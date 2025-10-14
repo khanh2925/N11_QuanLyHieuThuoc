@@ -16,53 +16,27 @@ import java.util.List;
 
 import customcomponent.PillButton;
 
-public class BanHang_GUI {
+public class BanHang_GUI extends JPanel {
 
-    private JFrame frame;
     private JTextField txtTimThuoc;
     private JPanel pnCotPhaiCenter; // vùng center chính
     private JPanel pnDanhSachDon;   // vùng chứa các đơn hàng
-
-    public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            try {
-                BanHang_GUI window = new BanHang_GUI();
-                window.frame.setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
+	private int COT_PHAI_HEAD_HEIGHT = 88;
+    
     public BanHang_GUI() {
         initialize();
     }
 
     private void initialize() {
-        frame = new JFrame("Bán Hàng - Hiệu thuốc Hòa An");
-        frame.setSize(1920, 1080);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setResizable(false);
-        frame.setLocationRelativeTo(null);
+    	
+    	setLayout(new BorderLayout());
 
-        JPanel pnMain = new JPanel(new BorderLayout());
-        frame.getContentPane().add(pnMain, BorderLayout.CENTER);
-
-        // ===== CỘT TRÁI =====
-        JPanel pnCotTrai = new JPanel();
-        pnCotTrai.setPreferredSize(new Dimension(383, 1080));
-        pnCotTrai.setBackground(new Color(128, 255, 255));
-        pnMain.add(pnCotTrai, BorderLayout.WEST);
-
-        // ===== CỘT PHẢI =====
-        JPanel pnCotPhai = new JPanel(new BorderLayout());
-        pnMain.add(pnCotPhai, BorderLayout.CENTER);
-
+    	
         // ===== HEADER =====
         JPanel pnCotPhaiHead = new JPanel(null);
         pnCotPhaiHead.setPreferredSize(new Dimension(1073, 88));
         pnCotPhaiHead.setBackground(new Color(0xE3F2F5));
-        pnCotPhai.add(pnCotPhaiHead, BorderLayout.NORTH);
+        add(pnCotPhaiHead, BorderLayout.NORTH);
 
         // Ô tìm kiếm
         txtTimThuoc = new JTextField("Tìm theo mã, tên...");
@@ -93,7 +67,7 @@ public class BanHang_GUI {
         pnCotPhaiCenter = new JPanel();
         pnCotPhaiCenter.setPreferredSize(new Dimension(1073, 992));
         pnCotPhaiCenter.setBackground(Color.WHITE);
-        pnCotPhai.add(pnCotPhaiCenter, BorderLayout.CENTER);
+        add(pnCotPhaiCenter, BorderLayout.CENTER);
         pnCotPhaiCenter.setBorder(new CompoundBorder(
         	    new LineBorder(new Color(0x00C853), 3, true), // viền xanh lá
         	    new EmptyBorder(5, 5, 5, 5) ));              // padding: top, left, bottom, right
@@ -116,7 +90,7 @@ public class BanHang_GUI {
         JPanel pnCotPhaiRight = new JPanel();
         pnCotPhaiRight.setPreferredSize(new Dimension(1920 - 383 - 1073, 1080));
         pnCotPhaiRight.setBackground(new Color(255, 255, 102));
-        pnCotPhai.add(pnCotPhaiRight, BorderLayout.EAST);
+        add(pnCotPhaiRight, BorderLayout.EAST);
 
         // ===== SINH DỮ LIỆU GIẢ & GEN PANEL =====
         List<Product> dsSanPham = new ArrayList<>();
@@ -132,6 +106,7 @@ public class BanHang_GUI {
         for (Product sp : dsSanPham) {
             pnDanhSachDon.add(createDonPanel(sp));
         }
+        
     }
 
     /**
