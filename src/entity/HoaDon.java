@@ -1,15 +1,10 @@
 package entity;
 
-package entity;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Lớp HoaDon đại diện cho một hóa đơn bán hàng trong hệ thống.
- */
 public class HoaDon {
 
     private String maHoaDon;

@@ -42,7 +42,7 @@ public class KhachHang {
 
         double tongChiTieu = 0;
         for (HoaDon hd : danhSachHoaDon) {
-            tongChiTieu += hd.getThanhToan(); // Lấy số tiền thực tế khách trả cho mỗi hóa đơn
+            tongChiTieu += hd.getTongTien(); // Lấy số tiền thực tế khách trả cho mỗi hóa đơn
         }
         
         // Áp dụng quy tắc quy đổi (ví dụ: 10000đ = 1 điểm)

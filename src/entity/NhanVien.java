@@ -13,19 +13,26 @@ public class NhanVien {
     private String caLam;
     private TaiKhoan taiKhoan;
 
+	
+    public NhanVien(String maNhanVien, String tenNhanVien, boolean gioiTinh, LocalDate ngaySinh, String soDienThoai,
+			String diaChi, boolean quanLy, String caLam, TaiKhoan taiKhoan) {
+		super();
+		this.maNhanVien = maNhanVien;
+		this.tenNhanVien = tenNhanVien;
+		this.gioiTinh = gioiTinh;
+		this.ngaySinh = ngaySinh;
+		this.soDienThoai = soDienThoai;
+		this.diaChi = diaChi;
+		this.quanLy = quanLy;
+		this.caLam = caLam;
+		this.taiKhoan = taiKhoan;
+	}
+
 	public NhanVien() {
-        }lic NhanVien(String maNhanVien, String tenNhanVien, boolean gioiTinh, LocalDate ngaySinh, String soDienThoai, String diaChi, boolean quanLy, String caLam, TaiKhoan taiKhoan) {
-        this.maNhanVien = maNhanVien;
-        this.tenNhanVien = tenNhanVien;
-        this.gioiTinh = gioiTinh;
-        this.ngaySinh = ngaySinh;
-        this.soDienThoai = soDienThoai;
-        this.diaChi = diaChi;
-        this.quanLy = quanLy;
-        this.caLam = caLam;
-        this.taiKhoan = taiKhoan;
-    }	
-    // Getters and Setters
+		super();
+	}
+
+	// Getters and Setters
 	public String getMaNhanVien() {
 		return maNhanVien;
 	}
