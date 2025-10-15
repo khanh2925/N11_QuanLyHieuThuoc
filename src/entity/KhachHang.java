@@ -1,6 +1,7 @@
 package entity;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 
 public class KhachHang {
@@ -12,11 +13,15 @@ public class KhachHang {
     private LocalDate ngaySinh;
     private int diemTichLuy;
 
+    // Thêm danh sách hóa đơn (nếu cần tính điểm từ hóa đơn)
+    private List<HoaDon> danhSachHoaDon;
+
     public KhachHang() {
     }
 
-    public KhachHang(String maKhachHang, String tenKhachHang, boolean gioiTinh, String soDienThoai, LocalDate ngaySinh, int diemTichLuy) {
-        this.maKhachHang = maKhachHang;
+    public KhachHang(String maKhachHang, String tenKhachHang, boolean gioiTinh,
+                     String soDienThoai, LocalDate ngaySinh, int diemTichLuy) {
+        setMaKhachHang(maKhachHang);
         setTenKhachHang(tenKhachHang);
         setGioiTinh(gioiTinh);
         setSoDienThoai(soDienThoai);
@@ -24,26 +29,15 @@ public class KhachHang {
         setDiemTichLuy(diemTichLuy);
     }
 
-    /**
-     * THUỘC TÍNH DẪN SUẤT: Điểm tích lũy được tính toán từ tổng giá trị các hóa đơn.
-     * Phương thức này thay thế cho việc lưu trữ trực tiếp.
-     * * Giả sử quy tắc: 10,000 VNĐ chi tiêu = 1 điểm.
-     * @return Tổng số điểm tích lũy đã được làm tròn.
-     */
-//    public int getDiemTichLuy() {
-//        if (danhSachHoaDon == null || danhSachHoaDon.isEmpty()) {
-//            return 0;
-//        }
-//
-//        double tongChiTieu = 0;
-//        for (HoaDon hd : danhSachHoaDon) {
-//            tongChiTieu += hd.getTongTien(); // Lấy số tiền thực tế khách trả cho mỗi hóa đơn
-//        }
-//        
-//        // Áp dụng quy tắc quy đổi (ví dụ: 10000đ = 1 điểm)
-//        int diem = (int) (tongChiTieu / 10000);
-//        return diem;
-//    }
+    // ✅ Giữ lại constructor sao chép để tiện tạo bản sao
+    public KhachHang(KhachHang other) {
+        this.maKhachHang = other.maKhachHang;
+        this.tenKhachHang = other.tenKhachHang;
+        this.gioiTinh = other.gioiTinh;
+        this.soDienThoai = other.soDienThoai;
+        this.ngaySinh = other.ngaySinh;
+        this.diemTichLuy = other.diemTichLuy;
+    }
 
     public String getMaKhachHang() {
         return maKhachHang;
@@ -106,8 +100,21 @@ public class KhachHang {
         this.ngaySinh = ngaySinh;
     }
 
+    /**
+     * ✅ Phương thức tính điểm tích lũy dựa trên danh sách hóa đơn
+     * Nếu không có hóa đơn → trả về điểm tích lũy hiện tại.
+     * Nếu có hóa đơn → tính toán lại theo quy tắc 10.000đ = 1 điểm.
+     */
     public int getDiemTichLuy() {
-        return diemTichLuy;
+        if (danhSachHoaDon == null || danhSachHoaDon.isEmpty()) {
+            return diemTichLuy;
+        }
+
+        double tongChiTieu = 0;
+        for (HoaDon hd : danhSachHoaDon) {
+            tongChiTieu += hd.getTongTien();
+        }
+        return (int) (tongChiTieu / 10000);
     }
 
     public void setDiemTichLuy(int diemTichLuy) {
@@ -115,6 +122,14 @@ public class KhachHang {
             throw new IllegalArgumentException("Điểm tích lũy phải lớn hơn hoặc bằng 0.");
         }
         this.diemTichLuy = diemTichLuy;
+    }
+
+    public List<HoaDon> getDanhSachHoaDon() {
+        return danhSachHoaDon;
+    }
+
+    public void setDanhSachHoaDon(List<HoaDon> danhSachHoaDon) {
+        this.danhSachHoaDon = danhSachHoaDon;
     }
 
     @Override
@@ -125,7 +140,7 @@ public class KhachHang {
                 ", gioiTinh=" + (gioiTinh ? "Nam" : "Nữ") +
                 ", soDienThoai='" + soDienThoai + '\'' +
                 ", ngaySinh=" + ngaySinh +
-                ", diemTichLuy=" + diemTichLuy +
+                ", diemTichLuy=" + getDiemTichLuy() +
                 '}';
     }
 

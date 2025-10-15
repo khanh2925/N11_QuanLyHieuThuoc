@@ -5,7 +5,6 @@ import java.time.Period;
 import java.util.Objects;
 
 public class NhanVien {
-
     private String maNhanVien;
     private String tenNhanVien;
     private Boolean gioiTinh;
@@ -16,39 +15,133 @@ public class NhanVien {
     private TaiKhoan taiKhoan;
     private String caLam;
 
-	
-    public NhanVien(String maNhanVien, String tenNhanVien, boolean gioiTinh, LocalDate ngaySinh, String soDienThoai,
-			String diaChi, boolean quanLy, String caLam, TaiKhoan taiKhoan) {
-		super();
-		this.maNhanVien = maNhanVien;
-		this.tenNhanVien = tenNhanVien;
-		this.gioiTinh = gioiTinh;
-		this.ngaySinh = ngaySinh;
-		this.soDienThoai = soDienThoai;
-		this.diaChi = diaChi;
-		this.quanLy = quanLy;
-		this.caLam = caLam;
-		this.taiKhoan = taiKhoan;
-	}
+    public NhanVien() {
+    }
 
-	public NhanVien() {
-		super();
-	}
+    public NhanVien(String maNhanVien, String tenNhanVien, Boolean gioiTinh, LocalDate ngaySinh,
+                    String soDienThoai, String diaChi, Boolean quanLy, TaiKhoan taiKhoan, String caLam) {
+        setMaNhanVien(maNhanVien);
+        setTenNhanVien(tenNhanVien);
+        setGioiTinh(gioiTinh);
+        setNgaySinh(ngaySinh);
+        setSoDienThoai(soDienThoai);
+        setDiaChi(diaChi);
+        setQuanLy(quanLy);
+        setTaiKhoan(taiKhoan);
+        setCaLam(caLam);
+    }
 
-	// Getters and Setters
-	public String getMaNhanVien() {
-		return maNhanVien;
-	}
+    public NhanVien(NhanVien nv) {
+        this.maNhanVien = nv.maNhanVien;
+        this.tenNhanVien = nv.tenNhanVien;
+        this.gioiTinh = nv.gioiTinh;
+        this.ngaySinh = nv.ngaySinh;
+        this.soDienThoai = nv.soDienThoai;
+        this.diaChi = nv.diaChi;
+        this.quanLy = nv.quanLy;
+        this.taiKhoan = nv.taiKhoan;
+        this.caLam = nv.caLam;
+    }
+
+    public String getMaNhanVien() {
+        return maNhanVien;
+    }
+
+    public void setMaNhanVien(String maNhanVien) {
+        if (maNhanVien != null && maNhanVien.matches("^NV\\d{8}\\d{4}$")) {
+            this.maNhanVien = maNhanVien;
+        } else {
+            throw new IllegalArgumentException("Mã nhân viên không hợp lệ. Định dạng yêu cầu: NVyyyyMMxxxx");
+        }
+    }
+
+    public String getTenNhanVien() {
+        return tenNhanVien;
+    }
+
+    public void setTenNhanVien(String tenNhanVien) {
+        if (tenNhanVien == null || tenNhanVien.trim().isEmpty()) {
+            throw new IllegalArgumentException("Họ tên không được rỗng.");
+        }
+        if (tenNhanVien.length() > 50) {
+            throw new IllegalArgumentException("Họ tên không được vượt quá 50 ký tự.");
+        }
+        this.tenNhanVien = tenNhanVien;
+    }
+
+    public Boolean isGioiTinh() {
+        return gioiTinh;
+    }
+
+    public void setGioiTinh(Boolean gioiTinh) {
+        if (gioiTinh == null) {
+            throw new IllegalArgumentException("Giới tính không được rỗng.");
+        }
+        this.gioiTinh = gioiTinh;
+    }
+
+    public LocalDate getNgaySinh() {
+        return ngaySinh;
+    }
+
+    public void setNgaySinh(LocalDate ngaySinh) {
+        if (ngaySinh == null || Period.between(ngaySinh, LocalDate.now()).getYears() < 18) {
+            throw new IllegalArgumentException("Nhân viên phải đủ 18 tuổi trở lên.");
+        }
+        this.ngaySinh = ngaySinh;
+    }
+
+    public String getSoDienThoai() {
+        return soDienThoai;
+    }
+
+    public void setSoDienThoai(String soDienThoai) {
+        if (soDienThoai != null && !soDienThoai.matches("^0\\d{9}$")) {
+            throw new IllegalArgumentException("Số điện thoại không hợp lệ (phải có 10 số, bắt đầu bằng 0).");
+        }
+        this.soDienThoai = soDienThoai;
+    }
+
+    public String getDiaChi() {
+        return diaChi;
+    }
+
+    public void setDiaChi(String diaChi) {
+        if (diaChi != null && diaChi.length() > 100) {
+            throw new IllegalArgumentException("Địa chỉ quá dài (tối đa 100 ký tự).");
+        }
+        this.diaChi = diaChi;
+    }
+
+    public Boolean isQuanLy() {
+        return quanLy;
+    }
+
+    public void setQuanLy(Boolean quanLy) {
+        if (quanLy == null) {
+            throw new IllegalArgumentException("Trạng thái quản lý không được để trống.");
+        }
+        this.quanLy = quanLy;
+    }
+
+    public TaiKhoan getTaiKhoan() {
+        return taiKhoan;
+    }
+
+    public void setTaiKhoan(TaiKhoan taiKhoan) {
+        if (taiKhoan == null) {
+            throw new IllegalArgumentException("Tài khoản không tồn tại.");
+        }
+        this.taiKhoan = taiKhoan;
+    }
 
     public String getCaLam() {
         return caLam;
     }
 
-
-
     public void setCaLam(String caLam) {
         if (caLam == null || caLam.trim().isEmpty()) {
-            throw new IllegalArgumentException("Ca làm không rỗng.");
+            throw new IllegalArgumentException("Ca làm không được rỗng.");
         }
         this.caLam = caLam;
     }
