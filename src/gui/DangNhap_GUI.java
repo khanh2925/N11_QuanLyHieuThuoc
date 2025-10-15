@@ -5,9 +5,9 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
-public class Gui_DangNhap extends JFrame {
+public class DangNhap_GUI extends JFrame {
 
-    public Gui_DangNhap() {
+    public DangNhap_GUI() {
         khoiTaoGiaoDien();
     }
 
@@ -128,7 +128,7 @@ public class Gui_DangNhap extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new Gui_DangNhap().setVisible(true));
+        SwingUtilities.invokeLater(() -> new DangNhap_GUI().setVisible(true));
     }
 }
 
