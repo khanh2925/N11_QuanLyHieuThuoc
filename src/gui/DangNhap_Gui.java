@@ -13,7 +13,7 @@ import javax.swing.border.LineBorder;
 
 import customcomponent.PillButton;
 
-public class test {
+public class DangNhap_Gui {
 
 	private JFrame frame;
 
@@ -21,7 +21,7 @@ public class test {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					test window = new test();
+					DangNhap_Gui window = new DangNhap_Gui();
 					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -30,12 +30,12 @@ public class test {
 		}); // ✅ chỉ đóng 1 lần ở đây
 	}
 
-	public test() {
+	public DangNhap_Gui() {
 		initialize();
 	}
 
 	private void initialize() {
-		frame = new JFrame("Demo chia panel");
+		frame = new JFrame("Đăng nhập");
 		frame.setBounds(100, 100, 1920, 1080);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setLayout(new BorderLayout());
