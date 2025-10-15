@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /connectDB/
 /customcomponent/
 /dao/
@@ -6,3 +7,7 @@
 /gui/
 /images/
 /lib/
+=======
+/gui/
+/images/
+>>>>>>> main

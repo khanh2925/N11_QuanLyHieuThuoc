@@ -16,6 +16,7 @@ public class NhanVien {
     private TaiKhoan taiKhoan;
     private String caLam;
 
+<<<<<<< HEAD
     public NhanVien() {
     }
 
@@ -134,6 +135,31 @@ public class NhanVien {
         }
         this.taiKhoan = taiKhoan;
     }
+=======
+	
+    public NhanVien(String maNhanVien, String tenNhanVien, boolean gioiTinh, LocalDate ngaySinh, String soDienThoai,
+			String diaChi, boolean quanLy, String caLam, TaiKhoan taiKhoan) {
+		super();
+		this.maNhanVien = maNhanVien;
+		this.tenNhanVien = tenNhanVien;
+		this.gioiTinh = gioiTinh;
+		this.ngaySinh = ngaySinh;
+		this.soDienThoai = soDienThoai;
+		this.diaChi = diaChi;
+		this.quanLy = quanLy;
+		this.caLam = caLam;
+		this.taiKhoan = taiKhoan;
+	}
+
+	public NhanVien() {
+		super();
+	}
+
+	// Getters and Setters
+	public String getMaNhanVien() {
+		return maNhanVien;
+	}
+>>>>>>> main
 
     public String getCaLam() {
         return caLam;
