@@ -1,17 +1,20 @@
 package entity;
 
 import java.time.LocalDate;
+import java.time.Period;
+import java.util.Objects;
 
 public class NhanVien {
+
     private String maNhanVien;
     private String tenNhanVien;
-    private boolean gioiTinh;
+    private Boolean gioiTinh;
     private LocalDate ngaySinh;
     private String soDienThoai;
     private String diaChi;
-    private boolean quanLy; // true: Sáng, false: Tối (ví dụ)
-    private String caLam;
+    private Boolean quanLy;
     private TaiKhoan taiKhoan;
+    private String caLam;
 
 	
     public NhanVien(String maNhanVien, String tenNhanVien, boolean gioiTinh, LocalDate ngaySinh, String soDienThoai,
@@ -37,78 +40,44 @@ public class NhanVien {
 		return maNhanVien;
 	}
 
-	public void setMaNhanVien(String maNhanVien) {
-		this.maNhanVien = maNhanVien;
-	}
+    public String getCaLam() {
+        return caLam;
+    }
 
-	public String getTenNhanVien() {
-		return tenNhanVien;
-	}
 
-	public void setTenNhanVien(String tenNhanVien) {
-		this.tenNhanVien = tenNhanVien;
-	}
 
-	public boolean isGioiTinh() {
-		return gioiTinh;
-	}
+    public void setCaLam(String caLam) {
+        if (caLam == null || caLam.trim().isEmpty()) {
+            throw new IllegalArgumentException("Ca làm không rỗng.");
+        }
+        this.caLam = caLam;
+    }
 
-	public void setGioiTinh(boolean gioiTinh) {
-		this.gioiTinh = gioiTinh;
-	}
+    @Override
+    public String toString() {
+        return "NhanVien{" +
+                "maNhanVien='" + maNhanVien + '\'' +
+                ", tenNhanVien='" + tenNhanVien + '\'' +
+                ", gioiTinh=" + gioiTinh +
+                ", ngaySinh=" + ngaySinh +
+                ", soDienThoai='" + soDienThoai + '\'' +
+                ", diaChi='" + diaChi + '\'' +
+                ", quanLy=" + quanLy +
+                ", taiKhoan=" + taiKhoan +
+                ", caLam='" + caLam + '\'' +
+                '}';
+    }
 
-	public LocalDate getNgaySinh() {
-		return ngaySinh;
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NhanVien nhanVien = (NhanVien) o;
+        return Objects.equals(maNhanVien, nhanVien.maNhanVien);
+    }
 
-	public void setNgaySinh(LocalDate ngaySinh) {
-		this.ngaySinh = ngaySinh;
-	}
-
-	public String getSoDienThoai() {
-		return soDienThoai;
-	}
-
-	public void setSoDienThoai(String soDienThoai) {
-		this.soDienThoai = soDienThoai;
-	}
-
-	public String getDiaChi() {
-		return diaChi;
-	}
-
-	public void setDiaChi(String diaChi) {
-		this.diaChi = diaChi;
-	}
-
-	public boolean isQuanLy() {
-		return quanLy;
-	}
-
-	public void setQuanLy(boolean quanLy) {
-		this.quanLy = quanLy;
-	}
-
-	public String getCaLam() {
-		return caLam;
-	}
-
-	public void setCaLam(String caLam) {
-		this.caLam = caLam;
-	}
-
-	public TaiKhoan getTaiKhoan() {
-		return taiKhoan;
-	}
-
-	public void setTaiKhoan(TaiKhoan taiKhoan) {
-		this.taiKhoan = taiKhoan;
-	}
-
-	public String toString() {
-		return "NhanVien [maNhanVien=" + maNhanVien + ", tenNhanVien=" + tenNhanVien + ", gioiTinh=" + gioiTinh
-				+ ", ngaySinh=" + ngaySinh + ", soDienThoai=" + soDienThoai + ", diaChi=" + diaChi + ", quanLy="
-				+ quanLy + ", caLam=" + caLam + ", taiKhoan=" + taiKhoan + "]";
-	}
-		
+    @Override
+    public int hashCode() {
+        return Objects.hash(maNhanVien);
+    }
 }

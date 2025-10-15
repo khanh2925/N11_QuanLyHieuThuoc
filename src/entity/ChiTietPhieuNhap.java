@@ -1,43 +1,55 @@
 package entity;
 
-import java.time.LocalDate;
+import java.util.Objects;
 
 public class ChiTietPhieuNhap {
+
     private PhieuNhap phieuNhap;
-    private SanPham sanPham;
+    private LoSanPham loSanPham;
     private int soLuongNhap;
     private double donGiaNhap;
-    private LocalDate ngaySanXuat;
-    private double thanhTien;
 
     public ChiTietPhieuNhap() {
     }
 
-    public ChiTietPhieuNhap(PhieuNhap phieuNhap, SanPham sanPham, int soLuongNhap, double donGiaNhap, LocalDate ngaySanXuat, double thanhTien) {
-        this.phieuNhap = phieuNhap;
-        this.sanPham = sanPham;
-        this.soLuongNhap = soLuongNhap;
-        this.donGiaNhap = donGiaNhap;
-        this.ngaySanXuat = ngaySanXuat;
-        this.thanhTien = thanhTien;
+    public ChiTietPhieuNhap(PhieuNhap phieuNhap, LoSanPham loSanPham, int soLuongNhap, double donGiaNhap) {
+        setPhieuNhap(phieuNhap);
+        setLoSanPham(loSanPham);
+        setSoLuongNhap(soLuongNhap);
+        setDonGiaNhap(donGiaNhap);
     }
 
-    // Getters and Setters
+    public ChiTietPhieuNhap(ChiTietPhieuNhap other) {
+        this.phieuNhap = other.phieuNhap;
+        this.loSanPham = other.loSanPham;
+        this.soLuongNhap = other.soLuongNhap;
+        this.donGiaNhap = other.donGiaNhap;
+    }
+
+    public double getThanhTien() {
+        return this.soLuongNhap * this.donGiaNhap;
+    }
 
     public PhieuNhap getPhieuNhap() {
         return phieuNhap;
     }
 
     public void setPhieuNhap(PhieuNhap phieuNhap) {
+        if (phieuNhap == null) {
+            throw new IllegalArgumentException("Phiếu nhập không tồn tại.");
+        }
         this.phieuNhap = phieuNhap;
     }
 
-    public SanPham getSanPham() {
-        return sanPham;
+    public LoSanPham getLoSanPham() {
+        return loSanPham;
     }
 
-    public void setSanPham(SanPham sanPham) {
-        this.sanPham = sanPham;
+    public void setLoSanPham(LoSanPham loSanPham) {
+        if (loSanPham == null) {
+            throw new IllegalArgumentException("Lô sản phẩm không tồn tại.");
+        }
+        this.loSanPham = loSanPham;
     }
 
     public int getSoLuongNhap() {
@@ -45,6 +57,9 @@ public class ChiTietPhieuNhap {
     }
 
     public void setSoLuongNhap(int soLuongNhap) {
+        if (soLuongNhap <= 0) {
+            throw new IllegalArgumentException("Số lượng nhập phải lớn hơn 0.");
+        }
         this.soLuongNhap = soLuongNhap;
     }
 
@@ -53,31 +68,33 @@ public class ChiTietPhieuNhap {
     }
 
     public void setDonGiaNhap(double donGiaNhap) {
+        if (donGiaNhap <= 0) {
+            throw new IllegalArgumentException("Đơn giá nhập phải lớn hơn 0.");
+        }
         this.donGiaNhap = donGiaNhap;
-    }
-
-    public LocalDate getNgaySanXuat() {
-        return ngaySanXuat;
-    }
-
-    public void setNgaySanXuat(LocalDate ngaySanXuat) {
-        this.ngaySanXuat = ngaySanXuat;
-    }
-
-    public double getThanhTien() {
-        return thanhTien;
-    }
-
-    public void setThanhTien(double thanhTien) {
-        this.thanhTien = thanhTien;
     }
 
     @Override
     public String toString() {
         return "ChiTietPhieuNhap{" +
-                "phieuNhap=" + phieuNhap.getMaPhieuNhap() +
-                ", sanPham=" + sanPham.getMaSanPham() +
+                "phieuNhap=" + (phieuNhap != null ? phieuNhap.getMaPhieuNhap() : "N/A") +
+                ", loSanPham=" + (loSanPham != null ? loSanPham.getMaLo() : "N/A") +
                 ", soLuongNhap=" + soLuongNhap +
+                ", donGiaNhap=" + donGiaNhap +
+                ", thanhTien=" + getThanhTien() +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ChiTietPhieuNhap that = (ChiTietPhieuNhap) o;
+        return Objects.equals(phieuNhap, that.phieuNhap) && Objects.equals(loSanPham, that.loSanPham);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(phieuNhap, loSanPham);
     }
 }

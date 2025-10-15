@@ -1,6 +1,9 @@
 package entity;
+
+import java.util.Objects;
+
 public class SanPham {
-    
+
     private String maSanPham;
     private String tenSanPham;
     private LoaiSanPham loaiSanPham;
@@ -12,46 +15,51 @@ public class SanPham {
     private DonViTinh donViTinh;
     private DuongDung duongDung;
     private double giaNhap;
-    private double giaBan; 
+    private double giaBan;
     private String hinhAnh;
     private String quyCachDongGoi;
     private String keBanSanPham;
-    private boolean hoatDong;
-    private String hanSuDung;
+    private Boolean hoatDong;
 
     public SanPham() {
     }
 
-
-    public SanPham(String maSanPham, String tenSanPham, LoaiSanPham loaiSanPham, String soDangKy, String hoatChat, String hamLuong, String hangSanXuat, String xuatXu, DonViTinh donViTinh, DuongDung duongDung, double giaNhap, double giaBan, String hinhAnh, String quyCachDongGoi, String keBanSanPham, boolean hoatDong, String hanSuDung) {
-        this.maSanPham = maSanPham;
-        this.tenSanPham = tenSanPham;
-        this.loaiSanPham = loaiSanPham;
-        this.soDangKy = soDangKy;
-        this.hoatChat = hoatChat;
-        this.hamLuong = hamLuong;
-        this.hangSanXuat = hangSanXuat;
-        this.xuatXu = xuatXu;
-        this.donViTinh = donViTinh;
-        this.duongDung = duongDung;
-        this.giaNhap = giaNhap;
-        this.giaBan = giaBan; // <-- Gán giá trị giaBan
-        this.hinhAnh = hinhAnh;
-        this.quyCachDongGoi = quyCachDongGoi;
-        this.keBanSanPham = keBanSanPham;
-        this.hoatDong = hoatDong;
-        this.hanSuDung = hanSuDung;
+    public SanPham(String maSanPham, String tenSanPham, LoaiSanPham loaiSanPham, String soDangKy, String hoatChat, String hamLuong, String hangSanXuat, String xuatXu, DonViTinh donViTinh, DuongDung duongDung, double giaNhap, double giaBan, String hinhAnh, String quyCachDongGoi, String keBanSanPham, Boolean hoatDong) {
+        setMaSanPham(maSanPham);
+        setTenSanPham(tenSanPham);
+        setLoaiSanPham(loaiSanPham);
+        setSoDangKy(soDangKy);
+        setHoatChat(hoatChat);
+        setHamLuong(hamLuong);
+        setHangSanXuat(hangSanXuat);
+        setXuatXu(xuatXu);
+        setDonViTinh(donViTinh);
+        setDuongDung(duongDung);
+        setGiaNhap(giaNhap);
+        setGiaBan(giaBan);
+        setHinhAnh(hinhAnh);
+        setQuyCachDongGoi(quyCachDongGoi);
+        setKeBanSanPham(keBanSanPham);
+        setHoatDong(hoatDong);
     }
 
-    // --- GETTERS AND SETTERS ---
-
-    // getGiaBan() và setGiaBan() đã được trả lại như một thuộc tính thông thường
-    public double getGiaBan() {
-        return giaBan;
-    }
-
-    public void setGiaBan(double giaBan) {
-        this.giaBan = giaBan;
+    public SanPham(SanPham sp) {
+        this.maSanPham = sp.maSanPham;
+        this.tenSanPham = sp.tenSanPham;
+        this.loaiSanPham = sp.loaiSanPham;
+        this.soDangKy = sp.soDangKy;
+        this.hoatChat = sp.hoatChat;
+        this.hamLuong = sp.hamLuong;
+        this.hangSanXuat = sp.hangSanXuat;
+        this.xuatXu = sp.xuatXu;
+        this.donViTinh = sp.donViTinh;
+        this.duongDung = sp.duongDung;
+        this.giaNhap = sp.giaNhap;
+        this.giaBan = sp.giaBan;
+        this.hinhAnh = sp.hinhAnh;
+        this.quyCachDongGoi = sp.quyCachDongGoi;
+        this.keBanSanPham = sp.keBanSanPham;
+        this.hoatDong = sp.hoatDong;
     }
 
     public String getMaSanPham() {
@@ -59,7 +67,11 @@ public class SanPham {
     }
 
     public void setMaSanPham(String maSanPham) {
-        this.maSanPham = maSanPham;
+        if (maSanPham != null && maSanPham.matches("^SP\\d{6}$")) {
+            this.maSanPham = maSanPham;
+        } else {
+            throw new IllegalArgumentException("Mã sản phẩm không hợp lệ. Định dạng yêu cầu: SPxxxxxx");
+        }
     }
 
     public String getTenSanPham() {
@@ -67,6 +79,12 @@ public class SanPham {
     }
 
     public void setTenSanPham(String tenSanPham) {
+        if (tenSanPham == null || tenSanPham.trim().isEmpty()) {
+            throw new IllegalArgumentException("Tên sản phẩm không được rỗng.");
+        }
+        if (tenSanPham.length() > 100) {
+            throw new IllegalArgumentException("Tên sản phẩm không được vượt quá 100 ký tự.");
+        }
         this.tenSanPham = tenSanPham;
     }
 
@@ -75,6 +93,9 @@ public class SanPham {
     }
 
     public void setLoaiSanPham(LoaiSanPham loaiSanPham) {
+        if (loaiSanPham == null) {
+            throw new IllegalArgumentException("Loại sản phẩm không tồn tại.");
+        }
         this.loaiSanPham = loaiSanPham;
     }
 
@@ -83,6 +104,9 @@ public class SanPham {
     }
 
     public void setSoDangKy(String soDangKy) {
+        if (soDangKy != null && soDangKy.length() > 20) {
+            throw new IllegalArgumentException("Số đăng ký không hợp lệ.");
+        }
         this.soDangKy = soDangKy;
     }
 
@@ -91,6 +115,9 @@ public class SanPham {
     }
 
     public void setHoatChat(String hoatChat) {
+        if (hoatChat != null && hoatChat.length() > 100) {
+            throw new IllegalArgumentException("Hoạt chất không được vượt quá 100 ký tự.");
+        }
         this.hoatChat = hoatChat;
     }
 
@@ -99,6 +126,9 @@ public class SanPham {
     }
 
     public void setHamLuong(String hamLuong) {
+        if (hamLuong != null && hamLuong.length() > 50) {
+            throw new IllegalArgumentException("Hàm lượng không được vượt quá 50 ký tự.");
+        }
         this.hamLuong = hamLuong;
     }
 
@@ -107,6 +137,9 @@ public class SanPham {
     }
 
     public void setHangSanXuat(String hangSanXuat) {
+        if (hangSanXuat != null && hangSanXuat.length() > 100) {
+            throw new IllegalArgumentException("Hãng sản xuất không được vượt quá 100 ký tự.");
+        }
         this.hangSanXuat = hangSanXuat;
     }
 
@@ -115,6 +148,9 @@ public class SanPham {
     }
 
     public void setXuatXu(String xuatXu) {
+        if (xuatXu != null && xuatXu.length() > 100) {
+            throw new IllegalArgumentException("Xuất xứ không được vượt quá 100 ký tự.");
+        }
         this.xuatXu = xuatXu;
     }
 
@@ -123,6 +159,9 @@ public class SanPham {
     }
 
     public void setDonViTinh(DonViTinh donViTinh) {
+        if (donViTinh == null) {
+            throw new IllegalArgumentException("Đơn vị tính không tồn tại.");
+        }
         this.donViTinh = donViTinh;
     }
 
@@ -131,6 +170,9 @@ public class SanPham {
     }
 
     public void setDuongDung(DuongDung duongDung) {
+        if (duongDung == null) {
+            throw new IllegalArgumentException("Đường dùng không tồn tại.");
+        }
         this.duongDung = duongDung;
     }
 
@@ -139,7 +181,41 @@ public class SanPham {
     }
 
     public void setGiaNhap(double giaNhap) {
+        if (giaNhap <= 0) {
+            throw new IllegalArgumentException("Giá nhập phải lớn hơn 0.");
+        }
+        if (this.giaBan > 0 && giaNhap >= this.giaBan) {
+            throw new IllegalArgumentException("Giá nhập phải nhỏ hơn giá bán.");
+        }
         this.giaNhap = giaNhap;
+    }
+
+    public double getGiaBan() {
+        return giaBan;
+    }
+
+    public void setGiaBan(double giaBan) {
+        if (giaBan <= 0) {
+            throw new IllegalArgumentException("Giá bán phải lớn hơn 0.");
+        }
+
+        double heSoLoiNhuan = 0;
+        if (this.giaNhap < 10000) {
+            heSoLoiNhuan = 1.5;
+        } else if (this.giaNhap < 50000) {
+            heSoLoiNhuan = 1.3;
+        } else if (this.giaNhap < 200000) {
+            heSoLoiNhuan = 1.2;
+        } else {
+            heSoLoiNhuan = 1.1;
+        }
+
+        double giaBanToiThieu = this.giaNhap * heSoLoiNhuan;
+
+        if (giaBan < giaBanToiThieu) {
+            throw new IllegalArgumentException("Giá bán phải cao hơn giá nhập theo đúng tỷ lệ lợi nhuận tối thiểu.");
+        }
+        this.giaBan = giaBan;
     }
 
     public String getHinhAnh() {
@@ -147,6 +223,9 @@ public class SanPham {
     }
 
     public void setHinhAnh(String hinhAnh) {
+        if (hinhAnh != null && hinhAnh.length() > 255) {
+            throw new IllegalArgumentException("Đường dẫn hình ảnh không được vượt quá 255 ký tự.");
+        }
         this.hinhAnh = hinhAnh;
     }
 
@@ -155,6 +234,9 @@ public class SanPham {
     }
 
     public void setQuyCachDongGoi(String quyCachDongGoi) {
+        if (quyCachDongGoi != null && quyCachDongGoi.length() > 100) {
+            throw new IllegalArgumentException("Quy cách đóng gói không được vượt quá 100 ký tự.");
+        }
         this.quyCachDongGoi = quyCachDongGoi;
     }
 
@@ -163,23 +245,18 @@ public class SanPham {
     }
 
     public void setKeBanSanPham(String keBanSanPham) {
+        if (keBanSanPham != null && keBanSanPham.length() > 100) {
+            throw new IllegalArgumentException("Kệ bán sản phẩm không được vượt quá 100 ký tự.");
+        }
         this.keBanSanPham = keBanSanPham;
     }
 
-    public boolean isHoatDong() {
+    public Boolean getHoatDong() {
         return hoatDong;
     }
 
-    public void setHoatDong(boolean hoatDong) {
+    public void setHoatDong(Boolean hoatDong) {
         this.hoatDong = hoatDong;
-    }
-
-    public String getHanSuDung() {
-        return hanSuDung;
-    }
-
-    public void setHanSuDung(String hanSuDung) {
-        this.hanSuDung = hanSuDung;
     }
 
     @Override
@@ -187,8 +264,21 @@ public class SanPham {
         return "SanPham{" +
                 "maSanPham='" + maSanPham + '\'' +
                 ", tenSanPham='" + tenSanPham + '\'' +
-                ", giaNhap=" + giaNhap +
                 ", giaBan=" + giaBan +
+                ", hoatDong=" + hoatDong +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SanPham sanPham = (SanPham) o;
+        return Objects.equals(maSanPham, sanPham.maSanPham);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(maSanPham);
     }
 }

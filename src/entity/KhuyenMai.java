@@ -1,6 +1,7 @@
 package entity;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 public class KhuyenMai {
 
@@ -20,27 +21,43 @@ public class KhuyenMai {
     }
 
     public KhuyenMai(String maKM, String tenKM, LocalDate ngayBatDau, LocalDate ngayKetThuc, boolean trangThai, boolean khuyenMaiHoaDon, HinhThucKM hinhThuc, double giaTri, String dieuKienApDungHoaDon, int soLuongToiThieu, int soLuongTangThem) {
-        this.maKM = maKM;
-        this.tenKM = tenKM;
-        this.ngayBatDau = ngayBatDau;
-        this.ngayKetThuc = ngayKetThuc;
-        this.trangThai = trangThai;
-        this.khuyenMaiHoaDon = khuyenMaiHoaDon;
-        this.hinhThuc = hinhThuc;
-        this.giaTri = giaTri;
-        this.dieuKienApDungHoaDon = dieuKienApDungHoaDon;
-        this.soLuongToiThieu = soLuongToiThieu;
-        this.soLuongTangThem = soLuongTangThem;
+        setMaKM(maKM);
+        setTenKM(tenKM);
+        setNgayBatDau(ngayBatDau);
+        setNgayKetThuc(ngayKetThuc);
+        setTrangThai(trangThai);
+        setKhuyenMaiHoaDon(khuyenMaiHoaDon);
+        setHinhThuc(hinhThuc);
+        setGiaTri(giaTri);
+        setDieuKienApDungHoaDon(dieuKienApDungHoaDon);
+        setSoLuongToiThieu(soLuongToiThieu);
+        setSoLuongTangThem(soLuongTangThem);
     }
 
-    // --- GETTERS AND SETTERS ---
+    public KhuyenMai(KhuyenMai other) {
+        this.maKM = other.maKM;
+        this.tenKM = other.tenKM;
+        this.ngayBatDau = other.ngayBatDau;
+        this.ngayKetThuc = other.ngayKetThuc;
+        this.trangThai = other.trangThai;
+        this.khuyenMaiHoaDon = other.khuyenMaiHoaDon;
+        this.hinhThuc = other.hinhThuc;
+        this.giaTri = other.giaTri;
+        this.dieuKienApDungHoaDon = other.dieuKienApDungHoaDon;
+        this.soLuongToiThieu = other.soLuongToiThieu;
+        this.soLuongTangThem = other.soLuongTangThem;
+    }
 
     public String getMaKM() {
         return maKM;
     }
 
     public void setMaKM(String maKM) {
-        this.maKM = maKM;
+        if (maKM != null && maKM.matches("^KM-\\d{8}-\\d{4}$")) {
+            this.maKM = maKM;
+        } else {
+            throw new IllegalArgumentException("Mã khuyến mãi không hợp lệ. Định dạng yêu cầu: KM-yyyymmdd-xxxx");
+        }
     }
 
     public String getTenKM() {
@@ -48,6 +65,9 @@ public class KhuyenMai {
     }
 
     public void setTenKM(String tenKM) {
+        if (tenKM == null || tenKM.trim().isEmpty() || tenKM.length() > 200) {
+            throw new IllegalArgumentException("Tên khuyến mãi không hợp lệ.");
+        }
         this.tenKM = tenKM;
     }
 
@@ -56,6 +76,12 @@ public class KhuyenMai {
     }
 
     public void setNgayBatDau(LocalDate ngayBatDau) {
+         if (ngayBatDau == null) {
+            throw new IllegalArgumentException("Ngày bắt đầu không được rỗng.");
+        }
+        if (this.ngayKetThuc != null && ngayBatDau.isAfter(this.ngayKetThuc)) {
+            throw new IllegalArgumentException("Ngày bắt đầu không hợp lệ.");
+        }
         this.ngayBatDau = ngayBatDau;
     }
 
@@ -64,6 +90,12 @@ public class KhuyenMai {
     }
 
     public void setNgayKetThuc(LocalDate ngayKetThuc) {
+        if (ngayKetThuc == null) {
+            throw new IllegalArgumentException("Ngày kết thúc không được rỗng.");
+        }
+        if (this.ngayBatDau != null && ngayKetThuc.isBefore(this.ngayBatDau)) {
+            throw new IllegalArgumentException("Ngày kết thúc không hợp lệ.");
+        }
         this.ngayKetThuc = ngayKetThuc;
     }
 
@@ -88,6 +120,9 @@ public class KhuyenMai {
     }
 
     public void setHinhThuc(HinhThucKM hinhThuc) {
+        if (hinhThuc == null) {
+            throw new IllegalArgumentException("Hình thức khuyến mãi không hợp lệ.");
+        }
         this.hinhThuc = hinhThuc;
     }
 
@@ -96,6 +131,9 @@ public class KhuyenMai {
     }
 
     public void setGiaTri(double giaTri) {
+        if (giaTri < 0) {
+            throw new IllegalArgumentException("Giá trị khuyến mãi không hợp lệ.");
+        }
         this.giaTri = giaTri;
     }
 
@@ -112,6 +150,9 @@ public class KhuyenMai {
     }
 
     public void setSoLuongToiThieu(int soLuongToiThieu) {
+        if (soLuongToiThieu < 0) {
+            throw new IllegalArgumentException("Số lượng tối thiểu không hợp lệ.");
+        }
         this.soLuongToiThieu = soLuongToiThieu;
     }
 
@@ -120,6 +161,9 @@ public class KhuyenMai {
     }
 
     public void setSoLuongTangThem(int soLuongTangThem) {
+        if (soLuongTangThem < 0) {
+            throw new IllegalArgumentException("Số lượng tặng thêm không hợp lệ.");
+        }
         this.soLuongTangThem = soLuongTangThem;
     }
 
@@ -128,9 +172,28 @@ public class KhuyenMai {
         return "KhuyenMai{" +
                 "maKM='" + maKM + '\'' +
                 ", tenKM='" + tenKM + '\'' +
+                ", ngayBatDau=" + ngayBatDau +
+                ", ngayKetThuc=" + ngayKetThuc +
                 ", trangThai=" + trangThai +
+                ", khuyenMaiHoaDon=" + khuyenMaiHoaDon +
                 ", hinhThuc=" + hinhThuc +
                 ", giaTri=" + giaTri +
+                ", dieuKienApDungHoaDon='" + dieuKienApDungHoaDon + '\'' +
+                ", soLuongToiThieu=" + soLuongToiThieu +
+                ", soLuongTangThem=" + soLuongTangThem +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        KhuyenMai khuyenMai = (KhuyenMai) o;
+        return Objects.equals(maKM, khuyenMai.maKM);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(maKM);
     }
 }
