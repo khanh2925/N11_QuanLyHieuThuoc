@@ -30,20 +30,20 @@ public class KhachHang {
      * * Giả sử quy tắc: 10,000 VNĐ chi tiêu = 1 điểm.
      * @return Tổng số điểm tích lũy đã được làm tròn.
      */
-    public int getDiemTichLuy() {
-        if (danhSachHoaDon == null || danhSachHoaDon.isEmpty()) {
-            return 0;
-        }
-
-        double tongChiTieu = 0;
-        for (HoaDon hd : danhSachHoaDon) {
-            tongChiTieu += hd.getTongTien(); // Lấy số tiền thực tế khách trả cho mỗi hóa đơn
-        }
-        
-        // Áp dụng quy tắc quy đổi (ví dụ: 10000đ = 1 điểm)
-        int diem = (int) (tongChiTieu / 10000);
-        return diem;
-    }
+//    public int getDiemTichLuy() {
+//        if (danhSachHoaDon == null || danhSachHoaDon.isEmpty()) {
+//            return 0;
+//        }
+//
+//        double tongChiTieu = 0;
+//        for (HoaDon hd : danhSachHoaDon) {
+//            tongChiTieu += hd.getTongTien(); // Lấy số tiền thực tế khách trả cho mỗi hóa đơn
+//        }
+//        
+//        // Áp dụng quy tắc quy đổi (ví dụ: 10000đ = 1 điểm)
+//        int diem = (int) (tongChiTieu / 10000);
+//        return diem;
+//    }
 
     public String getMaKhachHang() {
         return maKhachHang;
