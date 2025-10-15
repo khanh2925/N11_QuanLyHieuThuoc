@@ -108,5 +108,14 @@ public class NhanVien_GUI extends JFrame {
 	        b.setOpaque(active);
 	    });
 	}
+	public static void main(String[] args) {
+	    java.awt.EventQueue.invokeLater(() -> {
+	        try {
+	            new NhanVien_GUI().setVisible(true);
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
+	    });
+	}
 
 }

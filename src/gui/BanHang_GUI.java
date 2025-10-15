@@ -24,6 +24,7 @@ public class BanHang_GUI extends JPanel {
 	private int COT_PHAI_HEAD_HEIGHT = 88;
     
     public BanHang_GUI() {
+    	this.setPreferredSize(new Dimension(1537, 850));
         initialize();
     }
 
@@ -89,8 +90,107 @@ public class BanHang_GUI extends JPanel {
         // ===== CỘT PHẢI PHỤ =====
         JPanel pnCotPhaiRight = new JPanel();
         pnCotPhaiRight.setPreferredSize(new Dimension(1920 - 383 - 1073, 1080));
-        pnCotPhaiRight.setBackground(new Color(255, 255, 102));
+        pnCotPhaiRight.setBackground(Color.WHITE);
+        pnCotPhaiRight.setBorder(new EmptyBorder(20, 20, 20, 20)); // padding tổng thể
+        pnCotPhaiRight.setLayout(new BoxLayout(pnCotPhaiRight, BoxLayout.Y_AXIS));
         add(pnCotPhaiRight, BorderLayout.EAST);
+     // ==== TÊN NHÂN VIÊN & THỜI GIAN ====
+        JPanel pnNhanVien = new JPanel(new BorderLayout(5, 5));
+        pnNhanVien.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+        pnNhanVien.setOpaque(false);
+
+        JLabel lblNhanVien = new JLabel("Phạm Quốc Khánh");
+        lblNhanVien.setFont(new Font("Segoe UI", Font.BOLD, 14));
+
+        JLabel lblThoiGian = new JLabel("08/10/2025 11:45", SwingConstants.RIGHT);
+        lblThoiGian.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        pnNhanVien.add(lblNhanVien, BorderLayout.WEST);
+        pnNhanVien.add(lblThoiGian, BorderLayout.EAST);
+
+        pnCotPhaiRight.add(pnNhanVien);
+        pnCotPhaiRight.add(Box.createVerticalStrut(10));
+     // ===== ĐƯỜNG LINE NGAY DƯỚI =====
+        JSeparator lineNV = new JSeparator();
+        lineNV.setForeground(new Color(200, 200, 200)); // xám nhẹ
+        lineNV.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
+        pnCotPhaiRight.add(Box.createVerticalStrut(4));
+        pnCotPhaiRight.add(lineNV);
+        pnCotPhaiRight.add(Box.createVerticalStrut(10));
+        
+        // Ô tìm khách hàng
+        JTextField txtTimKH = new JTextField("🔍 Số điện thoại khách hàng (F4)");
+        txtTimKH.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        txtTimKH.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+        txtTimKH.setBorder(new LineBorder(new Color(0x00C0E2), 2, true));
+        pnCotPhaiRight.add(txtTimKH);
+        pnCotPhaiRight.add(Box.createVerticalStrut(15));
+
+        // Label thông tin khách hàng
+        pnCotPhaiRight.add(makeLabel("Tên khách hàng:", "Chu Anh Khôi"));
+        pnCotPhaiRight.add(makeLabel("Tổng tiền hàng:", "140,000 vnd"));
+        pnCotPhaiRight.add(makeLabel("Giảm giá sản phẩm:", "2,000 vnd"));
+        pnCotPhaiRight.add(makeLabel("Giảm giá hóa đơn:", "5,000 vnd"));
+
+        // Label giảm % đặc biệt
+        JLabel lblGiamPhanTram = new JLabel("-5% Cuối tuần");
+        lblGiamPhanTram.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblGiamPhanTram.setForeground(Color.RED);
+        lblGiamPhanTram.setAlignmentX(Component.LEFT_ALIGNMENT);
+        pnCotPhaiRight.add(lblGiamPhanTram);
+        pnCotPhaiRight.add(Box.createVerticalStrut(10));
+
+        // Tổng hóa đơn
+        JLabel lblTongHD = new JLabel("Tổng hóa đơn: 133,000 vnd");
+        lblTongHD.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblTongHD.setAlignmentX(Component.LEFT_ALIGNMENT);
+        pnCotPhaiRight.add(lblTongHD);
+        pnCotPhaiRight.add(Box.createVerticalStrut(10));
+
+        // Ô nhập tiền khách đưa
+        JPanel pnTienKhach = new JPanel(new BorderLayout(5, 5));
+        pnTienKhach.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+        pnTienKhach.setOpaque(false);
+        JLabel lblTienKhach = new JLabel("Tiền khách đưa:");
+        lblTienKhach.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        JTextField txtTienKhach = new JTextField("133,000");
+        txtTienKhach.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        txtTienKhach.setHorizontalAlignment(SwingConstants.RIGHT);
+        pnTienKhach.add(lblTienKhach, BorderLayout.WEST);
+        pnTienKhach.add(txtTienKhach, BorderLayout.CENTER);
+        pnCotPhaiRight.add(pnTienKhach);
+        pnCotPhaiRight.add(Box.createVerticalStrut(10));
+
+        // Tiền thừa
+        pnCotPhaiRight.add(makeLabel("Tiền thừa:", "0 vnd"));
+        pnCotPhaiRight.add(Box.createVerticalStrut(15));
+
+        // ====== DÒNG GỢI Ý TIỀN ======
+        String[] goiY = {"133,000", "135,000", "140,000", "150,000", "200,000", "500,000"};
+        JPanel pnGoiY = new JPanel(new GridLayout(2, 3, 10, 10));
+        pnGoiY.setOpaque(false);
+        for (String s : goiY) {
+            JButton btn = new JButton(s);
+            btn.setFocusPainted(false);
+            btn.setBackground(new Color(0xF7F7F7));
+            btn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            btn.setBorder(new LineBorder(new Color(0xDDDDDD), 1, true));
+            pnGoiY.add(btn);
+        }
+        pnCotPhaiRight.add(pnGoiY);
+        pnCotPhaiRight.add(Box.createVerticalStrut(20));
+
+        // ====== NÚT BÁN HÀNG ======
+        JButton btnBanHang = new JButton("Bán hàng");
+        btnBanHang.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnBanHang.setForeground(Color.BLACK);
+        btnBanHang.setBackground(new Color(0xFBE9E7));
+        btnBanHang.setPreferredSize(new Dimension(250, 60));
+        btnBanHang.setBorder(new LineBorder(new Color(0xE0E0E0), 2, true));
+        btnBanHang.setFocusPainted(false);
+        btnBanHang.setAlignmentX(Component.CENTER_ALIGNMENT);
+        pnCotPhaiRight.add(Box.createVerticalStrut(30));
+        pnCotPhaiRight.add(btnBanHang);
 
         // ===== SINH DỮ LIỆU GIẢ & GEN PANEL =====
         List<Product> dsSanPham = new ArrayList<>();
@@ -197,5 +297,31 @@ public class BanHang_GUI extends JPanel {
             this.soLuong = soLuong;
             this.donGia = donGia;
         }
+    }
+    public static void main(String[] args) {
+        java.awt.EventQueue.invokeLater(() -> {
+            try {
+                JFrame frame = new JFrame("Test Bán Hàng");
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                frame.setSize(1280, 800);
+                frame.setLocationRelativeTo(null);
+                frame.setContentPane(new BanHang_GUI());
+                frame.setVisible(true);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+    private JPanel makeLabel(String left, String right) {
+        JPanel pn = new JPanel(new BorderLayout());
+        pn.setOpaque(false);
+        JLabel l = new JLabel(left);
+        l.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        JLabel r = new JLabel(right);
+        r.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        pn.add(l, BorderLayout.WEST);
+        pn.add(r, BorderLayout.EAST);
+        pn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
+        return pn;
     }
 }
