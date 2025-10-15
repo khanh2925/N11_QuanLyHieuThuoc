@@ -30,7 +30,7 @@ public class BanHang_GUI extends JPanel {
     private void initialize() {
     	
     	setLayout(new BorderLayout());
-
+    	setPreferredSize(new Dimension(1537, 1168));
     	
         // ===== HEADER =====
         JPanel pnCotPhaiHead = new JPanel(null);
@@ -106,7 +106,6 @@ public class BanHang_GUI extends JPanel {
         for (Product sp : dsSanPham) {
             pnDanhSachDon.add(createDonPanel(sp));
         }
-        
     }
 
     /**
