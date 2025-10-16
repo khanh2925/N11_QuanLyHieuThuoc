@@ -4,6 +4,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import java.awt.*;
+import java.net.URL;
 import java.util.*;
 
 public class Main_GUI extends JFrame {
@@ -123,75 +124,83 @@ public class Main_GUI extends JFrame {
 		if (isQuanLy) {
 			addMenuButton(menu, "Tổng quan", "tongquan", "/images/icon_tong_quan.png");
 			addMenuButton(menu, "Đơn hàng", "donhang", "/images/icon_don_hang.png");
-			addSubmenuButton("donhang", "danhsachdonhang", "Đơn hàng", null, new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình quản lý đơn hàng");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			});
-			addSubmenuButton("donhang", "danhsachdontrahang", "Đơn trả hàng", null, new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình quản lý đơn trả hàng");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			});
+			addSubmenuButton("donhang", "danhsachdonhang", "Đơn hàng", "/images/icon_danh_sach.png",
+					new JPanel(new GridBagLayout()) {
+						{
+							JLabel lbl = new JLabel("Màn hình quản lý đơn hàng");
+							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+							add(lbl);
+						}
+					});
+			addSubmenuButton("donhang", "danhsachdontrahang", "Đơn trả hàng", "/images/icon_tra_hang.png",
+					new JPanel(new GridBagLayout()) {
+						{
+							JLabel lbl = new JLabel("Màn hình quản lý đơn trả hàng");
+							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+							add(lbl);
+						}
+					});
 			addMenuButton(menu, "Sản phẩm", "sanpham", "/images/icon_san_pham.png");
-			addSubmenuButton("sanpham", "danhsachsanpham", "Danh sách sản phẩm", null, new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình quản lý sản phẩm");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			});
-			addSubmenuButton("sanpham", "donvitinh", "Đơn vị tính", null, new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình quản lý đơn vị tính");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			});
-			addSubmenuButton("sanpham", "banggia", "Bảng giá", null, new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình quản lý giá sản phẩm");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			});
+			addSubmenuButton("sanpham", "danhsachsanpham", "Danh sách sản phẩm", "/images/icon_danh_sach.png",
+					new JPanel(new GridBagLayout()) {
+						{
+							JLabel lbl = new JLabel("Màn hình quản lý sản phẩm");
+							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+							add(lbl);
+						}
+					});
+			addSubmenuButton("sanpham", "donvitinh", "Đơn vị tính", "/images/icon_don_vi_tinh.png",
+					new JPanel(new GridBagLayout()) {
+						{
+							JLabel lbl = new JLabel("Màn hình quản lý đơn vị tính");
+							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+							add(lbl);
+						}
+					});
+			addSubmenuButton("sanpham", "banggia", "Bảng giá", "/images/icon_bang_gia.png",
+					new JPanel(new GridBagLayout()) {
+						{
+							JLabel lbl = new JLabel("Màn hình quản lý giá sản phẩm");
+							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+							add(lbl);
+						}
+					});
 			addMenuButton(menu, "Kho", "kho", "/images/icon_kho.png");
-			addSubmenuButton("kho", "nhaphang", "Đơn hàng", null, new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình quản lý đơn nhập hàng");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			});
-			addSubmenuButton("kho", "nhacungcap", "Nhà cung cấp", null, new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình quản lý nhà cung cấp");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			});
-			addSubmenuButton("kho", "xuathuy", "Xuất huỷ", null, new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình quản lý đơn huỷ hàng");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			});
+			addSubmenuButton("kho", "nhaphang", "Nhập hàng", "/images/icon_nhap_hang.png",
+					new JPanel(new GridBagLayout()) {
+						{
+							JLabel lbl = new JLabel("Màn hình quản lý đơn nhập hàng");
+							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+							add(lbl);
+						}
+					});
+			addSubmenuButton("kho", "nhacungcap", "Nhà cung cấp", "/images/icon_nha_cung_cap.png",
+					new JPanel(new GridBagLayout()) {
+						{
+							JLabel lbl = new JLabel("Màn hình quản lý nhà cung cấp");
+							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+							add(lbl);
+						}
+					});
+			addSubmenuButton("kho", "xuathuy", "Xuất huỷ", "/images/icon_xuat_huy.png",
+					new JPanel(new GridBagLayout()) {
+						{
+							JLabel lbl = new JLabel("Màn hình quản lý đơn huỷ hàng");
+							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+							add(lbl);
+						}
+					});
 			addMenuButton(menu, "Khách hàng", "khachhang", "/images/icon_khach_hang.png");
-			addSubmenuButton("khachhang", "danhsachkhachhang", "Khách hàng", null, new JPanel(new GridBagLayout()) {
+			addSubmenuButton("khachhang", "danhsachkhachhang", "Khách hàng", "/images/icon_khach_hang.png", new JPanel(new GridBagLayout()) {
 				{
 					JLabel lbl = new JLabel("Màn hình quản lý khách hàng");
 					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
 					add(lbl);
 				}
 			});
-			addSubmenuButton("khachhang", "hangkhachhang", "Hạng khách hàng", null, new JPanel(new GridBagLayout()) {
+			addSubmenuButton("khachhang", "nhomkhachhang", "Nhóm khách hàng", "/images/icon_nhom_khach_hang.png", new JPanel(new GridBagLayout()) {
 				{
-					JLabel lbl = new JLabel("Màn hình quản lý hạng khách hàng");
+					JLabel lbl = new JLabel("Màn hình quản lý khách hàng theo nhóm");
 					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
 					add(lbl);
 				}
@@ -205,25 +214,26 @@ public class Main_GUI extends JFrame {
 		} else {
 			addMenuButton(menu, "Bán hàng", "banhang", "/images/icon_ban_hang.png");
 			addMenuButton(menu, "Tra cứu", "tracuu", "/images/icon_tra_cuu.png");
-			addSubmenuButton("tracuu", "tracuudonhang", "Đơn hàng", null, new JPanel(new GridBagLayout()) {
+			addSubmenuButton("tracuu", "tracuudonhang", "Đơn hàng", "/images/icon_don_hang.png", new JPanel(new GridBagLayout()) {
 				{
 					JLabel lbl = new JLabel("Màn hình tra cứu đơn hàng");
 					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
 					add(lbl);
 				}
 			});
-			addSubmenuButton("tracuu", "tracuudonhangtra", "Đơn trả hàng", null, new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình tra cứu đơn trả hàng");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			});
+			addSubmenuButton("tracuu", "tracuudonhangtra", "Đơn trả hàng", "/images/icon_tra_hang.png",
+					new JPanel(new GridBagLayout()) {
+						{
+							JLabel lbl = new JLabel("Màn hình tra cứu đơn trả hàng");
+							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+							add(lbl);
+						}
+					});
 			addMenuButton(menu, "Trả hàng", "trahang", "/images/icon_tra_hang.png");
 			addMenuButton(menu, "Khách hàng", "khachhang", "/images/icon_khach_hang.png");
 			addMenuButton(menu, "Thông tin cá nhân", "thongtin", "/images/icon_thong_tin.png");
 
-			menu.add(Box.createVerticalGlue());			
+			menu.add(Box.createVerticalGlue());
 		}
 		addMenuButton(menu, "Đăng xuất", "logout", "/images/icon_dang_xuat.png");
 
@@ -241,11 +251,8 @@ public class Main_GUI extends JFrame {
 		btn.setFont(new Font("SansSerif", Font.BOLD, 16));
 		// Thêm icon nhỏ phía trước
 		ImageIcon icon = new ImageIcon(getClass().getResource(iconPath));
-		Image scaledIcon = icon.getImage().getScaledInstance(MENU_ICON_WIDTH, MENU_ICON_WIDTH, Image.SCALE_SMOOTH); // Scale
-																													// kích
-																													// thước
-																													// //
-																													// icon
+		// Scale kích thước icon
+		Image scaledIcon = icon.getImage().getScaledInstance(MENU_ICON_WIDTH, MENU_ICON_WIDTH, Image.SCALE_SMOOTH);
 		btn.setIcon(new ImageIcon(scaledIcon));
 		btn.addActionListener(e -> showCard(key));
 
@@ -380,7 +387,7 @@ public class Main_GUI extends JFrame {
 	/*
 	 * Thêm 1 nút submenu vào dưới nút cha, đồng thời đăng ký 1 card mới để show.
 	 */
-	public void addSubmenuButton(String parentKey, String subKey, String text, Icon icon, JPanel content) {
+	public void addSubmenuButton(String parentKey, String subKey, String text, String iconPath, JPanel content) {
 		JPanel subContainer = submenuContainers.get(parentKey);
 		if (subContainer == null) {
 			subContainer = createSubmenu(parentKey);
@@ -390,7 +397,7 @@ public class Main_GUI extends JFrame {
 			cardPanel.add(content, subKey);
 		}
 
-		JButton btn = new JButton(text, icon);
+		JButton btn = new JButton(text);
 		btn.setHorizontalAlignment(SwingConstants.LEFT);
 		// kích thước “nhỏ” hơn button chính 1 chút
 		btn.setPreferredSize(new Dimension(MENU_WIDTH, Math.max(36, MENU_BUTTON_HEIGHT - 16)));
@@ -399,6 +406,28 @@ public class Main_GUI extends JFrame {
 		btn.setContentAreaFilled(false);
 		// thụt vào sâu hơn các nút cha
 		btn.setBorder(new EmptyBorder(4, 24, 4, 8));
+
+		// Thêm icon nhỏ phía trước (có kiểm tra null và log)
+		ImageIcon icon = null;
+		if (iconPath == null || iconPath.isBlank()) {
+		    System.err.println("[WARN] iconPath bị null hoặc rỗng khi tạo icon!");
+		} else {
+		    // Đảm bảo path bắt đầu bằng "/" để getResource tìm đúng từ classpath
+		    String fixedPath = iconPath.startsWith("/") ? iconPath : "/" + iconPath;
+		    URL url = getClass().getResource(fixedPath);
+
+		    if (url == null) {
+		        System.err.println("[WARN] Không tìm thấy resource icon tại: " + fixedPath);
+		    } else {
+		        icon = new ImageIcon(url);
+		        // Scale kích thước icon
+		        Image scaledIcon = icon.getImage().getScaledInstance(
+		            MENU_ICON_WIDTH - 7, MENU_ICON_WIDTH - 7, Image.SCALE_SMOOTH
+		        );
+		        icon = new ImageIcon(scaledIcon);
+		        btn.setIcon(new ImageIcon(scaledIcon));
+		    }
+		}
 
 		btn.addActionListener(e -> showCard(subKey));
 
