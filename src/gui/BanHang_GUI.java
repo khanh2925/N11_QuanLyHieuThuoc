@@ -11,9 +11,12 @@ package gui;
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.*;
+
+import customcomponent.PillButton;
+
 import java.util.ArrayList;
 import java.util.List;
-import customcomponent.PillButton;
+
 import java.awt.event.*;
 
 import entity.SanPham;
@@ -44,10 +47,27 @@ public class BanHang_GUI extends JPanel {
 
         // Ô tìm kiếm
         txtTimThuoc = new JTextField("Tìm theo mã, tên...");
-        txtTimThuoc.setFont(new Font("Tahoma", Font.PLAIN, 16));
+        txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         txtTimThuoc.setBounds(25, 10, 342, 68);
-        txtTimThuoc.setBorder(new LineBorder(new Color(0x00C0E2), 2, false));
+        txtTimThuoc.setBorder(new LineBorder(new Color(0x00C0E2), 2, true));
         txtTimThuoc.setBackground(Color.WHITE);
+        txtTimThuoc.setForeground(Color.GRAY);
+        txtTimThuoc.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (txtTimThuoc.getText().equals("Tìm theo mã, tên...")) {
+                    txtTimThuoc.setText("");
+                    txtTimThuoc.setForeground(Color.BLACK);
+                }
+            }
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (txtTimThuoc.getText().isEmpty()) {
+                    txtTimThuoc.setText("Tìm theo mã, tên...");
+                    txtTimThuoc.setForeground(Color.GRAY);
+                }
+            }
+        });
         pnCotPhaiHead.add(txtTimThuoc);
 
         // Nút viên thuốc 2 màu
@@ -127,8 +147,28 @@ public class BanHang_GUI extends JPanel {
         JTextField txtTimKH = new JTextField("🔍 Số điện thoại khách hàng (F4)");
         txtTimKH.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtTimKH.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
-        txtTimKH.setBorder(new LineBorder(new Color(0xCCCCCC), 2, true));
+        txtTimKH.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(new Color(0xCCCCCC), 2, true),
+            new EmptyBorder(5,10,5,10)
+        ));
         txtTimKH.setBackground(new Color(0xFAFAFA));
+        txtTimKH.setForeground(Color.GRAY);
+        txtTimKH.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (txtTimKH.getText().equals("🔍 Số điện thoại khách hàng (F4)")) {
+                    txtTimKH.setText("");
+                    txtTimKH.setForeground(Color.BLACK);
+                }
+            }
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (txtTimKH.getText().isEmpty()) {
+                    txtTimKH.setText("🔍 Số điện thoại khách hàng (F4)");
+                    txtTimKH.setForeground(Color.GRAY);
+                }
+            }
+        });
         pnCotPhaiRight.add(txtTimKH);
         pnCotPhaiRight.add(Box.createVerticalStrut(15));
 
@@ -165,16 +205,20 @@ public class BanHang_GUI extends JPanel {
         pnCotPhaiRight.add(Box.createVerticalStrut(10));
 
         // Ô nhập tiền khách đưa
-        JPanel pnTienKhach = new JPanel(new BorderLayout(5, 5));
-        pnTienKhach.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+        JPanel pnTienKhach = new JPanel(new BorderLayout(8, 0));
+        pnTienKhach.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         pnTienKhach.setOpaque(false);
         JLabel lblTienKhach = new JLabel("Tiền khách đưa:");
         lblTienKhach.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        JTextField txtTienKhach = new JTextField("133,000");
-        txtTienKhach.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        JTextField txtTienKhach = new JTextField();
+        txtTienKhach.setFont(new Font("Segoe UI", Font.BOLD, 16));
         txtTienKhach.setHorizontalAlignment(SwingConstants.RIGHT);
-        txtTienKhach.setBorder(new LineBorder(new Color(0xCCCCCC), 2, true));
-        txtTienKhach.setBackground(new Color(0xFAFAFA));
+        txtTienKhach.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(new Color(0x00C0E2), 2, true),
+            new EmptyBorder(5, 10, 5, 10)
+        ));
+        txtTienKhach.setBackground(new Color(0xF0FAFA));
+        txtTienKhach.setForeground(new Color(0x00796B));
         pnTienKhach.add(lblTienKhach, BorderLayout.WEST);
         pnTienKhach.add(txtTienKhach, BorderLayout.CENTER);
         pnCotPhaiRight.add(pnTienKhach);
@@ -189,16 +233,23 @@ public class BanHang_GUI extends JPanel {
         pnWrapperGoiY.setLayout(new BoxLayout(pnWrapperGoiY, BoxLayout.X_AXIS));
         pnWrapperGoiY.setOpaque(false);
         pnWrapperGoiY.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+
         JPanel pnGoiY = new JPanel(new GridLayout(2, 3, 8, 8));
         pnGoiY.setOpaque(false);
         pnGoiY.setPreferredSize(new Dimension(330, 90));
         pnGoiY.setMaximumSize(new Dimension(330, 90));
+
         for (String s : goiY) {
             JButton btn = new PillButton(s);
             btn.setPreferredSize(new Dimension(100, 40));
             btn.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+            // ✅ Khi bấm sẽ tự set text vào ô "Tiền khách đưa"
+            btn.addActionListener(e -> txtTienKhach.setText(s));
+
             pnGoiY.add(btn);
         }
+
         pnWrapperGoiY.add(Box.createHorizontalGlue());
         pnWrapperGoiY.add(pnGoiY);
         pnWrapperGoiY.add(Box.createHorizontalGlue());
@@ -207,7 +258,7 @@ public class BanHang_GUI extends JPanel {
 
         // ====== NÚT BÁN HÀNG ======
         JButton btnBanHang = new PillButton("Bán hàng");
-        btnBanHang.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnBanHang.setFont(new Font("Segoe UI", Font.BOLD, 20));
         btnBanHang.setAlignmentX(Component.CENTER_ALIGNMENT);
         pnCotPhaiRight.add(Box.createVerticalStrut(30));
         pnCotPhaiRight.add(btnBanHang);
@@ -244,71 +295,89 @@ public class BanHang_GUI extends JPanel {
         pnDonMau.setBackground(Color.WHITE);
         pnDonMau.setBorder(new MatteBorder(0, 0, 1, 0, new Color(230, 230, 230)));
 
+        int centerY = 120 / 2; // để canh giữa theo chiều cao
+
         // ==== ẢNH SẢN PHẨM ====
         JLabel lblHinhAnh = new JLabel("Ảnh", SwingConstants.CENTER);
         lblHinhAnh.setBorder(new LineBorder(Color.LIGHT_GRAY));
-        lblHinhAnh.setBounds(27, 10, 100, 100);
+        lblHinhAnh.setBounds(27, centerY - 30, 100, 100);
         pnDonMau.add(lblHinhAnh);
 
         // ==== TÊN THUỐC ====
         JLabel lblTenThuoc = new JLabel(sp.getTenSanPham());
         lblTenThuoc.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        lblTenThuoc.setBounds(168, 26, 250, 34);
+        lblTenThuoc.setBounds(168, centerY - 30, 250, 34);
         pnDonMau.add(lblTenThuoc);
 
         // ==== ĐƠN VỊ TÍNH ====
         JLabel lblDonViTinh = new JLabel(sp.getDonViTinh().getTenDonViTinh());
         lblDonViTinh.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblDonViTinh.setBounds(350, 28, 100, 30);
+        lblDonViTinh.setBounds(350, centerY - 28, 100, 30);
         pnDonMau.add(lblDonViTinh);
 
         // ==== LÔ THUỐC ====
         JLabel lblLoThuoc = new JLabel("Lô: AAAA - SL: 20");
         lblLoThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblLoThuoc.setForeground(new Color(80, 80, 80));
-        lblLoThuoc.setBounds(168, 74, 320, 25);
+        lblLoThuoc.setBounds(168, centerY + 12, 320, 25);
         pnDonMau.add(lblLoThuoc);
 
-        // ==== PANEL TĂNG GIẢM ====
-        JPanel pnTangGiam = new JPanel(new BorderLayout(0, 0));
-        pnTangGiam.setBounds(500, 42, 137, 36);
+        // ==== PANEL TĂNG GIẢM ==== 
+        JPanel pnTangGiam = new JPanel(new BorderLayout(5, 0));
+        pnTangGiam.setBounds(500, centerY, 137, 36);
+        pnTangGiam.setBackground(new Color(0xF8FAFB));
+        pnTangGiam.setBorder(new LineBorder(new Color(0xB0BEC5), 2, true));
         pnDonMau.add(pnTangGiam);
 
-        JButton btnGiam = new JButton("-");
+        JButton btnGiam = new JButton("−");
         btnGiam.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnGiam.setFocusPainted(false);
+        btnGiam.setBackground(new Color(0xE0F2F1));
+        btnGiam.setBorder(new LineBorder(new Color(0x80CBC4), 1, true));
+        btnGiam.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnGiam.setOpaque(true);
+        btnGiam.setPreferredSize(new Dimension(40, 36));
         pnTangGiam.add(btnGiam, BorderLayout.WEST);
 
         JTextField txtSoLuong = new JTextField("1");
         txtSoLuong.setHorizontalAlignment(SwingConstants.CENTER);
-        txtSoLuong.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        txtSoLuong.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        txtSoLuong.setBorder(null);
+        txtSoLuong.setBackground(Color.WHITE);
         pnTangGiam.add(txtSoLuong, BorderLayout.CENTER);
 
         JButton btnTang = new JButton("+");
-        btnTang.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        btnTang.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnTang.setFocusPainted(false);
+        btnTang.setBackground(new Color(0xE0F2F1));
+        btnTang.setBorder(new LineBorder(new Color(0x80CBC4), 1, true));
+        btnTang.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnTang.setOpaque(true);
+        btnTang.setPreferredSize(new Dimension(40, 36));
         pnTangGiam.add(btnTang, BorderLayout.EAST);
 
         // ==== ĐƠN GIÁ ====
         JLabel lblDonGia = new JLabel(String.format("%,.0f vnđ", sp.getGiaBan()));
         lblDonGia.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblDonGia.setBounds(700, 42, 120, 29);
+        lblDonGia.setBounds(700, centerY, 120, 29);
         pnDonMau.add(lblDonGia);
 
         // ==== GIẢM GIÁ ====
         JLabel lblGiamGia = new JLabel("Giảm 5% - BlackFriday");
         lblGiamGia.setFont(new Font("Segoe UI", Font.ITALIC, 13));
         lblGiamGia.setForeground(new Color(220, 0, 0));
-        lblGiamGia.setBounds(700, 68, 160, 22);
+        lblGiamGia.setBounds(700, centerY + 26, 160, 22);
         pnDonMau.add(lblGiamGia);
 
         // ==== TỔNG TIỀN ====
         JLabel lblTongTien = new JLabel(String.format("%,.0f vnđ", sp.getGiaBan()));
         lblTongTien.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        lblTongTien.setBounds(850, 42, 120, 29);
+        lblTongTien.setBounds(850, centerY , 120, 29);
         pnDonMau.add(lblTongTien);
 
         // ==== NÚT XÓA ====
         JButton btnXoa = new JButton();
-        btnXoa.setBounds(980, 40, 35, 35);
+        btnXoa.setBounds(980, centerY, 35, 35);
         ImageIcon iconBin = new ImageIcon(getClass().getResource("/images/bin.png"));
         Image img = iconBin.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         btnXoa.setIcon(new ImageIcon(img));
@@ -319,8 +388,30 @@ public class BanHang_GUI extends JPanel {
         btnXoa.setCursor(new Cursor(Cursor.HAND_CURSOR));
         pnDonMau.add(btnXoa);
 
+        // ==== Xử lý tăng giảm ====
+        btnTang.addActionListener(e -> {
+            try {
+                int sl = Integer.parseInt(txtSoLuong.getText().trim());
+                txtSoLuong.setText(String.valueOf(sl + 1));
+            } catch (NumberFormatException ex) {
+                txtSoLuong.setText("1");
+            }
+        });
+
+        btnGiam.addActionListener(e -> {
+            try {
+                int sl = Integer.parseInt(txtSoLuong.getText().trim());
+                if (sl > 1) txtSoLuong.setText(String.valueOf(sl - 1));
+            } catch (NumberFormatException ex) {
+                txtSoLuong.setText("1");
+            }
+        });
+        pnDonMau.setMaximumSize(new Dimension(1060, 150));
+        pnDonMau.setMinimumSize(new Dimension(1040, 120));
+
         return pnDonMau;
     }
+    
 
 
     private JPanel makeLabel(String left, String right) {
