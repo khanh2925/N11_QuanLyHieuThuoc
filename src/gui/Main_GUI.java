@@ -6,7 +6,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.*;
 
-public class QuanLy_GUI extends JFrame {
+public class Main_GUI extends JFrame {
 	private final JPanel cardPanel = new JPanel(new CardLayout());
 	private final Map<String, JButton> menuContainers = new LinkedHashMap<>();
 	// Lưu container submenu theo key của nút cha
@@ -19,158 +19,212 @@ public class QuanLy_GUI extends JFrame {
 	private int LOGO_WIDTH = 100;
 	private int MENU_ICON_WIDTH = 33;
 
-	public QuanLy_GUI() {
-		setTitle("Hiệu thuốc Hòa An - Hệ thống quản lý - Quản lý");
+	private boolean isQuanLy = true;
+
+	public Main_GUI() {
+		setTitle("Hiệu thuốc Hòa An - Hệ thống quản lý");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setSize(1920, 1080);
 		setLocationRelativeTo(null);
 
 		JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-		split.setDividerLocation(300);
+		split.setDividerLocation(MENU_WIDTH);
 		split.setDividerSize(0);
 		split.setLeftComponent(createMenu());
 		split.setRightComponent(cardPanel);
 
 		add(split);
 
-		// Thêm các panel chức năng - sau này gắn tên panel vào đây
-		cardPanel.add(new JPanel(new GridBagLayout()) {
-			{
-				JLabel lbl = new JLabel("Màn hình tổng quan");
-				lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-				add(lbl);
-			}
-		}, "tongquan");
-		cardPanel.add(new JPanel(new GridBagLayout()) {
-			{
-				JLabel lbl = new JLabel("Màn hình khuyến mãi");
-				lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-				add(lbl);
-			}
-		}, "khuyenmai");
-		cardPanel.add(new JPanel(new GridBagLayout()) {
-			{
-				JLabel lbl = new JLabel("Màn hình quản lý nhân viên");
-				lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-				add(lbl);
-			}
-		}, "nhanvien");
-		cardPanel.add(new JPanel(new GridBagLayout()) {
-			{
-				JLabel lbl = new JLabel("Màn hình thống kê");
-				lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-				add(lbl);
-			}
-		}, "thongke");
-		cardPanel.add(new JPanel(new GridBagLayout()) {
-			{
-				JLabel lbl = new JLabel("Màn hình thông tin cá nhân");
-				lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-				add(lbl);
-			}
-		}, "thongtin");
-		showCard("tongquan");
+		if (isQuanLy) {
+			// Thêm các panel chức năng - sau này gắn tên panel vào đây
+			cardPanel.add(new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình tổng quan");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			}, "tongquan");
+			cardPanel.add(new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình khuyến mãi");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			}, "khuyenmai");
+			cardPanel.add(new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình quản lý nhân viên");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			}, "nhanvien");
+			cardPanel.add(new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình thống kê");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			}, "thongke");
+			cardPanel.add(new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình thông tin cá nhân");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			}, "thongtin");
+			showCard("tongquan");
+		} else {
+			// Thêm các panel chức năng - sau này gắn tên panel vào đây
+			cardPanel.add(new BanHang_GUI(), "banhang");
+			cardPanel.add(new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình trả hàng");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			}, "trahang");
+			cardPanel.add(new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình khách hàng");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			}, "khachhang");
+			cardPanel.add(new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình thông tin cá nhân");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			}, "thongtin");
+
+			showCard("banhang");
+
+		}
 	}
 
 	private JPanel createMenu() {
 		JPanel menu = new JPanel();
 		// menu dùng BoxLayout theo trục Y để các nút xếp dọc, chèn submenu
 		menu.setLayout(new BoxLayout(menu, BoxLayout.Y_AXIS));
-		menu.setBackground(new Color(199, 234, 239));
-		menu.setOpaque(true);
-		menu.setAlignmentX(Component.LEFT_ALIGNMENT);
-		menu.setMaximumSize(new Dimension(Integer.MAX_VALUE, menu.getPreferredSize().height));
 		this.menuPanel = menu; // ⬅️ QUAN TRỌNG: giữ tham chiếu để chèn submenu menu.setLayout(new
-		// BoxLayout(menu, BoxLayout.Y_AXIS));
+								// BoxLayout(menu, BoxLayout.Y_AXIS));
+		menu.setBackground(new Color(199, 234, 239));
 
 		ImageIcon iconLogo = new ImageIcon(getClass().getResource("/images/Logo.png"));
-		Image scaled = iconLogo.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH); // chỉnh kích thước logo
+		Image scaled = iconLogo.getImage().getScaledInstance(LOGO_WIDTH, LOGO_WIDTH, Image.SCALE_SMOOTH); // chỉnh kích
+																											// thước
+																											// logo
 
 		JLabel logo = new JLabel(new ImageIcon(scaled));
 		logo.setAlignmentX(Component.LEFT_ALIGNMENT);
 		menu.add(logo);
 
-		addMenuButton(menu, "Tổng quan", "tongquan", "/images/icon_tong_quan.png");
-		addMenuButton(menu, "Đơn hàng", "donhang", "/images/icon_don_hang.png");
-		addSubmenuButton("donhang", "danhsachdonhang", "Đơn hàng", null, new JPanel(new GridBagLayout()) {
-			{
-				JLabel lbl = new JLabel("Màn hình quản lý đơn hàng");
-				lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-				add(lbl);
-			}
-		});
-		addSubmenuButton("donhang", "danhsachdontrahang", "Đơn trả hàng", null, new JPanel(new GridBagLayout()) {
-			{
-				JLabel lbl = new JLabel("Màn hình quản lý đơn trả hàng");
-				lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-				add(lbl);
-			}
-		});
-		addMenuButton(menu, "Sản phẩm", "sanpham", "/images/icon_san_pham.png");
-		addSubmenuButton("sanpham", "danhsachsanpham", "Danh sách sản phẩm", null, new JPanel(new GridBagLayout()) {
-			{
-				JLabel lbl = new JLabel("Màn hình quản lý sản phẩm");
-				lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-				add(lbl);
-			}
-		});
-		addSubmenuButton("sanpham", "donvitinh", "Đơn vị tính", null, new JPanel(new GridBagLayout()) {
-			{
-				JLabel lbl = new JLabel("Màn hình quản lý đơn vị tính");
-				lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-				add(lbl);
-			}
-		});
-		addSubmenuButton("sanpham", "banggia", "Bảng giá", null, new JPanel(new GridBagLayout()) {
-			{
-				JLabel lbl = new JLabel("Màn hình quản lý giá sản phẩm");
-				lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-				add(lbl);
-			}
-		});
-		addMenuButton(menu, "Kho", "kho", "/images/icon_kho.png");
-		addSubmenuButton("kho", "nhaphang", "Đơn hàng", null, new JPanel(new GridBagLayout()) {
-			{
-				JLabel lbl = new JLabel("Màn hình quản lý đơn nhập hàng");
-				lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-				add(lbl);
-			}
-		});
-		addSubmenuButton("kho", "nhacungcap", "Nhà cung cấp", null, new JPanel(new GridBagLayout()) {
-			{
-				JLabel lbl = new JLabel("Màn hình quản lý nhà cung cấp");
-				lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-				add(lbl);
-			}
-		});
-		addSubmenuButton("kho", "xuathuy", "Xuất huỷ", null, new JPanel(new GridBagLayout()) {
-			{
-				JLabel lbl = new JLabel("Màn hình quản lý đơn huỷ hàng");
-				lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-				add(lbl);
-			}
-		});
-		addMenuButton(menu, "Khách hàng", "khachhang", "/images/icon_khach_hang.png");
-		addSubmenuButton("khachhang", "danhsachkhachhang", "Khách hàng", null, new JPanel(new GridBagLayout()) {
-			{
-				JLabel lbl = new JLabel("Màn hình quản lý khách hàng");
-				lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-				add(lbl);
-			}
-		});
-		addSubmenuButton("khachhang", "hangkhachhang", "Hạng khách hàng", null, new JPanel(new GridBagLayout()) {
-			{
-				JLabel lbl = new JLabel("Màn hình quản lý hạng khách hàng");
-				lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-				add(lbl);
-			}
-		});
-		addMenuButton(menu, "Khuyến mãi", "khuyenmai", "/images/icon_khuyen_mai.png");
-		addMenuButton(menu, "Nhân viên", "nhanvien", "/images/icon_nhan_vien.png");
-		addMenuButton(menu, "Thống kê - Báo cáo", "thongke", "/images/icon_thong_ke.png");
-		addMenuButton(menu, "Thông tin cá nhân", "thongtin", "/images/icon_thong_tin.png");
+		if (isQuanLy) {
+			addMenuButton(menu, "Tổng quan", "tongquan", "/images/icon_tong_quan.png");
+			addMenuButton(menu, "Đơn hàng", "donhang", "/images/icon_don_hang.png");
+			addSubmenuButton("donhang", "danhsachdonhang", "Đơn hàng", null, new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình quản lý đơn hàng");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			});
+			addSubmenuButton("donhang", "danhsachdontrahang", "Đơn trả hàng", null, new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình quản lý đơn trả hàng");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			});
+			addMenuButton(menu, "Sản phẩm", "sanpham", "/images/icon_san_pham.png");
+			addSubmenuButton("sanpham", "danhsachsanpham", "Danh sách sản phẩm", null, new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình quản lý sản phẩm");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			});
+			addSubmenuButton("sanpham", "donvitinh", "Đơn vị tính", null, new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình quản lý đơn vị tính");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			});
+			addSubmenuButton("sanpham", "banggia", "Bảng giá", null, new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình quản lý giá sản phẩm");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			});
+			addMenuButton(menu, "Kho", "kho", "/images/icon_kho.png");
+			addSubmenuButton("kho", "nhaphang", "Đơn hàng", null, new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình quản lý đơn nhập hàng");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			});
+			addSubmenuButton("kho", "nhacungcap", "Nhà cung cấp", null, new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình quản lý nhà cung cấp");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			});
+			addSubmenuButton("kho", "xuathuy", "Xuất huỷ", null, new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình quản lý đơn huỷ hàng");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			});
+			addMenuButton(menu, "Khách hàng", "khachhang", "/images/icon_khach_hang.png");
+			addSubmenuButton("khachhang", "danhsachkhachhang", "Khách hàng", null, new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình quản lý khách hàng");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			});
+			addSubmenuButton("khachhang", "hangkhachhang", "Hạng khách hàng", null, new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình quản lý hạng khách hàng");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			});
+			addMenuButton(menu, "Khuyến mãi", "khuyenmai", "/images/icon_khuyen_mai.png");
+			addMenuButton(menu, "Nhân viên", "nhanvien", "/images/icon_nhan_vien.png");
+			addMenuButton(menu, "Thống kê - Báo cáo", "thongke", "/images/icon_thong_ke.png");
+			addMenuButton(menu, "Thông tin cá nhân", "thongtin", "/images/icon_thong_tin.png");
 
-		menu.add(Box.createVerticalGlue());
+			menu.add(Box.createVerticalGlue());
+		} else {
+			addMenuButton(menu, "Bán hàng", "banhang", "/images/icon_ban_hang.png");
+			addMenuButton(menu, "Tra cứu", "tracuu", "/images/icon_tra_cuu.png");
+			addSubmenuButton("tracuu", "tracuudonhang", "Đơn hàng", null, new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình tra cứu đơn hàng");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			});
+			addSubmenuButton("tracuu", "tracuudonhangtra", "Đơn trả hàng", null, new JPanel(new GridBagLayout()) {
+				{
+					JLabel lbl = new JLabel("Màn hình tra cứu đơn trả hàng");
+					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+					add(lbl);
+				}
+			});
+			addMenuButton(menu, "Trả hàng", "trahang", "/images/icon_tra_hang.png");
+			addMenuButton(menu, "Khách hàng", "khachhang", "/images/icon_khach_hang.png");
+			addMenuButton(menu, "Thông tin cá nhân", "thongtin", "/images/icon_thong_tin.png");
+
+			menu.add(Box.createVerticalGlue());			
+		}
 		addMenuButton(menu, "Đăng xuất", "logout", "/images/icon_dang_xuat.png");
 
 		return menu;
@@ -179,27 +233,28 @@ public class QuanLy_GUI extends JFrame {
 	private void addMenuButton(JPanel menu, String text, String key, String iconPath) {
 		JButton btn = new JButton(text);
 		btn.setFocusPainted(false);
-		btn.setPreferredSize(new Dimension(Integer.MAX_VALUE, 60));
-		btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+		btn.setPreferredSize(new Dimension(MENU_WIDTH, MENU_BUTTON_HEIGHT));
+		btn.setMaximumSize(new Dimension(MENU_WIDTH, MENU_BUTTON_HEIGHT));
 		btn.setHorizontalAlignment(SwingConstants.LEFT);
 		btn.setBackground(new Color(0, 0, 0, 0));
 		btn.setBorder(null);
 		btn.setFont(new Font("SansSerif", Font.BOLD, 16));
-		btn.setRolloverEnabled(false); // ✅ tắt rollover mặc định tránh lớp phủ thứ 2
-		btn.setOpaque(false);
 		// Thêm icon nhỏ phía trước
 		ImageIcon icon = new ImageIcon(getClass().getResource(iconPath));
-		Image scaledIcon = icon.getImage().getScaledInstance(33, 33, Image.SCALE_SMOOTH); // Scale kích thước icon
+		Image scaledIcon = icon.getImage().getScaledInstance(MENU_ICON_WIDTH, MENU_ICON_WIDTH, Image.SCALE_SMOOTH); // Scale
+																													// kích
+																													// thước
+																													// //
+																													// icon
 		btn.setIcon(new ImageIcon(scaledIcon));
 		btn.addActionListener(e -> showCard(key));
 
 		if ("logout".equals(key)) {
-			btn.addActionListener(e -> onLogout()); // gọi hàm xử lý đăng xuất riêng
+			btn.addActionListener(e -> onLogout()); // gọi hàm xử lý đăng xuất
 		} else {
 			btn.addActionListener(e -> showCard(key));
 			menuContainers.put(key, btn); // chỉ lưu các nút có card
 		}
-
 		menu.add(btn);
 		menuContainers.put(key, btn);
 	}
@@ -209,7 +264,7 @@ public class QuanLy_GUI extends JFrame {
 				JOptionPane.YES_NO_OPTION);
 		if (confirm == JOptionPane.YES_OPTION) {
 			dispose(); // hoặc chuyển về form đăng nhập
-//	        new DangNhap_GUI().setVisible(true);
+//	        new DangNhap_Gui().setVisible(true);
 		}
 	}
 
@@ -293,12 +348,9 @@ public class QuanLy_GUI extends JFrame {
 
 		JPanel sub = new JPanel();
 		sub.setLayout(new BoxLayout(sub, BoxLayout.Y_AXIS));
-		sub.setBackground(new Color(199, 234, 239));
-		sub.setOpaque(true);
+		sub.setOpaque(false);
 		// thụt vào 1 chút
 		sub.setBorder(new EmptyBorder(0, 16, 8, 0));
-		sub.setAlignmentX(Component.LEFT_ALIGNMENT);
-		sub.setMaximumSize(new Dimension(Integer.MAX_VALUE, sub.getPreferredSize().height));
 		sub.setVisible(false); // đóng mặc định
 
 		submenuContainers.put(parentKey, sub);
@@ -345,7 +397,6 @@ public class QuanLy_GUI extends JFrame {
 		btn.setMaximumSize(new Dimension(MENU_WIDTH, Math.max(36, MENU_BUTTON_HEIGHT - 16)));
 		btn.setFocusPainted(false);
 		btn.setContentAreaFilled(false);
-		btn.setOpaque(false);
 		// thụt vào sâu hơn các nút cha
 		btn.setBorder(new EmptyBorder(4, 24, 4, 8));
 
@@ -379,8 +430,6 @@ public class QuanLy_GUI extends JFrame {
 				sub.setVisible(!wasVisible);
 				menuPanel.revalidate();
 				menuPanel.repaint();
-				getContentPane().revalidate();
-				getContentPane().repaint();
 				// Khi submenu mới mở, tự show card đầu tiên
 				if (!wasVisible && sub.getComponentCount() > 0 && sub.getComponent(0) instanceof JButton) {
 					JButton firstSub = (JButton) sub.getComponent(0);
