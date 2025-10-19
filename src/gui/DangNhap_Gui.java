@@ -1,3 +1,4 @@
+
 package gui;
 
 import java.awt.*;
@@ -230,9 +231,4 @@ public class DangNhap_Gui {
             }
         });
     }
-
-	public void setVisible(boolean b) {
-		// TODO Auto-generated method stub
-		
-	}
 }
