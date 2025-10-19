@@ -1,3 +1,10 @@
+/**
+ * @author Thanh Kha
+ * @version 1.0
+ * @since Oct 16, 2025
+ *
+ * Mô tả: Class App chứa main để chạy trương trình
+ */
 package gui;
 
 import javax.swing.SwingUtilities;
