@@ -14,7 +14,7 @@ import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
 import entity.KhachHang;
 
-public class KhachHang_NV_Gui extends JPanel {
+public class KhachHang_QL_GUI extends JPanel {
 
     private JPanel pnCenter;
     private JPanel pnHeader;
@@ -32,7 +32,7 @@ public class KhachHang_NV_Gui extends JPanel {
     private JCheckBox chckbxTangDan;
     private JCheckBox chckbxGiamDan;
 
-    public KhachHang_NV_Gui() {
+    public KhachHang_QL_GUI() {
         setPreferredSize(new Dimension(1537, 850));
         initialize();
     }
@@ -59,13 +59,13 @@ public class KhachHang_NV_Gui extends JPanel {
         ImagePanel btnTimKiem = new ImagePanel(iconSearch.getImage());
         btnTimKiem.setLayout(new BorderLayout());
         btnTimKiem.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnTimKiem.setBounds(300, 11, 45, 45);
+        btnTimKiem.setBounds(298, 27, 30, 30);
         pnHeader.add(btnTimKiem);
 
         ImageIcon icon = new ImageIcon(getClass().getResource("/images/add.png"));
         ImagePanel btnThem = new ImagePanel(icon.getImage());
         btnThem.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnThem.setBounds(449, 11, 45, 45);
+        btnThem.setBounds(456, 27, 30, 30);
         pnHeader.add(btnThem);
         btnThem.setLayout(null);
         
@@ -78,18 +78,18 @@ public class KhachHang_NV_Gui extends JPanel {
         ImageIcon iconSua = new ImageIcon(getClass().getResource("/images/edit.png"));
         ImagePanel btnSua = new ImagePanel(iconSua.getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
         btnSua.setLayout(null);
-        btnSua.setBounds(570, 11, 45, 45);
+        btnSua.setBounds(577, 27, 30, 30);
         btnSua.setCursor(new Cursor(Cursor.HAND_CURSOR));
         pnHeader.add(btnSua);
         
-        JLabel lblSua = new JLabel("Sửa", SwingConstants.CENTER);
+        JLabel lblSua = new JLabel("Cập nhật", SwingConstants.CENTER);
         lblSua.setBounds(553, 55, 70, 25);
         pnHeader.add(lblSua);
         lblSua.setFont(new Font("Arial", Font.BOLD, 16));
         lblSua.setForeground(Color.BLACK);
         
         JLabel lblTimKiem = new JLabel("Tìm kiếm", SwingConstants.CENTER);
-        lblTimKiem.setBounds(300, 58, 70, 19);
+        lblTimKiem.setBounds(280, 58, 70, 19);
         pnHeader.add(lblTimKiem);
         lblTimKiem.setFont(new Font("Arial", Font.BOLD, 16));
         lblTimKiem.setForeground(Color.BLACK);
@@ -209,7 +209,7 @@ public class KhachHang_NV_Gui extends JPanel {
         
         lbKhachHang = new JLabel("Khách Hàng");
         lbKhachHang.setBounds(25, 25, 172, 53);
-        lbKhachHang.setFont(new Font("Tahoma", Font.BOLD, 25));
+        lbKhachHang.setFont(new Font("Times New Roman", Font.BOLD, 30));
         pnRight.add(lbKhachHang);
         
         JLabel lblNewLabel = new JLabel("Giới tính");
@@ -307,7 +307,7 @@ public class KhachHang_NV_Gui extends JPanel {
             JFrame frame = new JFrame("Quản lý khách hàng");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-            frame.setContentPane(new KhachHang_NV_Gui());
+            frame.setContentPane(new KhachHang_QL_GUI());
             frame.setVisible(true);
         });
     }
