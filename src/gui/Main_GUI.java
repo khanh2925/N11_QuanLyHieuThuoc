@@ -410,14 +410,12 @@ public class Main_GUI extends JFrame {
 		// Thêm icon nhỏ phía trước (có kiểm tra null và log)
 		ImageIcon icon = null;
 		if (iconPath == null || iconPath.isBlank()) {
-		    System.err.println("[WARN] iconPath bị null hoặc rỗng khi tạo icon!");
+		    System.err.println("iconPath bị null hoặc rỗng khi tạo icon!");
 		} else {
-		    // Đảm bảo path bắt đầu bằng "/" để getResource tìm đúng từ classpath
-		    String fixedPath = iconPath.startsWith("/") ? iconPath : "/" + iconPath;
-		    URL url = getClass().getResource(fixedPath);
+		    URL url = getClass().getResource(iconPath);
 
 		    if (url == null) {
-		        System.err.println("[WARN] Không tìm thấy resource icon tại: " + fixedPath);
+		        System.err.println("Không tìm thấy resource icon tại: " + iconPath);
 		    } else {
 		        icon = new ImageIcon(url);
 		        // Scale kích thước icon
