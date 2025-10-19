@@ -3,7 +3,7 @@
  * @version 1.0
  * @since Oct 16, 2025
  *
- * Mô tả: Giao diện quản lý phiếu nhập hàng
+ * Mô tả: Giao diện quản lý phiếu huỷ hàng
  */
 
 package gui;
@@ -14,6 +14,7 @@ import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -23,10 +24,13 @@ import javax.swing.table.TableColumnModel;
 import com.toedter.calendar.JDateChooser;
 import customcomponent.*;
 import dao.*;
+import dao.ChiTietPhieuHuy_DAO.CTPHView;
+import dao.PhieuHuy_DAO.PhieuHuyView;
 import entity.NhanVien;
+import entity.PhieuHuy;
 import entity.PhieuNhap;
 
-public class NhapHang_GUI extends JPanel {
+public class HuyHang_GUI extends JPanel {
 
 	private JPanel pnCenter; // vùng trung tâm
 	private JPanel pnHeader; // vùng đầu trang
@@ -34,15 +38,15 @@ public class NhapHang_GUI extends JPanel {
 	private JButton btnThem;
 	private JButton btnXuatFile;
 	private JTextField txtSearch;
-	private DefaultTableModel modelPN;
-	private JTable tblPN;
-	private JScrollPane scrCTPN;
-	private DefaultTableModel modelCTPN;
-	private JScrollPane scrPN;
-	private JTable tblCTPN;
+	private DefaultTableModel modelPH;
+	private JTable tblPH;
+	private JScrollPane scrCTPH;
+	private DefaultTableModel modelCTPh;
+	private JScrollPane scrPH;
+	private JTable tblCTPH;
 
-	private final PhieuNhap_DAO pnDAO = new PhieuNhap_DAO();
-	private final ChiTietPhieuNhap_DAO ctpnDAO = new ChiTietPhieuNhap_DAO();
+	private final PhieuHuy_DAO phDAO = new PhieuHuy_DAO();
+	private final ChiTietPhieuHuy_DAO ctphDAO = new ChiTietPhieuHuy_DAO();
 	private NhanVien_DAO nvDAO = new NhanVien_DAO();
 
 	private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
@@ -51,7 +55,7 @@ public class NhapHang_GUI extends JPanel {
 	private Color blueMint = new Color(180, 220, 240);
 	private Color pinkPastel = new Color(255, 200, 220);
 
-	public NhapHang_GUI() {
+	public HuyHang_GUI() {
 		this.setPreferredSize(new Dimension(1537, 850));
 		initialize();
 	}
@@ -86,7 +90,6 @@ public class NhapHang_GUI extends JPanel {
 		txtSearch.setLocation(10, 10);
 		txtSearch.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
 		txtSearch.setFont(new Font("Segoe UI", Font.BOLD, 20));
-//		txtSearch.setText("Tìm phiếu nhập theo sđt, NCC, tên...");
 
 		JTextField txtDateRange = new JTextField();
 		txtDateRange.setSize(250, 65);
@@ -153,64 +156,63 @@ public class NhapHang_GUI extends JPanel {
 
 		initTable();
 		initMasterDetail();
-		loadPhieuNhap();
+		loadPhieuHuy();
 	}
 
 	private void initTable() {
-		// Bảng phiếu nhập
-		String[] phieuNhapCols = { "Mã PN", "Ngày lập phiếu", "Nhân Viên", "NCC", "Tổng tiền" };
-		modelPN = new DefaultTableModel(phieuNhapCols, 0) {
+		// Bảng phiếu huỷ
+		String[] phieuHuyCols = { "Mã PH", "Ngày lập phiếu", "Nhân Viên", "Tổng dòng huỷ", "Trạng thái" };
+		modelPH = new DefaultTableModel(phieuHuyCols, 0) {
 			@Override
 			public boolean isCellEditable(int r, int c) {
 				return false;
 			}
 		};
-		tblPN = new JTable(modelPN);
-		scrPN = new JScrollPane(tblPN);
-		pnCenter.add(scrPN);
-		// Bảng chi tiết phiếu nhập
-		String[] cTPhieuCols = { "Mã lô", "Mã SP", "Tên SP", "SL nhập", "Đơn giá", "Thành tiền", "Ngày nhập" };
+		tblPH = new JTable(modelPH);
+		scrPH = new JScrollPane(tblPH);
+		pnCenter.add(scrPH);
+		// Bảng chi tiết phiếu huỷ
+		String[] cTPhieuCols = { "Mã lô", "Mã SP", "Tên SP", "SL huỷ", "Đơn vị tính", "Hạn sử dụng", "Lý do" };
 
-		modelCTPN = new DefaultTableModel(cTPhieuCols, 0) {
+		modelCTPh = new DefaultTableModel(cTPhieuCols, 0) {
 			@Override
 			public boolean isCellEditable(int r, int c) {
 				return false;
 			}
 		};
-		tblCTPN = new JTable(modelCTPN);
-		scrCTPN = new JScrollPane(tblCTPN);
-		pnRight.add(scrCTPN);
+		tblCTPH = new JTable(modelCTPh);
+		scrCTPH = new JScrollPane(tblCTPH);
+		pnRight.add(scrCTPH);
 
-		formatTable(tblPN);
-		tblPN.setSelectionBackground(blueMint);
-		tblPN.getTableHeader().setBackground(pinkPastel);
-		formatTable(tblCTPN);
-		tblCTPN.setSelectionBackground(pinkPastel);
-		tblCTPN.getTableHeader().setBackground(blueMint);
+		formatTable(tblPH);
+		tblPH.setSelectionBackground(blueMint);
+		tblPH.getTableHeader().setBackground(pinkPastel);
+		formatTable(tblCTPH);
+		tblCTPH.setSelectionBackground(pinkPastel);
+		tblCTPH.getTableHeader().setBackground(blueMint);
 	}
 
 	// Nạp danh sách phiếu nhập (master)
-	private void loadPhieuNhap() {
+	private void loadPhieuHuy() {
 		try {
-			modelPN.setRowCount(0);
-			java.util.List<PhieuNhap> list = pnDAO.findAll();
+			modelPH.setRowCount(0);
+			List<PhieuHuyView> list = phDAO.findAll();
 
-			for (PhieuNhap x : list) {
-				String ncc = (x.getNhaCungCap() != null) ? x.getNhaCungCap().getMaNhaCungCap() : "";
-				NhanVien nv = nvDAO.findById(x.getNhanVien().getMaNhanVien());
-				String tenNV = nv.getTenNhanVien();
-				String ngay = (x.getNgayNhap() != null) ? sdf.format(java.sql.Date.valueOf(x.getNgayNhap())) : "";
-				double tongTien = x.getTongTien();
-				modelPN.addRow(new Object[] { x.getMaPhieuNhap(), ngay, tenNV, ncc, df.format(tongTien) });
+			for (PhieuHuyView x : list) {
+				String ngay = (x.getNgayLap() != null) ? sdf.format(java.sql.Date.valueOf(x.getNgayLap())) : "";
+				String tenNV = x.getTenNhanVien();
+				int soDong = x.getSoDongChiTiet();
+				boolean trangThai = x.getTrangThai();
+				modelPH.addRow(new Object[] { x.getMaPhieuHuy(), ngay, tenNV, soDong, trangThai});
 			}
 
 			// Chọn dòng đầu và load chi tiết
-			if (modelPN.getRowCount() > 0) {
-				tblPN.setRowSelectionInterval(0, 0);
-				String maPN = String.valueOf(modelPN.getValueAt(0, 0));
+			if (modelPH.getRowCount() > 0) {
+				tblPH.setRowSelectionInterval(0, 0);
+				String maPN = String.valueOf(modelPH.getValueAt(0, 0));
 				loadChiTiet(maPN);
 			} else {
-				modelCTPN.setRowCount(0);
+				modelCTPh.setRowCount(0);
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -218,18 +220,16 @@ public class NhapHang_GUI extends JPanel {
 		}
 	}
 
-	private void loadChiTiet(String maPhieuNhap) {
+	private void loadChiTiet(String maPhieuHuy) {
 		try {
-			modelCTPN.setRowCount(0);
+			modelCTPh.setRowCount(0);
 			// dùng view-model có TenSanPham
-			java.util.List<ChiTietPhieuNhap_DAO.CTPNView> list = ctpnDAO.findViewByMaPhieu(maPhieuNhap);
+			List<CTPHView> list = ctphDAO.findByMaPhieu(maPhieuHuy);
 			java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
 
-			for (dao.ChiTietPhieuNhap_DAO.CTPNView v : list) {
-				String ngay = (v.ngayNhap != null) ? sdf.format(v.ngayNhap) : "";
-				double thanhTien = v.soLuongNhap * v.donGiaNhap;
-				modelCTPN.addRow(new Object[] { v.maLo, v.maSanPham, v.tenSanPham, v.soLuongNhap,
-						df.format(v.donGiaNhap), df.format(thanhTien), ngay });
+			for (CTPHView v : list) {
+				modelCTPh.addRow(new Object[] { v.getMaLo(), v.getMaSanPham(), v.getTenSanPham(), v.getSoLuongHuy(),
+						v.getTenDonViTinh(), v.getHanSuDung(), v.getLyDo()});
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -238,15 +238,15 @@ public class NhapHang_GUI extends JPanel {
 	}
 
 	private void initMasterDetail() {
-		tblPN.getSelectionModel().addListSelectionListener(e -> {
+		tblPH.getSelectionModel().addListSelectionListener(e -> {
 			if (e.getValueIsAdjusting())
 				return; // tránh bắn 2 lần
-			int viewRow = tblPN.getSelectedRow();
+			int viewRow = tblPH.getSelectedRow();
 			if (viewRow < 0)
 				return;
-			int modelRow = tblPN.convertRowIndexToModel(viewRow);
-			String maPN = String.valueOf(modelPN.getValueAt(modelRow, 0));
-			loadChiTiet(maPN);
+			int modelRow = tblPH.convertRowIndexToModel(viewRow);
+			String maPH = String.valueOf(modelPH.getValueAt(modelRow, 0));
+			loadChiTiet(maPH);
 		});
 	}
 
@@ -295,7 +295,7 @@ public class NhapHang_GUI extends JPanel {
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			frame.setSize(1280, 800);
 			frame.setLocationRelativeTo(null);
-			frame.setContentPane(new NhapHang_GUI());
+			frame.setContentPane(new HuyHang_GUI());
 			frame.setVisible(true);
 		});
 	}
