@@ -126,7 +126,16 @@ public class KhachHang_NV_Gui extends JPanel {
         //... (dữ liệu còn lại)
 
         String[] columnNames = {"Mã khách hàng", "Tên khách hàng", "Giới tính", "Số điện thoại", "Ngày sinh", "Điểm tích lũy"};
-        model = new DefaultTableModel(columnNames, 0); // Sử dụng biến thành viên
+
+     model = new DefaultTableModel(columnNames, 0) {
+         @Override
+         public Class<?> getColumnClass(int columnIndex) {
+             if (columnIndex == 5) {
+                 return Integer.class;
+             }
+             return super.getColumnClass(columnIndex);
+         }
+     };
 
         for (KhachHang kh : dsKhachHang) {
             model.addRow(new Object[]{
