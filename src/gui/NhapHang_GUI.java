@@ -73,7 +73,6 @@ public class NhapHang_GUI extends JPanel {
 		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 		txtSearch.setBounds(20, 27, 250, 44);
 		txtSearch.setBorder(new RoundedBorder(20));
-		pnHeader.add(txtSearch);
 
 		// ===== BỘ LỌC THEO NGÀY =====
 		JLabel lblTuNgay = new JLabel("Từ ngày:");
