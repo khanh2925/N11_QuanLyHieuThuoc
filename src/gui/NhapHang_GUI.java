@@ -1,0 +1,302 @@
+/**
+ * @author Thanh Kha
+ * @version 1.0
+ * @since Oct 16, 2025
+ *
+ * Mô tả: Giao diện quản lý phiếu nhập hàng
+ */
+
+package gui;
+
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumnModel;
+
+import com.toedter.calendar.JDateChooser;
+import customcomponent.*;
+import dao.*;
+import entity.NhanVien;
+import entity.PhieuNhap;
+
+public class NhapHang_GUI extends JPanel {
+
+	private JPanel pnCenter; // vùng trung tâm
+	private JPanel pnHeader; // vùng đầu trang
+	private JPanel pnRight; // vùng cột phải
+	private JButton btnThem;
+	private JButton btnXuatFile;
+	private JTextField txtSearch;
+	private DefaultTableModel modelPN;
+	private JTable tblPN;
+	private JScrollPane scrCTPN;
+	private DefaultTableModel modelCTPN;
+	private JScrollPane scrPN;
+	private JTable tblCTPN;
+
+	private final PhieuNhap_DAO pnDAO = new PhieuNhap_DAO();
+	private final ChiTietPhieuNhap_DAO ctpnDAO = new ChiTietPhieuNhap_DAO();
+	private NhanVien_DAO nvDAO = new NhanVien_DAO();
+
+	private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+	DecimalFormat df = new DecimalFormat("#,000.#đ");
+
+	private Color blueMint = new Color(180, 220, 240);
+	private Color pinkPastel = new Color(255, 200, 220);
+
+	public NhapHang_GUI() {
+		this.setPreferredSize(new Dimension(1537, 850));
+		initialize();
+	}
+
+	private void initialize() {
+
+		setLayout(new BorderLayout());
+		setPreferredSize(new Dimension(1537, 1168));
+
+		// ===== HEADER =====
+		pnHeader = new JPanel();
+		pnHeader.setPreferredSize(new Dimension(1073, 88));
+		pnHeader.setLayout(null);
+		add(pnHeader, BorderLayout.NORTH);
+
+		String placeholder = "Tìm kiếm";
+		JTextField txtSearch = new JTextField() {
+		    @Override
+		    protected void paintComponent(Graphics g) {
+		        super.paintComponent(g);
+		        if (placeholder == null || placeholder.length() == 0 || getText().length() > 0) return;
+		        Graphics2D g2 = (Graphics2D) g;
+		        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		        g2.setColor(getDisabledTextColor());
+		        
+		        FontMetrics fm = g2.getFontMetrics();
+		        int textY = getHeight() / 2 + fm.getAscent() / 2 - 2;
+		        g2.drawString(placeholder, getInsets().left, textY);
+		    }
+		};
+		txtSearch.setSize(340, 65);
+		txtSearch.setLocation(10, 10);
+		txtSearch.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+		txtSearch.setFont(new Font("Segoe UI", Font.BOLD, 20));
+//		txtSearch.setText("Tìm phiếu nhập theo sđt, NCC, tên...");
+
+		JTextField txtDateRange = new JTextField();
+		txtDateRange.setSize(250, 65);
+		txtDateRange.setLocation(360, 10);
+		txtDateRange.setEditable(false);
+		txtDateRange.setText("Chọn ngày");
+		txtDateRange.setFont(new Font("Segoe UI", Font.BOLD, 15));
+		txtDateRange.setHorizontalAlignment(SwingConstants.CENTER);
+		txtDateRange.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				JFrame frame = new JFrame();
+				frame.getContentPane().setLayout(new FlowLayout());
+
+				JDateChooser startChooser = new JDateChooser();
+				JDateChooser endChooser = new JDateChooser();
+				JButton btnOk = new JButton("Chọn");
+
+				frame.getContentPane().add(new JLabel("Từ ngày:"));
+				frame.getContentPane().add(startChooser);
+				frame.getContentPane().add(new JLabel("Đến ngày:"));
+				frame.getContentPane().add(endChooser);
+				frame.getContentPane().add(btnOk);
+
+				frame.pack();
+				frame.setLocationRelativeTo(null);
+				frame.setVisible(true);
+
+				btnOk.addActionListener(ev -> {
+					Date start = startChooser.getDate();
+					Date end = endChooser.getDate();
+					if (start != null && end != null) {
+						SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+						txtDateRange.setText(sdf.format(start) + " - " + sdf.format(end));
+					}
+					frame.dispose();
+				});
+			}
+		});
+
+		btnThem = new PillButton("Thêm");
+		btnThem.setSize(100, 30);
+		btnThem.setLocation(620, 25);
+		btnXuatFile = new PillButton("Xuất file");
+		btnXuatFile.setSize(100, 30);
+		btnXuatFile.setLocation(730, 25);
+
+		pnHeader.add(txtSearch);
+		pnHeader.add(txtDateRange);
+		pnHeader.add(btnThem);
+		pnHeader.add(btnXuatFile);
+
+		// ===== CENTER =====
+		pnCenter = new JPanel();
+		pnCenter.setLayout(new BorderLayout());
+		add(pnCenter, BorderLayout.CENTER);
+
+		// ===== RIGHT =====
+		pnRight = new JPanel();
+		pnRight.setPreferredSize(new Dimension(600, 1080));
+		pnRight.setBackground(new Color(0, 128, 255));
+		pnRight.setLayout(new BoxLayout(pnRight, BoxLayout.Y_AXIS));
+		add(pnRight, BorderLayout.EAST);
+
+		initTable();
+		initMasterDetail();
+		loadPhieuNhap();
+	}
+
+	private void initTable() {
+		// Bảng phiếu nhập
+		String[] phieuNhapCols = { "Mã PN", "Ngày lập phiếu", "Nhân Viên", "NCC", "Tổng tiền" };
+		modelPN = new DefaultTableModel(phieuNhapCols, 0) {
+			@Override
+			public boolean isCellEditable(int r, int c) {
+				return false;
+			}
+		};
+		tblPN = new JTable(modelPN);
+		scrPN = new JScrollPane(tblPN);
+		pnCenter.add(scrPN);
+		// Bảng chi tiết phiếu nhập
+		String[] cTPhieuCols = { "Mã lô", "Mã SP", "Tên SP", "SL nhập", "Đơn giá", "Thành tiền", "Ngày nhập" };
+
+		modelCTPN = new DefaultTableModel(cTPhieuCols, 0) {
+			@Override
+			public boolean isCellEditable(int r, int c) {
+				return false;
+			}
+		};
+		tblCTPN = new JTable(modelCTPN);
+		scrCTPN = new JScrollPane(tblCTPN);
+		pnRight.add(scrCTPN);
+
+		formatTable(tblPN);
+		tblPN.setSelectionBackground(blueMint);
+		tblPN.getTableHeader().setBackground(pinkPastel);
+		formatTable(tblCTPN);
+		tblCTPN.setSelectionBackground(pinkPastel);
+		tblCTPN.getTableHeader().setBackground(blueMint);
+	}
+
+	// Nạp danh sách phiếu nhập (master)
+	private void loadPhieuNhap() {
+		try {
+			modelPN.setRowCount(0);
+			java.util.List<PhieuNhap> list = pnDAO.findAll();
+
+			for (PhieuNhap x : list) {
+				String ncc = (x.getNhaCungCap() != null) ? x.getNhaCungCap().getMaNhaCungCap() : "";
+				NhanVien nv = nvDAO.findById(x.getNhanVien().getMaNhanVien());
+				String tenNV = nv.getTenNhanVien();
+				String ngay = (x.getNgayNhap() != null) ? sdf.format(java.sql.Date.valueOf(x.getNgayNhap())) : "";
+				double tongTien = x.getTongTien();
+				modelPN.addRow(new Object[] { x.getMaPhieuNhap(), ngay, tenNV, ncc, df.format(tongTien) });
+			}
+
+			// Chọn dòng đầu và load chi tiết
+			if (modelPN.getRowCount() > 0) {
+				tblPN.setRowSelectionInterval(0, 0);
+				String maPN = String.valueOf(modelPN.getValueAt(0, 0));
+				loadChiTiet(maPN);
+			} else {
+				modelCTPN.setRowCount(0);
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			javax.swing.JOptionPane.showMessageDialog(this, "Lỗi tải Phiếu nhập: " + ex.getMessage());
+		}
+	}
+
+	private void loadChiTiet(String maPhieuNhap) {
+		try {
+			modelCTPN.setRowCount(0);
+			// dùng view-model có TenSanPham
+			java.util.List<ChiTietPhieuNhap_DAO.CTPNView> list = ctpnDAO.findViewByMaPhieu(maPhieuNhap);
+			java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+
+			for (dao.ChiTietPhieuNhap_DAO.CTPNView v : list) {
+				String ngay = (v.ngayNhap != null) ? sdf.format(v.ngayNhap) : "";
+				double thanhTien = v.soLuongNhap * v.donGiaNhap;
+				modelCTPN.addRow(new Object[] { v.maLo, v.maSanPham, v.tenSanPham, v.soLuongNhap,
+						df.format(v.donGiaNhap), df.format(thanhTien), ngay });
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			javax.swing.JOptionPane.showMessageDialog(this, "Lỗi tải Chi tiết: " + ex.getMessage());
+		}
+	}
+
+	private void initMasterDetail() {
+		tblPN.getSelectionModel().addListSelectionListener(e -> {
+			if (e.getValueIsAdjusting())
+				return; // tránh bắn 2 lần
+			int viewRow = tblPN.getSelectedRow();
+			if (viewRow < 0)
+				return;
+			int modelRow = tblPN.convertRowIndexToModel(viewRow);
+			String maPN = String.valueOf(modelPN.getValueAt(modelRow, 0));
+			loadChiTiet(maPN);
+		});
+	}
+
+	private void formatTable(JTable table) {
+		table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+		table.getTableHeader().setBorder(null);
+
+		table.setRowHeight(28);
+		table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		table.setSelectionBackground(new Color(180, 205, 230));
+		table.setShowGrid(false);
+
+		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+		centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+
+		DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+		rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
+
+		DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
+		leftRenderer.setHorizontalAlignment(JLabel.LEFT);
+
+		// Đặt renderer cho từng cột theo tên header
+		TableColumnModel m = table.getColumnModel();
+		for (int i = 0; i < m.getColumnCount(); i++) {
+			String col = m.getColumn(i).getHeaderValue().toString().toLowerCase();
+
+			if (col.contains("mã"))
+				m.getColumn(i).setCellRenderer(centerRenderer);
+			else if (col.contains("số lượng") || col.contains("sl"))
+				m.getColumn(i).setCellRenderer(rightRenderer);
+			else if (col.contains("giá") || col.contains("tiền"))
+				m.getColumn(i).setCellRenderer(rightRenderer);
+			else if (col.contains("ngày"))
+				m.getColumn(i).setCellRenderer(centerRenderer);
+			else
+				m.getColumn(i).setCellRenderer(leftRenderer);
+		}
+
+		// Không cho reorder header
+		table.getTableHeader().setReorderingAllowed(false);
+	}
+
+	public static void main(String[] args) {
+		SwingUtilities.invokeLater(() -> {
+			JFrame frame = new JFrame("Khung trống - clone base");
+			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			frame.setSize(1280, 800);
+			frame.setLocationRelativeTo(null);
+			frame.setContentPane(new NhapHang_GUI());
+			frame.setVisible(true);
+		});
+	}
+}

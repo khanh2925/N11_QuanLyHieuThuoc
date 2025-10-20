@@ -11,12 +11,15 @@ package gui;
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class Khung_GUI extends JPanel {
 
     private JPanel pnCenter;   // vùng trung tâm
     private JPanel pnHeader;   // vùng đầu trang
     private JPanel pnRight;    // vùng cột phải
+    private JTextField textField;
 
     public Khung_GUI() {
         this.setPreferredSize(new Dimension(1537, 850));
@@ -33,6 +36,23 @@ public class Khung_GUI extends JPanel {
         pnHeader.setBackground(new Color(0xE3F2F5));
         pnHeader.setLayout(null);
         add(pnHeader, BorderLayout.NORTH);
+        
+        JButton btnNewButton = new JButton("New button");
+        btnNewButton.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+        	}
+        });
+        btnNewButton.setBounds(426, 11, 89, 66);
+        pnHeader.add(btnNewButton);
+        
+        JButton btnNewButton_1 = new JButton("New button");
+        btnNewButton_1.setBounds(542, 11, 89, 66);
+        pnHeader.add(btnNewButton_1);
+        
+        textField = new JTextField();
+        textField.setBounds(53, 34, 196, 20);
+        pnHeader.add(textField);
+        textField.setColumns(10);
 
         // ===== CENTER =====
         pnCenter = new JPanel();
