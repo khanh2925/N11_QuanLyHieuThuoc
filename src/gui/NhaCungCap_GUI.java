@@ -47,23 +47,12 @@ public class NhaCungCap_GUI extends JPanel {
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên nhà cung cấp / SĐT");
         txtTimKiem.setForeground(Color.GRAY);
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtTimKiem.setBounds(20, 27, 280, 44);
+        txtTimKiem.setBounds(20, 27, 350, 44);
         txtTimKiem.setBorder(new RoundedBorder(20));
         pnHeader.add(txtTimKiem);
 
         // ... (các thành phần khác trong header của bạn)
         ImageIcon iconSearch = new ImageIcon(getClass().getResource("/images/search.png"));
-        ImagePanel btnTimKiem = new ImagePanel(iconSearch.getImage());
-        btnTimKiem.setLayout(new BorderLayout());
-        btnTimKiem.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnTimKiem.setBounds(339, 27, 30, 30);
-        pnHeader.add(btnTimKiem);
-        
-        JLabel lblTimKiem = new JLabel("Tìm kiếm", SwingConstants.CENTER);
-        lblTimKiem.setBounds(320, 58, 70, 19);
-        pnHeader.add(lblTimKiem);
-        lblTimKiem.setFont(new Font("Arial", Font.BOLD, 16));
-        lblTimKiem.setForeground(Color.BLACK);
 
         ImageIcon icon = new ImageIcon(getClass().getResource("/images/add.png"));
         ImagePanel btnThem = new ImagePanel(icon.getImage());
