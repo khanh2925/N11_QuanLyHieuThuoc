@@ -144,7 +144,8 @@ public class BanHang_GUI extends JPanel {
         pnCotPhaiRight.add(Box.createVerticalStrut(10));
 
         // Ô tìm khách hàng
-        JTextField txtTimKH = new JTextField("🔍 Số điện thoại khách hàng (F4)");
+        JTextField txtTimKH = new JTextField();
+        addPlaceholder(txtTimKH,"🔍 Số điện thoại khách hàng (F4)");
         txtTimKH.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtTimKH.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
         txtTimKH.setBorder(BorderFactory.createCompoundBorder(
