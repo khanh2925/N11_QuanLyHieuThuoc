@@ -112,9 +112,7 @@ public class Main_GUI extends JFrame {
 		menu.setBackground(new Color(199, 234, 239));
 
 		ImageIcon iconLogo = new ImageIcon(getClass().getResource("/images/Logo.png"));
-		Image scaled = iconLogo.getImage().getScaledInstance(LOGO_WIDTH, LOGO_WIDTH, Image.SCALE_SMOOTH); // chỉnh kích
-																											// thước
-																											// logo
+		Image scaled = iconLogo.getImage().getScaledInstance(LOGO_WIDTH, LOGO_WIDTH, Image.SCALE_SMOOTH); // chỉnh kích thước logo
 
 		JLabel logo = new JLabel(new ImageIcon(scaled));
 		logo.setAlignmentX(Component.LEFT_ALIGNMENT);

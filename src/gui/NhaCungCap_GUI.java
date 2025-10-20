@@ -93,6 +93,21 @@ public class NhaCungCap_GUI extends JPanel {
         dsNhaCungCap.add(new NhaCungCap("NCC-004", "Công Ty TNHH Gia Vị Toàn Cầu", "0939888777", "789 Cách Mạng Tháng Tám, Quận 3, TP.HCM"));
         dsNhaCungCap.add(new NhaCungCap("NCC-005", "Trang Trại Rau Hữu Cơ Đà Lạt", "0945123789", "Đà Lạt, Lâm Đồng"));
         dsNhaCungCap.add(new NhaCungCap("NCC-006", "Vựa Hải Sản Tươi Sống Vũng Tàu", "0977456123", "Vũng Tàu, Bà Rịa - Vũng Tàu"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-007", "Công Ty TNHH Dược Phẩm An Khang", "0902233445", "62 Trần Hưng Đạo, Quận 1, TP.HCM"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-008", "Công Ty TNHH Bao Bì Minh Phát", "0915566778", "22 Nguyễn Văn Linh, Quận 7, TP.HCM"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-009", "Công Ty CP Bánh Kẹo Hương Việt", "0988123123", "89 Hai Bà Trưng, Quận 1, TP.HCM"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-010", "Nhà Cung Cấp Gạo Miền Tây", "0909998888", "Chợ Lớn, Quận 6, TP.HCM"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-011", "Công Ty CP Dầu Ăn Tường An", "0923456789", "KCN Tân Tạo, Bình Tân, TP.HCM"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-012", "Công Ty TNHH Nước Khoáng Thiên Nhiên", "0969876543", "12 Lê Hồng Phong, Đà Nẵng"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-013", "Công Ty TNHH Thủy Hải Sản Miền Trung", "0933123456", "Cảng Cá Thọ Quang, Sơn Trà, Đà Nẵng"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-014", "Công Ty TNHH Sữa Thanh Tâm", "0911002200", "Bình Dương"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-015", "Công Ty CP Dược Liệu Xanh", "0907771234", "Nha Trang, Khánh Hòa"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-016", "Công Ty CP Cà Phê Việt Hưng", "0977334455", "Buôn Ma Thuột, Đắk Lắk"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-017", "Công Ty TNHH Thực Phẩm Đông Lạnh An Bình", "0988556677", "KCN Sóng Thần, Bình Dương"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-018", "Công Ty TNHH Nông Nghiệp Xanh Sạch", "0919888777", "Long An"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-019", "Nhà Phân Phối Đồ Uống Việt Phát", "0944332211", "Cần Thơ"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-020", "Công Ty TNHH Trái Cây Miền Nam", "0905444333", "Tiền Giang"));
+
 
         String[] columnNames = {"Mã nhà cung cấp", "Tên nhà cung cấp", "Số điện thoại", "Địa chỉ"};
         model = new DefaultTableModel(columnNames, 0);
@@ -169,16 +184,20 @@ public class NhaCungCap_GUI extends JPanel {
 
     private void applySearchFilter() {
         String text = txtTimKiem.getText();
-        if (text.trim().length() == 0) {
+        
+        // Kiểm tra xem người dùng đã xóa hết chữ chưa
+        // Hoặc kiểm tra xem ô tìm kiếm có đang hiển thị placeholder không (nếu có)
+        if (text.trim().isEmpty() || txtTimKiem.getForeground().equals(Color.GRAY)) {
             sorter.setRowFilter(null);
         } else {
             // Tạo một danh sách các bộ lọc
             List<RowFilter<Object, Object>> filters = new ArrayList<>();
             
+            // Thêm "^" để chỉ tìm kiếm những dòng BẮT ĐẦU BẰNG chuỗi `text`
             // Lọc trên cột Tên NCC (index 1) - (?i) để không phân biệt hoa thường
-            filters.add(RowFilter.regexFilter("(?i)" + text, 1));
+            filters.add(RowFilter.regexFilter("(?i)^" + text, 1));
             // Lọc trên cột SĐT (index 2)
-            filters.add(RowFilter.regexFilter("(?i)" + text, 2));
+            filters.add(RowFilter.regexFilter("(?i)^" + text, 2));
             
             // Áp dụng bộ lọc "OR", hàng nào khớp với 1 trong các điều kiện sẽ được hiển thị
             sorter.setRowFilter(RowFilter.orFilter(filters));

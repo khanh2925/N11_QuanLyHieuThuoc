@@ -1,7 +1,7 @@
 package gui;
 
 import java.awt.*;
-import java.awt.event.ActionListener; // Thêm import này
+import java.awt.event.ActionListener;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ArrayList;
@@ -51,16 +51,11 @@ public class KhachHang_QL_GUI extends JPanel {
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên / số điện thoại");
         txtTimKiem.setForeground(Color.GRAY);
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtTimKiem.setBounds(20, 27, 250, 44);
+        txtTimKiem.setBounds(20, 27, 336, 44);
         txtTimKiem.setBorder(new RoundedBorder(20));
         pnHeader.add(txtTimKiem);
 
         ImageIcon iconSearch = new ImageIcon(getClass().getResource("/images/search.png"));
-        ImagePanel btnTimKiem = new ImagePanel(iconSearch.getImage());
-        btnTimKiem.setLayout(new BorderLayout());
-        btnTimKiem.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnTimKiem.setBounds(298, 27, 30, 30);
-        pnHeader.add(btnTimKiem);
 
         ImageIcon icon = new ImageIcon(getClass().getResource("/images/add.png"));
         ImagePanel btnThem = new ImagePanel(icon.getImage());
@@ -87,12 +82,6 @@ public class KhachHang_QL_GUI extends JPanel {
         pnHeader.add(lblSua);
         lblSua.setFont(new Font("Arial", Font.BOLD, 16));
         lblSua.setForeground(Color.BLACK);
-        
-        JLabel lblTimKiem = new JLabel("Tìm kiếm", SwingConstants.CENTER);
-        lblTimKiem.setBounds(280, 58, 70, 19);
-        pnHeader.add(lblTimKiem);
-        lblTimKiem.setFont(new Font("Arial", Font.BOLD, 16));
-        lblTimKiem.setForeground(Color.BLACK);
         
         // ===== CENTER =====
         pnCenter = new JPanel(new BorderLayout());
