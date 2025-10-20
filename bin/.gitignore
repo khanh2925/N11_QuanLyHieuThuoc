@@ -1,2 +1,7 @@
-/gui/
-/images/
+/com.miglayout.core_11.4.2.jar
+/com.miglayout.swing_11.4.2.jar
+/itextpdf-5.5.9.jar
+/jcalendar-1.4.jar
+/jfreechart-1.5.2.jar
+/sqljdbc42.jar
+/times.ttf

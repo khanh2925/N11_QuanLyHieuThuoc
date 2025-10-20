@@ -1,7 +1,10 @@
 package gui;
 
 import java.awt.*;
-import java.awt.event.ActionListener; // Thêm import này
+import java.awt.event.ActionListener;
+// ===== THÊM CÁC IMPORT CẦN THIẾT ===== // MỚI
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ArrayList;
@@ -51,16 +54,11 @@ public class KhachHang_NV_GUI extends JPanel {
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên / số điện thoại");
         txtTimKiem.setForeground(Color.GRAY);
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtTimKiem.setBounds(20, 27, 250, 44);
+        txtTimKiem.setBounds(20, 27, 336, 44);
         txtTimKiem.setBorder(new RoundedBorder(20));
         pnHeader.add(txtTimKiem);
 
         ImageIcon iconSearch = new ImageIcon(getClass().getResource("/images/search.png"));
-        ImagePanel btnTimKiem = new ImagePanel(iconSearch.getImage());
-        btnTimKiem.setLayout(new BorderLayout());
-        btnTimKiem.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnTimKiem.setBounds(298, 27, 30, 30);
-        pnHeader.add(btnTimKiem);
 
         ImageIcon icon = new ImageIcon(getClass().getResource("/images/add.png"));
         ImagePanel btnThem = new ImagePanel(icon.getImage());
@@ -87,12 +85,6 @@ public class KhachHang_NV_GUI extends JPanel {
         pnHeader.add(lblSua);
         lblSua.setFont(new Font("Arial", Font.BOLD, 16));
         lblSua.setForeground(Color.BLACK);
-        
-        JLabel lblTimKiem = new JLabel("Tìm kiếm", SwingConstants.CENTER);
-        lblTimKiem.setBounds(280, 58, 70, 19);
-        pnHeader.add(lblTimKiem);
-        lblTimKiem.setFont(new Font("Arial", Font.BOLD, 16));
-        lblTimKiem.setForeground(Color.BLACK);
         
         // ===== CENTER =====
         pnCenter = new JPanel(new BorderLayout());
@@ -127,15 +119,15 @@ public class KhachHang_NV_GUI extends JPanel {
 
         String[] columnNames = {"Mã khách hàng", "Tên khách hàng", "Giới tính", "Số điện thoại", "Ngày sinh", "Điểm tích lũy"};
 
-     model = new DefaultTableModel(columnNames, 0) {
-         @Override
-         public Class<?> getColumnClass(int columnIndex) {
-             if (columnIndex == 5) {
-                 return Integer.class;
+        model = new DefaultTableModel(columnNames, 0) {
+             @Override
+             public Class<?> getColumnClass(int columnIndex) {
+                 if (columnIndex == 5) {
+                     return Integer.class;
+                 }
+                 return super.getColumnClass(columnIndex);
              }
-             return super.getColumnClass(columnIndex);
-         }
-     };
+        };
 
         for (KhachHang kh : dsKhachHang) {
             model.addRow(new Object[]{
@@ -171,9 +163,9 @@ public class KhachHang_NV_GUI extends JPanel {
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
         for (int i = 0; i < table.getColumnCount(); i++) {
-            if (i != 1 && i != 3 && i != 4) {
+//            if (i != 1 && i != 3 && i != 4) {
                 table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
-            }
+//            }
         }
 
         table.getColumnModel().getColumn(0).setPreferredWidth(100);
@@ -250,7 +242,11 @@ public class KhachHang_NV_GUI extends JPanel {
         sorter = new TableRowSorter<>(model);
         table.setRowSorter(sorter);
 
+        // --- SỰ KIỆN LỌC GIỚI TÍNH ---
         ActionListener filterListener = e -> {
+            // MỚI: Xóa trắng ô tìm kiếm khi nhấn vào checkbox giới tính
+            txtTimKiem.setText(""); 
+            
             JCheckBox source = (JCheckBox) e.getSource();
             if (source == chckbxNam && chckbxNam.isSelected()) {
                 chckbxNu.setSelected(false);
@@ -261,7 +257,24 @@ public class KhachHang_NV_GUI extends JPanel {
         };
         chckbxNam.addActionListener(filterListener);
         chckbxNu.addActionListener(filterListener);
+        
+        // ===== THÊM SỰ KIỆN LỌC CHO TEXTFIELD TÌM KIẾM ===== // MỚI
+        txtTimKiem.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                applyFilters();
+            }
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                applyFilters();
+            }
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                // Không dùng cho text field đơn giản
+            }
+        });
 
+        // --- SỰ KIỆN SẮP XẾP ---
         ActionListener sortListener = e -> {
             JCheckBox source = (JCheckBox) e.getSource();
             if (source == chckbxTangDan && chckbxTangDan.isSelected()) {
@@ -283,17 +296,36 @@ public class KhachHang_NV_GUI extends JPanel {
         chckbxGiamDan.addActionListener(sortListener);
     }
     
-    // ===== PHƯƠNG THỨC LỌC =====
+    
+ // ===== PHƯƠNG THỨC LỌC ===== // SỬA ĐỔI
     private void applyFilters() {
-        List<RowFilter<Object, Object>> filters = new ArrayList<>();
-        int gioiTinhColumnIndex = 2;
-
-        if (chckbxNam.isSelected()) {
-            filters.add(RowFilter.regexFilter("Nam", gioiTinhColumnIndex));
-        } else if (chckbxNu.isSelected()) {
-            filters.add(RowFilter.regexFilter("Nữ", gioiTinhColumnIndex));
+        // ĐÂY LÀ DÒNG SỬA LỖI CHÍNH XÁC
+        // Nếu màu chữ là GRAY, nghĩa là placeholder đang hiển thị -> không lọc
+        if (txtTimKiem.getForeground().equals(Color.GRAY)) {
+            // Áp dụng các bộ lọc khác (nếu có) mà không cần bộ lọc tìm kiếm
+            // Điều này đảm bảo lọc giới tính vẫn hoạt động ngay cả khi ô tìm kiếm có placeholder
+            applyGenderFilterOnly();
+            return; // Dừng, không thực hiện lọc văn bản
         }
 
+        // --- Logic lọc kết hợp ---
+        // Tạo một danh sách để chứa tất cả các bộ lọc
+        List<RowFilter<Object, Object>> filters = new ArrayList<>();
+
+        // 1. Bộ lọc cho TÌM KIẾM THEO VĂN BẢN (tên và sđt)
+        String searchText = txtTimKiem.getText().trim();
+        if (!searchText.isEmpty()) {
+            filters.add(RowFilter.regexFilter("(?i)" + searchText, 1, 3));
+        }
+
+        // 2. Bộ lọc cho GIỚI TÍNH
+        if (chckbxNam.isSelected()) {
+            filters.add(RowFilter.regexFilter("Nam", 2));
+        } else if (chckbxNu.isSelected()) {
+            filters.add(RowFilter.regexFilter("Nữ", 2));
+        }
+
+        // Kết hợp tất cả các bộ lọc bằng điều kiện AND
         if (filters.isEmpty()) {
             sorter.setRowFilter(null);
         } else {
@@ -301,6 +333,21 @@ public class KhachHang_NV_GUI extends JPanel {
         }
     }
 
+    private void applyGenderFilterOnly() {
+        List<RowFilter<Object, Object>> filters = new ArrayList<>();
+        if (chckbxNam.isSelected()) {
+            filters.add(RowFilter.regexFilter("Nam", 2));
+        } else if (chckbxNu.isSelected()) {
+            filters.add(RowFilter.regexFilter("Nữ", 2));
+        }
+
+        if (filters.isEmpty()) {
+            sorter.setRowFilter(null);
+        } else {
+            // Chỉ áp dụng bộ lọc giới tính
+            sorter.setRowFilter(RowFilter.andFilter(filters));
+        }
+    }
     // ===== MAIN =====
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {

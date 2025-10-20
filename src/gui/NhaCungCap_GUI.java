@@ -14,7 +14,7 @@ import java.util.List;
 import customcomponent.ImagePanel;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
-import entity.NhaCungCap; // Thay đổi entity thành NhaCungCap
+import entity.NhaCungCap;
 
 public class NhaCungCap_GUI extends JPanel {
 
@@ -47,10 +47,11 @@ public class NhaCungCap_GUI extends JPanel {
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên nhà cung cấp / SĐT");
         txtTimKiem.setForeground(Color.GRAY);
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtTimKiem.setBounds(20, 27, 280, 44); // Tăng chiều rộng
+        txtTimKiem.setBounds(20, 27, 280, 44);
         txtTimKiem.setBorder(new RoundedBorder(20));
         pnHeader.add(txtTimKiem);
 
+        // ... (các thành phần khác trong header của bạn)
         ImageIcon iconSearch = new ImageIcon(getClass().getResource("/images/search.png"));
         ImagePanel btnTimKiem = new ImagePanel(iconSearch.getImage());
         btnTimKiem.setLayout(new BorderLayout());
@@ -89,14 +90,13 @@ public class NhaCungCap_GUI extends JPanel {
         pnHeader.add(lblSua);
         lblSua.setFont(new Font("Arial", Font.BOLD, 16));
         lblSua.setForeground(Color.BLACK);
-        
+
         // ===== CENTER =====
         pnCenter = new JPanel(new BorderLayout());
         pnCenter.setBackground(Color.WHITE);
         pnCenter.setBorder(new LineBorder(new Color(200, 200, 200)));
         add(pnCenter, BorderLayout.CENTER);
 
-        // Dữ liệu mẫu cho Nhà Cung Cấp
         List<NhaCungCap> dsNhaCungCap = new ArrayList<>();
         dsNhaCungCap.add(new NhaCungCap("NCC-001", "Công Ty TNHH Thực Phẩm Sạch An Tâm", "0901112222", "123 Lê Lợi, Quận 1, TP.HCM"));
         dsNhaCungCap.add(new NhaCungCap("NCC-002", "Nhà Phân Phối Nông Sản Việt", "0987654321", "45 Nguyễn Trãi, Quận 5, TP.HCM"));
@@ -105,13 +105,9 @@ public class NhaCungCap_GUI extends JPanel {
         dsNhaCungCap.add(new NhaCungCap("NCC-005", "Trang Trại Rau Hữu Cơ Đà Lạt", "0945123789", "Đà Lạt, Lâm Đồng"));
         dsNhaCungCap.add(new NhaCungCap("NCC-006", "Vựa Hải Sản Tươi Sống Vũng Tàu", "0977456123", "Vũng Tàu, Bà Rịa - Vũng Tàu"));
 
-
-        // Cập nhật tên cột cho bảng Nhà Cung Cấp
         String[] columnNames = {"Mã nhà cung cấp", "Tên nhà cung cấp", "Số điện thoại", "Địa chỉ"};
-
         model = new DefaultTableModel(columnNames, 0);
 
-        // Nạp dữ liệu vào model
         for (NhaCungCap ncc : dsNhaCungCap) {
             model.addRow(new Object[]{
                 ncc.getMaNhaCungCap(),
@@ -122,7 +118,7 @@ public class NhaCungCap_GUI extends JPanel {
         }
 
         table = new JTable(model);
-        // ... (Toàn bộ phần cấu hình JTable giữ nguyên)
+        // ... (Cấu hình JTable giữ nguyên)
         table.setFont(new Font("Segoe UI", Font.PLAIN, 15));
         table.setRowHeight(34);
         table.setGridColor(new Color(230, 230, 230));
@@ -146,7 +142,6 @@ public class NhaCungCap_GUI extends JPanel {
         table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
         table.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
 
-        // Điều chỉnh lại độ rộng các cột
         table.getColumnModel().getColumn(0).setPreferredWidth(120);
         table.getColumnModel().getColumn(1).setPreferredWidth(300);
         table.getColumnModel().getColumn(2).setPreferredWidth(120);
@@ -163,7 +158,7 @@ public class NhaCungCap_GUI extends JPanel {
                 return c;
             }
         });
-
+        
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         pnCenter.add(scrollPane, BorderLayout.CENTER);
@@ -172,9 +167,7 @@ public class NhaCungCap_GUI extends JPanel {
         sorter = new TableRowSorter<>(model);
         table.setRowSorter(sorter);
         
-        // Loại bỏ các checkbox lọc và sắp xếp không còn phù hợp
-        
-        // ===== SỰ KIỆN TÌM KIẾM =====
+        // ===== PHẦN THÊM SỰ KIỆN TÌM KIẾM (ĐẶT Ở ĐÂY) =====
         txtTimKiem.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
@@ -183,30 +176,30 @@ public class NhaCungCap_GUI extends JPanel {
         });
     }
     
-    // ===== PHƯƠNG THỨC LỌC TÌM KIẾM =====
+    // ===== PHƯƠNG THỨC LỌC DỮ LIỆU TRÊN BẢNG (ĐẶT Ở ĐÂY) =====
+
     private void applySearchFilter() {
         String text = txtTimKiem.getText();
         if (text.trim().length() == 0) {
             sorter.setRowFilter(null);
         } else {
-            // Lọc trên cột Tên NCC (index 1) và SĐT (index 2)
-            // "(?i)" để không phân biệt chữ hoa, chữ thường
-            RowFilter<Object, Object> tenFilter = RowFilter.regexFilter("(?i)" + text, 1);
-            RowFilter<Object, Object> sdtFilter = RowFilter.regexFilter("(?i)" + text, 2);
-            
+            // Tạo một danh sách các bộ lọc
             List<RowFilter<Object, Object>> filters = new ArrayList<>();
-            filters.add(tenFilter);
-            filters.add(sdtFilter);
             
+            // Lọc trên cột Tên NCC (index 1) - (?i) để không phân biệt hoa thường
+            filters.add(RowFilter.regexFilter("(?i)" + text, 1));
+            // Lọc trên cột SĐT (index 2)
+            filters.add(RowFilter.regexFilter("(?i)" + text, 2));
+            
+            // Áp dụng bộ lọc "OR", hàng nào khớp với 1 trong các điều kiện sẽ được hiển thị
             sorter.setRowFilter(RowFilter.orFilter(filters));
         }
     }
 
-
     // ===== MAIN =====
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Quản lý Nhà Cung Cấp"); // Đổi tiêu đề frame
+            JFrame frame = new JFrame("Quản lý Nhà Cung Cấp");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
             frame.setContentPane(new NhaCungCap_GUI());
