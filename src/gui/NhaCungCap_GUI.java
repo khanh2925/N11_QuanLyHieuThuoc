@@ -87,26 +87,27 @@ public class NhaCungCap_GUI extends JPanel {
         add(pnCenter, BorderLayout.CENTER);
 
         List<NhaCungCap> dsNhaCungCap = new ArrayList<>();
-        dsNhaCungCap.add(new NhaCungCap("NCC-001", "Công Ty TNHH Thực Phẩm Sạch An Tâm", "0901112222", "123 Lê Lợi, Quận 1, TP.HCM"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-002", "Nhà Phân Phối Nông Sản Việt", "0987654321", "45 Nguyễn Trãi, Quận 5, TP.HCM"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-003", "Công Ty CP Nước Giải Khát ABC", "0912345678", "KCN Tân Bình, Quận Tân Phú, TP.HCM"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-004", "Công Ty TNHH Gia Vị Toàn Cầu", "0939888777", "789 Cách Mạng Tháng Tám, Quận 3, TP.HCM"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-005", "Trang Trại Rau Hữu Cơ Đà Lạt", "0945123789", "Đà Lạt, Lâm Đồng"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-006", "Vựa Hải Sản Tươi Sống Vũng Tàu", "0977456123", "Vũng Tàu, Bà Rịa - Vũng Tàu"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-007", "Công Ty TNHH Dược Phẩm An Khang", "0902233445", "62 Trần Hưng Đạo, Quận 1, TP.HCM"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-008", "Công Ty TNHH Bao Bì Minh Phát", "0915566778", "22 Nguyễn Văn Linh, Quận 7, TP.HCM"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-009", "Công Ty CP Bánh Kẹo Hương Việt", "0988123123", "89 Hai Bà Trưng, Quận 1, TP.HCM"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-010", "Nhà Cung Cấp Gạo Miền Tây", "0909998888", "Chợ Lớn, Quận 6, TP.HCM"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-011", "Công Ty CP Dầu Ăn Tường An", "0923456789", "KCN Tân Tạo, Bình Tân, TP.HCM"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-012", "Công Ty TNHH Nước Khoáng Thiên Nhiên", "0969876543", "12 Lê Hồng Phong, Đà Nẵng"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-013", "Công Ty TNHH Thủy Hải Sản Miền Trung", "0933123456", "Cảng Cá Thọ Quang, Sơn Trà, Đà Nẵng"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-014", "Công Ty TNHH Sữa Thanh Tâm", "0911002200", "Bình Dương"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-015", "Công Ty CP Dược Liệu Xanh", "0907771234", "Nha Trang, Khánh Hòa"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-016", "Công Ty CP Cà Phê Việt Hưng", "0977334455", "Buôn Ma Thuột, Đắk Lắk"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-017", "Công Ty TNHH Thực Phẩm Đông Lạnh An Bình", "0988556677", "KCN Sóng Thần, Bình Dương"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-018", "Công Ty TNHH Nông Nghiệp Xanh Sạch", "0919888777", "Long An"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-019", "Nhà Phân Phối Đồ Uống Việt Phát", "0944332211", "Cần Thơ"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-020", "Công Ty TNHH Trái Cây Miền Nam", "0905444333", "Tiền Giang"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-021", "Công Ty TNHH Dược Phẩm Trung Ương CPC1", "0901234561", "356 Nguyễn Trãi, Thanh Xuân, Hà Nội"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-022", "Công Ty CP Dược Phẩm OPC", "0912345672", "1010 Nguyễn Văn Linh, Quận 7, TP.HCM"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-023", "Công Ty TNHH Dược Phẩm Eco Pharma", "0923456783", "27 Trường Chinh, Đà Nẵng"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-024", "Công Ty CP Dược Phẩm Hà Tây", "0934567894", "15 Nguyễn Du, Hà Đông, Hà Nội"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-025", "Công Ty CP Dược Hậu Giang", "0945678905", "288 Bis Nguyễn Văn Cừ, Quận Ninh Kiều, Cần Thơ"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-026", "Công Ty CP Pymepharco", "0956789016", "166-170 Nguyễn Huệ, TP. Tuy Hòa, Phú Yên"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-027", "Công Ty TNHH United Pharma Việt Nam", "0967890127", "KCN VSIP, Bình Dương"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-028", "Công Ty TNHH Sanofi Việt Nam", "0978901238", "KCN Sài Đồng, Long Biên, Hà Nội"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-029", "Công Ty TNHH Dược Phẩm Traphaco", "0989012349", "75 Yên Ninh, Ba Đình, Hà Nội"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-030", "Công Ty CP Dược Phẩm Imexpharm", "0990123450", "KCN Việt Nam – Singapore, Bình Dương"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-031", "Công Ty CP Dược Danapha", "0902123456", "KCN Liên Chiểu, Đà Nẵng"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-032", "Công Ty CP Dược Phẩm Vimedimex", "0913234567", "46 Tô Hiến Thành, Hai Bà Trưng, Hà Nội"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-033", "Công Ty CP Dược Phẩm Mekophar", "0924345678", "297 Trần Hưng Đạo, Quận 1, TP.HCM"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-034", "Công Ty TNHH Trang Thiết Bị Y Tế Hoàng Gia", "0935456789", "45 Trần Hưng Đạo, Quận 5, TP.HCM"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-035", "Công Ty TNHH Dược Liệu Đông Y An Thịnh", "0946567890", "Tân Bình, TP.HCM"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-036", "Công Ty TNHH Dược Mỹ Phẩm Lotus", "0957678901", "Quận 3, TP.HCM"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-037", "Công Ty CP Dược Phẩm Bidiphar", "0968789012", "498 Nguyễn Thái Học, Quy Nhơn, Bình Định"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-038", "Công Ty TNHH Dược Phẩm Thành Công", "0979890123", "Đà Lạt, Lâm Đồng"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-039", "Công Ty TNHH Vật Tư Y Tế Kim Long", "0980901234", "Huế"));
+        dsNhaCungCap.add(new NhaCungCap("NCC-040", "Công Ty TNHH Dược Phẩm Minh Châu", "0991012345", "Long An"));
+
 
 
         String[] columnNames = {"Mã nhà cung cấp", "Tên nhà cung cấp", "Số điện thoại", "Địa chỉ"};

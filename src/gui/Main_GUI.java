@@ -239,11 +239,7 @@ public class Main_GUI extends JFrame {
 		btn.setFont(new Font("SansSerif", Font.BOLD, 16));
 		// Thêm icon nhỏ phía trước
 		ImageIcon icon = new ImageIcon(getClass().getResource(iconPath));
-		Image scaledIcon = icon.getImage().getScaledInstance(MENU_ICON_WIDTH, MENU_ICON_WIDTH, Image.SCALE_SMOOTH); // Scale
-																													// kích
-																													// thước
-																													// //
-																													// icon
+		Image scaledIcon = icon.getImage().getScaledInstance(MENU_ICON_WIDTH, MENU_ICON_WIDTH, Image.SCALE_SMOOTH); // Scale kích thước icon
 		btn.setIcon(new ImageIcon(scaledIcon));
 		btn.addActionListener(e -> showCard(key));
 
