@@ -171,6 +171,25 @@ public class DangNhap_GUI {
         btnQuenMK.setBorderPainted(false);
         btnQuenMK.setFocusPainted(false);
         btnQuenMK.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+		btnDangNhap.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String taiKhoan = txtTaiKhoan.getText();
+				String matKhau = new String(txtMatKhau.getPassword());
+				// Kiểm tra dữ liệu nhập
+				if (taiKhoan.equals("admin") && matKhau.equals("admin123")) {
+			        addPlaceholder(txtTaiKhoan, "Nhập tài khoản của bạn");
+			        addPlaceholder(txtMatKhau, "Nhập mật khẩu của bạn");
+		            frame.setContentPane(new Main_GUI());
+					// Chuyển đến giao diện chính của ứng dụng
+				} else {
+					JOptionPane.showMessageDialog(frame, "Tài khoản hoặc mật khẩu không đúng.", "Lỗi đăng nhập",
+							JOptionPane.ERROR_MESSAGE);
+			        addPlaceholder(txtTaiKhoan, "Nhập tài khoản của bạn");
+			        addPlaceholder(txtMatKhau, "Nhập mật khẩu của bạn");
+				}
+			}
+		});
 
         btnQuenMK.addMouseListener(new MouseAdapter() {
             @Override
