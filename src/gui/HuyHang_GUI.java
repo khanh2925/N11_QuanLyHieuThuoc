@@ -13,6 +13,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -23,12 +26,7 @@ import javax.swing.table.TableColumnModel;
 
 import com.toedter.calendar.JDateChooser;
 import customcomponent.*;
-import dao.*;
-import dao.ChiTietPhieuHuy_DAO.CTPHView;
-import dao.PhieuHuy_DAO.PhieuHuyView;
-import entity.NhanVien;
-import entity.PhieuHuy;
-import entity.PhieuNhap;
+import entity.*;
 
 public class HuyHang_GUI extends JPanel {
 
@@ -41,15 +39,11 @@ public class HuyHang_GUI extends JPanel {
 	private DefaultTableModel modelPH;
 	private JTable tblPH;
 	private JScrollPane scrCTPH;
-	private DefaultTableModel modelCTPh;
+	private DefaultTableModel modelCTPH;
 	private JScrollPane scrPH;
 	private JTable tblCTPH;
 
-	private final PhieuHuy_DAO phDAO = new PhieuHuy_DAO();
-	private final ChiTietPhieuHuy_DAO ctphDAO = new ChiTietPhieuHuy_DAO();
-	private NhanVien_DAO nvDAO = new NhanVien_DAO();
-
-	private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+	DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 	DecimalFormat df = new DecimalFormat("#,000.#đ");
 
 	private Color blueMint = new Color(180, 220, 240);
@@ -71,74 +65,51 @@ public class HuyHang_GUI extends JPanel {
 		pnHeader.setLayout(null);
 		add(pnHeader, BorderLayout.NORTH);
 
-		String placeholder = "Tìm kiếm";
-		JTextField txtSearch = new JTextField() {
-		    @Override
-		    protected void paintComponent(Graphics g) {
-		        super.paintComponent(g);
-		        if (placeholder == null || placeholder.length() == 0 || getText().length() > 0) return;
-		        Graphics2D g2 = (Graphics2D) g;
-		        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		        g2.setColor(getDisabledTextColor());
-		        
-		        FontMetrics fm = g2.getFontMetrics();
-		        int textY = getHeight() / 2 + fm.getAscent() / 2 - 2;
-		        g2.drawString(placeholder, getInsets().left, textY);
-		    }
-		};
-		txtSearch.setSize(340, 65);
-		txtSearch.setLocation(10, 10);
-		txtSearch.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
-		txtSearch.setFont(new Font("Segoe UI", Font.BOLD, 20));
+		txtSearch = new JTextField("");
+		PlaceholderSupport.addPlaceholder(txtSearch, "Tìm kiếm theo tên / số điện thoại");
+		txtSearch.setForeground(Color.GRAY);
+		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		txtSearch.setBounds(20, 27, 250, 44);
+		txtSearch.setBorder(new RoundedBorder(20));
 
-		JTextField txtDateRange = new JTextField();
-		txtDateRange.setSize(250, 65);
-		txtDateRange.setLocation(360, 10);
-		txtDateRange.setEditable(false);
-		txtDateRange.setText("Chọn ngày");
-		txtDateRange.setFont(new Font("Segoe UI", Font.BOLD, 15));
-		txtDateRange.setHorizontalAlignment(SwingConstants.CENTER);
-		txtDateRange.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				JFrame frame = new JFrame();
-				frame.getContentPane().setLayout(new FlowLayout());
+		// ===== BỘ LỌC THEO NGÀY =====
+		JLabel lblTuNgay = new JLabel("Từ ngày:");
+		lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		lblTuNgay.setBounds(306, 36, 60, 25);
 
-				JDateChooser startChooser = new JDateChooser();
-				JDateChooser endChooser = new JDateChooser();
-				JButton btnOk = new JButton("Chọn");
+		com.toedter.calendar.JDateChooser dateTu = new com.toedter.calendar.JDateChooser();
+		dateTu.setDateFormatString("dd/MM/yyyy");
+		dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		dateTu.setBounds(366, 36, 130, 25);
+		dateTu.setDate(new java.util.Date()); // mặc định là hôm nay
 
-				frame.getContentPane().add(new JLabel("Từ ngày:"));
-				frame.getContentPane().add(startChooser);
-				frame.getContentPane().add(new JLabel("Đến ngày:"));
-				frame.getContentPane().add(endChooser);
-				frame.getContentPane().add(btnOk);
+		JLabel lblDenNgay = new JLabel("Đến:");
+		lblDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		lblDenNgay.setBounds(511, 36, 40, 25);
 
-				frame.pack();
-				frame.setLocationRelativeTo(null);
-				frame.setVisible(true);
+		com.toedter.calendar.JDateChooser dateDen = new com.toedter.calendar.JDateChooser();
+		dateDen.setDateFormatString("dd/MM/yyyy");
+		dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		dateDen.setBounds(551, 36, 130, 25);
 
-				btnOk.addActionListener(ev -> {
-					Date start = startChooser.getDate();
-					Date end = endChooser.getDate();
-					if (start != null && end != null) {
-						SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-						txtDateRange.setText(sdf.format(start) + " - " + sdf.format(end));
-					}
-					frame.dispose();
-				});
-			}
-		});
+		// set mặc định là ngày mai
+		java.util.Calendar cal = java.util.Calendar.getInstance();
+		cal.add(java.util.Calendar.DATE, 1);
+		dateDen.setDate(cal.getTime());
 
 		btnThem = new PillButton("Thêm");
 		btnThem.setSize(100, 30);
-		btnThem.setLocation(620, 25);
+		btnThem.setLocation(703, 34);
+
 		btnXuatFile = new PillButton("Xuất file");
 		btnXuatFile.setSize(100, 30);
-		btnXuatFile.setLocation(730, 25);
+		btnXuatFile.setLocation(813, 34);
 
 		pnHeader.add(txtSearch);
-		pnHeader.add(txtDateRange);
+		pnHeader.add(lblTuNgay);
+		pnHeader.add(dateTu);
+		pnHeader.add(lblDenNgay);
+		pnHeader.add(dateDen);
 		pnHeader.add(btnThem);
 		pnHeader.add(btnXuatFile);
 
@@ -155,7 +126,6 @@ public class HuyHang_GUI extends JPanel {
 		add(pnRight, BorderLayout.EAST);
 
 		initTable();
-		initMasterDetail();
 		loadPhieuHuy();
 	}
 
@@ -174,13 +144,13 @@ public class HuyHang_GUI extends JPanel {
 		// Bảng chi tiết phiếu huỷ
 		String[] cTPhieuCols = { "Mã lô", "Mã SP", "Tên SP", "SL huỷ", "Đơn vị tính", "Hạn sử dụng", "Lý do" };
 
-		modelCTPh = new DefaultTableModel(cTPhieuCols, 0) {
+		modelCTPH = new DefaultTableModel(cTPhieuCols, 0) {
 			@Override
 			public boolean isCellEditable(int r, int c) {
 				return false;
 			}
 		};
-		tblCTPH = new JTable(modelCTPh);
+		tblCTPH = new JTable(modelCTPH);
 		scrCTPH = new JScrollPane(tblCTPH);
 		pnRight.add(scrCTPH);
 
@@ -194,60 +164,67 @@ public class HuyHang_GUI extends JPanel {
 
 	// Nạp danh sách phiếu nhập (master)
 	private void loadPhieuHuy() {
-		try {
-			modelPH.setRowCount(0);
-			List<PhieuHuyView> list = phDAO.findAll();
+		// ====== DANH MỤC / SẢN PHẨM CƠ BẢN (tương tự LoadPhieuNhap) ======
+		DonViTinh vien = new DonViTinh("DVT-001", "Viên", null);
+		DuongDung uong = DuongDung.UONG;
+		LoaiSanPham thuoc = new LoaiSanPham("LSP001", "Thuốc", null);
 
-			for (PhieuHuyView x : list) {
-				String ngay = (x.getNgayLap() != null) ? sdf.format(java.sql.Date.valueOf(x.getNgayLap())) : "";
-				String tenNV = x.getTenNhanVien();
-				int soDong = x.getSoDongChiTiet();
-				boolean trangThai = x.getTrangThai();
-				modelPH.addRow(new Object[] { x.getMaPhieuHuy(), ngay, tenNV, soDong, trangThai});
-			}
+		SanPham sp1 = new SanPham("SP000001", "Paracetamol 500mg", thuoc, "VN-12345", "Paracetamol", "500mg",
+				"DHG Pharma", "Việt Nam", vien, uong, 800, 1500, "paracetamol.jpg", "Hộp 10 vỉ x 10 viên", "A1", true);
 
-			// Chọn dòng đầu và load chi tiết
-			if (modelPH.getRowCount() > 0) {
-				tblPH.setRowSelectionInterval(0, 0);
-				String maPN = String.valueOf(modelPH.getValueAt(0, 0));
-				loadChiTiet(maPN);
-			} else {
-				modelCTPh.setRowCount(0);
-			}
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			javax.swing.JOptionPane.showMessageDialog(this, "Lỗi tải Phiếu nhập: " + ex.getMessage());
+		SanPham sp2 = new SanPham("SP000002", "Vitamin C 1000mg", thuoc, "VN-67890", "Ascorbic Acid", "1000mg",
+				"Traphaco", "Việt Nam", vien, uong, 1200, 2500, "vitaminc.jpg", "Hộp 5 vỉ x 10 viên", "A2", true);
+
+		// ====== LÔ SẢN PHẨM (theo constructor bạn đang dùng: 2 LocalDate) ======
+		LoSanPham lo1 = new LoSanPham("LO000003", LocalDate.of(2025, 6, 1), LocalDate.of(2027, 6, 1), 80, sp1);
+		LoSanPham lo2 = new LoSanPham("LO000004", LocalDate.of(2024, 12, 1), LocalDate.of(2026, 12, 1), 120, sp2);
+		// Nếu LoSanPham của bạn chỉ có 1 LocalDate (hanSuDung), thay bằng:
+		// LoSanPham lo1 = new LoSanPham("LO000003", LocalDate.of(2027, 6, 1), 80, sp1);
+		// LoSanPham lo2 = new LoSanPham("LO000004", LocalDate.of(2026, 12, 1), 120,
+		// sp2);
+
+		// ====== TÀI KHOẢN & NHÂN VIÊN ======
+		TaiKhoan tk1 = new TaiKhoan("TK000001", "admin", "Aa123456@");
+		TaiKhoan tk2 = new TaiKhoan("TK000002", "user25100001", "Aa123456@");
+
+		// Giữ đúng thứ tự tham số giống bên bạn (ma, ten, gioiTinh, ngaySinh, sdt,
+		// diaChi, quanLy, taiKhoan, caLam, trangThai)
+		NhanVien nv1 = new NhanVien("NV2025100001", "Lê Thanh Kha", true, LocalDate.of(1998, 5, 10), "0912345678",
+				"TP.HCM", true, tk1, "SANG", true);
+		NhanVien nv2 = new NhanVien("NV2025100002", "Chu Anh Khôi", true, LocalDate.of(1998, 5, 10), "0912345678",
+				"TP.HCM", false, tk2, "SANG", true);
+
+		// ====== PHIẾU HỦY ======
+		PhieuHuy ph1 = new PhieuHuy("PH-20251018-0001", LocalDate.of(2025, 10, 18), nv1, true);
+		PhieuHuy ph2 = new PhieuHuy("PH-20251019-0002", LocalDate.of(2025, 10, 19), nv2, false);
+
+		List<PhieuHuy> phieuHuys = Arrays.asList(ph1, ph2);
+
+		// ====== CHI TIẾT PHIẾU HỦY ======
+		ChiTietPhieuHuy cth1 = new ChiTietPhieuHuy(ph1, 10, "Viên bị ẩm/mốc", lo1, lo1.getSanPham().getGiaNhap());
+		ChiTietPhieuHuy cth2 = new ChiTietPhieuHuy(ph1, 5, "Vỏ vỉ rách", lo2, lo2.getSanPham().getGiaNhap());
+		ChiTietPhieuHuy cth3 = new ChiTietPhieuHuy(ph2, 20, "Cận hạn sử dụng", lo1, lo1.getSanPham().getGiaNhap());
+
+		List<ChiTietPhieuHuy> chiTietPhieuHuys = Arrays.asList(cth1, cth2, cth3);
+
+		// ====== ĐỔ DỮ LIỆU LÊN BẢNG PHIẾU HỦY ======
+		// Giả định bạn đã có:
+		// - modelPH: DefaultTableModel cho bảng Phiếu Hủy
+		// - fmt: DateTimeFormatter (ví dụ: DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+		modelPH.setRowCount(0);
+		for (PhieuHuy ph : phieuHuys) {
+			modelPH.addRow(new Object[] { ph.getMaPhieuHuy(), ph.getNgayLapPhieu().format(fmt),
+					ph.getNhanVien().getTenNhanVien(), ph.isTrangThai() ? "Đã duyệt" : "Chờ duyệt" });
 		}
-	}
 
-	private void loadChiTiet(String maPhieuHuy) {
-		try {
-			modelCTPh.setRowCount(0);
-			// dùng view-model có TenSanPham
-			List<CTPHView> list = ctphDAO.findByMaPhieu(maPhieuHuy);
-			java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
-
-			for (CTPHView v : list) {
-				modelCTPh.addRow(new Object[] { v.getMaLo(), v.getMaSanPham(), v.getTenSanPham(), v.getSoLuongHuy(),
-						v.getTenDonViTinh(), v.getHanSuDung(), v.getLyDo()});
-			}
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			javax.swing.JOptionPane.showMessageDialog(this, "Lỗi tải Chi tiết: " + ex.getMessage());
+		// ====== ĐỔ DỮ LIỆU LÊN BẢNG CHI TIẾT PHIẾU HỦY ======
+		// Giả định bạn đã có modelCTPH: DefaultTableModel cho bảng chi tiết hủy
+		modelCTPH.setRowCount(0);
+		for (ChiTietPhieuHuy cth : chiTietPhieuHuys) {
+			modelCTPH.addRow(new Object[] { cth.getPhieuHuy().getMaPhieuHuy(), cth.getLoSanPham().getMaLo(),
+					cth.getLoSanPham().getSanPham().getTenSanPham(), cth.getSoLuongHuy(), cth.getLyDoChiTiet() });
 		}
-	}
 
-	private void initMasterDetail() {
-		tblPH.getSelectionModel().addListSelectionListener(e -> {
-			if (e.getValueIsAdjusting())
-				return; // tránh bắn 2 lần
-			int viewRow = tblPH.getSelectedRow();
-			if (viewRow < 0)
-				return;
-			int modelRow = tblPH.convertRowIndexToModel(viewRow);
-			String maPH = String.valueOf(modelPH.getValueAt(modelRow, 0));
-			loadChiTiet(maPH);
-		});
 	}
 
 	private void formatTable(JTable table) {
