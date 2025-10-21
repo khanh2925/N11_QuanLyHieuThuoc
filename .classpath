@@ -10,5 +10,9 @@
 	<classpathentry kind="lib" path="src/lib/jcalendar-1.4.jar"/>
 	<classpathentry kind="lib" path="src/lib/jfreechart-1.5.2.jar"/>
 	<classpathentry kind="lib" path="src/lib/sqljdbc42.jar"/>
+	<classpathentry kind="lib" path="com.miglayout.swing_11.4.2.jar"/>
+	<classpathentry kind="lib" path="com.miglayout.core_11.4.2.jar"/>
+	<classpathentry kind="lib" path="src/lib/com.miglayout.core_11.4.2.jar"/>
+	<classpathentry kind="lib" path="src/lib/com.miglayout.swing_11.4.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
