@@ -13,6 +13,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 
 import customcomponent.PillButton;
+import customcomponent.PlaceholderSupport;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,28 +47,13 @@ public class BanHang_GUI extends JPanel {
         add(pnCotPhaiHead, BorderLayout.NORTH);
 
         // Ô tìm kiếm
-        txtTimThuoc = new JTextField("Tìm theo mã, tên...");
+        txtTimThuoc = new JTextField();
+        PlaceholderSupport.addPlaceholder(txtTimThuoc, "Tìm theo mã, tên...");
         txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         txtTimThuoc.setBounds(25, 10, 342, 68);
         txtTimThuoc.setBorder(new LineBorder(new Color(0x00C0E2), 2, true));
         txtTimThuoc.setBackground(Color.WHITE);
         txtTimThuoc.setForeground(Color.GRAY);
-        txtTimThuoc.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (txtTimThuoc.getText().equals("Tìm theo mã, tên...")) {
-                    txtTimThuoc.setText("");
-                    txtTimThuoc.setForeground(Color.BLACK);
-                }
-            }
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (txtTimThuoc.getText().isEmpty()) {
-                    txtTimThuoc.setText("Tìm theo mã, tên...");
-                    txtTimThuoc.setForeground(Color.GRAY);
-                }
-            }
-        });
         pnCotPhaiHead.add(txtTimThuoc);
 
         // Nút viên thuốc 2 màu
@@ -145,6 +131,7 @@ public class BanHang_GUI extends JPanel {
 
         // Ô tìm khách hàng
         JTextField txtTimKH = new JTextField();
+        PlaceholderSupport.addPlaceholder(txtTimKH, "Tìm theo số điện thoại");
         txtTimKH.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtTimKH.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
         txtTimKH.setBorder(BorderFactory.createCompoundBorder(
@@ -153,22 +140,6 @@ public class BanHang_GUI extends JPanel {
         ));
         txtTimKH.setBackground(new Color(0xFAFAFA));
         txtTimKH.setForeground(Color.GRAY);
-        txtTimKH.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (txtTimKH.getText().equals("🔍 Số điện thoại khách hàng (F4)")) {
-                    txtTimKH.setText("");
-                    txtTimKH.setForeground(Color.BLACK);
-                }
-            }
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (txtTimKH.getText().isEmpty()) {
-                    txtTimKH.setText("🔍 Số điện thoại khách hàng (F4)");
-                    txtTimKH.setForeground(Color.GRAY);
-                }
-            }
-        });
         pnCotPhaiRight.add(txtTimKH);
         pnCotPhaiRight.add(Box.createVerticalStrut(15));
 
