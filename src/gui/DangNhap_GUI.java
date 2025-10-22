@@ -9,7 +9,7 @@ import customcomponent.PillButton;
 import customcomponent.RoundedBorder;
 import javax.swing.border.LineBorder;
 
-public class DangNhap_Gui {
+public class DangNhap_GUI {
 
     private JFrame frame;
     private JTextField txtTaiKhoan;
@@ -19,7 +19,7 @@ public class DangNhap_Gui {
         EventQueue.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                DangNhap_Gui window = new DangNhap_Gui();
+                DangNhap_GUI window = new DangNhap_GUI();
                 window.frame.setVisible(true);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -27,7 +27,7 @@ public class DangNhap_Gui {
         });
     }
 
-    public DangNhap_Gui() {
+    public DangNhap_GUI() {
         initialize();
     }
 
@@ -171,6 +171,25 @@ public class DangNhap_Gui {
         btnQuenMK.setBorderPainted(false);
         btnQuenMK.setFocusPainted(false);
         btnQuenMK.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+		btnDangNhap.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String taiKhoan = txtTaiKhoan.getText();
+				String matKhau = new String(txtMatKhau.getPassword());
+				// Kiểm tra dữ liệu nhập
+				if (taiKhoan.equals("admin") && matKhau.equals("admin123")) {
+			        addPlaceholder(txtTaiKhoan, "Nhập tài khoản của bạn");
+			        addPlaceholder(txtMatKhau, "Nhập mật khẩu của bạn");
+		            frame.setContentPane(new Main_GUI());
+					// Chuyển đến giao diện chính của ứng dụng
+				} else {
+					JOptionPane.showMessageDialog(frame, "Tài khoản hoặc mật khẩu không đúng.", "Lỗi đăng nhập",
+							JOptionPane.ERROR_MESSAGE);
+			        addPlaceholder(txtTaiKhoan, "Nhập tài khoản của bạn");
+			        addPlaceholder(txtMatKhau, "Nhập mật khẩu của bạn");
+				}
+			}
+		});
 
         btnQuenMK.addMouseListener(new MouseAdapter() {
             @Override

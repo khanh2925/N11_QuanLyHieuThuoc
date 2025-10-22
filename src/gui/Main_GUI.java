@@ -52,6 +52,7 @@ public class Main_GUI extends JFrame {
 					add(lbl);
 				}
 			}, "tongquan");
+
 			cardPanel.add(new KhachHang_NV_GUI(), "khachhang");
 			cardPanel.add(new JPanel(new GridBagLayout()) {
 				{

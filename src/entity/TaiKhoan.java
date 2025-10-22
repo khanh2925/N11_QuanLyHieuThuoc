@@ -40,7 +40,7 @@ public class TaiKhoan {
     }
 
     public void setTenDangNhap(String tenDangNhap) {
-        if (tenDangNhap != null && tenDangNhap.matches("^[a-zA-Z0-9]{5,30}$")) {
+        if (tenDangNhap != null && tenDangNhap.matches("^[a-zA-Z0-9à-ỵÀ-Ỵ ]{5,30}$")) {
             this.tenDangNhap = tenDangNhap;
         } else {
             throw new IllegalArgumentException("Tên đăng nhập không hợp lệ, chỉ được chứa chữ và số, độ dài từ 5-30 ký tự.");
