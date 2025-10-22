@@ -1,18 +1,25 @@
 /**
- * @author Thanh Kha
- * @version 1.0
+ * @author Quốc Khánh
+ * @version 3.0
  * @since Oct 16, 2025
  *
- * Mô tả: Giao diện quản lý sản phẩm
+ * Mô tả: Khung giao diện trống - giữ lại bố cục chính để clone trang khác.
  */
 
 package gui;
 
-import entity.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
-import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -20,72 +27,48 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+import javax.swing.border.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
-
-import org.jfree.chart.block.CenterArrangement;
 
 import customcomponent.ClipTooltipRenderer;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
+import entity.KhuyenMai;
+import entity.LoaiSanPham;
+import entity.SanPham;
+import entity.ChiTietKhuyenMaiSanPham;
+import entity.DonViTinh;
+import entity.DuongDung;
+import entity.HinhThucKM;
 
-import java.net.URL;
-import java.text.DecimalFormat;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.Image;
-
-import java.util.ArrayList;
-import java.util.List;
-
-public class SanPham_GUI extends JPanel {
+public class KhuyenMai_GUI extends JPanel {
 
 	private JPanel pnCenter; // vùng trung tâm
 	private JPanel pnHeader; // vùng đầu trang
-	private DefaultTableModel modelSP;
-	private JTable tblSP;
-	private JScrollPane scrSP;
-
-	DecimalFormat df = new DecimalFormat("#,000.#đ");
-
-	private Color blueMint = new Color(180, 220, 240);
-	private Color pinkPastel = new Color(255, 200, 220);
+	private JPanel pnRight; // vùng cột phải
 	private JTextField txtSearch;
 	private PillButton btnThem;
 	private PillButton btnCapNhat;
-	private JComboBox<String> cboLoaiHang;
-	private JPanel pnLoc;
+	private DefaultTableModel modelKM;
+	private JTable tblKM;
+	private JScrollPane scrKM;
+	private Color blueMint = new Color(180, 220, 240);
+	private Color pinkPastel = new Color(255, 200, 220);
 
-	private LoaiSanPham lspKeDon;
-	private LoaiSanPham lspKhongKeDon;
-	private LoaiSanPham lspTPCN;
-	private LoaiSanPham lspDungCuYTe;
+	DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+	DecimalFormat df = new DecimalFormat("#,000.#đ");
 
-	private DonViTinh dvtVien;
-	private DonViTinh dvtHop;
-	private DonViTinh dvtLo;
-	private DonViTinh dvtTuyp;
-	private List<SanPham> dssp;
-
-	public SanPham_GUI() {
+	public KhuyenMai_GUI() {
+		this.setPreferredSize(new Dimension(1537, 850));
 		initialize();
 	}
 
 	private void initialize() {
 		setLayout(new BorderLayout());
 		setPreferredSize(new Dimension(1537, 1168));
-
-		UIManager.put("ComboBox.background", Color.WHITE);
-		UIManager.put("ComboBox.selectionBackground", blueMint);
-		UIManager.put("ComboBox.selectionForeground", Color.BLACK);
-		UIManager.put("ComboBox.foreground", Color.BLACK);
-		UIManager.put("ComboBox.disabledBackground", Color.WHITE);
 
 		// ===== HEADER =====
 		pnHeader = new JPanel();
@@ -95,24 +78,11 @@ public class SanPham_GUI extends JPanel {
 		add(pnHeader, BorderLayout.NORTH);
 
 		txtSearch = new JTextField("");
-		PlaceholderSupport.addPlaceholder(txtSearch, "Tìm kiếm sản phẩm");
+		PlaceholderSupport.addPlaceholder(txtSearch, "Tìm kiếm khuyến mãi");
 		txtSearch.setForeground(Color.GRAY);
 		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 		txtSearch.setPreferredSize(new Dimension(420, 44));
 		txtSearch.setBorder(new RoundedBorder(20));
-
-		pnLoc = new JPanel();
-		pnLoc.setBorder(BorderFactory.createTitledBorder(new RoundedBorder(20), "Lọc và sắp xếp"));
-		pnLoc.setBackground(new Color(0, 0, 0, 0)); // Màu nền trong suốt
-		pnLoc.setPreferredSize(new Dimension(560, 66));
-		pnLoc.setLayout(null);
-
-		cboLoaiHang = new JComboBox<String>();
-		cboLoaiHang.setLocation(20, 18);
-		cboLoaiHang.setSize(150, 30);
-		cboLoaiHang.setBackground(Color.white);
-
-		pnLoc.add(cboLoaiHang);
 
 		btnThem = new PillButton("Thêm");
 		btnThem.setSize(100, 30);
@@ -121,42 +91,37 @@ public class SanPham_GUI extends JPanel {
 		btnCapNhat.setSize(100, 30);
 
 		pnHeader.add(txtSearch);
-		pnHeader.add(pnLoc);
 		pnHeader.add(btnThem);
 		pnHeader.add(btnCapNhat);
 		// ===== CENTER =====
 		pnCenter = new JPanel();
+		pnCenter.setBackground(new Color(255, 128, 192));
 		pnCenter.setLayout(new BorderLayout());
 		add(pnCenter, BorderLayout.CENTER);
 		initTable();
-		KhoiTaoEntityMau();
-		LoadSanPham();
-
-		LoadCboLoaiSanPham();
+		LoadKhuyenMai();
 	}
 
 	private void initTable() {
-		// Bảng sản phẩm
-		String[] sanPhamCols = { "Hình ảnh", "Mã sản phẩm", "Tên sản phẩm", "Loại sản phẩm", "Số đăng ký", "Hoạt chất",
-				"Hàm lượng", "Hãng sản xuất", "Xuất xứ", "Đơn vị tính", "Đường dùng", "Giá nhập", "Giá bán",
-				"Quy cách đóng gói", "Kệ bán", "Trạng thái" };
-
-		modelSP = new DefaultTableModel(sanPhamCols, 0) {
+		// Bảng khuyến mãi
+		String[] khuyenMaiCols = { "Mã khuyến mãi", "Tên khuyến mãi", "Hình thức", "Giá trị", "Ngày bắt đầu",
+				"Ngày kết thúc", "Loại khuyến mãi", "Điều kiện áp dụng", "Trạng thái" };
+		modelKM = new DefaultTableModel(khuyenMaiCols, 0) {
 			@Override
 			public boolean isCellEditable(int r, int c) {
 				return false;
 			}
 		};
-		tblSP = new JTable(modelSP);
-		scrSP = new JScrollPane(tblSP);
-		pnCenter.add(scrSP);
-		formatTable(tblSP);
-		tblSP.setSelectionBackground(pinkPastel);
-		tblSP.getTableHeader().setBackground(blueMint);
+		tblKM = new JTable(modelKM);
+		scrKM = new JScrollPane(tblKM);
+		pnCenter.add(scrKM);
+		formatTable(tblKM);
+		tblKM.setSelectionBackground(pinkPastel);
+		tblKM.getTableHeader().setBackground(blueMint);
 
 		// Render ảnh trên table
-		tblSP.setRowHeight(55); // chiều cao hàng để đủ chỗ cho ảnh
-		tblSP.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
+		tblKM.setRowHeight(55); // chiều cao hàng để đủ chỗ cho ảnh
+		tblKM.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
 			@Override
 			public void setValue(Object value) {
 				if (value instanceof ImageIcon) {
@@ -170,8 +135,8 @@ public class SanPham_GUI extends JPanel {
 		});
 
 		// Bỏ qua cột Ảnh (index 0). Gắn tooltip cho tất cả các cột còn lại.
-		for (int col = 1; col < tblSP.getColumnCount(); col++) {
-			tblSP.getColumnModel().getColumn(col).setCellRenderer(new ClipTooltipRenderer());
+		for (int col = 1; col < tblKM.getColumnCount(); col++) {
+			tblKM.getColumnModel().getColumn(col).setCellRenderer(new ClipTooltipRenderer());
 		}
 	}
 
@@ -214,22 +179,21 @@ public class SanPham_GUI extends JPanel {
 		table.getTableHeader().setReorderingAllowed(false);
 	}
 
-	private void KhoiTaoEntityMau() {
-		lspKeDon = new LoaiSanPham("LSP001", "Thuốc kê đơn", "Chỉ bán khi có đơn");
-		lspKhongKeDon = new LoaiSanPham("LSP002", "Thuốc không kê đơn", "Bán tự do");
-		lspTPCN = new LoaiSanPham("LSP003", "Thực phẩm chức năng", "Hỗ trợ sức khỏe");
-		lspDungCuYTe = new LoaiSanPham("LSP004", "Dụng cụ y tế", "Dụng cụ hỗ trợ");
+	public void LoadKhuyenMai() {
 
-		dvtVien = new DonViTinh("DVT-001", "Viên", "Thuốc dạng viên nén hoặc nang");
-		dvtHop = new DonViTinh("DVT-002", "Hộp", "Hộp chứa nhiều vỉ thuốc");
-		dvtLo = new DonViTinh("DVT-003", "Lọ", "Dung dịch hoặc viên trong lọ");
-		dvtTuyp = new DonViTinh("DVT-004", "Tuýp", "Thuốc bôi ngoài da dạng kem/gel");
-	}
+		LoaiSanPham lspKeDon = new LoaiSanPham("LSP001", "Thuốc kê đơn", "Chỉ bán khi có đơn");
+		LoaiSanPham lspKhongKeDon = new LoaiSanPham("LSP002", "Thuốc không kê đơn", "Bán tự do");
+		LoaiSanPham lspTPCN = new LoaiSanPham("LSP003", "Thực phẩm chức năng", "Hỗ trợ sức khỏe");
+		LoaiSanPham lspDungCuYTe = new LoaiSanPham("LSP004", "Dụng cụ y tế", "Dụng cụ hỗ trợ");
 
-	private void LoadSanPham() {
-		// ====== 2. Tạo danh sách sản phẩm ======
-		dssp = new ArrayList<>();
+		DonViTinh dvtVien = new DonViTinh("DVT-001", "Viên", "Thuốc dạng viên nén hoặc nang");
+		DonViTinh dvtHop = new DonViTinh("DVT-002", "Hộp", "Hộp chứa nhiều vỉ thuốc");
+		DonViTinh dvtLo = new DonViTinh("DVT-003", "Lọ", "Dung dịch hoặc viên trong lọ");
+		DonViTinh dvtTuyp = new DonViTinh("DVT-004", "Tuýp", "Thuốc bôi ngoài da dạng kem/gel");
 
+		List<SanPham> dssp = new ArrayList<>();
+		List<KhuyenMai> ds = new ArrayList<>();
+		List<ChiTietKhuyenMaiSanPham> dsctkm = new ArrayList<>();
 		dssp.add(new SanPham("SP000001", "Paracetamol 500mg", lspKhongKeDon, "SDK-001", "Paracetamol", "500mg",
 				"Traphaco", "Việt Nam", dvtVien, DuongDung.UONG, 800, 1200, "paracetamol.png", "Hộp 10 vỉ x 10 viên",
 				"Kệ A1", true));
@@ -302,41 +266,79 @@ public class SanPham_GUI extends JPanel {
 		dssp.add(new SanPham("SP000020", "Acyclovir cream 5%", lspKeDon, "SDK-020", "Acyclovir", "5%", "Stella",
 				"Việt Nam", dvtTuyp, DuongDung.BOI, 6000, 12000, "acyclovir.png", "Tuýp 5g", "Kệ C4", true));
 
-		dssp.forEach(sp -> {
-			String imagePath = "/images/" + sp.getHinhAnh();
-			ImageIcon icon = null;
+		// giả lập danh sách khuyến mãi
 
-			URL url = getClass().getResource(imagePath);
+		// KM theo % trên HÓA ĐƠN
+		ds.add(new KhuyenMai("KM-20251022-0001", "Giảm 10% toàn bộ hóa đơn", LocalDate.of(2025, 10, 22),
+				LocalDate.of(2025, 11, 30), true, /* đang áp dụng */
+				true, /* khuyến mãi hóa đơn */
+				HinhThucKM.GIAM_GIA_PHAN_TRAM, 10.0, "Áp dụng mọi đơn hàng", 0, 0));
 
-			if (url == null) {
-				String errorImagePath = "/images/icon_anh_sp_null.png";
-				url = getClass().getResource(errorImagePath);
-				if (url == null) {
-					System.err.println("Không tìm thấy ảnh tại" + imagePath + ", ảnh thay thế bị lỗi!");
-				} else {
-					System.err.println("Không tìm thấy ảnh tại" + imagePath + ", dùng " + errorImagePath + " thay thế");
-				}
+		ds.add(new KhuyenMai("KM-20251101-0002", "Giảm 5% cho đơn từ 300.000đ", LocalDate.of(2025, 11, 1),
+				LocalDate.of(2025, 11, 30), true, true, HinhThucKM.GIAM_GIA_PHAN_TRAM, 5.0, "Đơn hàng >= 300000đ", 0,
+				0));
+
+		// KM GIẢM TIỀN mặt trên hóa đơn
+		ds.add(new KhuyenMai("KM-20251001-0003", "Giảm 20.000đ cho đơn từ 200.000đ", LocalDate.of(2025, 10, 1),
+				LocalDate.of(2025, 10, 31), false, true, /* đã hết hạn, ví dụ */
+				HinhThucKM.GIAM_GIA_TIEN, 20000, "Đơn hàng >= 200000đ", 0, 0));
+
+		// KM theo % NHÓM HÀNG (không phải hóa đơn)
+		ds.add(new KhuyenMai("KM-20251201-0004", "Giảm 15% nhóm Vitamin", LocalDate.of(2025, 12, 1),
+				LocalDate.of(2025, 12, 15), true, false, HinhThucKM.GIAM_GIA_PHAN_TRAM, 15.0,
+				"Chỉ áp dụng nhóm Vitamin/TP chức năng", 0, 0));
+
+		// KM TẶNG THÊM (MUA N TẶNG M) — dùng soLuongToiThieu & soLuongTangThem
+		ds.add(new KhuyenMai("KM-20251025-0005", "Mua 2 tặng 1 – Paracetamol 500mg", LocalDate.of(2025, 10, 25),
+				LocalDate.of(2025, 11, 25), true, false, HinhThucKM.TANG_THEM, 0, "Áp dụng riêng Paracetamol 500mg", 2,
+				1));
+
+		dsctkm.add(new ChiTietKhuyenMaiSanPham(
+				dssp.stream().filter(sp -> sp.getMaSanPham().equals("SP000001")).findFirst().orElse(null),
+				ds.stream().filter(km -> km.getMaKM().equals("KM-20251025-0005")).findFirst().orElse(null)));
+
+		ds.add(new KhuyenMai("KM-20251105-0006", "Mua 5 tặng 2 – Salonpas hộp", LocalDate.of(2025, 11, 5),
+				LocalDate.of(2025, 11, 20), true, false, HinhThucKM.TANG_THEM, 0, "Áp dụng khi mua hộp Salonpas", 5,
+				2));
+
+		dsctkm.add(new ChiTietKhuyenMaiSanPham(
+				dssp.stream().filter(sp -> sp.getMaSanPham().equals("SP000008")).findFirst().orElse(null),
+				ds.stream().filter(km -> km.getMaKM().equals("KM-20251105-0006")).findFirst().orElse(null)));
+
+		// KM GIẢM TIỀN theo sản phẩm
+		ds.add(new KhuyenMai("KM-20251020-0007", "Giảm 5.000đ – Nước muối 0.9%", LocalDate.of(2025, 10, 20),
+				LocalDate.of(2025, 11, 10), true, false, HinhThucKM.GIAM_GIA_TIEN, 5000,
+				"Áp dụng Nước muối 0.9% chai 500ml", 0, 0));
+
+		dsctkm.add(new ChiTietKhuyenMaiSanPham(
+				dssp.stream().filter(sp -> sp.getMaSanPham().equals("SP000012")).findFirst().orElse(null),
+				ds.stream().filter(km -> km.getMaKM().equals("KM-20251020-0007")).findFirst().orElse(null)));
+
+		// Một số KM test cho nhiều trạng thái
+		ds.add(new KhuyenMai("KM-20250901-0008", "Giảm 7% cho nhóm giảm đau", LocalDate.of(2025, 9, 1),
+				LocalDate.of(2025, 9, 30), false, false, HinhThucKM.GIAM_GIA_PHAN_TRAM, 7.0, "Hết hạn", 0, 0));
+
+		ds.add(new KhuyenMai("KM-20251210-0009", "Giảm 30.000đ đơn từ 500.000đ", LocalDate.of(2025, 12, 10),
+				LocalDate.of(2026, 1, 10), true, true, HinhThucKM.GIAM_GIA_TIEN, 30000, "Đơn hàng >= 500000đ", 0, 0));
+
+		for (KhuyenMai km : ds) {
+			String giaTri = "";
+			String hinhThuc = "";
+			if (km.getHinhThuc() == HinhThucKM.GIAM_GIA_PHAN_TRAM) {
+				hinhThuc = "Giảm giá phần trăm";
+				giaTri = km.getGiaTri() + "%";
+			} else if (km.getHinhThuc() == HinhThucKM.GIAM_GIA_TIEN) {
+				hinhThuc = "Giảm giá tiền";
+				giaTri = df.format(km.getGiaTri());
+			} else {
+				hinhThuc = "Tặng thêm";
+				giaTri = "Mua " + km.getSoLuongToiThieu() + " tặng " + km.getSoLuongTangThem();
 			}
-
-			icon = new ImageIcon(url);
-			// Scale kích thước icon
-			Image img = icon.getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
-			icon = new ImageIcon(img);
-
-			modelSP.addRow(new Object[] { icon, sp.getMaSanPham(), sp.getTenSanPham(),
-					sp.getLoaiSanPham().getTenLoaiSanPham(), sp.getSoDangKy(), sp.getHoatChat(), sp.getHamLuong(),
-					sp.getHangSanXuat(), sp.getXuatXu(), sp.getDonViTinh().getTenDonViTinh(), sp.getDuongDung(),
-					df.format(sp.getGiaNhap()), df.format(sp.getGiaBan()), sp.getQuyCachDongGoi(), sp.getKeBanSanPham(),
-					sp.isHoatDong() ? "Đang kinh doanh" : "Ngừng kinh doanh" });
-		});
-	}
-
-	private void LoadCboLoaiSanPham() {
-		cboLoaiHang.addItem("Chọn loại sản phẩm");
-		cboLoaiHang.addItem(lspKeDon.getTenLoaiSanPham());
-		cboLoaiHang.addItem(lspKhongKeDon.getTenLoaiSanPham());
-		cboLoaiHang.addItem(lspDungCuYTe.getTenLoaiSanPham());
-		cboLoaiHang.addItem(lspTPCN.getTenLoaiSanPham());
+			modelKM.addRow(
+					new Object[] { km.getMaKM(), km.getTenKM(), hinhThuc, giaTri, km.getNgayBatDau().format(fmt),
+							km.getNgayKetThuc().format(fmt), km.isKhuyenMaiHoaDon() ? "Khuyến mãi hoá đơn" : "Khuyến mãi sản phẩm",
+							km.getDieuKienApDungHoaDon(), km.isTrangThai() ? "Đang áp dụng" : "Hết hạn" });
+		}
 	}
 
 	public static void main(String[] args) {
@@ -345,7 +347,7 @@ public class SanPham_GUI extends JPanel {
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			frame.setSize(1280, 800);
 			frame.setLocationRelativeTo(null);
-			frame.setContentPane(new SanPham_GUI());
+			frame.setContentPane(new KhuyenMai_GUI());
 			frame.setVisible(true);
 		});
 	}
