@@ -4,9 +4,14 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Frame;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
+import java.util.Date;
+
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+
+import com.toedter.calendar.JDateChooser; // THAY ĐỔI 1: Import class mới từ thư viện JCalendar
 
 import entity.NhanVien;
 import entity.TaiKhoan;
@@ -18,13 +23,14 @@ public class ThemNhanVien_Dialog extends JDialog {
     private JTextField txtDiaChi;
     private JTextField txtSoDienThoai;
     private JPasswordField txtMatKhau;
-    
-    // Thêm các component mới
-    private JComboBox<String> cmbNgay, cmbThang, cmbNam;
+
+    // THAY ĐỔI 2: Khai báo JDateChooser thay cho DateChooser cũ
+    private JDateChooser ngaySinhDateChooser;
+
     private JRadioButton radNam, radNu;
     private JCheckBox chkQuanLy;
     private JComboBox<String> cmbCaLam;
-    
+
     private JButton btnThem;
     private JButton btnThoat;
 
@@ -36,12 +42,13 @@ public class ThemNhanVien_Dialog extends JDialog {
     }
 
     private void initialize() {
-        // Tăng chiều cao để chứa các component mới
         setSize(650, 600);
         setLocationRelativeTo(getParent());
         getContentPane().setBackground(Color.WHITE);
         setLayout(null);
 
+        // ... (Code cho các component khác không thay đổi) ...
+        
         // --- Tiêu đề Dialog ---
         JLabel lblTitle = new JLabel("Thêm nhân viên");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
@@ -98,21 +105,15 @@ public class ThemNhanVien_Dialog extends JDialog {
         lblNgaySinh.setBounds(40, 240, 120, 25);
         getContentPane().add(lblNgaySinh);
 
-        cmbNgay = new JComboBox<>();
-        for (int i = 1; i <= 31; i++) cmbNgay.addItem(String.format("%02d", i));
-        cmbNgay.setBounds(40, 270, 70, 35);
-        getContentPane().add(cmbNgay);
+        // THAY ĐỔI 3: Khởi tạo JDateChooser và thiết lập định dạng ngày tháng
+        ngaySinhDateChooser = new JDateChooser(); // Sử dụng constructor của JDateChooser
+        ngaySinhDateChooser.setBounds(40, 270, 250, 35);
+        ngaySinhDateChooser.setDateFormatString("dd-MM-yyyy"); // Đặt định dạng hiển thị
+        ngaySinhDateChooser.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        getContentPane().add(ngaySinhDateChooser);
 
-        cmbThang = new JComboBox<>();
-        for (int i = 1; i <= 12; i++) cmbThang.addItem(String.format("%02d", i));
-        cmbThang.setBounds(120, 270, 70, 35);
-        getContentPane().add(cmbThang);
+        // ... (Code cho các component còn lại không thay đổi) ...
 
-        cmbNam = new JComboBox<>();
-        for (int i = LocalDate.now().getYear() - 18; i >= 1950; i--) cmbNam.addItem(String.valueOf(i));
-        cmbNam.setBounds(200, 270, 90, 35);
-        getContentPane().add(cmbNam);
-        
         // --- Giới tính ---
         JLabel lblGioiTinh = new JLabel("Giới tính:");
         lblGioiTinh.setFont(new Font("Segoe UI", Font.PLAIN, 16));
@@ -179,7 +180,7 @@ public class ThemNhanVien_Dialog extends JDialog {
         btnThem.setBackground(Color.LIGHT_GRAY);
         btnThem.setBorder(new LineBorder(Color.GRAY));
         getContentPane().add(btnThem);
-
+        
         // --- Thêm sự kiện cho các nút ---
         btnThoat.addActionListener(e -> dispose());
         btnThem.addActionListener(e -> onThemButtonClick());
@@ -187,40 +188,43 @@ public class ThemNhanVien_Dialog extends JDialog {
 
     private void onThemButtonClick() {
         try {
-            // 1. Lấy dữ liệu từ các component
+            // ... (Lấy dữ liệu các trường text không đổi) ...
             String ten = txtTenNhanVien.getText();
             String email = txtEmail.getText();
             String diaChi = txtDiaChi.getText();
             String sdt = txtSoDienThoai.getText();
             String matKhau = new String(txtMatKhau.getPassword());
             
-            String ngay = cmbNgay.getSelectedItem().toString();
-            String thang = cmbThang.getSelectedItem().toString();
-            String nam = cmbNam.getSelectedItem().toString();
-            LocalDate ngaySinh = LocalDate.parse(nam + "-" + thang + "-" + ngay);
+            // THAY ĐỔI 4: Lấy ngày từ JDateChooser bằng phương thức getDate()
+            Date selectedDate = ngaySinhDateChooser.getDate(); // Sử dụng getDate()
+            if (selectedDate == null) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày sinh.", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            // Phần còn lại của logic chuyển đổi và kiểm tra tuổi không thay đổi
+            LocalDate ngaySinh = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+            if (ngaySinh.isAfter(LocalDate.now().minusYears(18))) {
+                JOptionPane.showMessageDialog(this, "Nhân viên phải đủ 18 tuổi.", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             
             boolean gioiTinh = radNam.isSelected();
             boolean isQuanLy = chkQuanLy.isSelected();
             String caLam = cmbCaLam.getSelectedItem().toString();
 
-            // 2. Tạo mã tự động theo đúng định dạng
             String maTK = String.format("TK%06d", (int) (Math.random() * 1000000));
-            // Lấy 10 chữ số cuối của timestamp để đảm bảo đúng định dạng
             String maNV = String.format("NV%s", String.valueOf(System.currentTimeMillis()).substring(3));
 
-            // 3. Tạo đối tượng TaiKhoan và NhanVien
-            // Việc validate sẽ được thực hiện tự động trong các hàm setter của entity
             TaiKhoan tk = new TaiKhoan(maTK, email, matKhau); 
             this.nhanVienMoi = new NhanVien(maNV, ten, gioiTinh, ngaySinh, sdt, diaChi, isQuanLy, tk, caLam, true);
             
-            // 4. Đóng dialog nếu thành công
             dispose();
             
         } catch (IllegalArgumentException | DateTimeParseException ex) {
-            // Bắt lỗi từ các hàm setter trong entity hoặc lỗi parse ngày tháng
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
-        	 JOptionPane.showMessageDialog(this, "Đã xảy ra lỗi không xác định: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Đã xảy ra lỗi không xác định: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
