@@ -22,7 +22,6 @@ import javax.swing.table.TableColumnModel;
 
 import com.toedter.calendar.JDateChooser;
 import customcomponent.*;
-import dao.*;
 import entity.NhanVien;
 import entity.PhieuNhap;
 
