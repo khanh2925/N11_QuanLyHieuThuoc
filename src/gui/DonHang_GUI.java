@@ -16,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
@@ -30,7 +31,6 @@ public class DonHang_GUI extends JPanel {
 	private JPanel pnCenter; // vùng trung tâm
 	private JPanel pnHeader; // vùng đầu trang
 	private JPanel pnRight; // vùng cột phải
-	private JButton btnThem;
 	private JButton btnXuatFile;
 	private JTextField txtSearch;
 	private DefaultTableModel modelHD;
@@ -39,6 +39,8 @@ public class DonHang_GUI extends JPanel {
 	private DefaultTableModel modelCTHD;
 	private JScrollPane scrHD;
 	private JTable tblCTHD;
+	private JDateChooser dateTu;
+	private JDateChooser dateDen;
 
 
 	private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
@@ -63,77 +65,43 @@ public class DonHang_GUI extends JPanel {
 		pnHeader.setLayout(null);
 		add(pnHeader, BorderLayout.NORTH);
 
-		String placeholder = "Tìm kiếm";
-		JTextField txtSearch = new JTextField() {
-		    @Override
-		    protected void paintComponent(Graphics g) {
-		        super.paintComponent(g);
-		        if (placeholder == null || placeholder.length() == 0 || getText().length() > 0) return;
-		        Graphics2D g2 = (Graphics2D) g;
-		        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		        g2.setColor(getDisabledTextColor());
-		        
-		        FontMetrics fm = g2.getFontMetrics();
-		        int textY = getHeight() / 2 + fm.getAscent() / 2 - 2;
-		        g2.drawString(placeholder, getInsets().left, textY);
-		    }
-		};
-		txtSearch.setSize(340, 65);
-		txtSearch.setLocation(10, 10);
-		txtSearch.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
-		txtSearch.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        txtSearch = new JTextField();
+        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        txtSearch.setBounds(10, 10, 342, 68);
+        txtSearch.setBorder(new LineBorder(new Color(0x00C0E2), 2,true));
+        txtSearch.setBackground(Color.WHITE);
 
 
-		JTextField txtDateRange = new JTextField();
-		txtDateRange.setSize(250, 65);
-		txtDateRange.setLocation(360, 10);
-		txtDateRange.setEditable(false);
-		txtDateRange.setText("Chọn ngày");
-		txtDateRange.setFont(new Font("Segoe UI", Font.BOLD, 15));
-		txtDateRange.setHorizontalAlignment(SwingConstants.CENTER);
-		txtDateRange.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				JFrame frame = new JFrame();
-				frame.getContentPane().setLayout(new FlowLayout());
+        PlaceholderSupport.addPlaceholder(txtSearch, "Tìm theo mã/tên ...");
 
-				JDateChooser startChooser = new JDateChooser();
-				JDateChooser endChooser = new JDateChooser();
-				JButton btnOk = new JButton("Chọn");
-
-				frame.getContentPane().add(new JLabel("Từ ngày:"));
-				frame.getContentPane().add(startChooser);
-				frame.getContentPane().add(new JLabel("Đến ngày:"));
-				frame.getContentPane().add(endChooser);
-				frame.getContentPane().add(btnOk);
-
-				frame.pack();
-				frame.setLocationRelativeTo(null);
-				frame.setVisible(true);
-
-				btnOk.addActionListener(ev -> {
-					Date start = startChooser.getDate();
-					Date end = endChooser.getDate();
-					if (start != null && end != null) {
-						SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-						txtDateRange.setText(sdf.format(start) + " - " + sdf.format(end));
-					}
-					frame.dispose();
-				});
-			}
-		});
-
-		btnThem = new PillButton("Thêm");
-		btnThem.setSize(100, 30);
-		btnThem.setLocation(620, 25);
 		btnXuatFile = new PillButton("Xuất file");
 		btnXuatFile.setSize(100, 30);
-		btnXuatFile.setLocation(736, 25);
+		btnXuatFile.setLocation(801, 30);
 
 		pnHeader.add(txtSearch);
-		pnHeader.add(txtDateRange);
-		pnHeader.add(btnThem);
 		pnHeader.add(btnXuatFile);
+		
+		JLabel lblTuNgay = new JLabel("Từ ngày:");
+		lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		lblTuNgay.setBounds(360, 30, 60, 25);
+		pnHeader.add(lblTuNgay);
+		
+		dateTu = new JDateChooser();
+		dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		dateTu.setDateFormatString("dd/MM/yyyy");
+		dateTu.setBounds(427, 30, 130, 25);
+		pnHeader.add(dateTu);
+		
+		JLabel lblDenNgay = new JLabel("Đến:");
+		lblDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		lblDenNgay.setBounds(588, 30, 40, 25);
+		pnHeader.add(lblDenNgay);
+		
+		dateDen = new JDateChooser();
+		dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		dateDen.setDateFormatString("dd/MM/yyyy");
+		dateDen.setBounds(635, 30, 130, 25);
+		pnHeader.add(dateDen);
 		
 
 		// ===== CENTER =====

@@ -16,14 +16,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumnModel;
 
-import com.toedter.calendar.JDateChooser;
-import customcomponent.*;
-import entity.NhanVien;
-import entity.PhieuNhap;
+import customcomponent.NhapHangItemRow;
+import customcomponent.PillButton;
+import customcomponent.PlaceholderSupport;
+import customcomponent.RoundedBorder;
 
 public class ThemPhieuNhap_GUI extends JPanel {
 
