@@ -17,11 +17,11 @@ import java.util.Date;
 
 import javax.swing.*;
 
+
 import customcomponent.NhapHangItemRow;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
-
 
 public class ThemPhieuNhap_GUI extends JPanel {
 
@@ -227,7 +227,7 @@ public class ThemPhieuNhap_GUI extends JPanel {
 
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
-			JFrame frame = new JFrame("Khung trống - clone base");
+			JFrame frame = new JFrame("Thêm phiếu nhập");
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			frame.setSize(1280, 800);
 			frame.setLocationRelativeTo(null);

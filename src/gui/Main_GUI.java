@@ -27,7 +27,7 @@ public class Main_GUI extends JFrame {
 	private int LOGO_WIDTH = 100;
 	private int MENU_ICON_WIDTH = 33;
 
-	private boolean isQuanLy = true;
+	private boolean isQuanLy = false;
 
 	public Main_GUI() {
 		setTitle("Hiệu thuốc Hòa An - Hệ thống quản lý");
@@ -52,6 +52,7 @@ public class Main_GUI extends JFrame {
 					add(lbl);
 				}
 			}, "tongquan");
+
 			cardPanel.add(new KhachHang_NV_GUI(), "khachhang");
 			cardPanel.add(new JPanel(new GridBagLayout()) {
 				{
@@ -167,6 +168,14 @@ public class Main_GUI extends JFrame {
 					new TraCuuDonHang_GUI());
 			addSubmenuButton("tracuu", "tracuudonhangtra", "Đơn trả hàng", "/images/icon_tra_hang.png",
 					new TraCuuDonTraHang_GUI());
+			addSubmenuButton("tracuu", "tracuukesanpham", "Kệ sản phẩm", "/images/icon_ke_sp.png",
+					new JPanel(new GridBagLayout()) {
+						{
+							JLabel lbl = new JLabel("Màn hình tra cứu kệ sản phẩm");
+							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+							add(lbl);
+						}
+					});
 			addMenuButton(menu, "Trả hàng", "trahang", "/images/icon_tra_hang.png");
 			addMenuButton(menu, "Khách hàng", "khachhang", "/images/icon_khach_hang.png");
 			addMenuButton(menu, "Thông tin cá nhân", "thongtin", "/images/icon_thong_tin.png");
