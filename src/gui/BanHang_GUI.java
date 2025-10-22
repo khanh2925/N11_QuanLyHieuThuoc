@@ -47,6 +47,7 @@ public class BanHang_GUI extends JPanel {
         add(pnCotPhaiHead, BorderLayout.NORTH);
 
         // Ô tìm kiếm
+        // Ô tìm kiếm
         txtTimThuoc = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimThuoc, "Tìm theo mã, tên...");
         txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
@@ -55,7 +56,6 @@ public class BanHang_GUI extends JPanel {
         txtTimThuoc.setBackground(Color.WHITE);
         txtTimThuoc.setForeground(Color.GRAY);
         pnCotPhaiHead.add(txtTimThuoc);
-
         // Nút viên thuốc 2 màu
         JButton btnThemDon = new PillButton("Thêm đơn");
         btnThemDon.setBounds(400, 20, 169, 48);
