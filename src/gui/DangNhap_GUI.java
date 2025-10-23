@@ -32,6 +32,7 @@ public class DangNhap_GUI extends JFrame {
 
 	private JTextField txtTaiKhoan;
 	private JPasswordField txtMatKhau;
+	private boolean isHidden;
 
 	public DangNhap_GUI() {
 		initialize();
@@ -52,7 +53,7 @@ public class DangNhap_GUI extends JFrame {
 
 	private JPanel createLeftPanel() {
 		JPanel pnLeft = new JPanel(new BorderLayout());
-		pnLeft.setPreferredSize(new Dimension(1256, 1080));
+		pnLeft.setPreferredSize(new Dimension(1056, 1080));
 		pnLeft.setBackground(new Color(0xB2EBF2));
 
 		ImagePanel pnlCenterBackground = new ImagePanel(
@@ -69,15 +70,13 @@ public class DangNhap_GUI extends JFrame {
 		ImageIcon logoIcon = new ImageIcon(getClass().getResource("/images/Logo.png"));
 		Image logoImage = logoIcon.getImage().getScaledInstance(250, 250, Image.SCALE_SMOOTH);
 		JLabel lblLogo = new JLabel(new ImageIcon(logoImage));
-		lblLogo.setBounds(190, 30, 250, 250);
-		pnFormDangNhap.add(lblLogo);
+		lblLogo.setBounds(147, 30, 250, 250);
 
 		JLabel lblTieuDeForm = new JLabel("Chào mừng đến với Hòa An");
 		lblTieuDeForm.setHorizontalAlignment(SwingConstants.CENTER);
-		lblTieuDeForm.setFont(new Font("Arial", Font.BOLD, 36));
+		lblTieuDeForm.setFont(new Font("Arial", Font.BOLD, 32));
 		lblTieuDeForm.setForeground(new Color(0x006064));
-		lblTieuDeForm.setBounds(39, 290, 570, 61);
-		pnFormDangNhap.add(lblTieuDeForm);
+		lblTieuDeForm.setBounds(39, 290, 435, 61);
 
 		int inputWidth = 532;
 		int inputHeight = 50;
@@ -85,39 +84,75 @@ public class DangNhap_GUI extends JFrame {
 		JLabel lblTaiKhoan = new JLabel("Tài khoản");
 		lblTaiKhoan.setFont(new Font("Arial", Font.PLAIN, 24));
 		lblTaiKhoan.setBounds(50, 399, 129, 30);
-		pnFormDangNhap.add(lblTaiKhoan);
 
 		txtTaiKhoan = new JTextField();
 		txtTaiKhoan.setFont(new Font("Arial", Font.PLAIN, 20));
-		txtTaiKhoan.setBounds(50, 439, inputWidth, inputHeight);
+		txtTaiKhoan.setBounds(50, 439, 400, 50);
 		txtTaiKhoan.setOpaque(false);
 		txtTaiKhoan.setBorder(new RoundedBorder(20));
 		txtTaiKhoan.setMargin(new Insets(5, 15, 5, 15));
-		pnFormDangNhap.add(txtTaiKhoan);
-		addPlaceholder(txtTaiKhoan, "Nhập tài khoản của bạn");
+
+		txtTaiKhoan.setText("Nhập tài khoản của bạn");
+		txtTaiKhoan.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				if (txtTaiKhoan.getText().equals("Nhập tài khoản của bạn")) {
+					txtTaiKhoan.setText("");
+					txtTaiKhoan.setForeground(Color.BLACK);
+				}
+			}
+
+			@Override
+			public void focusLost(FocusEvent e) {
+				if (txtTaiKhoan.getText().isEmpty()) {
+					txtTaiKhoan.setForeground(Color.GRAY);
+					txtTaiKhoan.setText("Nhập tài khoản của bạn");
+				}
+			}
+		});
 
 		JLabel lblMatKhau = new JLabel("Mật khẩu");
 		lblMatKhau.setFont(new Font("Arial", Font.PLAIN, 24));
 		lblMatKhau.setBounds(50, 518, 100, 30);
 		pnFormDangNhap.add(lblMatKhau);
 
-		JPanel pnMatKhau = new JPanel(null);
+		JPanel pnMatKhau = new JPanel(new BorderLayout());
 		pnMatKhau.setBorder(UIManager.getBorder("PasswordField.border"));
-		pnMatKhau.setBounds(50, 558, inputWidth, inputHeight);
+		pnMatKhau.setBounds(50, 558, 400, 50);
 		pnMatKhau.setOpaque(false);
 		pnMatKhau.setBorder(new RoundedBorder(20));
-		pnFormDangNhap.add(pnMatKhau);
 
 		// === Ô nhập mật khẩu ===
 		txtMatKhau = new JPasswordField();
+		final char defaultEcho = txtMatKhau.getEchoChar();
+		
 		txtMatKhau.setFont(new Font("Arial", Font.PLAIN, 20));
 		txtMatKhau.setBounds(60, 558, inputWidth - 60, inputHeight);
 		txtMatKhau.setOpaque(false);
 		txtMatKhau.setBorder(null);
-
 		txtMatKhau.setMargin(new Insets(5, 15, 5, 45));
-		pnFormDangNhap.add(txtMatKhau);
-		addPlaceholder(txtMatKhau, "Nhập mật khẩu của bạn");
+		
+		txtMatKhau.setText("Nhập mật khẩu của bạn");
+		txtMatKhau.setEchoChar((char) 0);
+		txtMatKhau.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				if (String.valueOf(txtMatKhau.getPassword()).equals("Nhập mật khẩu của bạn")) {
+					txtMatKhau.setText("");
+					txtMatKhau.setForeground(Color.BLACK);
+					txtMatKhau.setEchoChar('•'); // Ký tự mật khẩu thật
+				}
+			}
+
+			@Override
+			public void focusLost(FocusEvent e) {
+				if (String.valueOf(txtMatKhau.getPassword()).isEmpty()) {
+					txtMatKhau.setForeground(Color.GRAY);
+					txtMatKhau.setText("Nhập mật khẩu của bạn");
+					txtMatKhau.setEchoChar((char) 0);
+				}
+			}
+		});
 
 		// === Icon mắt ===
 		ImageIcon iconOpen = new ImageIcon(new ImageIcon(getClass().getResource("/images/eye_open.png")).getImage()
@@ -127,68 +162,59 @@ public class DangNhap_GUI extends JFrame {
 
 		// === Nút hiện/ẩn mật khẩu ===
 		JButton btnTogglePassword = new JButton(iconOpen); // mặc định ẩn mật khẩu → hiện icon "mắt mở"
-		btnTogglePassword.setBounds(50 + inputWidth - 50, 558, 40, inputHeight);
+		btnTogglePassword.setBounds(410, 558, 40, inputHeight);
 		btnTogglePassword.setFocusPainted(false);
 		btnTogglePassword.setBorderPainted(false);
 		btnTogglePassword.setContentAreaFilled(false);
 		btnTogglePassword.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		btnTogglePassword.setFocusable(false);
-		pnFormDangNhap.add(btnTogglePassword);
 
-		// Trạng thái mặc định: ẩn mật khẩu
-		final boolean[] isHidden = { true };
-		txtMatKhau.setEchoChar('●');
-
-		// Sự kiện click vào nút mắt
-		btnTogglePassword.addActionListener(e -> {
-			if (isHidden[0]) {
-				// Hiện mật khẩu
-				txtMatKhau.setEchoChar((char) 0);
-				btnTogglePassword.setIcon(iconClose); // đổi sang icon mắt đóng
-			} else {
-				// Ẩn mật khẩu
-				txtMatKhau.setEchoChar('●');
-				btnTogglePassword.setIcon(iconOpen);
-			}
-			isHidden[0] = !isHidden[0];
-		});
+		// Lưu trạng thái toggle
+		isHidden = true;
 
 		JButton btnDangNhap = new PillButton("ĐĂNG NHẬP");
 		btnDangNhap.setFont(new Font("Arial", Font.BOLD, 18));
 		btnDangNhap.setForeground(Color.WHITE);
-		btnDangNhap.setBounds(50, 669, inputWidth, 50);
+		btnDangNhap.setBounds(50, 669, 400, 50);
 		btnDangNhap.setCursor(new Cursor(Cursor.HAND_CURSOR));
-		pnFormDangNhap.add(btnDangNhap);
 
 		JButton btnQuenMK = new JButton("Quên mật khẩu?");
-		btnQuenMK.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-			}
-		});
 		btnQuenMK.setFont(new Font("Arial", Font.ITALIC, 16));
 		btnQuenMK.setForeground(new Color(0xD32F2F));
-		btnQuenMK.setBounds(403, 732, 179, 30);
+		btnQuenMK.setBounds(295, 729, 179, 30);
 		btnQuenMK.setContentAreaFilled(false);
 		btnQuenMK.setBorderPainted(false);
 		btnQuenMK.setFocusPainted(false);
 		btnQuenMK.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
+		pnFormDangNhap.add(lblLogo);
+		pnFormDangNhap.add(lblTieuDeForm);
+		pnFormDangNhap.add(lblTaiKhoan);
+		pnFormDangNhap.add(txtTaiKhoan);
+		pnFormDangNhap.add(pnMatKhau);
+		pnMatKhau.add(txtMatKhau, BorderLayout.CENTER);
+		pnMatKhau.add(btnTogglePassword, BorderLayout.EAST);
+		pnFormDangNhap.add(btnDangNhap);
+		pnFormDangNhap.add(btnQuenMK);
+
+		// Sự kiện click vào nút mắt
+		btnTogglePassword.addActionListener(e -> {
+			if (isHidden) {
+				// Hiện mật khẩu
+				txtMatKhau.setEchoChar((char) 0);
+				btnTogglePassword.setIcon(iconClose); // đổi sang icon mắt đóng
+				btnTogglePassword.setToolTipText("Hiện mật khẩu");
+			} else {
+				// Ẩn mật khẩu
+				txtMatKhau.setEchoChar(defaultEcho);
+				btnTogglePassword.setIcon(iconOpen);
+				btnTogglePassword.setToolTipText("Ẩn mật khẩu");
+			}
+			isHidden = !isHidden;
+		});
+		
 		btnDangNhap.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-//				String taiKhoan = txtTaiKhoan.getText();
-//				String matKhau = new String(txtMatKhau.getPassword());
-//				// Kiểm tra dữ liệu nhập
-//				if (taiKhoan.equals("admin") && matKhau.equals("admin123")) {
-//			        addPlaceholder(txtTaiKhoan, "Nhập tài khoản của bạn");
-//			        addPlaceholder(txtMatKhau, "Nhập mật khẩu của bạn");
-//		            frame.setContentPane(new Main_GUI());
-//					// Chuyển đến giao diện chính của ứng dụng
-//				} else {
-//					JOptionPane.showMessageDialog(frame, "Tài khoản hoặc mật khẩu không đúng.", "Lỗi đăng nhập",
-//							JOptionPane.ERROR_MESSAGE);
-//			        addPlaceholder(txtTaiKhoan, "Nhập tài khoản của bạn");
-//			        addPlaceholder(txtMatKhau, "Nhập mật khẩu của bạn");
-//				}
 				TaiKhoan tk1 = new TaiKhoan("TK000001", "admin", "Admin123@");
 				TaiKhoan tk2 = new TaiKhoan("TK000002", "nhanvien1", "Nhanvien1@");
 				List<NhanVien> dsnv = List.of(
@@ -209,7 +235,8 @@ public class DangNhap_GUI extends JFrame {
 							"Thành công", JOptionPane.INFORMATION_MESSAGE);
 					dispose();
 					// Mở Main_GUI
-					new Main_GUI(nvDangNhap).setVisible(true);;
+					new Main_GUI(nvDangNhap).setVisible(true);
+					;
 				} else {
 					JOptionPane.showMessageDialog(null, "Sai tài khoản hoặc mật khẩu!", "Đăng nhập thất bại",
 							JOptionPane.ERROR_MESSAGE);
@@ -218,7 +245,7 @@ public class DangNhap_GUI extends JFrame {
 				}
 			}
 		});
-
+		
 		btnQuenMK.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
@@ -238,43 +265,19 @@ public class DangNhap_GUI extends JFrame {
 						JOptionPane.INFORMATION_MESSAGE);
 			}
 		});
+		
+		// Bắt sự kiện Enter để kích hoạt đăng nhập
+		ActionListener dangNhapAction = new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				btnDangNhap.doClick(); // Giả lập click nút Đăng nhập
+			}
+		};
 
-		pnFormDangNhap.add(btnQuenMK);
+		txtTaiKhoan.addActionListener(dangNhapAction);
+		txtMatKhau.addActionListener(dangNhapAction);
 
 		return pnFormDangNhap;
-	}
-
-	private void addPlaceholder(JTextField field, String placeholder) {
-		field.setText(placeholder);
-		field.setForeground(Color.GRAY);
-
-		if (field instanceof JPasswordField) {
-			((JPasswordField) field).setEchoChar((char) 0);
-		}
-
-		field.addFocusListener(new FocusListener() {
-			@Override
-			public void focusGained(FocusEvent e) {
-				if (field.getText().equals(placeholder)) {
-					field.setText("");
-					field.setForeground(Color.BLACK);
-					if (field instanceof JPasswordField) {
-						((JPasswordField) field).setEchoChar('●');
-					}
-				}
-			}
-
-			@Override
-			public void focusLost(FocusEvent e) {
-				if (field.getText().isEmpty()) {
-					field.setForeground(Color.GRAY);
-					field.setText(placeholder);
-					if (field instanceof JPasswordField) {
-						((JPasswordField) field).setEchoChar((char) 0);
-					}
-				}
-			}
-		});
 	}
 
 }

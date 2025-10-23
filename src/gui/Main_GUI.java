@@ -233,7 +233,7 @@ public class Main_GUI extends JFrame {
 				JOptionPane.YES_NO_OPTION);
 		if (confirm == JOptionPane.YES_OPTION) {
 			dispose(); // hoặc chuyển về form đăng nhập
-//			new DangNhap_GUI().setVisible(true);
+			new DangNhap_GUI().setVisible(true);
 		}
 	}
 
