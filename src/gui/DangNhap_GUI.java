@@ -192,10 +192,10 @@ public class DangNhap_GUI extends JFrame {
 				TaiKhoan tk1 = new TaiKhoan("TK000001", "admin", "Admin123@");
 				TaiKhoan tk2 = new TaiKhoan("TK000002", "nhanvien1", "Nhanvien1@");
 				List<NhanVien> dsnv = List.of(
-						new NhanVien("NV2025100001", "Nguyễn Văn A", true, LocalDate.of(2005, 1, 1), "0987654321",
-								"HCM", true, tk1, "SANG", false),
-						new NhanVien("NV2025100002", "Nguyễn Văn B", true, LocalDate.of(2005, 1, 1), "0987654321",
-								"HCM", true, tk2, "SANG", false));
+						new NhanVien("NV2025100001", "Nguyễn Văn A", false, LocalDate.of(2005, 1, 1), "0987654321",
+								"HCM", false, tk1, "SANG", false),
+						new NhanVien("NV2025100002", "Nguyễn Văn B", false, LocalDate.of(2005, 1, 1), "0987654321",
+								"HCM", false, tk2, "SANG", false));
 
 				NhanVien nvDangNhap = dsnv.stream()
 						.filter(nv -> nv.getTaiKhoan().getTenDangNhap().equals(txtTaiKhoan.getText().trim())

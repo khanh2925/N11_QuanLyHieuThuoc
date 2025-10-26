@@ -10,10 +10,11 @@ import customcomponent.PlaceholderSupport;
 
 public class BangGia_GUI extends JPanel {
 
-    private JPanel pnCenter;   // vùng trung tâm
-    private JPanel pnHeader;   // vùng đầu trang
-    private JPanel pnLeft;     // vùng bên trái
+    private JPanel pnCenter;
+    private JPanel pnHeader;
+    private JPanel pnLeft;
     private JTextField txtTimThuoc;
+    private JTextField txtTiLe;
 
     public BangGia_GUI() {
         this.setPreferredSize(new Dimension(1537, 850));
@@ -83,125 +84,137 @@ public class BangGia_GUI extends JPanel {
         pnHeader.add(rdbGiamDan);
         rdbTangDan.setSelected(true);
 
-     // ===== LEFT =====
-        pnLeft = new JPanel();
+        // ===== LEFT =====
+        pnLeft = new JPanel(null); // 🔥 absolute layout
         pnLeft.setPreferredSize(new Dimension(300, 1080));
         pnLeft.setBackground(Color.WHITE);
         pnLeft.setBorder(new EmptyBorder(20, 20, 20, 20));
-        pnLeft.setLayout(null); // dùng layout tự do
         add(pnLeft, BorderLayout.WEST);
 
-        // ----- Tiêu đề -----
-        JLabel lblTitle = new JLabel("Điều chỉnh giá");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        lblTitle.setBounds(10, 10, 250, 30);
-        pnLeft.add(lblTitle);
+        // ===== TIÊU ĐỀ =====
+        JLabel lblDieuChinhGia = new JLabel("Điều chỉnh giá");
+        lblDieuChinhGia.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblDieuChinhGia.setBounds(20, 10, 260, 30);
+        pnLeft.add(lblDieuChinhGia);
 
-        // ----- Đường line ngăn cách -----
         JSeparator line = new JSeparator();
-        line.setBounds(10, 45, 260, 2);
+        line.setBounds(20, 45, 260, 1);
         pnLeft.add(line);
 
-        // ----- Label “Công thức” -----
-        JLabel lblCongThuc = new JLabel("Công thức:");
-        lblCongThuc.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        lblCongThuc.setBounds(10, 60, 150, 25);
+        // ===== CÔNG THỨC =====
+        JLabel lblCongThuc = new JLabel("Giá bán = Giá nhập + Tỉ lệ (%)");
+        lblCongThuc.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblCongThuc.setForeground(Color.RED);
+        lblCongThuc.setBounds(20, 60, 260, 25);
         pnLeft.add(lblCongThuc);
 
-        // ----- Label mô tả công thức -----
-        JLabel lblMoTa = new JLabel("Giá bán = Giá nhập + tỉ lệ (%)");
-        lblMoTa.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblMoTa.setForeground(new Color(90, 90, 90));
-        lblMoTa.setBounds(10, 85, 250, 25);
-        pnLeft.add(lblMoTa);
+        // ===== Ô TỈ LỆ =====
+        JLabel lblTiLe = new JLabel("Tỉ lệ %:");
+        lblTiLe.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblTiLe.setBounds(20, 95, 60, 25);
+        pnLeft.add(lblTiLe);
 
-        // ----- Label + ô nhập tỉ lệ -----
-        JLabel lblGiaNhap = new JLabel("Giá nhập + ");
-        lblGiaNhap.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        lblGiaNhap.setBounds(10, 120, 80, 25);
-        pnLeft.add(lblGiaNhap);
-
-     // ----- Label + ô nhập tỉ lệ -----
-        JLabel lblGiaNhap1 = new JLabel("Giá nhập + ");
-        lblGiaNhap1.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        lblGiaNhap1.setBounds(10, 120, 80, 25);
-        pnLeft.add(lblGiaNhap1);
-
-        // --- ComboBox tỉ lệ (%) ---
-        String[] tiLeMau = {"5", "10", "15", "20", "25"};
-        JComboBox<String> cbTiLe = new JComboBox<>(tiLeMau);
-        cbTiLe.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        cbTiLe.setBounds(90, 120, 60, 30);
-        cbTiLe.setEditable(true); // Cho phép nhập tay
-        cbTiLe.setBackground(Color.WHITE);
-        pnLeft.add(cbTiLe);
+        txtTiLe = new JTextField();
+        txtTiLe.setBounds(80, 90, 100, 30);
+        txtTiLe.setHorizontalAlignment(SwingConstants.RIGHT);
+        txtTiLe.setForeground(new Color(0, 121, 107));
+        txtTiLe.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        txtTiLe.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(0x00C0E2), 2, true),
+                new EmptyBorder(5, 8, 5, 8)
+        ));
+        txtTiLe.setBackground(new Color(240, 250, 250));
+        pnLeft.add(txtTiLe);
 
         JLabel lblPhanTram = new JLabel("%");
-        lblPhanTram.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        lblPhanTram.setBounds(155, 120, 20, 25);
+        lblPhanTram.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblPhanTram.setBounds(190, 95, 20, 25);
         pnLeft.add(lblPhanTram);
 
-     // ----- Label “Khoảng giá áp dụng” -----
-        JLabel lblKhoangGia = new JLabel("Khoảng giá áp dụng:");
-        lblKhoangGia.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        lblKhoangGia.setBounds(10, 170, 250, 25);
-        pnLeft.add(lblKhoangGia);
+        // ===== KHOẢNG GIÁ NHẬP =====
+        JLabel lblKhoang = new JLabel("Khoảng giá nhập:");
+        lblKhoang.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblKhoang.setBounds(20, 135, 200, 25);
+        pnLeft.add(lblKhoang);
 
-        // --- ComboBox giá từ ---
         String[] giaTuMau = {"0", "1.000", "5.000", "10.000", "20.000"};
+        String[] giaDenMau = {"10.000", "20.000", "50.000", "100.000", "200.000", "Trở lên"};
+
         JComboBox<String> cbGiaTu = new JComboBox<>(giaTuMau);
-        cbGiaTu.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cbGiaTu.setBounds(10, 200, 100, 30);
+        cbGiaTu.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         cbGiaTu.setEditable(true);
+        cbGiaTu.setBounds(20, 165, 90, 30);
         pnLeft.add(cbGiaTu);
 
-        // --- Label “đến” ---
         JLabel lblDen = new JLabel("đến");
-        lblDen.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblDen.setBounds(120, 200, 30, 25);
+        lblDen.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblDen.setBounds(115, 170, 30, 20);
         pnLeft.add(lblDen);
 
-        // --- ComboBox giá đến ---
-        String[] giaDenMau = {"10.000", "20.000", "50.000", "100.000", "200.000", "Trở lên"};
         JComboBox<String> cbGiaDen = new JComboBox<>(giaDenMau);
-        cbGiaDen.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cbGiaDen.setBounds(160, 200, 110, 30);
+        cbGiaDen.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         cbGiaDen.setEditable(true);
+        cbGiaDen.setBounds(150, 165, 100, 30);
         pnLeft.add(cbGiaDen);
 
-        // ----- Nút áp dụng -----
+        // ===== NÚT ÁP DỤNG =====
         JButton btnApDung = new PillButton("Áp dụng");
-        btnApDung.setBounds(80, 250, 120, 35);
+        btnApDung.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnApDung.setBounds(80, 210, 120, 35);
         pnLeft.add(btnApDung);
-        
 
-        // ----- Bảng hiển thị các mốc giá đã set -----
-        String[] cols = {"Giá từ (VNĐ)", "Giá đến (VNĐ)", "Tỉ lệ (%)"};
+        // ===== BẢNG MỐC GIÁ =====
+        String[] cols = {"Giá từ", "Giá đến", "Tỉ lệ (%)"};
         DefaultTableModel modelMoc = new DefaultTableModel(cols, 0);
         JTable tblMocGia = new JTable(modelMoc);
         tblMocGia.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        tblMocGia.setRowHeight(28);
+        tblMocGia.setRowHeight(24);
         tblMocGia.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        tblMocGia.getTableHeader().setBackground(new Color(230, 240, 250));
+        tblMocGia.getTableHeader().setBackground(new Color(245, 247, 250));
         tblMocGia.getTableHeader().setForeground(Color.BLACK);
-        tblMocGia.setShowVerticalLines(false);
         tblMocGia.setGridColor(new Color(230, 230, 230));
-     // ===== Sự kiện khi nhấn “Áp dụng” =====
+        tblMocGia.setShowVerticalLines(false);
+
+        JScrollPane sp = new JScrollPane(tblMocGia);
+        sp.setBounds(20, 260, 260, 200);
+        sp.setBorder(BorderFactory.createLineBorder(new Color(0xE0E0E0)));
+        pnLeft.add(sp);
+
+        // ===== SỰ KIỆN ÁP DỤNG =====
         btnApDung.addActionListener(e -> {
-            String tu = cbGiaTu.getSelectedItem().toString().trim();
-            String den = cbGiaDen.getSelectedItem().toString().trim();
-            String tile = "10"; // giả định tạm tỉ lệ 10%, có thể sửa sau
-            if (tu.isEmpty() || den.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Vui lòng chọn khoảng giá hợp lệ!");
+            String tuStr = cbGiaTu.getSelectedItem().toString().trim();
+            String denStr = cbGiaDen.getSelectedItem().toString().trim();
+            String tile = txtTiLe.getText().trim();
+
+            if (tuStr.isEmpty() || denStr.isEmpty() || tile.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Vui lòng nhập đầy đủ thông tin!");
                 return;
             }
-            modelMoc.addRow(new Object[]{tu, den, tile});
+
+            double tu = parseGia(tuStr);
+            double den = parseGia(denStr);
+
+            if (den <= tu) {
+                JOptionPane.showMessageDialog(null, "Khoảng giá không hợp lệ (Giá đến phải lớn hơn giá từ)!");
+                return;
+            }
+
+            // ✅ Kiểm tra trùng hoặc giao nhau
+            for (int i = 0; i < modelMoc.getRowCount(); i++) {
+                double tuCu = parseGia(modelMoc.getValueAt(i, 0).toString());
+                double denCu = parseGia(modelMoc.getValueAt(i, 1).toString());
+
+                if (!(den < tuCu || tu > denCu)) {
+                    JOptionPane.showMessageDialog(null,
+                        String.format("Khoảng giá %.0f - %.0f đã trùng hoặc giao với khoảng %.0f - %.0f!",
+                                      tu, den, tuCu, denCu));
+                    return;
+                }
+            }
+
+            modelMoc.addRow(new Object[]{tuStr, denStr, tile});
         });
-        JScrollPane sp = new JScrollPane(tblMocGia);
-        sp.setBounds(10, 300, 260, 200);
-        sp.setBorder(new LineBorder(new Color(220, 220, 220)));
-        pnLeft.add(sp);
-        
+
         // ===== CENTER =====
         pnCenter = new JPanel(new BorderLayout());
         pnCenter.setBackground(Color.WHITE);
@@ -225,9 +238,7 @@ public class BangGia_GUI extends JPanel {
             {"SP-010", "Omeprazol 20mg", 2000, 3500}
         };
 
-        for (Object[] row : duLieu) {
-            model.addRow(row);
-        }
+        for (Object[] row : duLieu) model.addRow(row);
 
         JTable table = new JTable(model);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 15));
@@ -271,6 +282,18 @@ public class BangGia_GUI extends JPanel {
         pnCenter.add(scrollPane, BorderLayout.CENTER);
     }
 
+    // ===== HÀM HỖ TRỢ PARSE GIÁ =====
+    private double parseGia(String giaStr) {
+        try {
+            giaStr = giaStr.replaceAll("[^\\d]", "");
+            if (giaStr.isEmpty()) return 0;
+            return Double.parseDouble(giaStr);
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    // ===== MAIN TEST =====
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Bảng giá");

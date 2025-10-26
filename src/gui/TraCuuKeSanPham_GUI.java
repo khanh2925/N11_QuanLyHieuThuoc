@@ -11,6 +11,7 @@ package gui;
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.table.DefaultTableModel;
 
 import customcomponent.PlaceholderSupport;
 
@@ -44,21 +45,11 @@ public class TraCuuKeSanPham_GUI extends JPanel {
         txtTimThuoc = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimThuoc, "Tìm theo mã, tên...");
         txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        txtTimThuoc.setBounds(10, 10, 284, 68);
+        txtTimThuoc.setBounds(10, 10, 337, 68);
         txtTimThuoc.setBorder(new LineBorder(new Color(0x00C0E2), 2, true));
         txtTimThuoc.setBackground(Color.WHITE);
         txtTimThuoc.setForeground(Color.GRAY);
         pnHeader.add(txtTimThuoc);
-        
-        JLabel lblLoaiSP = new JLabel("Loại sản phẩm:");
-        lblLoaiSP.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        lblLoaiSP.setBounds(320, 10, 130, 25);
-        pnHeader.add(lblLoaiSP);
-        
-        JComboBox<String> cbLoaiSP = new JComboBox<String>();
-        cbLoaiSP.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cbLoaiSP.setBounds(320, 40, 200, 32);
-        pnHeader.add(cbLoaiSP);
 
      // ===== CENTER =====
         Image img = new ImageIcon(getClass().getResource("/images/ke-thuoc.png")).getImage(); // đường dẫn ảnh
@@ -67,17 +58,70 @@ public class TraCuuKeSanPham_GUI extends JPanel {
         add(pnCenter, BorderLayout.CENTER); 
 
 
-        // ===== Left =====
-        pnLeft = new JPanel(); 
-        pnLeft.setPreferredSize(new Dimension(300, 1080)); 
-        pnLeft.setBackground(new Color(255, 255, 255));
-        pnLeft.setBorder(new EmptyBorder(10, 10, 10, 10)); 
+     // ===== Left =====
+        pnLeft = new JPanel();
+        pnLeft.setPreferredSize(new Dimension(350, 1080));
+        pnLeft.setBackground(Color.WHITE);
+        pnLeft.setBorder(new EmptyBorder(20, 20, 20, 20));
+        pnLeft.setLayout(null);
         add(pnLeft, BorderLayout.WEST);
-        pnLeft.setLayout(new BoxLayout(pnLeft, BoxLayout.Y_AXIS));
-        
-        lblThongTin = new JLabel("Thông tin");
-        lblThongTin.setFont(new Font("Tahoma", Font.BOLD, 20));
+
+        // ----- Tiêu đề -----
+        JLabel lblThongTin = new JLabel("Thông tin sản phẩm");
+        lblThongTin.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        lblThongTin.setBounds(10, 10, 300, 30);
         pnLeft.add(lblThongTin);
+
+        JSeparator sep1 = new JSeparator();
+        sep1.setBounds(10, 45, 310, 2);
+        pnLeft.add(sep1);
+
+        // ----- Label & TextField: Tên thuốc -----
+        JLabel lblTenThuoc = new JLabel("Tên thuốc:");
+        lblTenThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        lblTenThuoc.setBounds(10, 60, 100, 25);
+        pnLeft.add(lblTenThuoc);
+
+        JTextField txtTenThuoc = new JTextField("Paracetamol 500mg");
+        txtTenThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        txtTenThuoc.setBounds(10, 85, 300, 30);
+        txtTenThuoc.setBorder(new LineBorder(new Color(200, 200, 200), 1, true));
+        pnLeft.add(txtTenThuoc);
+
+        // ----- Bảng thông tin lô -----
+        String[] colNames = {"Mã lô", "HSD", "Số lượng"};
+        Object[][] duLieuLo = {
+            {"LO-001", "12/2026", 120},
+            {"LO-002", "05/2027", 200},
+            {"LO-003", "09/2027", 150}
+        };
+
+        DefaultTableModel modelLo = new DefaultTableModel(duLieuLo, colNames);
+        JTable tblLo = new JTable(modelLo);
+        tblLo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tblLo.setRowHeight(28);
+        tblLo.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        tblLo.getTableHeader().setBackground(new Color(0x00C0E2));
+        tblLo.getTableHeader().setForeground(Color.WHITE);
+        tblLo.setGridColor(new Color(230, 230, 230));
+
+        JScrollPane spLo = new JScrollPane(tblLo);
+        spLo.setBounds(10, 135, 310, 120);
+        spLo.setBorder(new LineBorder(new Color(220, 220, 220), 1, true));
+        pnLeft.add(spLo);
+
+        // ----- Label & TextField: Vị trí kệ -----
+        JLabel lblViTri = new JLabel("Vị trí kệ:");
+        lblViTri.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        lblViTri.setBounds(10, 270, 100, 25);
+        pnLeft.add(lblViTri);
+
+        JTextField txtViTri = new JTextField("Kệ A2 - Tầng 3");
+        txtViTri.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        txtViTri.setBounds(10, 295, 300, 30);
+        txtViTri.setBorder(new LineBorder(new Color(200, 200, 200), 1, true));
+        pnLeft.add(txtViTri);
+
     }
 
     public static void main(String[] args) {

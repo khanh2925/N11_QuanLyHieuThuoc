@@ -181,13 +181,7 @@ public class Main_GUI extends JFrame {
 			addSubmenuButton("tracuu", "tracuudonhangtra", "Đơn trả hàng", "/images/icon_tra_hang.png",
 					new TraCuuDonTraHang_GUI());
 			addSubmenuButton("tracuu", "tracuukesanpham", "Kệ sản phẩm", "/images/icon_ke_sp.png",
-					new JPanel(new GridBagLayout()) {
-						{
-							JLabel lbl = new JLabel("Màn hình tra cứu kệ sản phẩm");
-							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-							add(lbl);
-						}
-					});
+					new TraCuuKeSanPham_GUI());
 			addMenuButton(menu, "Trả hàng", "trahang", "/images/icon_tra_hang.png");
 			addMenuButton(menu, "Khách hàng", "khachhang", "/images/icon_khach_hang.png");
 			addMenuButton(menu, "Thông tin cá nhân", "thongtin", "/images/icon_thong_tin.png");
