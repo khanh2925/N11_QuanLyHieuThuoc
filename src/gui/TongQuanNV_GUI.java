@@ -62,25 +62,25 @@ public class TongQuanNV_GUI extends JPanel {
         
         // chọn ngày
         JLabel lblTuNgay = new JLabel("Từ ngày:");
-        lblTuNgay.setFont(new Font("Segoe UI", Font.BOLD, 18)); // to + in đậm
-        lblTuNgay.setBounds(90, 126, 100, 30);
+        lblTuNgay.setFont(new Font("Segoe UI", Font.BOLD, 20)); // to + in đậm
+        lblTuNgay.setBounds(152, 75, 121, 38);
         pnCenter.add(lblTuNgay);
 
-        JDateChooser dateTu = new JDateChooser();
+        dateTu = new JDateChooser();
         dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         dateTu.setDateFormatString("dd/MM/yyyy");
-        dateTu.setBounds(230, 126, 250, 30);
+        dateTu.setBounds(152, 126, 328, 30);
         pnCenter.add(dateTu);
 
         JLabel lblDenNgay = new JLabel("Đến:");
-        lblDenNgay.setFont(new Font("Segoe UI", Font.BOLD, 18)); // to + in đậm
-        lblDenNgay.setBounds(760, 126, 85, 30);
+        lblDenNgay.setFont(new Font("Segoe UI", Font.BOLD, 20)); // to + in đậm
+        lblDenNgay.setBounds(816, 79, 85, 30);
         pnCenter.add(lblDenNgay);
 
-        JDateChooser dateDen = new JDateChooser();
+        dateDen = new JDateChooser();
         dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         dateDen.setDateFormatString("dd/MM/yyyy");
-        dateDen.setBounds(891, 126, 250, 30);
+        dateDen.setBounds(816, 126, 345, 30);
         pnCenter.add(dateDen);
         
      // Tạo font chung cho label
@@ -254,7 +254,7 @@ public class TongQuanNV_GUI extends JPanel {
         JLabel lblSLuongBiTra = new JLabel("Số lượng sản phẩm bị trả");
         lblSLuongBiTra.setFont(fontTieuDe);
         lblSLuongBiTra.setForeground(mauChu);
-        lblSLuongBiTra.setBounds(89, 21, 238, 40);
+        lblSLuongBiTra.setBounds(89, 21, 257, 40);
         pnlSLuongBiTra.add(lblSLuongBiTra);
         
         JPanel pnlHAMHSLuongBiTra = new JPanel() {

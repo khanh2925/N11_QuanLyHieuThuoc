@@ -16,15 +16,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumnModel;
 
-import com.toedter.calendar.JDateChooser;
-import customcomponent.*;
-import dao.*;
-import entity.NhanVien;
-import entity.PhieuNhap;
+
+import customcomponent.NhapHangItemRow;
+import customcomponent.PillButton;
+import customcomponent.PlaceholderSupport;
+import customcomponent.RoundedBorder;
+
 
 public class ThemPhieuNhap_GUI extends JPanel {
 
@@ -32,6 +30,10 @@ public class ThemPhieuNhap_GUI extends JPanel {
 	private JPanel pnHeader; // vùng đầu trang
 	private JPanel pnRight; // vùng cột phải
 	private JScrollPane scrNhapHangItems;
+	private JTextField txtSearch;
+	private PillButton btnImport;
+	private PillButton btnXuatFile;
+	private JTextField txtSearchNCC;
 
 	public ThemPhieuNhap_GUI() {
 		this.setPreferredSize(new Dimension(1537, 850));
@@ -51,77 +53,48 @@ public class ThemPhieuNhap_GUI extends JPanel {
 		pnHeader.setLayout(null);
 		add(pnHeader, BorderLayout.NORTH);
 
-		String placeholder = "Tìm kiếm";
-		JTextField txtSearch = new JTextField() {
-			@Override
-			protected void paintComponent(Graphics g) {
-				super.paintComponent(g);
-				if (placeholder == null || placeholder.length() == 0 || getText().length() > 0)
-					return;
-				Graphics2D g2 = (Graphics2D) g;
-				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-				g2.setColor(getDisabledTextColor());
+		txtSearch = new JTextField("");
+		PlaceholderSupport.addPlaceholder(txtSearch, "Tìm kiếm theo tên / số điện thoại");
+		txtSearch.setForeground(Color.GRAY);
+		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		txtSearch.setBounds(20, 27, 250, 44);
+		txtSearch.setBorder(new RoundedBorder(20));
 
-				FontMetrics fm = g2.getFontMetrics();
-				int textY = getHeight() / 2 + fm.getAscent() / 2 - 2;
-				g2.drawString(placeholder, getInsets().left, textY);
-			}
-		};
-		txtSearch.setSize(340, 65);
-		txtSearch.setLocation(10, 10);
-		txtSearch.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
-		txtSearch.setFont(new Font("Segoe UI", Font.BOLD, 20));
+		// ===== BỘ LỌC THEO NGÀY =====
+		JLabel lblTuNgay = new JLabel("Từ ngày:");
+		lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		lblTuNgay.setBounds(306, 36, 60, 25);
 
-		JTextField txtDateRange = new JTextField();
-		txtDateRange.setSize(250, 65);
-		txtDateRange.setLocation(360, 10);
-		txtDateRange.setEditable(false);
-		txtDateRange.setText("Chọn ngày");
-		txtDateRange.setFont(new Font("Segoe UI", Font.BOLD, 15));
-		txtDateRange.setHorizontalAlignment(SwingConstants.CENTER);
-		txtDateRange.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				JFrame frame = new JFrame();
-				frame.getContentPane().setLayout(new FlowLayout());
+		com.toedter.calendar.JDateChooser dateTu = new com.toedter.calendar.JDateChooser();
+		dateTu.setDateFormatString("dd/MM/yyyy");
+		dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		dateTu.setBounds(366, 36, 130, 25);
+		dateTu.setDate(new java.util.Date());
 
-				JDateChooser startChooser = new JDateChooser();
-				JDateChooser endChooser = new JDateChooser();
-				JButton btnOk = new JButton("Chọn");
+		JLabel lblDenNgay = new JLabel("Đến:");
+		lblDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		lblDenNgay.setBounds(511, 36, 40, 25);
 
-				frame.getContentPane().add(new JLabel("Từ ngày:"));
-				frame.getContentPane().add(startChooser);
-				frame.getContentPane().add(new JLabel("Đến ngày:"));
-				frame.getContentPane().add(endChooser);
-				frame.getContentPane().add(btnOk);
+		com.toedter.calendar.JDateChooser dateDen = new com.toedter.calendar.JDateChooser();
+		dateDen.setDateFormatString("dd/MM/yyyy");
+		dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		dateDen.setBounds(551, 36, 130, 25);
 
-				frame.pack();
-				frame.setLocationRelativeTo(null);
-				frame.setVisible(true);
+		// set mặc định là ngày mai
+		java.util.Calendar cal = java.util.Calendar.getInstance();
+		cal.add(java.util.Calendar.DATE, 1);
+		dateDen.setDate(cal.getTime());
 
-				btnOk.addActionListener(ev -> {
-					Date start = startChooser.getDate();
-					Date end = endChooser.getDate();
-					if (start != null && end != null) {
-						SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-						txtDateRange.setText(sdf.format(start) + " - " + sdf.format(end));
-					}
-					frame.dispose();
-				});
-			}
-		});
-
-		PillButton btnThem = new PillButton("Thêm");
-		btnThem.setSize(100, 30);
-		btnThem.setLocation(620, 25);
-		PillButton btnXuatFile = new PillButton("Xuất file");
-		btnXuatFile.setSize(100, 30);
-		btnXuatFile.setLocation(730, 25);
+		btnImport = new PillButton("Nhập từ file");
+		btnImport.setSize(141, 30);
+		btnImport.setLocation(703, 34);
 
 		pnHeader.add(txtSearch);
-		pnHeader.add(txtDateRange);
-		pnHeader.add(btnThem);
-		pnHeader.add(btnXuatFile);
+		pnHeader.add(lblTuNgay);
+		pnHeader.add(dateTu);
+		pnHeader.add(lblDenNgay);
+		pnHeader.add(dateDen);
+		pnHeader.add(btnImport);
 
 		// ===== CENTER =====
 		pnCenter = new JPanel();
@@ -187,7 +160,7 @@ public class ThemPhieuNhap_GUI extends JPanel {
 		pnCenter.revalidate();
 		pnCenter.repaint();
 	}
-	
+
 	private void initFilterPanel() {
 		pnRight.setLayout(null);
 		// ==== Nhãn tên nhân viên + ngày giờ ====
@@ -203,20 +176,14 @@ public class ThemPhieuNhap_GUI extends JPanel {
 
 		// ==== Ô tìm kiếm nhà cung cấp ====
 		JLayeredPane pnSearch = new JLayeredPane();
-		pnSearch.setBounds(0, 50, 300, 28);
-		JTextField txtTimNCC = new JTextField();
-		txtTimNCC.setBounds(0, 0, 300, 28);
-		txtTimNCC.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-		txtTimNCC.setBorder(BorderFactory.createCompoundBorder(
-		        BorderFactory.createLineBorder(new Color(180,180,180), 1, true),
-		        BorderFactory.createEmptyBorder(0, 28, 0, 5)
-		));
-		pnSearch.add(txtTimNCC, Integer.valueOf(0)); // lớp dưới cùng
-
-		// Icon search (đè lên bên trái)
-		JLabel iconSearch = new JLabel(new ImageIcon(getClass().getResource("/images/icon_tra_cuu.png")));
-		iconSearch.setBounds(6, 4, 20, 20);
-		pnSearch.add(iconSearch, Integer.valueOf(1)); // lớp cao hơn text
+		pnSearch.setBounds(0, 50, 300, 40);
+		txtSearchNCC = new JTextField("");
+		PlaceholderSupport.addPlaceholder(txtSearchNCC, "Tìm kiếm nhà cung cấp");
+		txtSearchNCC.setForeground(Color.GRAY);
+		txtSearchNCC.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		txtSearchNCC.setBounds(0, 0, 300, 40);
+		txtSearchNCC.setBorder(new RoundedBorder(20));
+		pnSearch.add(txtSearchNCC, Integer.valueOf(0));
 		pnRight.add(pnSearch);
 
 		// ==== Nhà cung cấp ====
@@ -246,25 +213,8 @@ public class ThemPhieuNhap_GUI extends JPanel {
 		// ==== Nút nhập phiếu ====
 		PillButton btnNhapPhieu = new PillButton("Nhập phiếu");
 		btnNhapPhieu.setFont(new Font("Segoe UI", Font.BOLD, 25));
-//		btnNhapPhieu.setForeground(Color.BLACK);
-//		btnNhapPhieu.setFocusPainted(false);
 		btnNhapPhieu.setBounds(20, 217, 263, 100);
-//		btnNhapPhieu.setBackground(new Color(240, 240, 240));
-//		btnNhapPhieu.setBorder(BorderFactory.createEmptyBorder());
 		btnNhapPhieu.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		// hiệu ứng gradient nhẹ
-//		btnNhapPhieu.setUI(new javax.swing.plaf.basic.BasicButtonUI() {
-//		    @Override
-//		    public void paint(Graphics g, JComponent c) {
-//		        Graphics2D g2 = (Graphics2D) g.create();
-//		        GradientPaint gp = new GradientPaint(0, 0, new Color(250, 250, 250),
-//		                                             c.getWidth(), 0, new Color(245, 200, 200));
-//		        g2.setPaint(gp);
-//		        g2.fillRoundRect(0, 0, c.getWidth(), c.getHeight(), 40, 40);
-//		        g2.dispose();
-//		        super.paint(g, c);
-//		    }
-//		});
 		pnRight.add(btnNhapPhieu);
 
 		// ==== Quay lại ====
@@ -275,10 +225,10 @@ public class ThemPhieuNhap_GUI extends JPanel {
 		lblQuayLai.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		pnRight.add(lblQuayLai);
 	}
-	
+
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
-			JFrame frame = new JFrame("Khung trống - clone base");
+			JFrame frame = new JFrame("Thêm phiếu nhập");
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			frame.setSize(1280, 800);
 			frame.setLocationRelativeTo(null);

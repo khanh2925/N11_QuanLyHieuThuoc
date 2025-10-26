@@ -293,9 +293,10 @@ public class KhachHang_QL_GUI extends JPanel {
     // ===== MAIN =====
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Quản lý khách hàng");
+            JFrame frame = new JFrame("Quản lý Khách Hàng");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            frame.setSize(1280, 800);
+            frame.setLocationRelativeTo(null);
             frame.setContentPane(new KhachHang_QL_GUI());
             frame.setVisible(true);
         });

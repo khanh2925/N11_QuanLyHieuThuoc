@@ -1,1 +1,42 @@
-bin/ 
+# =========================
+# JAVA & ECLIPSE SETTINGS
+# =========================
+
+# Build directories
+bin/
+out/
+target/
+build/
+
+# Eclipse metadata
+.classpath
+.project
+.settings/
+
+# IntelliJ IDEA metadata
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code metadata
+.vscode/
+
+# Logs and temp files
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Gradle and Maven caches
+.gradle/
+.mvn/
+*.class
+
+# Backup files
+*~
