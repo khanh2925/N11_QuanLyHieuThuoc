@@ -9,7 +9,7 @@ import customcomponent.PillButton;
 import customcomponent.RoundedBorder;
 import javax.swing.border.LineBorder;
 
-public class DangNhap_Gui {
+public class DangNhap_GUI {
 
     private JFrame frame;
     private JTextField txtTaiKhoan;
@@ -19,7 +19,7 @@ public class DangNhap_Gui {
         EventQueue.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                DangNhap_Gui window = new DangNhap_Gui();
+                DangNhap_GUI window = new DangNhap_GUI();
                 window.frame.setVisible(true);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -27,7 +27,7 @@ public class DangNhap_Gui {
         });
     }
 
-    public DangNhap_Gui() {
+    public DangNhap_GUI() {
         initialize();
     }
 
