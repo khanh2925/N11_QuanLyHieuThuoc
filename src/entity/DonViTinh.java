@@ -4,7 +4,11 @@ import java.util.Objects;
 
 public class DonViTinh {
 
-    private String maDonViTinh;
+    public DonViTinh(String maDonViTinh) {
+		this.maDonViTinh = maDonViTinh;
+	}
+
+	private String maDonViTinh;
     private String tenDonViTinh;
     private String moTa;
 

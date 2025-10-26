@@ -300,7 +300,7 @@ public class NhanVien_QL_GUI extends JPanel {
             nv.getDiaChi(),
             nv.isQuanLy() ? "Quản lý" : "Nhân viên",
             nv.getCaLam(),
-            nv.getTrangThai() ? "Đang làm" : "Đã nghỉ" 
+            nv.isTrangThai() ? "Đang làm" : "Đã nghỉ" 
         });
     }
     
@@ -318,7 +318,8 @@ public class NhanVien_QL_GUI extends JPanel {
         model.setValueAt(nv.getDiaChi(), row, 5);
         model.setValueAt(nv.isQuanLy() ? "Quản lý" : "Nhân viên", row, 6);
         model.setValueAt(nv.getCaLam(), row, 7);
-        // Có thể thêm cột trạng thái nếu cần
+        model.setValueAt(nv.isTrangThai() ? "Đang Làm" : "Đã nghỉ", row, 8);
+        
     }
     
     private void applySearchFilter() {

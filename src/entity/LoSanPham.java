@@ -9,7 +9,14 @@ public class LoSanPham {
     private LocalDate ngaySanXuat;
     private LocalDate hanSuDung;
     private int soLuong;
-    private SanPham sanPham;
+    
+    
+    public LoSanPham(String maLo) {
+	
+		this.maLo = maLo;
+	}
+
+	private SanPham sanPham;
 
     public LoSanPham() {
     }
