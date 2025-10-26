@@ -11,7 +11,7 @@ import java.util.Date;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
-import com.toedter.calendar.JDateChooser; //Import JDateChooser
+import com.toedter.calendar.JDateChooser;
 
 import entity.NhanVien;
 
@@ -28,6 +28,7 @@ public class CapNhatNhanVien_Dialog extends JDialog {
     private JRadioButton radNam, radNu;
     private JCheckBox chkQuanLy;
     private JComboBox<String> cmbCaLam;
+    private JComboBox<String> cmbTrangThai; // <<< 1. KHAI BÁO COMPONENT MỚI
     private JButton btnLuu;
     private JButton btnThoat;
 
@@ -42,7 +43,8 @@ public class CapNhatNhanVien_Dialog extends JDialog {
     }
 
     private void initialize() {
-        setSize(650, 600);
+        // Tăng chiều cao Dialog để có chỗ cho component mới
+        setSize(650, 650); 
         setLocationRelativeTo(getParent());
         getContentPane().setBackground(Color.WHITE);
         setLayout(null);
@@ -53,7 +55,7 @@ public class CapNhatNhanVien_Dialog extends JDialog {
         lblTitle.setBounds(225, 20, 250, 35);
         getContentPane().add(lblTitle);
 
-        // ... (Các component khác không thay đổi) ...
+        // ... (Các component cũ giữ nguyên vị trí) ...
         JLabel lblTen = new JLabel("Tên nhân viên:");
         lblTen.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblTen.setBounds(40, 80, 120, 25);
@@ -90,7 +92,6 @@ public class CapNhatNhanVien_Dialog extends JDialog {
         txtSoDienThoai.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         getContentPane().add(txtSoDienThoai);
         
-        // --- Ngày sinh ---
         JLabel lblNgaySinh = new JLabel("Ngày sinh:");
         lblNgaySinh.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblNgaySinh.setBounds(40, 240, 120, 25);
@@ -126,6 +127,15 @@ public class CapNhatNhanVien_Dialog extends JDialog {
         chkQuanLy.setBounds(40, 320, 120, 35);
         getContentPane().add(chkQuanLy);
         
+        // <<< 2. THÊM UI CHO TRẠNG THÁI >>>
+        JLabel lblTrangThai = new JLabel("Trạng thái:");
+        lblTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        lblTrangThai.setBounds(180, 320, 120, 25);
+        getContentPane().add(lblTrangThai);
+        cmbTrangThai = new JComboBox<>(new String[]{"Đang làm", "Đã nghỉ"});
+        cmbTrangThai.setBounds(180, 350, 140, 35);
+        getContentPane().add(cmbTrangThai);
+
         JLabel lblCaLam = new JLabel("Ca làm:");
         lblCaLam.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblCaLam.setBounds(340, 320, 120, 25);
@@ -134,17 +144,18 @@ public class CapNhatNhanVien_Dialog extends JDialog {
         cmbCaLam.setBounds(340, 350, 250, 35);
         getContentPane().add(cmbCaLam);
 
+        // --- Điều chỉnh vị trí của Mật khẩu và các nút ---
         JLabel lblMatKhau = new JLabel("Mật khẩu (để trống nếu không đổi):");
         lblMatKhau.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblMatKhau.setBounds(40, 400, 300, 25);
+        lblMatKhau.setBounds(40, 410, 300, 25); // Đổi y
         getContentPane().add(lblMatKhau);
         txtMatKhau = new JPasswordField();
-        txtMatKhau.setBounds(40, 430, 550, 35);
+        txtMatKhau.setBounds(40, 440, 550, 35); // Đổi y
         txtMatKhau.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         getContentPane().add(txtMatKhau);
 
         btnThoat = new JButton("Thoát");
-        btnThoat.setBounds(480, 500, 110, 35);
+        btnThoat.setBounds(480, 520, 110, 40); // Đổi y và height
         btnThoat.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnThoat.setBackground(new Color(0x6B7280));
         btnThoat.setForeground(Color.WHITE);
@@ -153,7 +164,7 @@ public class CapNhatNhanVien_Dialog extends JDialog {
         getContentPane().add(btnThoat);
 
         btnLuu = new JButton("Lưu thay đổi");
-        btnLuu.setBounds(320, 500, 140, 35);
+        btnLuu.setBounds(320, 520, 140, 40); // Đổi y và height
         btnLuu.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnLuu.setBackground(new Color(0x3B82F6));
         btnLuu.setForeground(Color.WHITE);
@@ -183,6 +194,9 @@ public class CapNhatNhanVien_Dialog extends JDialog {
 
         chkQuanLy.setSelected(nhanVienCanCapNhat.isQuanLy());
         cmbCaLam.setSelectedItem(nhanVienCanCapNhat.getCaLam());
+        
+        // <<< 3. NẠP DỮ LIỆU TRẠNG THÁI HIỆN TẠI >>>
+        cmbTrangThai.setSelectedItem(nhanVienCanCapNhat.getTrangThai() ? "Đang làm" : "Đã nghỉ");
     }
 
     private void onLuuButtonClick() {
@@ -209,6 +223,9 @@ public class CapNhatNhanVien_Dialog extends JDialog {
             boolean isQuanLy = chkQuanLy.isSelected();
             String caLam = cmbCaLam.getSelectedItem().toString();
             
+            // <<< 4. LẤY DỮ LIỆU TRẠNG THÁI MỚI >>>
+            boolean trangThai = cmbTrangThai.getSelectedItem().toString().equals("Đang làm");
+            
             nhanVienCanCapNhat.setTenNhanVien(ten);
             nhanVienCanCapNhat.getTaiKhoan().setTenDangNhap(email);
             nhanVienCanCapNhat.setDiaChi(diaChi);
@@ -217,6 +234,7 @@ public class CapNhatNhanVien_Dialog extends JDialog {
             nhanVienCanCapNhat.setGioiTinh(gioiTinh);
             nhanVienCanCapNhat.setQuanLy(isQuanLy);
             nhanVienCanCapNhat.setCaLam(caLam);
+            nhanVienCanCapNhat.setTrangThai(trangThai); // <<< 5. LƯU TRẠNG THÁI MỚI
 
             if (!matKhau.isEmpty()) {
                 nhanVienCanCapNhat.getTaiKhoan().setMatKhau(matKhau);

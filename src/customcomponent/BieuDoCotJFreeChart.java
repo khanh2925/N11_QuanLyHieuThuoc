@@ -2,6 +2,8 @@ package customcomponent;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.GradientPaint;
 import java.awt.Paint;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -10,6 +12,11 @@ import javax.swing.JPanel;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.CategoryAxis;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.NumberTickUnit;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
 import org.jfree.chart.labels.StandardCategoryToolTipGenerator;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
@@ -35,53 +42,72 @@ public class BieuDoCotJFreeChart extends JPanel {
 
     private JFreeChart taoBieuDo(DefaultCategoryDataset dataset) {
         JFreeChart bieuDoCot = ChartFactory.createBarChart(
-                "Thống kê",               // Tiêu đề mặc định của biểu đồ
-                "Danh mục",               // Tên trục X
-                "Giá trị",                // Tên trục Y
-                dataset,
-                PlotOrientation.VERTICAL, // Hướng biểu đồ: Dọc
-                true,                     // Hiển thị chú thích (legend)
-                true,                     // Hiển thị tooltip (khi di chuột)
-                false                     // Không dùng URLs
+                null, null, null, dataset,
+                PlotOrientation.VERTICAL, false, true, false
         );
 
-        // Tùy chỉnh giao diện
+        bieuDoCot.setBackgroundPaint(Color.WHITE);
+        bieuDoCot.setAntiAlias(true);
+        bieuDoCot.setTextAntiAlias(true);
+
         CategoryPlot vungVe = bieuDoCot.getCategoryPlot();
-        vungVe.setBackgroundPaint(Color.WHITE); // Màu nền của vùng vẽ
-        vungVe.setRangeGridlinePaint(new Color(220, 220, 220)); // Màu đường kẻ ngang
+        vungVe.setOutlineVisible(false);
+        vungVe.setBackgroundPaint(Color.WHITE);
+        vungVe.setRangeGridlinePaint(new Color(220, 220, 220));
+        vungVe.setDomainGridlinesVisible(false);
 
-        // Sử dụng một renderer tùy chỉnh để tô màu cho từng cột
-        BarRenderer rendererTuyChinh = new RendererTuyChinh();
-        vungVe.setRenderer(rendererTuyChinh);
+        Font fontTruc = new Font("Segoe UI", Font.PLAIN, 13);
+        
+        CategoryAxis trucX = vungVe.getDomainAxis();
+        trucX.setAxisLineVisible(false);
+        trucX.setTickMarksVisible(false);
+        trucX.setTickLabelFont(fontTruc);
+        trucX.setTickLabelPaint(new Color(100, 100, 100));
 
-        // Các tùy chỉnh khác cho cột
-        rendererTuyChinh.setDrawBarOutline(false); // Bỏ đường viền cột
-        rendererTuyChinh.setBarPainter(new StandardBarPainter()); // Dùng màu đặc, không có hiệu ứng gradient
-        rendererTuyChinh.setShadowVisible(false); // Tắt bóng đổ
+        NumberAxis trucY = (NumberAxis) vungVe.getRangeAxis();
+        trucY.setAxisLineVisible(false);
+        trucY.setTickMarksVisible(false);
+        trucY.setTickLabelFont(fontTruc);
+        trucY.setTickLabelPaint(new Color(100, 100, 100));
+        trucY.setNumberFormatOverride(new DecimalFormat("#,##0"));
 
-        // Định dạng cho tooltip
+        BarRenderer rendererTuyChinh = new RendererTuyChinhEnhanced();
+        rendererTuyChinh.setDrawBarOutline(false);
+        rendererTuyChinh.setShadowVisible(false);
+        rendererTuyChinh.setMaximumBarWidth(0.08); 
+        rendererTuyChinh.setBarPainter(new StandardBarPainter());
+
+        rendererTuyChinh.setDefaultItemLabelsVisible(true);
+        Font fontGiaTri = new Font("Segoe UI", Font.BOLD, 15);
+        DecimalFormat dinhDangSo = new DecimalFormat("#,##0"); 
+        rendererTuyChinh.setDefaultItemLabelGenerator(new StandardCategoryItemLabelGenerator("{2}", dinhDangSo));
+        rendererTuyChinh.setDefaultItemLabelFont(fontGiaTri);
+        rendererTuyChinh.setDefaultItemLabelPaint(new Color(50, 50, 50));
+        
         rendererTuyChinh.setDefaultToolTipGenerator(new StandardCategoryToolTipGenerator(
-                "{1} ({0}): {2}", new DecimalFormat("#,##0.#")));
+                "{1} ({0}): {2}", new DecimalFormat("#,##0")));
+        
+        vungVe.setRenderer(rendererTuyChinh);
 
         return bieuDoCot;
     }
     
-    /**
-     * Lớp nội bộ (inner class) để tùy chỉnh việc tô màu cho từng cột.
-     * Nó sẽ tìm màu trong danh sách dữ liệu bạn đã thêm vào.
-     */
-    private class RendererTuyChinh extends BarRenderer {
+    private class RendererTuyChinhEnhanced extends BarRenderer {
         @Override
         public Paint getItemPaint(int hang, int cot) {
-            String tenNhom = (String) getPlot().getDataset().getRowKey(hang);
-            String tenDanhMuc = (String) getPlot().getDataset().getColumnKey(cot);
-
+            String tenNhom = getPlot().getDataset().getRowKey(hang).toString();
+            String tenDanhMuc = getPlot().getDataset().getColumnKey(cot).toString();
             for (DuLieuBieuDoCot duLieu : danhSachDuLieu) {
                 if (duLieu.getTenNhom().equals(tenNhom) && duLieu.getTenDanhMuc().equals(tenDanhMuc)) {
-                    return duLieu.getMauSac();
+                    Color mauGoc = duLieu.getMauSac();
+                    Color mauNhatHon = new Color(
+                        Math.min(255, mauGoc.getRed() + 30),
+                        Math.min(255, mauGoc.getGreen() + 30),
+                        Math.min(255, mauGoc.getBlue() + 30)
+                    );
+                    return new GradientPaint(0f, 0f, mauNhatHon, 0f, 100f, mauGoc); 
                 }
             }
-            // Trả về màu mặc định nếu không tìm thấy
             return super.getItemPaint(hang, cot);
         }
     }
@@ -93,7 +119,6 @@ public class BieuDoCotJFreeChart extends JPanel {
         }
     }
 
-    // --- Các phương thức public để bên ngoài sử dụng ---
     public void themDuLieu(DuLieuBieuDoCot duLieu) {
         danhSachDuLieu.add(duLieu);
         capNhatBieuDo();
@@ -105,6 +130,53 @@ public class BieuDoCotJFreeChart extends JPanel {
     }
     
     public void setTieuDeBieuDo(String tieuDe) {
+        Font fontTieuDe = new Font("Segoe UI", Font.BOLD, 18);
         bieuDo.setTitle(tieuDe);
+        bieuDo.getTitle().setFont(fontTieuDe);
+        bieuDo.getTitle().setPaint(new Color(50, 50, 50));
+    }
+
+    public void setLegendVisible(boolean visible) {
+        bieuDo.getLegend().setVisible(visible);
+    }
+    
+    public void setBuocNhayTrucY(double buocNhay) {
+        CategoryPlot plot = bieuDo.getCategoryPlot();
+        NumberAxis trucY = (NumberAxis) plot.getRangeAxis();
+        if (buocNhay > 0) {
+            trucY.setTickUnit(new NumberTickUnit(buocNhay));
+        }
+    }
+    
+    public void setDaiTrucY(double giaTriThapNhat, double giaTriCaoNhat) {
+        CategoryPlot plot = bieuDo.getCategoryPlot();
+        NumberAxis trucY = (NumberAxis) plot.getRangeAxis();
+        if (giaTriCaoNhat > giaTriThapNhat) {
+            trucY.setRange(giaTriThapNhat, giaTriCaoNhat);
+        }
+    }
+    
+    /**
+     * === PHƯƠNG THỨC MỚI: Đặt tiêu đề cho trục ngang (X) ===
+     * @param tieuDe Tên tiêu đề bạn muốn hiển thị
+     */
+    public void setTieuDeTrucX(String tieuDe) {
+        CategoryPlot plot = bieuDo.getCategoryPlot();
+        CategoryAxis trucX = plot.getDomainAxis();
+        trucX.setLabel(tieuDe);
+        trucX.setLabelFont(new Font("Segoe UI", Font.BOLD, 14));
+        trucX.setLabelPaint(new Color(80, 80, 80));
+    }
+    
+    /**
+     * === PHƯƠNG THỨC MỚI: Đặt tiêu đề cho trục dọc (Y) ===
+     * @param tieuDe Tên tiêu đề bạn muốn hiển thị
+     */
+    public void setTieuDeTrucY(String tieuDe) {
+        CategoryPlot plot = bieuDo.getCategoryPlot();
+        ValueAxis trucY = plot.getRangeAxis();
+        trucY.setLabel(tieuDe);
+        trucY.setLabelFont(new Font("Segoe UI", Font.BOLD, 14));
+        trucY.setLabelPaint(new Color(80, 80, 80));
     }
 }

@@ -318,6 +318,7 @@ public class NhanVien_QL_GUI extends JPanel {
         model.setValueAt(nv.getDiaChi(), row, 5);
         model.setValueAt(nv.isQuanLy() ? "Quản lý" : "Nhân viên", row, 6);
         model.setValueAt(nv.getCaLam(), row, 7);
+        model.setValueAt(nv.getTrangThai() ? "Đang làm" : "Đã nghỉ", row, 8);
         // Có thể thêm cột trạng thái nếu cần
     }
     
