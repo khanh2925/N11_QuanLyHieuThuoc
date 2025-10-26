@@ -23,7 +23,6 @@ import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
 
-
 public class ThemPhieuNhap_GUI extends JPanel {
 
 	private JPanel pnCenter; // vùng trung tâm

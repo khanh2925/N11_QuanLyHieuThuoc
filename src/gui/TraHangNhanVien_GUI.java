@@ -13,6 +13,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 
 import customcomponent.PillButton;
+import customcomponent.PlaceholderSupport;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,28 +47,13 @@ public class TraHangNhanVien_GUI extends JPanel {
         add(pnCotPhaiHead, BorderLayout.NORTH);
 
         // Ô tìm kiếm
-        txtTimThuoc = new JTextField("Tìm theo mã, tên...");
+        txtTimThuoc = new JTextField();
+        PlaceholderSupport.addPlaceholder(txtTimThuoc, "Tìm theo mã, tên...");
         txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         txtTimThuoc.setBounds(25, 10, 342, 68);
         txtTimThuoc.setBorder(new LineBorder(new Color(0x00C0E2), 2, true));
         txtTimThuoc.setBackground(Color.WHITE);
         txtTimThuoc.setForeground(Color.GRAY);
-        txtTimThuoc.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (txtTimThuoc.getText().equals("Tìm theo mã, tên...")) {
-                    txtTimThuoc.setText("");
-                    txtTimThuoc.setForeground(Color.BLACK);
-                }
-            }
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (txtTimThuoc.getText().isEmpty()) {
-                    txtTimThuoc.setText("Tìm theo mã, tên...");
-                    txtTimThuoc.setForeground(Color.GRAY);
-                }
-            }
-        });
         pnCotPhaiHead.add(txtTimThuoc);
 
         // ===== CENTER (DANH SÁCH SẢN PHẨM) =====
