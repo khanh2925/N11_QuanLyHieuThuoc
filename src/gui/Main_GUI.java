@@ -10,6 +10,8 @@ package gui;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
+import entity.NhanVien;
+
 import java.awt.*;
 import java.net.URL;
 import java.util.*;
@@ -27,9 +29,20 @@ public class Main_GUI extends JFrame {
 	private int LOGO_WIDTH = 100;
 	private int MENU_ICON_WIDTH = 33;
 
-	private boolean isQuanLy = true;
+	private NhanVien nvDangNhap;
+	private JLabel lblUserTop;
+
+	public Main_GUI(NhanVien nv) {
+		this.nvDangNhap = nv; // GÁN TRƯỚC
+		buildUI(); // rồi mới dựng UI
+		hienThongTinNhanVien();
+	}
 
 	public Main_GUI() {
+		this(null); // ⬅️ constructor mặc định gọi qua constructor chính
+	}
+
+	private void buildUI() { // ⬅️ DI CHUYỂN NỘI DUNG từ constructor mặc định vào đây
 		setTitle("Hiệu thuốc Hòa An - Hệ thống quản lý");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setSize(1920, 1080);
@@ -43,8 +56,8 @@ public class Main_GUI extends JFrame {
 
 		add(split);
 
-		if (isQuanLy) {
-			// Thêm các panel chức năng - sau này gắn tên panel vào đây
+		boolean isQL = nvDangNhap != null && nvDangNhap.isQuanLy(); // ⬅️ CHỐT NULL-SAFE
+		if (isQL) { // Thêm các panel chức năng - sau này gắn tên panel vào đây
 			cardPanel.add(new JPanel(new GridBagLayout()) {
 				{
 					JLabel lbl = new JLabel("Màn hình tổng quan");
@@ -111,14 +124,13 @@ public class Main_GUI extends JFrame {
 
 		ImageIcon iconLogo = new ImageIcon(getClass().getResource("/images/Logo.png"));
 		Image scaled = iconLogo.getImage().getScaledInstance(LOGO_WIDTH, LOGO_WIDTH, Image.SCALE_SMOOTH); // chỉnh kích
-																											// thước
 																											// logo
-
 		JLabel logo = new JLabel(new ImageIcon(scaled));
 		logo.setAlignmentX(Component.LEFT_ALIGNMENT);
 		menu.add(logo);
 
-		if (isQuanLy) {
+		boolean isQL = nvDangNhap != null && nvDangNhap.isQuanLy();
+		if (isQL) {
 			addMenuButton(menu, "Tổng quan", "tongquan", "/images/icon_tong_quan.png");
 			addMenuButton(menu, "Đơn hàng", "donhang", "/images/icon_don_hang.png");
 			addSubmenuButton("donhang", "danhsachdonhang", "Đơn hàng", "/images/icon_danh_sach.png", new DonHang_GUI());
@@ -168,12 +180,17 @@ public class Main_GUI extends JFrame {
 					new TraCuuDonHang_GUI());
 			addSubmenuButton("tracuu", "tracuudonhangtra", "Đơn trả hàng", "/images/icon_tra_hang.png",
 					new TraCuuDonTraHang_GUI());
+			addSubmenuButton("tracuu", "tracuukesanpham", "Kệ sản phẩm", "/images/icon_ke_sp.png",
+					new TraCuuKeSanPham_GUI());
 			addMenuButton(menu, "Trả hàng", "trahang", "/images/icon_tra_hang.png");
 			addMenuButton(menu, "Khách hàng", "khachhang", "/images/icon_khach_hang.png");
 			addMenuButton(menu, "Thông tin cá nhân", "thongtin", "/images/icon_thong_tin.png");
 
 			menu.add(Box.createVerticalGlue());
 		}
+		lblUserTop = new JLabel("Chưa đăng nhập");
+		lblUserTop.setFont(new Font("SansSerif", Font.BOLD, 16));
+		menu.add(lblUserTop);
 		addMenuButton(menu, "Đăng xuất", "logout", "/images/icon_dang_xuat.png");
 
 		return menu;
@@ -407,6 +424,17 @@ public class Main_GUI extends JFrame {
 				}
 			}
 		});
+	}
+
+	private void hienThongTinNhanVien() {
+		if (lblUserTop == null)
+			return;
+		if (nvDangNhap == null) {
+			lblUserTop.setText("Chưa đăng nhập");
+			return;
+		}
+		// Sẽ gọi getHoTen() (xem mục #2)
+		lblUserTop.setText(nvDangNhap.getMaNhanVien() + " - " + nvDangNhap.getTenNhanVien());
 	}
 
 }
