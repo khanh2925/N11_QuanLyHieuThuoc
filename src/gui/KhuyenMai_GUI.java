@@ -1,10 +1,3 @@
-/**
- * @author Quốc Khánh
- * @version 3.0
- * @since Oct 16, 2025
- *
- * Mô tả: Khung giao diện trống - giữ lại bố cục chính để clone trang khác.
- */
 
 package gui;
 

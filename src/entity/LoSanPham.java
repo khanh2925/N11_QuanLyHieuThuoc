@@ -29,6 +29,9 @@ public class LoSanPham {
         this.soLuong = other.soLuong;
         this.sanPham = other.sanPham;
     }
+    public LoSanPham(String maLo) {
+        this.maLo = maLo;
+    }
 
     public String getMaLo() {
         return maLo;
