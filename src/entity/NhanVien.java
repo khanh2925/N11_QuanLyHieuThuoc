@@ -7,7 +7,7 @@ import java.util.Objects;
 public class NhanVien {
 	private String maNhanVien;
 	private String tenNhanVien;
-	private Boolean gioiTinh;
+	private boolean gioiTinh;
 	private LocalDate ngaySinh;
 	private String soDienThoai;
 	private String diaChi;
