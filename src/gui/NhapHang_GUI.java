@@ -22,6 +22,7 @@ import javax.swing.table.TableColumnModel;
 
 import customcomponent.*;
 import entity.*;
+import enums.DuongDung;
 
 public class NhapHang_GUI extends JPanel {
 

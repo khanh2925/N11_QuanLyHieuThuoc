@@ -1,4 +1,4 @@
-package entity;
+package enums;
 
 public enum HinhThucKM {
 	GIAM_GIA_PHAN_TRAM,

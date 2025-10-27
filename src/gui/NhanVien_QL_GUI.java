@@ -14,6 +14,7 @@ import javax.swing.border.*;
 import javax.swing.table.*;
 
 import customcomponent.ImagePanel;
+import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
 import entity.NhanVien;
@@ -32,6 +33,7 @@ public class NhanVien_QL_GUI extends JPanel {
     
     // THAY ĐỔI 1: Chuyển danh sách nhân viên thành biến thành viên
     private List<NhanVien> dsNhanVien;
+	private PillButton btnThem;
 
     public NhanVien_QL_GUI() {
         setPreferredSize(new Dimension(1537, 850));
@@ -56,10 +58,11 @@ public class NhanVien_QL_GUI extends JPanel {
         txtTimKiem.setBorder(new RoundedBorder(20));
         pnHeader.add(txtTimKiem);
 
-        ImageIcon icon = new ImageIcon(getClass().getResource("/images/add.png"));
-        ImagePanel btnThem = new ImagePanel(icon.getImage());
-        btnThem.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnThem.setBounds(456, 27, 30, 30);
+//        ImageIcon icon = new ImageIcon(getClass().getResource("/images/add.png"));
+//        ImagePanel btnThem = new ImagePanel(icon.getImage());
+//        btnThem.setCursor(new Cursor(Cursor.HAND_CURSOR));
+//        btnThem.setBounds(456, 27, 30, 30);
+        btnThem=new PillButton("Thêm");
         pnHeader.add(btnThem);
         btnThem.setLayout(null);
 
@@ -300,7 +303,7 @@ public class NhanVien_QL_GUI extends JPanel {
             nv.getDiaChi(),
             nv.isQuanLy() ? "Quản lý" : "Nhân viên",
             nv.getCaLam(),
-            nv.getTrangThai() ? "Đang làm" : "Đã nghỉ" 
+            nv.isTrangThai() ? "Đang làm" : "Đã nghỉ" 
         });
     }
     
@@ -318,6 +321,7 @@ public class NhanVien_QL_GUI extends JPanel {
         model.setValueAt(nv.getDiaChi(), row, 5);
         model.setValueAt(nv.isQuanLy() ? "Quản lý" : "Nhân viên", row, 6);
         model.setValueAt(nv.getCaLam(), row, 7);
+        model.setValueAt(nv.isTrangThai() ? "Đang làm" : "Đã nghỉ", row, 8);
         // Có thể thêm cột trạng thái nếu cần
     }
     

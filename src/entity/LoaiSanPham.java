@@ -17,7 +17,11 @@ public class LoaiSanPham {
         setMoTa(moTa);
     }
 
-    public LoaiSanPham(LoaiSanPham lsp) {
+    public LoaiSanPham(String maLoaiSanPham) {
+		this.maLoaiSanPham = maLoaiSanPham;
+	}
+
+	public LoaiSanPham(LoaiSanPham lsp) {
         this.maLoaiSanPham = lsp.maLoaiSanPham;
         this.tenLoaiSanPham = lsp.tenLoaiSanPham;
         this.moTa = lsp.moTa;

@@ -11,32 +11,28 @@ public class KhachHang {
     private boolean gioiTinh;
     private String soDienThoai;
     private LocalDate ngaySinh;
-    private int diemTichLuy;
 
-    // Thêm danh sách hóa đơn (nếu cần tính điểm từ hóa đơn)
+    // Nếu cần tính điểm theo hóa đơn thì sau này có thể thêm DAO xử lý
     private List<HoaDon> danhSachHoaDon;
 
     public KhachHang() {
     }
 
     public KhachHang(String maKhachHang, String tenKhachHang, boolean gioiTinh,
-                     String soDienThoai, LocalDate ngaySinh, int diemTichLuy) {
+                     String soDienThoai, LocalDate ngaySinh) {
         setMaKhachHang(maKhachHang);
         setTenKhachHang(tenKhachHang);
         setGioiTinh(gioiTinh);
         setSoDienThoai(soDienThoai);
         setNgaySinh(ngaySinh);
-        setDiemTichLuy(diemTichLuy);
     }
 
-    // ✅ Giữ lại constructor sao chép để tiện tạo bản sao
     public KhachHang(KhachHang other) {
         this.maKhachHang = other.maKhachHang;
         this.tenKhachHang = other.tenKhachHang;
         this.gioiTinh = other.gioiTinh;
         this.soDienThoai = other.soDienThoai;
         this.ngaySinh = other.ngaySinh;
-        this.diemTichLuy = other.diemTichLuy;
     }
 
     public String getMaKhachHang() {
@@ -100,30 +96,6 @@ public class KhachHang {
         this.ngaySinh = ngaySinh;
     }
 
-    /**
-     * ✅ Phương thức tính điểm tích lũy dựa trên danh sách hóa đơn
-     * Nếu không có hóa đơn → trả về điểm tích lũy hiện tại.
-     * Nếu có hóa đơn → tính toán lại theo quy tắc 10.000đ = 1 điểm.
-     */
-    public int getDiemTichLuy() {
-        if (danhSachHoaDon == null || danhSachHoaDon.isEmpty()) {
-            return diemTichLuy;
-        }
-
-        double tongChiTieu = 0;
-        for (HoaDon hd : danhSachHoaDon) {
-            tongChiTieu += hd.getTongTien();
-        }
-        return (int) (tongChiTieu / 10000);
-    }
-
-    public void setDiemTichLuy(int diemTichLuy) {
-        if (diemTichLuy < 0) {
-            throw new IllegalArgumentException("Điểm tích lũy phải lớn hơn hoặc bằng 0.");
-        }
-        this.diemTichLuy = diemTichLuy;
-    }
-
     public List<HoaDon> getDanhSachHoaDon() {
         return danhSachHoaDon;
     }
@@ -140,7 +112,6 @@ public class KhachHang {
                 ", gioiTinh=" + (gioiTinh ? "Nam" : "Nữ") +
                 ", soDienThoai='" + soDienThoai + '\'' +
                 ", ngaySinh=" + ngaySinh +
-                ", diemTichLuy=" + getDiemTichLuy() +
                 '}';
     }
 
@@ -148,8 +119,8 @@ public class KhachHang {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        KhachHang khachHang = (KhachHang) o;
-        return Objects.equals(maKhachHang, khachHang.maKhachHang);
+        KhachHang that = (KhachHang) o;
+        return Objects.equals(maKhachHang, that.maKhachHang);
     }
 
     @Override

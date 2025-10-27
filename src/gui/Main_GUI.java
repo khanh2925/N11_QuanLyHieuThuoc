@@ -67,20 +67,8 @@ public class Main_GUI extends JFrame {
 			}, "tongquan");
 
 			cardPanel.add(new KhachHang_NV_GUI(), "khachhang");
-			cardPanel.add(new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình khuyến mãi");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			}, "khuyenmai");
-			cardPanel.add(new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình quản lý nhân viên");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			}, "nhanvien");
+			cardPanel.add(new KhuyenMai_GUI(), "khuyenmai");
+			cardPanel.add(new NhanVien_QL_GUI(), "nhanvien");
 			cardPanel.add(new JPanel(new GridBagLayout()) {
 				{
 					JLabel lbl = new JLabel("Màn hình thống kê");
@@ -88,13 +76,7 @@ public class Main_GUI extends JFrame {
 					add(lbl);
 				}
 			}, "thongke");
-			cardPanel.add(new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình thông tin cá nhân");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			}, "thongtin");
+			cardPanel.add(new TongQuanNV_GUI(), "thongtin");
 			showCard("tongquan");
 		} else {
 			// Thêm các panel chức năng - sau này gắn tên panel vào đây
@@ -138,29 +120,11 @@ public class Main_GUI extends JFrame {
 					new QLTraHang_GUI());
 			addMenuButton(menu, "Sản phẩm", "sanpham", "/images/icon_san_pham.png");
 			addSubmenuButton("sanpham", "danhsachsanpham", "Danh sách sản phẩm", "/images/icon_danh_sach.png",
-					new JPanel(new GridBagLayout()) {
-						{
-							JLabel lbl = new JLabel("Màn hình quản lý sản phẩm");
-							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-							add(lbl);
-						}
-					});
+				new SanPham_GUI());
 			addSubmenuButton("sanpham", "donvitinh", "Đơn vị tính", "/images/icon_don_vi_tinh.png",
-					new JPanel(new GridBagLayout()) {
-						{
-							JLabel lbl = new JLabel("Màn hình quản lý đơn vị tính");
-							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-							add(lbl);
-						}
-					});
+					new DonViTinh_QL_GUI());
 			addSubmenuButton("sanpham", "banggia", "Bảng giá", "/images/icon_bang_gia.png",
-					new JPanel(new GridBagLayout()) {
-						{
-							JLabel lbl = new JLabel("Màn hình quản lý giá sản phẩm");
-							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-							add(lbl);
-						}
-					});
+					new BangGia_GUI());
 			addMenuButton(menu, "Kho", "kho", "/images/icon_kho.png");
 			addSubmenuButton("kho", "nhaphang", "Nhập hàng", "/images/icon_nhap_hang.png", new NhapHang_GUI());
 			addSubmenuButton("kho", "nhacungcap", "Nhà cung cấp", "/images/icon_nha_cung_cap.png",

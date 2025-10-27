@@ -1,10 +1,3 @@
-/**
- * @author Quốc Khánh
- * @version 3.0
- * @since Oct 16, 2025
- *
- * Mô tả: Khung giao diện trống - giữ lại bố cục chính để clone trang khác.
- */
 
 package gui;
 
@@ -27,7 +20,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.border.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
@@ -36,13 +28,13 @@ import customcomponent.ClipTooltipRenderer;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
+import entity.ChiTietKhuyenMaiSanPham;
+import entity.DonViTinh;
 import entity.KhuyenMai;
 import entity.LoaiSanPham;
 import entity.SanPham;
-import entity.ChiTietKhuyenMaiSanPham;
-import entity.DonViTinh;
-import entity.DuongDung;
-import entity.HinhThucKM;
+import enums.DuongDung;
+import enums.HinhThucKM;
 
 public class KhuyenMai_GUI extends JPanel {
 
@@ -298,7 +290,7 @@ public class KhuyenMai_GUI extends JPanel {
 				ds.stream().filter(km -> km.getMaKM().equals("KM-20251025-0005")).findFirst().orElse(null)));
 
 		ds.add(new KhuyenMai("KM-20251105-0006", "Mua 5 tặng 2 – Salonpas hộp", LocalDate.of(2025, 11, 5),
-				LocalDate.of(2025, 11, 20), true, false, HinhThucKM.TANG_THEM, 0, "Áp dụng khi mua hộp Salonpas", 5,
+				LocalDate.of(2025, 11, 20), true, false, HinhThucKM.GIAM_GIA_PHAN_TRAM, 0, "Áp dụng khi mua hộp Salonpas", 5,
 				2));
 
 		dsctkm.add(new ChiTietKhuyenMaiSanPham(

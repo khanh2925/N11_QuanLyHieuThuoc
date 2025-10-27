@@ -45,7 +45,7 @@ public class ThemNhanVien_Dialog extends JDialog {
         setSize(650, 600);
         setLocationRelativeTo(getParent());
         getContentPane().setBackground(Color.WHITE);
-        setLayout(null);
+        getContentPane().setLayout(null);
 
         // ... (Code cho các component khác không thay đổi) ...
         
@@ -141,7 +141,7 @@ public class ThemNhanVien_Dialog extends JDialog {
         chkQuanLy = new JCheckBox("Là quản lý");
         chkQuanLy.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         chkQuanLy.setBackground(Color.WHITE);
-        chkQuanLy.setBounds(40, 320, 120, 35);
+        chkQuanLy.setBounds(40, 348, 120, 35);
         getContentPane().add(chkQuanLy);
         
         JLabel lblCaLam = new JLabel("Ca làm:");
