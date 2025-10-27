@@ -39,26 +39,26 @@ public class TraCuuDonHang_GUI extends JPanel {
 
      // ===== BỘ LỌC THEO NGÀY =====
         JLabel lblTuNgay = new JLabel("Từ ngày:");
-        lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblTuNgay.setBounds(30, 30, 60, 25);
+        lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        lblTuNgay.setBounds(30, 30, 80, 40);
         pnHeader.add(lblTuNgay);
 
         com.toedter.calendar.JDateChooser dateTu = new com.toedter.calendar.JDateChooser();
         dateTu.setDateFormatString("dd/MM/yyyy");
-        dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        dateTu.setBounds(90, 30, 130, 25);
+        dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        dateTu.setBounds(130, 35, 130, 30);
         dateTu.setDate(new java.util.Date()); // mặc định là hôm nay
         pnHeader.add(dateTu);
 
         JLabel lblDenNgay = new JLabel("Đến:");
-        lblDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblDenNgay.setBounds(235, 30, 40, 25);
+        lblDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        lblDenNgay.setBounds(310, 30, 40, 40);
         pnHeader.add(lblDenNgay);
 
         com.toedter.calendar.JDateChooser dateDen = new com.toedter.calendar.JDateChooser();
         dateDen.setDateFormatString("dd/MM/yyyy");
-        dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        dateDen.setBounds(275, 30, 130, 25);
+        dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        dateDen.setBounds(370, 35, 130, 30);
 
         // set mặc định là ngày mai
         java.util.Calendar cal = java.util.Calendar.getInstance();
@@ -68,8 +68,8 @@ public class TraCuuDonHang_GUI extends JPanel {
 
         // ===== NÚT LỌC =====
         JButton btnLoc = new PillButton("Lọc");
-        btnLoc.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnLoc.setBounds(420, 30, 70, 25);
+        btnLoc.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnLoc.setBounds(570, 30, 120, 40);
         btnLoc.setFocusPainted(false);
         pnHeader.add(btnLoc);
         
@@ -83,9 +83,9 @@ public class TraCuuDonHang_GUI extends JPanel {
         });
         
         JButton btnXemChiTiet = new PillButton("Chi tiết");
-        btnXemChiTiet.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnXemChiTiet.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnXemChiTiet.setFocusPainted(false);
-        btnXemChiTiet.setBounds(500, 30, 94, 25);
+        btnXemChiTiet.setBounds(760, 32, 120, 40);
         pnHeader.add(btnXemChiTiet);
         
         // ===== CENTER =====
@@ -96,7 +96,7 @@ public class TraCuuDonHang_GUI extends JPanel {
         add(pnCenter, BorderLayout.CENTER);
         
      // ===== CENTER =====
-        pnCenter = new JPanel(new BorderLayout());
+        pnCenter = new JPanel();
         pnCenter.setBackground(Color.WHITE);
         pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
         add(pnCenter, BorderLayout.CENTER);
@@ -121,7 +121,7 @@ public class TraCuuDonHang_GUI extends JPanel {
 
         // Bảng hóa đơn
         JTable tblHoaDon = new JTable(model);
-        tblHoaDon.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tblHoaDon.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         tblHoaDon.setRowHeight(30);
         tblHoaDon.setGridColor(new Color(230, 230, 230));
         tblHoaDon.setSelectionBackground(new Color(0xC8E6C9)); // xanh lá nhạt
@@ -129,8 +129,8 @@ public class TraCuuDonHang_GUI extends JPanel {
 
         // Header bảng
         JTableHeader header = tblHoaDon.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        header.setBackground(new Color(0x00C853));
+        header.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        header.setBackground(new Color(33, 150, 243));
         header.setForeground(Color.WHITE);
         header.setReorderingAllowed(false);
 
@@ -139,15 +139,16 @@ public class TraCuuDonHang_GUI extends JPanel {
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
         tblHoaDon.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
 
-        // Căn phải cột “Tổng tiền”
+        // Căn Giữa cột “Tổng tiền”
         DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
         rightRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
-        tblHoaDon.getColumnModel().getColumn(3).setCellRenderer(rightRenderer);
+        tblHoaDon.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
+        pnCenter.setLayout(new BorderLayout(0, 0));
 
         // ScrollPane chứa bảng
         JScrollPane scrollPane = new JScrollPane(tblHoaDon);
         scrollPane.setBorder(new LineBorder(new Color(220, 220, 220), 1, true));
-        pnCenter.add(scrollPane, BorderLayout.CENTER);
+        pnCenter.add(scrollPane);
 
     }
 

@@ -37,68 +37,52 @@ public class TraCuuDonTraHang_GUI extends JPanel {
         pnHeader = new JPanel();
         pnHeader.setPreferredSize(new Dimension(1073, 88));
         pnHeader.setBackground(new Color(0xE3F2F5));
-        pnHeader.setLayout(null);
         add(pnHeader, BorderLayout.NORTH);
+        pnHeader.setLayout(null);
 
         // ===== BỘ LỌC NGÀY =====
         JLabel lblTuNgay = new JLabel("Từ ngày:");
-        lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblTuNgay.setBounds(30, 30, 60, 25);
+        lblTuNgay.setBounds(30, 30, 80, 40);
+        lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         pnHeader.add(lblTuNgay);
 
         JDateChooser dateTu = new JDateChooser();
+        dateTu.setBounds(130, 35, 130, 30);
         dateTu.setDateFormatString("dd/MM/yyyy");
-        dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        dateTu.setBounds(90, 30, 130, 25);
+        dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         dateTu.setDate(new java.util.Date());
         pnHeader.add(dateTu);
 
-        JLabel lblDenNgay = new JLabel("Đến:");
-        lblDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblDenNgay.setBounds(235, 30, 40, 25);
-        pnHeader.add(lblDenNgay);
+        JLabel lbLocTrangThai = new JLabel("Lọc theo trạng thái:");
+        lbLocTrangThai.setBounds(580, 30, 160, 40);
+        lbLocTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        pnHeader.add(lbLocTrangThai);
 
         JDateChooser dateDen = new JDateChooser();
+        dateDen.setBounds(370, 35, 130, 30);
         dateDen.setDateFormatString("dd/MM/yyyy");
-        dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        dateDen.setBounds(275, 30, 130, 25);
+        dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, 1);
         dateDen.setDate(cal.getTime());
         pnHeader.add(dateDen);
 
-        // ===== COMBOBOX TRẠNG THÁI =====
-        JLabel lblTrangThai = new JLabel("Trạng thái:");
-        lblTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblTrangThai.setBounds(430, 30, 80, 25);
-        pnHeader.add(lblTrangThai);
-
         cbTrangThai = new JComboBox<>(new String[]{"Tất cả", "Đã xử lý", "Chưa xử lý"});
-        cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cbTrangThai.setBounds(510, 30, 120, 25);
+        cbTrangThai.setBounds(750, 35, 150, 30);
+        cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         pnHeader.add(cbTrangThai);
-
-        // ===== NÚT LỌC =====
-        JButton btnLoc = new PillButton("Lọc");
-        btnLoc.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnLoc.setBounds(650, 30, 70, 25);
-        btnLoc.setFocusPainted(false);
-        pnHeader.add(btnLoc);
         
         PillButton btnChiTieest = new PillButton("Lọc");
-        btnChiTieest.setText("Chi Tiết");
-        btnChiTieest.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnChiTieest.setBounds(980, 30, 150, 40);
+        btnChiTieest.setText("Xem Chi Tiết");
+        btnChiTieest.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnChiTieest.setFocusPainted(false);
-        btnChiTieest.setBounds(730, 30, 89, 25);
         pnHeader.add(btnChiTieest);
-
-        btnLoc.addActionListener(e -> {
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
-            String tu = sdf.format(dateTu.getDate());
-            String den = sdf.format(dateDen.getDate());
-            String trangThai = (String) cbTrangThai.getSelectedItem();
-            System.out.println("Lọc từ " + tu + " đến " + den + " | Trạng thái: " + trangThai);
-        });
+        
+        JLabel lblDenNgay_1 = new JLabel("Đến:");
+        lblDenNgay_1.setBounds(310, 30, 40, 40);
+        lblDenNgay_1.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        pnHeader.add(lblDenNgay_1);
 
         // ===== CENTER =====
         pnCenter = new JPanel(new BorderLayout());
@@ -124,7 +108,7 @@ public class TraCuuDonTraHang_GUI extends JPanel {
         };
 
         tblTraHang = new JTable(model);
-        tblTraHang.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tblTraHang.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         tblTraHang.setRowHeight(30);
         tblTraHang.setGridColor(new Color(230, 230, 230));
         tblTraHang.setSelectionBackground(new Color(0xC8E6C9));
@@ -132,8 +116,8 @@ public class TraCuuDonTraHang_GUI extends JPanel {
 
         // Header
         JTableHeader header = tblTraHang.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        header.setBackground(new Color(0x00C853));
+        header.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        header.setBackground(new Color(33, 150, 243));
         header.setForeground(Color.WHITE);
         header.setReorderingAllowed(false);
 
@@ -146,7 +130,7 @@ public class TraCuuDonTraHang_GUI extends JPanel {
         // Căn phải tiền
         DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
         rightRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
-        tblTraHang.getColumnModel().getColumn(3).setCellRenderer(rightRenderer);
+        tblTraHang.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
 
         // Renderer riêng cho trạng thái (tô màu)
         tblTraHang.getColumnModel().getColumn(4).setCellRenderer(new DefaultTableCellRenderer() {
@@ -156,7 +140,7 @@ public class TraCuuDonTraHang_GUI extends JPanel {
                                                            int row, int column) {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
-                lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
+                lbl.setFont(new Font("Segoe UI", Font.BOLD, 18));
                 String trangThai = value.toString();
                 if (trangThai.equals("Đã xử lý")) {
                     lbl.setForeground(new Color(0x2E7D32)); // xanh đậm

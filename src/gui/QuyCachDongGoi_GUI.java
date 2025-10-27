@@ -10,6 +10,8 @@ import javax.swing.table.*;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
 import customcomponent.PillButton;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class QuyCachDongGoi_GUI extends JPanel {
 
@@ -59,21 +61,28 @@ public class QuyCachDongGoi_GUI extends JPanel {
         txtTimKiem = new JTextField("");
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên sản phẩm...");
         txtTimKiem.setForeground(Color.GRAY);
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtTimKiem.setBounds(20, 27, 350, 44);
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        txtTimKiem.setBounds(20, 17, 420, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         pnHeader.add(txtTimKiem);
 
         PillButton btnThem = new PillButton("Thêm");
-        btnThem.setBounds(393, 35, 93, 28);
+        btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnThem.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+        	}
+        });
+        btnThem.setBounds(504, 30, 120, 40);
         pnHeader.add(btnThem);
 
         PillButton btnCapNhat = new PillButton("Cập nhật");
-        btnCapNhat.setBounds(496, 35, 100, 28);
+        btnCapNhat.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnCapNhat.setBounds(670, 30, 130, 40);
         pnHeader.add(btnCapNhat);
 
         PillButton btnXoa = new PillButton("Xoá");
-        btnXoa.setBounds(604, 35, 93, 28);
+        btnXoa.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnXoa.setBounds(860, 30, 120, 40);
         pnHeader.add(btnXoa);
 
         // ===== CENTER =====
@@ -104,7 +113,7 @@ public class QuyCachDongGoi_GUI extends JPanel {
 
         // ===== TABLE =====
         table = new JTable(model);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         table.setRowHeight(34);
         table.setGridColor(new Color(230, 230, 230));
         table.setShowHorizontalLines(true);
@@ -116,7 +125,7 @@ public class QuyCachDongGoi_GUI extends JPanel {
         table.setFillsViewportHeight(true);
 
         JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        header.setFont(new Font("Segoe UI", Font.BOLD, 18));
         header.setBackground(new Color(33, 150, 243));
         header.setForeground(Color.WHITE);
         header.setPreferredSize(new Dimension(100, 40));

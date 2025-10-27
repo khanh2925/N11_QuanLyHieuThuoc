@@ -14,6 +14,7 @@ import javax.swing.border.*;
 import javax.swing.table.DefaultTableModel;
 
 import customcomponent.PlaceholderSupport;
+import customcomponent.RoundedBorder;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -45,8 +46,8 @@ public class TraCuuKeSanPham_GUI extends JPanel {
         txtTimThuoc = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimThuoc, "Tìm theo mã, tên...");
         txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        txtTimThuoc.setBounds(10, 10, 337, 68);
-        txtTimThuoc.setBorder(new LineBorder(new Color(0x00C0E2), 2, true));
+        txtTimThuoc.setBounds(10, 17, 420, 60);
+        txtTimThuoc.setBorder(new RoundedBorder(20));
         txtTimThuoc.setBackground(Color.WHITE);
         txtTimThuoc.setForeground(Color.GRAY);
         pnHeader.add(txtTimThuoc);

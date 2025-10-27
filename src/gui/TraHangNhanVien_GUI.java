@@ -1,11 +1,3 @@
-/**
- * @author Quốc Khánh
- * @version 2.1
- * @since Oct 15, 2025
- *
- * Mô tả: Giao diện bán hàng - danh sách sản phẩm sinh từ entity SanPham.
- */
-
 package gui;
 
 import java.awt.*;
@@ -14,23 +6,40 @@ import javax.swing.border.*;
 
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
+import customcomponent.RoundedBorder;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import java.awt.event.*;
 
-import entity.SanPham;
-import enums.DuongDung;
-import entity.LoaiSanPham;
-import entity.DonViTinh;
-
-
 public class TraHangNhanVien_GUI extends JPanel {
 
     private JTextField txtTimThuoc;
     private JPanel pnCotPhaiCenter;
     private JPanel pnDanhSachDon;
+
+    // ===== Data model siêu gọn cho màn hình (không dùng entity/enums) =====
+    private static class Product {
+        private final String maSanPham;
+        private final String tenSanPham;
+        private final String donViTinhTen;
+        private final double giaBan;
+        private final String hinh; // path resource, nếu có
+
+        Product(String ma, String ten, String dvt, double giaBan, String hinh) {
+            this.maSanPham = ma;
+            this.tenSanPham = ten;
+            this.donViTinhTen = dvt;
+            this.giaBan = giaBan;
+            this.hinh = hinh;
+        }
+        public String getMaSanPham() { return maSanPham; }
+        public String getTenSanPham() { return tenSanPham; }
+        public String getDonViTinhTen() { return donViTinhTen; }
+        public double getGiaBan() { return giaBan; }
+        public String getHinh() { return hinh; }
+    }
 
     public TraHangNhanVien_GUI() {
         this.setPreferredSize(new Dimension(1537, 850));
@@ -51,8 +60,8 @@ public class TraHangNhanVien_GUI extends JPanel {
         txtTimThuoc = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimThuoc, "Tìm theo mã, tên...");
         txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        txtTimThuoc.setBounds(25, 10, 342, 68);
-        txtTimThuoc.setBorder(new LineBorder(new Color(0x00C0E2), 2, true));
+        txtTimThuoc.setBounds(25, 17, 420, 60);
+        txtTimThuoc.setBorder(new RoundedBorder(20));
         txtTimThuoc.setBackground(Color.WHITE);
         txtTimThuoc.setForeground(Color.GRAY);
         pnCotPhaiHead.add(txtTimThuoc);
@@ -155,29 +164,26 @@ public class TraHangNhanVien_GUI extends JPanel {
         pnMGG.setLayout(new BorderLayout(5, 5));
 
         JTextArea txtGhiChuGiamGia = new JTextArea(
-        	    "Hóa đơn có áp dụng khuyến mãi “cuối tuần” - giảm 10% cho hóa đơn trên 100,000 vnđ - "
-        	  + "Tổng giá trị sản phẩm khách trả trên 100,000 vnđ nên trừ 10% tiền trả khách."
-        	);
-        	txtGhiChuGiamGia.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        	txtGhiChuGiamGia.setForeground(Color.RED);
-        	txtGhiChuGiamGia.setOpaque(false);       
-        	txtGhiChuGiamGia.setEditable(false);       
-        	txtGhiChuGiamGia.setFocusable(false);   
-        	txtGhiChuGiamGia.setLineWrap(true);         
-        	txtGhiChuGiamGia.setWrapStyleWord(true);   
-        	txtGhiChuGiamGia.setAlignmentX(Component.LEFT_ALIGNMENT);
-        	txtGhiChuGiamGia.setBorder(null);           
-        	txtGhiChuGiamGia.setMargin(new Insets(0, 0, 0, 0)); 
-        	txtGhiChuGiamGia.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+            "Hóa đơn có áp dụng khuyến mãi “cuối tuần” - giảm 10% cho hóa đơn trên 100,000 vnđ - "
+          + "Tổng giá trị sản phẩm khách trả trên 100,000 vnđ nên trừ 10% tiền trả khách."
+        );
+        txtGhiChuGiamGia.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        txtGhiChuGiamGia.setForeground(Color.RED);
+        txtGhiChuGiamGia.setOpaque(false);
+        txtGhiChuGiamGia.setEditable(false);
+        txtGhiChuGiamGia.setFocusable(false);
+        txtGhiChuGiamGia.setLineWrap(true);
+        txtGhiChuGiamGia.setWrapStyleWord(true);
+        txtGhiChuGiamGia.setAlignmentX(Component.LEFT_ALIGNMENT);
+        txtGhiChuGiamGia.setBorder(null);
+        txtGhiChuGiamGia.setMargin(new Insets(0, 0, 0, 0));
+        txtGhiChuGiamGia.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
 
-        	// thêm vào panel khuyến mãi
-        	pnMGG.add(txtGhiChuGiamGia, BorderLayout.CENTER);
+        pnMGG.add(txtGhiChuGiamGia, BorderLayout.CENTER);
         pnCotPhaiRight.add(Box.createVerticalStrut(10));
         pnCotPhaiRight.add(Box.createVerticalStrut(10));
 
-
-
-        // ====== NÚT BÁN HÀNG ======
+        // ====== NÚT TRẢ HÀNG ======
         JButton btnBanHang = new PillButton("Trả hàng");
         btnBanHang.setFont(new Font("Segoe UI", Font.BOLD, 20));
         btnBanHang.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -185,31 +191,19 @@ public class TraHangNhanVien_GUI extends JPanel {
         pnCotPhaiRight.add(btnBanHang);
         pnCotPhaiRight.add(Box.createVerticalStrut(270));
 
-        // ===== SINH DỮ LIỆU TỪ ENTITY SanPham =====
-        LoaiSanPham loaiThuoc = new LoaiSanPham("LSP001", "Thuốc hạ sốt", "Test");
-        DonViTinh hop = new DonViTinh("DVT-001", "Hộp", "TEST");
-        DonViTinh vien = new DonViTinh("DVT-002", "Viên", "TEST");
+        // ===== DỮ LIỆU SẢN PHẨM (FAKE, không entity) =====
+        List<Product> dsSanPham = new ArrayList<>();
+        dsSanPham.add(new Product("SP000001", "Paracetamol",   "Hộp", 10000, "/images/para.png"));
+        dsSanPham.add(new Product("SP000002", "Decolgen",      "Vỉ",   7500,  "/images/decolgen.png"));
+        dsSanPham.add(new Product("SP000003", "Panadol Extra", "Hộp", 15600, "/images/panadol.png"));
+        dsSanPham.add(new Product("SP000004", "Efferalgan",    "Hộp", 13000, "/images/efferalgan.png"));
 
-        List<SanPham> dsSanPham = new ArrayList<>();
-        dsSanPham.add(new SanPham("SP000001", "Paracetamol", loaiThuoc, "SDK001", "Paracetamol",
-                "500mg", "Pymepharco", "Việt Nam", hop, DuongDung.UONG, 80000, 100000,
-                "/images/para.png", "Hộp 10 vỉ x 10 viên", "K1", true));
-        dsSanPham.add(new SanPham("SP000002", "Decolgen", loaiThuoc, "SDK002",
-                "Paracetamol + Pseudoephedrine", "250mg", "Uni-P", "Philippines", vien,
-                DuongDung.UONG, 5000, 7500, "/images/decolgen.png", "Vỉ 10 viên", "K2", true));
-        dsSanPham.add(new SanPham("SP000003", "Panadol Extra", loaiThuoc, "SDK003",
-                "Paracetamol + Cafein", "500mg", "GSK", "Anh", hop, DuongDung.UONG,
-                12000, 15600, "/images/panadol.png", "Hộp 12 vỉ", "K3", true));
-        dsSanPham.add(new SanPham("SP000004", "Efferalgan", loaiThuoc, "SDK004",
-                "Paracetamol", "500mg", "UPSA", "Pháp", hop, DuongDung.UONG,
-                10000, 13000, "/images/efferalgan.png", "Hộp 16 viên", "K4", true));
-
-        for (SanPham sp : dsSanPham) {
+        for (Product sp : dsSanPham) {
             pnDanhSachDon.add(createDonPanel(sp));
         }
     }
 
-    private JPanel createDonPanel(SanPham sp) {
+    private JPanel createDonPanel(Product sp) {
         JPanel pnDonMau = new JPanel();
         pnDonMau.setPreferredSize(new Dimension(1040, 120));
         pnDonMau.setLayout(null);
@@ -222,22 +216,31 @@ public class TraHangNhanVien_GUI extends JPanel {
         JLabel lblHinhAnh = new JLabel("Ảnh", SwingConstants.CENTER);
         lblHinhAnh.setBorder(new LineBorder(Color.LIGHT_GRAY));
         lblHinhAnh.setBounds(27, centerY - 30, 100, 100);
+        if (sp.getHinh() != null) {
+            java.net.URL url = getClass().getResource(sp.getHinh());
+            if (url != null) {
+                ImageIcon icon = new ImageIcon(url);
+                Image scaled = icon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+                lblHinhAnh.setIcon(new ImageIcon(scaled));
+                lblHinhAnh.setText("");
+            }
+        }
         pnDonMau.add(lblHinhAnh);
 
         // ==== TÊN THUỐC ====
         JLabel lblTenThuoc = new JLabel(sp.getTenSanPham());
         lblTenThuoc.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        lblTenThuoc.setBounds(168, centerY - 30, 250, 34);
+        lblTenThuoc.setBounds(168, centerY - 30, 320, 34);
         pnDonMau.add(lblTenThuoc);
 
         // ==== ĐƠN VỊ TÍNH ====
-        JLabel lblDonViTinh = new JLabel(sp.getDonViTinh().getTenDonViTinh());
+        JLabel lblDonViTinh = new JLabel(sp.getDonViTinhTen());
         lblDonViTinh.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblDonViTinh.setBounds(350, centerY - 28, 100, 30);
+        lblDonViTinh.setBounds(350, centerY - 28, 120, 30);
         pnDonMau.add(lblDonViTinh);
 
         // ==== LÔ THUỐC ====
-        JLabel lblLoThuoc = new JLabel("Lô: AAAA - SL: 20");
+        JLabel lblLoThuoc = new JLabel("Lô: " + sp.getMaSanPham() + " - SL: 20");
         lblLoThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblLoThuoc.setForeground(new Color(80, 80, 80));
         lblLoThuoc.setBounds(168, centerY + 12, 320, 25);
@@ -299,9 +302,12 @@ public class TraHangNhanVien_GUI extends JPanel {
         // ==== NÚT XÓA ====
         JButton btnXoa = new JButton();
         btnXoa.setBounds(980, centerY, 35, 35);
-        ImageIcon iconBin = new ImageIcon(getClass().getResource("/images/bin.png"));
-        Image img = iconBin.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-        btnXoa.setIcon(new ImageIcon(img));
+        java.net.URL binUrl = getClass().getResource("/images/bin.png");
+        if (binUrl != null) {
+            ImageIcon iconBin = new ImageIcon(binUrl);
+            Image img = iconBin.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            btnXoa.setIcon(new ImageIcon(img));
+        }
         btnXoa.setBorderPainted(false);
         btnXoa.setContentAreaFilled(false);
         btnXoa.setFocusPainted(false);
@@ -309,31 +315,41 @@ public class TraHangNhanVien_GUI extends JPanel {
         btnXoa.setCursor(new Cursor(Cursor.HAND_CURSOR));
         pnDonMau.add(btnXoa);
 
-        // ==== Xử lý tăng giảm ====
+        // ==== Xử lý tăng giảm (cập nhật tổng tiền) ====
         btnTang.addActionListener(e -> {
             try {
                 int sl = Integer.parseInt(txtSoLuong.getText().trim());
-                txtSoLuong.setText(String.valueOf(sl + 1));
+                sl = Math.max(1, sl + 1);
+                txtSoLuong.setText(String.valueOf(sl));
+                lblTongTien.setText(String.format("%,.0f vnđ", sl * sp.getGiaBan()));
             } catch (NumberFormatException ex) {
                 txtSoLuong.setText("1");
+                lblTongTien.setText(String.format("%,.0f vnđ", sp.getGiaBan()));
             }
         });
 
         btnGiam.addActionListener(e -> {
             try {
                 int sl = Integer.parseInt(txtSoLuong.getText().trim());
-                if (sl > 1) txtSoLuong.setText(String.valueOf(sl - 1));
+                sl = Math.max(1, sl - 1);
+                txtSoLuong.setText(String.valueOf(sl));
+                lblTongTien.setText(String.format("%,.0f vnđ", sl * sp.getGiaBan()));
             } catch (NumberFormatException ex) {
                 txtSoLuong.setText("1");
+                lblTongTien.setText(String.format("%,.0f vnđ", sp.getGiaBan()));
             }
         });
+
+        btnXoa.addActionListener(e -> {
+            pnDanhSachDon.remove(pnDonMau);
+            pnDanhSachDon.revalidate();
+            pnDanhSachDon.repaint();
+        });
+
         pnDonMau.setMaximumSize(new Dimension(1060, 150));
         pnDonMau.setMinimumSize(new Dimension(1040, 120));
-
         return pnDonMau;
     }
-    
-
 
     private JPanel makeLabel(String left, String right) {
         JPanel pn = new JPanel(new BorderLayout());
@@ -350,7 +366,7 @@ public class TraHangNhanVien_GUI extends JPanel {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Test Bán Hàng");
+            JFrame frame = new JFrame("Trả hàng - Data Fake");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1280, 800);
             frame.setLocationRelativeTo(null);
