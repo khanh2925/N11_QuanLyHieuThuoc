@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridBagLayout;
 import java.net.URL;
 import java.util.List;
 
@@ -12,12 +13,13 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JWindow;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 
+// <<< THAY ĐỔI 1: Import lớp ImagePanel thật từ package của bạn
+import customcomponent.ImagePanel;
 
 public class Loading_GUI extends JWindow {
 
@@ -30,98 +32,93 @@ public class Loading_GUI extends JWindow {
     }
 
     private void buildUI() {
+        setSize(850, 610);
+        setLocationRelativeTo(null);
+
+        // --- PANEL CHÍNH VỚI BORDER LAYOUT ---
         JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setBorder(new LineBorder(new Color(0, 120, 215), 2)); // Viền xanh đẹp mắt
-        setSize(600, 400);
-        setLocationRelativeTo(null); // Canh giữa màn hình
         setContentPane(contentPanel);
 
-        // Hiển thị logo ở trung tâm
-        URL logoUrl = getClass().getResource("/images/Logo.png");
-        if (logoUrl != null) {
-            ImageIcon logoIcon = new ImageIcon(logoUrl);
-            JLabel lblLogo = new JLabel(logoIcon);
-            contentPanel.add(lblLogo, BorderLayout.CENTER);
+        // --- IMAGE PANEL (Nền) ---
+        URL bgImageUrl = getClass().getResource("/images/Loading.png");
+        ImagePanel imagePanel; 
+
+        if (bgImageUrl != null) {
+            ImageIcon bgImageIcon = new ImageIcon(bgImageUrl);
+            imagePanel = new ImagePanel(bgImageIcon.getImage());
         } else {
-            // Fallback nếu không tìm thấy logo
-            JLabel lblAppName = new JLabel("Hiệu thuốc Hòa An", SwingConstants.CENTER);
-            lblAppName.setFont(new Font("Segoe UI", Font.BOLD, 36));
-            contentPanel.add(lblAppName, BorderLayout.CENTER);
+            // Fallback nếu không tìm thấy ảnh
+            imagePanel = new ImagePanel(null);
+            imagePanel.setLayout(new GridBagLayout());
+            imagePanel.setBackground(new Color(0xE3F2F5));
+            imagePanel.setOpaque(true); // Cần set Opaque thành true cho fallback để màu nền hiển thị
+            imagePanel.add(new JLabel("Không tìm thấy ảnh nền..."));
+            System.err.println("Không tìm thấy ảnh nền: /images/Loading.png");
         }
-
-        // Panel chứa thanh progress và text status
+        
+        imagePanel.setLayout(new BorderLayout());
+        contentPanel.add(imagePanel, BorderLayout.CENTER);
+        
+        // --- PANEL TIẾN TRÌNH (Footer) SẼ NẰM TRÊN ẢNH ---
         JPanel progressPanel = new JPanel(new BorderLayout());
-        progressPanel.setPreferredSize(new Dimension(0, 60));
-        progressPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        progressPanel.setBackground(Color.WHITE);
-        contentPanel.add(progressPanel, BorderLayout.SOUTH);
-
-        // Label trạng thái
+        progressPanel.setOpaque(false); 
+        progressPanel.setPreferredSize(new Dimension(0, 65));
+        
+        Border padding = new EmptyBorder(5, 20, 15, 20);
+        progressPanel.setBorder(padding);
+        
+        // --- LABEL TRẠNG THÁI ---
         lblStatus = new JLabel("Đang khởi tạo ứng dụng...");
-        lblStatus.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblStatus.setHorizontalAlignment(SwingConstants.LEFT);
+        lblStatus.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        lblStatus.setForeground(Color.RED); // Giữ lại thay đổi màu đỏ của bạn
         progressPanel.add(lblStatus, BorderLayout.NORTH);
-
-        // Thanh tiến trình
+        
+        // --- THANH TIẾN TRÌNH ---
         progressBar = new JProgressBar(0, 100);
         progressBar.setStringPainted(true);
-        progressBar.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        progressBar.setForeground(new Color(0, 120, 215));
+        progressBar.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        progressBar.setForeground(new Color(0, 150, 136)); 
+        progressBar.setBackground(new Color(230, 230, 230)); 
         progressPanel.add(progressBar, BorderLayout.CENTER);
+
+        imagePanel.add(progressPanel, BorderLayout.SOUTH);
     }
 
-    /**
-     * Sử dụng SwingWorker để chạy tác vụ nền mà không làm treo giao diện
-     */
     private void startLoading() {
         SwingWorker<Void, Integer> worker = new SwingWorker<Void, Integer>() {
-            
-            // Tác vụ chạy trên background thread
             @Override
             protected Void doInBackground() throws Exception {
                 for (int i = 0; i <= 100; i++) {
-                    Thread.sleep(40); // Giả lập thời gian tải
-                    
-                    // Cập nhật trạng thái tại các mốc nhất định
-                    if (i == 10) {
-                    	publishStatus("Đang tải các thành phần giao diện...");
-                    } else if (i == 40) {
-                    	publishStatus("Đang kết nối cơ sở dữ liệu...");
-                    } else if (i == 70) {
-                    	publishStatus("Đang xác thực thông tin...");
-                    } else if (i == 90) {
-                    	publishStatus("Sắp hoàn tất...");
-                    }
-                    
-                    publish(i); // Gửi tiến trình về cho EDT
+                    Thread.sleep(30);
+                    if (i == 10) publishStatus("Đang tải tài nguyên...");
+                    else if (i == 40) publishStatus("Đang kết nối cơ sở dữ liệu...");
+                    else if (i == 70) publishStatus("Đang cấu hình giao diện...");
+                    else if (i == 90) publishStatus("Sắp hoàn tất...");
+                    publish(i);
                 }
                 return null;
             }
 
-            // Cập nhật giao diện trên Event Dispatch Thread (EDT)
             @Override
             protected void process(List<Integer> chunks) {
-                int latestProgress = chunks.get(chunks.size() - 1);
-                progressBar.setValue(latestProgress);
+                progressBar.setValue(chunks.get(chunks.size() - 1));
             }
 
-            // Chạy trên EDT sau khi doInBackground hoàn tất
             @Override
             protected void done() {
-                dispose(); // Đóng màn hình loading
-                new DangNhap_GUI().setVisible(true); // Mở màn hình đăng nhập
+
+                 new DangNhap_GUI().setVisible(true);
             }
         };
-
-        worker.execute(); // Bắt đầu thực thi
-        setVisible(true); // Hiển thị cửa sổ loading
+        worker.execute();
+        setVisible(true);
     }
     
-    /**
-     * Phương thức helper để cập nhật label trạng thái một cách an toàn từ background thread
-     * @param text
-     */
     private void publishStatus(String text) {
     	SwingUtilities.invokeLater(() -> lblStatus.setText(text));
+    }
+
+    public static void main(String[] args) {
+        new Loading_GUI();
     }
 }
