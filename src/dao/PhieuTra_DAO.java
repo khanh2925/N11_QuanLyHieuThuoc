@@ -44,8 +44,8 @@ public class PhieuTra_DAO {
                 LocalDate ngayLap = rs.getDate("NgayLapPhieu").toLocalDate();
                 boolean trangThaiDB = rs.getBoolean("TrangThai");
 
-                NhanVien nv = nhanVienDAO.timKiemNhanVienBangMa(maNV);
-                KhachHang kh = khachHangDAO.findKhachHangById(maKH);
+                NhanVien nv = nhanVienDAO.getNhanVienTheoMa(maNV);
+                KhachHang kh = khachHangDAO.getKhachHangTheoMa(maKH);
 
                 String trangThaiEntity = trangThaiDB ? "Đã xử lý" : "Chờ duyệt";
                 PhieuTra pt = new PhieuTra(maPhieuTra, kh, nv, ngayLap, trangThaiEntity);

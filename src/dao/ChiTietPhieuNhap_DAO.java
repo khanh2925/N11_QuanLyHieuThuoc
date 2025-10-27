@@ -41,7 +41,7 @@ public class ChiTietPhieuNhap_DAO {
                 int soLuongNhap = rs.getInt("SoLuongNhap");
                 double donGiaNhap = rs.getDouble("DonGiaNhap");
 
-                LoSanPham lo = loSanPhamDAO.timKiemLoSanPhamBangMa(maLo);
+                LoSanPham lo = loSanPhamDAO.getLoSanPhamTheoMa(maLo);
 
                 if (lo != null) {
                     PhieuNhap pn = new PhieuNhap();

@@ -196,7 +196,7 @@ public class CapNhatNhanVien_Dialog extends JDialog {
         cmbCaLam.setSelectedItem(nhanVienCanCapNhat.getCaLam());
         
         // <<< 3. NẠP DỮ LIỆU TRẠNG THÁI HIỆN TẠI >>>
-        cmbTrangThai.setSelectedItem(nhanVienCanCapNhat.getTrangThai() ? "Đang làm" : "Đã nghỉ");
+        cmbTrangThai.setSelectedItem(nhanVienCanCapNhat.isTrangThai() ? "Đang làm" : "Đã nghỉ");
     }
 
     private void onLuuButtonClick() {

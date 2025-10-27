@@ -27,6 +27,7 @@ import javax.swing.table.TableColumnModel;
 import com.toedter.calendar.JDateChooser;
 import customcomponent.*;
 import entity.*;
+import enums.DuongDung;
 
 public class HuyHang_GUI extends JPanel {
 

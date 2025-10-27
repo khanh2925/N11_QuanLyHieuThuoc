@@ -9,7 +9,10 @@ public class LoSanPham {
     private LocalDate ngaySanXuat;
     private LocalDate hanSuDung;
     private int soLuong;
-    private SanPham sanPham;
+    
+
+
+	private SanPham sanPham;
 
     public LoSanPham() {
     }
@@ -28,6 +31,9 @@ public class LoSanPham {
         this.hanSuDung = other.hanSuDung;
         this.soLuong = other.soLuong;
         this.sanPham = other.sanPham;
+    }
+    public LoSanPham(String maLo) {
+        this.maLo = maLo;
     }
 
     public String getMaLo() {

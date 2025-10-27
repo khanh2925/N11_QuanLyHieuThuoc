@@ -44,7 +44,7 @@ public class PhieuHuy_DAO {
                 boolean trangThai = rs.getBoolean("TrangThai");
                 String maNhanVien = rs.getString("MaNhanVien");
 
-                NhanVien nv = nhanVienDAO.timKiemNhanVienBangMa(maNhanVien);
+                NhanVien nv = nhanVienDAO.getNhanVienTheoMa(maNhanVien);
                 PhieuHuy ph = new PhieuHuy(maPhieuHuy, ngayLapPhieu, nv, trangThai);
 
                 List<ChiTietPhieuHuy> chiTietList = chiTietPhieuHuyDAO.timKiemChiTietPhieuHuyBangMa(maPhieuHuy);
@@ -91,7 +91,7 @@ public class PhieuHuy_DAO {
                 int soLuongHuy = rs.getInt("SoLuongHuy");
                 String lyDo = rs.getString("LyDoChiTiet");
 
-                LoSanPham lo = loSanPhamDAO.timKiemLoSanPhamBangMa(maLo);
+                LoSanPham lo = loSanPhamDAO.getLoSanPhamTheoMa(maLo);
                 if (lo != null) {
                     // Constructor của ChiTietPhieuHuy yêu cầu PhieuHuy, nhưng ở đây ta chỉ có mã
                     // Ta sẽ tạm thời truyền null để lấy danh sách chi tiết

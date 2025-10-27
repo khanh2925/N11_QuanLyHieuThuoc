@@ -5,7 +5,8 @@ import java.util.Objects;
 public class NhaCungCap {
 
     private String maNhaCungCap;
-    private String tenNhaCungCap;
+
+	private String tenNhaCungCap;
     private String soDienThoai;
     private String diaChi;
 
@@ -19,7 +20,11 @@ public class NhaCungCap {
         setDiaChi(diaChi);
     }
 
-    public NhaCungCap(NhaCungCap ncc) {
+    public NhaCungCap(String maNhaCungCap) {
+		this.maNhaCungCap = maNhaCungCap;
+	}
+
+	public NhaCungCap(NhaCungCap ncc) {
         this.maNhaCungCap = ncc.maNhaCungCap;
         this.tenNhaCungCap = ncc.tenNhaCungCap;
         this.soDienThoai = ncc.soDienThoai;

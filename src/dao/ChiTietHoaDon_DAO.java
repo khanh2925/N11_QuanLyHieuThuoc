@@ -38,7 +38,7 @@ public class ChiTietHoaDon_DAO {
                 HoaDon hd = new HoaDon();
                 hd.setMaHoaDon(maHD);
 
-                SanPham sp = sanPhamDAO.findSanPhamById(maSP);
+                SanPham sp = sanPhamDAO.getSanPhamTheoMa(maSP);
 
                 return new ChiTietHoaDon(hd, sp, soLuong, giaBan, null);
             }
@@ -79,7 +79,7 @@ public class ChiTietHoaDon_DAO {
 
                 HoaDon hd = new HoaDon();
                 hd.setMaHoaDon(maHD);
-                SanPham sp = sanPhamDAO.findSanPhamById(maSP);
+                SanPham sp = sanPhamDAO.getSanPhamTheoMa(maSP);
 
                 if (sp != null) {
                     ChiTietHoaDon cthd = new ChiTietHoaDon(hd, sp, soLuong, giaBan, null);

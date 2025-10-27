@@ -22,7 +22,10 @@ public class PhieuNhap {
         this.nhanVien = nhanVien;
         this.tongTien = tongTien;
     }
-    
+    public PhieuNhap(String maPhieuNhap) {
+        this.maPhieuNhap = maPhieuNhap;
+    }
+
     // Getters and Setters for all fields
     
     public String getMaPhieuNhap() {
