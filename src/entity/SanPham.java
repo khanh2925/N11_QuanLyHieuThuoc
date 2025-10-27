@@ -20,7 +20,12 @@ public class SanPham {
     private double giaNhap;
     private double giaBan;
     private String hinhAnh;
-    private String quyCachDongGoi;
+    
+    public SanPham(String maSanPham) {
+		this.maSanPham = maSanPham;
+	}
+
+	private String quyCachDongGoi;
     private String keBanSanPham;
     private boolean hoatDong;
 

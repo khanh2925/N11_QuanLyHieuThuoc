@@ -21,9 +21,10 @@ import java.util.List;
 import java.awt.event.*;
 
 import entity.SanPham;
+import enums.DuongDung;
 import entity.LoaiSanPham;
 import entity.DonViTinh;
-import entity.DuongDung;
+
 
 public class TraHangNhanVien_GUI extends JPanel {
 

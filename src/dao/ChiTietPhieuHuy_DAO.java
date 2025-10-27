@@ -42,7 +42,7 @@ public class ChiTietPhieuHuy_DAO {
                 String lyDo = rs.getString("LyDoChiTiet");
                 String maLo = rs.getString("MaLo");
 
-                LoSanPham lo = loSanPhamDAO.timKiemLoSanPhamBangMa(maLo);
+                LoSanPham lo = loSanPhamDAO.getLoSanPhamTheoMa(maLo);
                 if (lo != null) {
                     ChiTietPhieuHuy ct = new ChiTietPhieuHuy(ph, soLuongHuy, lyDo, lo, lo.getSanPham().getGiaNhap());
                     danhSachChiTiet.add(ct);

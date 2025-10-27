@@ -11,7 +11,7 @@ public class NhanVien {
 	private LocalDate ngaySinh;
 	private String soDienThoai;
 	private String diaChi;
-	private Boolean quanLy;
+	private boolean quanLy;
 	private TaiKhoan taiKhoan;
 	private String caLam;
 	private boolean trangThai;
@@ -19,8 +19,8 @@ public class NhanVien {
 	public NhanVien() {
 	}
 
-	public NhanVien(String maNhanVien, String tenNhanVien, Boolean gioiTinh, LocalDate ngaySinh, String soDienThoai,
-			String diaChi, Boolean quanLy, TaiKhoan taiKhoan, String caLam, boolean trangThai) {
+	public NhanVien(String maNhanVien, String tenNhanVien, boolean gioiTinh, LocalDate ngaySinh, String soDienThoai,
+			String diaChi, boolean quanLy, TaiKhoan taiKhoan, String caLam, boolean trangThai) {
 		setMaNhanVien(maNhanVien);
 		setTenNhanVien(tenNhanVien);
 		setGioiTinh(gioiTinh);
@@ -71,14 +71,11 @@ public class NhanVien {
 		this.tenNhanVien = tenNhanVien;
 	}
 
-	public Boolean isGioiTinh() {
+	public boolean isGioiTinh() {
 		return gioiTinh;
 	}
 
-	public void setGioiTinh(Boolean gioiTinh) {
-		if (gioiTinh == null) {
-			throw new IllegalArgumentException("Giới tính không được rỗng.");
-		}
+	public void setGioiTinh(boolean gioiTinh) {
 		this.gioiTinh = gioiTinh;
 	}
 
@@ -115,14 +112,11 @@ public class NhanVien {
 		this.diaChi = diaChi;
 	}
 
-	public Boolean isQuanLy() {
+	public boolean isQuanLy() {
 		return quanLy;
 	}
 
-	public void setQuanLy(Boolean quanLy) {
-		if (quanLy == null) {
-			throw new IllegalArgumentException("Trạng thái quản lý không được để trống.");
-		}
+	public void setQuanLy(boolean quanLy) {
 		this.quanLy = quanLy;
 	}
 
@@ -148,7 +142,7 @@ public class NhanVien {
 		this.caLam = caLam;
 	}
 
-	public boolean getTrangThai() {
+	public boolean isTrangThai() {
 		return trangThai;
 	}
 

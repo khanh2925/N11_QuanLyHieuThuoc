@@ -9,7 +9,10 @@ public class LoSanPham {
     private LocalDate ngaySanXuat;
     private LocalDate hanSuDung;
     private int soLuong;
-    private SanPham sanPham;
+    
+
+
+	private SanPham sanPham;
 
     public LoSanPham() {
     }

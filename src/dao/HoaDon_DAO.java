@@ -41,7 +41,7 @@ public class HoaDon_DAO {
                 String maNV = rs.getString("MaNhanVien");
                 boolean thuocTheoDon = rs.getBoolean("ThuocTheoDon");
 
-                NhanVien nv = nhanVienDAO.timKiemNhanVienBangMa(maNV);
+                NhanVien nv = nhanVienDAO.getNhanVienTheoMa(maNV);
                 // KhachHang kh = khachHangDAO.timKiemKhachHangBangMa(maKH); // Entity HoaDon chỉ cần mã KH
 
                 // KhuyenMai là null vì DB không có
