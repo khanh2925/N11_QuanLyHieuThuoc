@@ -12,7 +12,6 @@ public class SanPham {
     private String tenSanPham;
     private LoaiSanPham loaiSanPham;
     private String soDangKy;
-    private DonViTinh donViTinh;
     private DuongDung duongDung;
     private double giaNhap;
     private double giaBan;
@@ -32,7 +31,7 @@ public class SanPham {
 	}
     
     public SanPham(String maSanPham, String tenSanPham, LoaiSanPham loaiSanPham, String soDangKy,
-                   DonViTinh donViTinh, DuongDung duongDung,
+                    DuongDung duongDung,
                    double giaNhap, double giaBan, String hinhAnh,
                    String keBanSanPham, boolean hoatDong) {
 
@@ -40,7 +39,6 @@ public class SanPham {
         setTenSanPham(tenSanPham);
         setLoaiSanPham(loaiSanPham);
         setSoDangKy(soDangKy);
-        setDonViTinh(donViTinh);
         setDuongDung(duongDung);
         setGiaNhap(giaNhap);
         setGiaBan(giaBan);
@@ -54,7 +52,6 @@ public class SanPham {
         this.tenSanPham = sp.tenSanPham;
         this.loaiSanPham = sp.loaiSanPham;
         this.soDangKy = sp.soDangKy;
-        this.donViTinh = sp.donViTinh;
         this.duongDung = sp.duongDung;
         this.giaNhap = sp.giaNhap;
         this.giaBan = sp.giaBan;
@@ -107,18 +104,6 @@ public class SanPham {
         if (soDangKy != null && soDangKy.length() > 20)
             throw new IllegalArgumentException("Số đăng ký không hợp lệ (tối đa 20 ký tự).");
         this.soDangKy = soDangKy;
-    }
-
- 
-
-    public DonViTinh getDonViTinh() {
-        return donViTinh;
-    }
-
-    public void setDonViTinh(DonViTinh donViTinh) {
-        if (donViTinh == null)
-            throw new IllegalArgumentException("Đơn vị tính không tồn tại.");
-        this.donViTinh = donViTinh;
     }
 
     public DuongDung getDuongDung() {

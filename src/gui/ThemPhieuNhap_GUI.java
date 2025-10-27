@@ -10,15 +10,33 @@ import javax.swing.border.*;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
-import entity.DonViTinh;
-import entity.LoaiSanPham;
-import entity.SanPham;
-import enums.DuongDung;
 
 public class ThemPhieuNhap_GUI extends JPanel {
     private JPanel pnCotPhaiCenter;
     private JPanel pnDanhSachDon;
-	private JTextField txtSearch;
+    private JTextField txtSearch;
+
+    // ===== Data model siêu gọn cho màn hình (không dùng entity/enums) =====
+    private static class Product {
+        private final String maSanPham;
+        private final String tenSanPham;
+        private final String donViTinhTen;
+        private final double giaBan;
+        private final String hinh; // path resource, nếu cần
+
+        Product(String ma, String ten, String dvt, double giaBan, String hinh) {
+            this.maSanPham = ma;
+            this.tenSanPham = ten;
+            this.donViTinhTen = dvt;
+            this.giaBan = giaBan;
+            this.hinh = hinh;
+        }
+        public String getMaSanPham() { return maSanPham; }
+        public String getTenSanPham() { return tenSanPham; }
+        public String getDonViTinhTen() { return donViTinhTen; }
+        public double getGiaBan() { return giaBan; }
+        public String getHinh() { return hinh; }
+    }
 
     public ThemPhieuNhap_GUI() {
         this.setPreferredSize(new Dimension(1537, 850));
@@ -34,7 +52,6 @@ public class ThemPhieuNhap_GUI extends JPanel {
         pnCotPhaiHead.setPreferredSize(new Dimension(1073, 88));
         pnCotPhaiHead.setBackground(new Color(0xE3F2F5));
         add(pnCotPhaiHead, BorderLayout.NORTH);
-        
 
         // Nút thêm lô
         JButton btnThemLo = new PillButton("Thêm lô");
@@ -47,7 +64,7 @@ public class ThemPhieuNhap_GUI extends JPanel {
         btnNhapFile.setFont(new Font("Segoe UI", Font.BOLD, 16));
         btnNhapFile.setBounds(640, 30, 150, 40);
         pnCotPhaiHead.add(btnNhapFile);
-        
+
         txtSearch = new JTextField();
         PlaceholderSupport.addPlaceholder(txtSearch, "Tìm sản phẩm theo mã");
         txtSearch.setForeground(Color.GRAY);
@@ -62,8 +79,8 @@ public class ThemPhieuNhap_GUI extends JPanel {
         pnCotPhaiCenter.setBackground(Color.WHITE);
         add(pnCotPhaiCenter, BorderLayout.CENTER);
         pnCotPhaiCenter.setBorder(new CompoundBorder(
-            new LineBorder(new Color(0x00C853), 3, true),
-            new EmptyBorder(5, 5, 5, 5)
+                new LineBorder(new Color(0x00C853), 3, true),
+                new EmptyBorder(5, 5, 5, 5)
         ));
         pnCotPhaiCenter.setLayout(new BorderLayout(0, 0));
 
@@ -118,8 +135,8 @@ public class ThemPhieuNhap_GUI extends JPanel {
         txtTimNCC.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtTimNCC.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
         txtTimNCC.setBorder(BorderFactory.createCompoundBorder(
-            new LineBorder(new Color(0xCCCCCC), 2, true),
-            new EmptyBorder(5,10,5,10)
+                new LineBorder(new Color(0xCCCCCC), 2, true),
+                new EmptyBorder(5,10,5,10)
         ));
         txtTimNCC.setBackground(new Color(0xFAFAFA));
         txtTimNCC.setForeground(Color.GRAY);
@@ -156,24 +173,19 @@ public class ThemPhieuNhap_GUI extends JPanel {
         pnCotPhaiRight.add(lblQuayLai);
         pnCotPhaiRight.add(Box.createVerticalStrut(270));
 
-        // ===== DỮ LIỆU SẢN PHẨM NHẬP =====
-        LoaiSanPham loaiThuoc = new LoaiSanPham("LSP001", "Thuốc nhập kho", "Test");
-        DonViTinh hop = new DonViTinh("DVT-001", "Hộp", "TEST");
-        DonViTinh vi = new DonViTinh("DVT-002", "Vỉ", "TEST");
+        // ===== DỮ LIỆU SẢN PHẨM NHẬP (FAKE, không entity) =====
+        List<Product> dsSanPham = new ArrayList<>();
+        dsSanPham.add(new Product("SP000001", "Paracetamol 500mg", "Hộp", 100000, "/images/para.png"));
+        dsSanPham.add(new Product("SP000002", "Vitamin C 1000mg",   "Vỉ",   70000,  "/images/vitaminc.png"));
+        dsSanPham.add(new Product("SP000003", "Efferalgan 500mg",   "Hộp",  95000,  "/images/efferalgan.png"));
 
-        List<SanPham> dsSanPham = new ArrayList<>();
-        dsSanPham.add(new SanPham("SP000001", "Paracetamol", loaiThuoc, "SDK001", "Paracetamol", "500mg", "Pymepharco",
-                "Việt Nam", hop, DuongDung.UONG, 80000, 100000, "/images/para.png", "Hộp 10 vỉ x 10 viên", "K1", true));
-        dsSanPham.add(new SanPham("SP000002", "Vitamin C", loaiThuoc, "SDK002", "Ascorbic Acid", "1000mg", "Traphaco",
-                "Việt Nam", vi, DuongDung.UONG, 50000, 70000, "/images/vitaminc.png", "Vỉ 10 viên", "K2", true));
-
-        for (SanPham sp : dsSanPham) {
+        for (Product sp : dsSanPham) {
             pnDanhSachDon.add(createDonPanel(sp));
         }
     }
 
     // ===== TẠO 1 DÒNG SẢN PHẨM NHẬP =====
-    private JPanel createDonPanel(SanPham sp) {
+    private JPanel createDonPanel(Product sp) {
         JPanel pnDonMau = new JPanel();
         pnDonMau.setPreferredSize(new Dimension(1040, 120));
         pnDonMau.setLayout(null);
@@ -185,16 +197,25 @@ public class ThemPhieuNhap_GUI extends JPanel {
         JLabel lblHinhAnh = new JLabel("Ảnh", SwingConstants.CENTER);
         lblHinhAnh.setBorder(new LineBorder(Color.LIGHT_GRAY));
         lblHinhAnh.setBounds(27, centerY - 30, 100, 100);
+        if (sp.getHinh() != null) {
+            java.net.URL url = getClass().getResource(sp.getHinh());
+            if (url != null) {
+                ImageIcon icon = new ImageIcon(url);
+                Image scaled = icon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+                lblHinhAnh.setIcon(new ImageIcon(scaled));
+                lblHinhAnh.setText("");
+            }
+        }
         pnDonMau.add(lblHinhAnh);
 
         JLabel lblTenThuoc = new JLabel(sp.getTenSanPham());
         lblTenThuoc.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        lblTenThuoc.setBounds(168, centerY - 30, 250, 34);
+        lblTenThuoc.setBounds(168, centerY - 30, 320, 34);
         pnDonMau.add(lblTenThuoc);
 
-        JLabel lblDonViTinh = new JLabel(sp.getDonViTinh().getTenDonViTinh());
+        JLabel lblDonViTinh = new JLabel(sp.getDonViTinhTen());
         lblDonViTinh.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblDonViTinh.setBounds(350, centerY - 28, 100, 30);
+        lblDonViTinh.setBounds(350, centerY - 28, 120, 30);
         pnDonMau.add(lblDonViTinh);
 
         JLabel lblLoThuoc = new JLabel("Lô: " + sp.getMaSanPham() + " - SL: 20");
@@ -245,8 +266,10 @@ public class ThemPhieuNhap_GUI extends JPanel {
         JButton btnXoa = new JButton();
         btnXoa.setBounds(980, centerY, 35, 35);
         ImageIcon iconBin = new ImageIcon(getClass().getResource("/images/bin.png"));
-        Image img = iconBin.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-        btnXoa.setIcon(new ImageIcon(img));
+        if (iconBin.getImage() != null) {
+            Image img = iconBin.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            btnXoa.setIcon(new ImageIcon(img));
+        }
         btnXoa.setBorderPainted(false);
         btnXoa.setContentAreaFilled(false);
         btnXoa.setFocusPainted(false);
@@ -259,17 +282,23 @@ public class ThemPhieuNhap_GUI extends JPanel {
             try {
                 int sl = Integer.parseInt(txtSoLuong.getText().trim());
                 txtSoLuong.setText(String.valueOf(sl + 1));
+                lblTongTien.setText(String.format("%,.0f vnđ", (sl + 1) * sp.getGiaBan()));
             } catch (NumberFormatException ex) {
                 txtSoLuong.setText("1");
+                lblTongTien.setText(String.format("%,.0f vnđ", sp.getGiaBan()));
             }
         });
 
         btnGiam.addActionListener(e -> {
             try {
                 int sl = Integer.parseInt(txtSoLuong.getText().trim());
-                if (sl > 1) txtSoLuong.setText(String.valueOf(sl - 1));
+                if (sl > 1) {
+                    txtSoLuong.setText(String.valueOf(sl - 1));
+                    lblTongTien.setText(String.format("%,.0f vnđ", (sl - 1) * sp.getGiaBan()));
+                }
             } catch (NumberFormatException ex) {
                 txtSoLuong.setText("1");
+                lblTongTien.setText(String.format("%,.0f vnđ", sp.getGiaBan()));
             }
         });
 
@@ -300,7 +329,7 @@ public class ThemPhieuNhap_GUI extends JPanel {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Thêm Phiếu Nhập");
+            JFrame frame = new JFrame("Thêm Phiếu Nhập - Data Fake");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1280, 800);
             frame.setLocationRelativeTo(null);

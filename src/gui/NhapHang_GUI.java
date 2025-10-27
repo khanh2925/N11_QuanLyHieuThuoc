@@ -1,26 +1,35 @@
-
 package gui;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
-import javax.swing.*;
-import javax.swing.table.*;
 
-import customcomponent.*;
-import entity.*;
-import enums.DuongDung;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumnModel;
+
+import customcomponent.PillButton;
+import customcomponent.PlaceholderSupport;
+import customcomponent.RoundedBorder;
 
 public class NhapHang_GUI extends JPanel {
 
     private JPanel pnCenter;
     private JPanel pnHeader;
     private JPanel pnRight;
-    private JButton btnThem;
-    private JButton btnXuatFile;
+    private PillButton btnThem;
+    private PillButton btnXuatFile;
     private DefaultTableModel modelPN;
     private JTable tblPN;
     private JScrollPane scrCTPN;
@@ -30,7 +39,7 @@ public class NhapHang_GUI extends JPanel {
     private JTextField txtSearch;
 
     DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    DecimalFormat df = new DecimalFormat("#,000.#đ");
+    DecimalFormat df = new DecimalFormat("#,###đ");
 
     private Color blueMint = new Color(180, 220, 240);
     private Color pinkPastel = new Color(255, 200, 220);
@@ -85,9 +94,9 @@ public class NhapHang_GUI extends JPanel {
         btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnThem.setBounds(922, 30, 120, 40);
 
-        // Sự kiện bấm -> chuyển sang ThemPhieuNhap_GUI
+        // Giữ nguyên sự kiện (nếu có màn ThemPhieuNhap_GUI)
         btnThem.addActionListener(e -> {
-            Window win = SwingUtilities.getWindowAncestor(this);
+            java.awt.Window win = SwingUtilities.getWindowAncestor(this);
             if (win instanceof JFrame frame) {
                 frame.setContentPane(new ThemPhieuNhap_GUI());
                 frame.revalidate();
@@ -115,11 +124,11 @@ public class NhapHang_GUI extends JPanel {
         pnRight = new JPanel();
         pnRight.setPreferredSize(new Dimension(600, 1080));
         pnRight.setBackground(new Color(0, 128, 255));
-        pnRight.setLayout(new BoxLayout(pnRight, BoxLayout.Y_AXIS));
+        pnRight.setLayout(new javax.swing.BoxLayout(pnRight, javax.swing.BoxLayout.Y_AXIS));
         add(pnRight, BorderLayout.EAST);
 
         initTable();
-        LoadPhieuNhap();
+        LoadPhieuNhap(); // nạp data fake
     }
 
     private void initTable() {
@@ -148,56 +157,63 @@ public class NhapHang_GUI extends JPanel {
         tblCTPN.getTableHeader().setBackground(blueMint);
     }
 
+    /** Data fake thuần tuý, không dùng entity/enums */
     public void LoadPhieuNhap() {
-        DonViTinh vien = new DonViTinh("DVT-001", "Viên", null);
-        LoaiSanPham thuoc = new LoaiSanPham("LSP001", "Thuốc", null);
-        DuongDung uong = DuongDung.UONG;
+        // ==== PHIẾU NHẬP (master) ====
+        // fields: maPN, ngayLap, tenNV, tenNCC, tongTien (sẽ tính từ chi tiết)
+        Object[][] pnData = {
+            { "PN001", LocalDate.of(2025, 10, 18), "Lê Thanh Kha", "Công ty Dược Hậu Giang", 0.0 },
+            { "PN002", LocalDate.of(2025, 10, 20), "Trần Thị B",   "Mekophar",               0.0 }
+        };
 
-        SanPham sp1 = new SanPham("SP000001", "Paracetamol 500mg", thuoc, "VN-12345",
-                "Paracetamol", "500mg", "DHG Pharma", "Việt Nam",
-                vien, uong, 800, 1500, "paracetamol.jpg", "Hộp 10 vỉ x 10 viên", "A1", true);
+        // ==== CHI TIẾT (detail) ====
+        // fields: (maPN), maLo, maSP, tenSP, slNhap, donGia
+        Object[][] ctData = {
+            { "PN001", "LO000001", "SP000001", "Paracetamol 500mg", 50, 800.0 },
+            { "PN001", "LO000002", "SP000002", "Vitamin C 1000mg",  30, 1200.0 },
+            { "PN002", "LO000003", "SP000003", "Efferalgan 500mg",  40, 950.0 },
+            { "PN002", "LO000004", "SP000004", "Bông y tế",         80, 120.0 }
+        };
 
-        SanPham sp2 = new SanPham("SP000002", "Vitamin C 1000mg", thuoc, "VN-67890",
-                "Ascorbic Acid", "1000mg", "Traphaco", "Việt Nam",
-                vien, uong, 1200, 2500, "vitaminc.jpg", "Hộp 5 vỉ x 10 viên", "A2", true);
+        // Tính tổng tiền cho từng PN từ ctData
+        for (int i = 0; i < pnData.length; i++) {
+            String maPN = pnData[i][0].toString();
+            double tong = 0.0;
+            for (Object[] ct : ctData) {
+                if (maPN.equals(ct[0])) {
+                    int sl = (int) ct[4];
+                    double donGia = ((Number) ct[5]).doubleValue();
+                    tong += sl * donGia;
+                }
+            }
+            pnData[i][4] = tong;
+        }
 
-        LoSanPham lo1 = new LoSanPham("LO000001", LocalDate.of(2025, 1, 1),
-                LocalDate.of(2027, 1, 1), 100, sp1);
-        LoSanPham lo2 = new LoSanPham("LO000002", LocalDate.of(2024, 1, 1),
-                LocalDate.of(2026, 1, 1), 200, sp2);
+        // Đổ master
+        modelPN.setRowCount(0);
+        for (Object[] pn : pnData) {
+            modelPN.addRow(new Object[]{
+                pn[0],
+                ((LocalDate) pn[1]).format(fmt),
+                pn[2],
+                pn[3],
+                df.format(((Number) pn[4]).doubleValue())
+            });
+        }
 
-        TaiKhoan tk1 = new TaiKhoan("TK000001", "admin", "Aa123456@");
-        NhanVien nv1 = new NhanVien("NV2025100001", "Lê Thanh Kha", true,
-                LocalDate.of(1998, 5, 10), "0912345678", "TP.HCM",
-                true, tk1, "SANG", true);
-
-        NhaCungCap ncc1 = new NhaCungCap("NCC-001", "Công ty Dược Hậu Giang",
-                "0283822334", "Cần Thơ");
-
-        PhieuNhap pn1 = new PhieuNhap("PN001", LocalDate.of(2025, 10, 18),
-                ncc1, nv1, 0);
-
-        ChiTietPhieuNhap ct1 = new ChiTietPhieuNhap(pn1, lo1, 50, 800);
-        ChiTietPhieuNhap ct2 = new ChiTietPhieuNhap(pn1, lo2, 30, 1200);
-        List<ChiTietPhieuNhap> chiTiet = Arrays.asList(ct1, ct2);
-
-        double tong = chiTiet.stream().mapToDouble(ChiTietPhieuNhap::getThanhTien).sum();
-        pn1.setTongTien(tong);
-
-        modelPN.addRow(new Object[]{pn1.getMaPhieuNhap(),
-                pn1.getNgayNhap().format(fmt),
-                pn1.getNhanVien().getTenNhanVien(),
-                pn1.getNhaCungCap().getTenNhaCungCap(),
-                df.format(pn1.getTongTien())});
-
-        for (ChiTietPhieuNhap c : chiTiet) {
+        // Đổ detail
+        modelCTPN.setRowCount(0);
+        for (Object[] ct : ctData) {
+            int sl = (int) ct[4];
+            double donGia = ((Number) ct[5]).doubleValue();
+            double thanhTien = sl * donGia;
             modelCTPN.addRow(new Object[]{
-                    c.getLoSanPham().getMaLo(),
-                    c.getLoSanPham().getSanPham().getMaSanPham(),
-                    c.getLoSanPham().getSanPham().getTenSanPham(),
-                    c.getSoLuongNhap(),
-                    df.format(c.getDonGiaNhap()),
-                    df.format(c.getThanhTien())
+                ct[1], // Mã lô
+                ct[2], // Mã SP
+                ct[3], // Tên SP
+                sl,
+                df.format(donGia),
+                df.format(thanhTien)
             });
         }
     }
@@ -231,7 +247,7 @@ public class NhapHang_GUI extends JPanel {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Quản lý phiếu nhập");
+            JFrame frame = new JFrame("Quản lý phiếu nhập - Data Fake");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1280, 800);
             frame.setLocationRelativeTo(null);
