@@ -1,10 +1,3 @@
-/**
- * @author Thanh Kha
- * @version 1.0
- * @since Oct 16, 2025
- *
- * Mô tả: Giao diện quản lý phiếu nhập hàng
- */
 
 package gui;
 

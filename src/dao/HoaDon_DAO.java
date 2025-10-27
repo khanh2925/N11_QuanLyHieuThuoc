@@ -42,7 +42,7 @@ public class HoaDon_DAO {
                 boolean thuocTheoDon = rs.getBoolean("ThuocTheoDon");
 
                 NhanVien nv = nhanVienDAO.timKiemNhanVienBangMa(maNV);
-                // KhachHang kh = khachHangDAO.timKiemKhachHangBangMa(maKH); // Entity HoaDon chỉ cần mã KH
+                 KhachHang kh = khachHangDAO.timKiemKhachHangBangMa(maKH); // Entity HoaDon chỉ cần mã KH
 
                 // KhuyenMai là null vì DB không có
                 HoaDon hd = new HoaDon(maHD, maKH, ngayLap, nv, null, thuocTheoDon);
