@@ -23,7 +23,7 @@ import java.awt.event.*;
 
 import entity.SanPham;
 import enums.DuongDung;
-import entity.LoaiSanPham;
+import enums.LoaiSanPham;
 import entity.DonViTinh;
 //import entity.DuongDung;
 
@@ -240,23 +240,15 @@ public class BanHang_GUI extends JPanel {
         pnCotPhaiRight.add(Box.createVerticalStrut(270));
 
         // ===== SINH DỮ LIỆU TỪ ENTITY SanPham =====
-        LoaiSanPham loaiThuoc = new LoaiSanPham("LSP001", "Thuốc hạ sốt", "Test");
+
         DonViTinh hop = new DonViTinh("DVT-001", "Hộp", "TEST");
         DonViTinh vien = new DonViTinh("DVT-002", "Viên", "TEST");
 
         List<SanPham> dsSanPham = new ArrayList<>();
-        dsSanPham.add(new SanPham("SP000001", "Paracetamol", loaiThuoc, "SDK001", "Paracetamol",
-                "500mg", "Pymepharco", "Việt Nam", hop, DuongDung.UONG, 80000, 100000,
-                "/images/para.png", "Hộp 10 vỉ x 10 viên", "K1", true));
-        dsSanPham.add(new SanPham("SP000002", "Decolgen", loaiThuoc, "SDK002",
-                "Paracetamol + Pseudoephedrine", "250mg", "Uni-P", "Philippines", vien,
-                DuongDung.UONG, 5000, 7500, "/images/decolgen.png", "Vỉ 10 viên", "K2", true));
-        dsSanPham.add(new SanPham("SP000003", "Panadol Extra", loaiThuoc, "SDK003",
-                "Paracetamol + Cafein", "500mg", "GSK", "Anh", hop, DuongDung.UONG,
-                12000, 15600, "/images/panadol.png", "Hộp 12 vỉ", "K3", true));
-        dsSanPham.add(new SanPham("SP000004", "Efferalgan", loaiThuoc, "SDK004",
-                "Paracetamol", "500mg", "UPSA", "Pháp", hop, DuongDung.UONG,
-                10000, 13000, "/images/efferalgan.png", "Hộp 16 viên", "K4", true));
+        dsSanPham.add(new SanPham("SP000001", "Paracetamol", LoaiSanPham.THUOC, "SDK001", hop, DuongDung.UONG, 80000, 100000,"/images/para.png"     , "K1", true));
+        dsSanPham.add(new SanPham("SP000002", "Decolgen", LoaiSanPham.THUOC, "SDK001", vien, DuongDung.UONG, 7000, 100000,"/images/para.png"     , "K2", true));
+       
+        
 
         for (SanPham sp : dsSanPham) {
             pnDanhSachDon.add(createDonPanel(sp));
