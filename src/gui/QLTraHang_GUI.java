@@ -59,48 +59,51 @@ public class QLTraHang_GUI extends JPanel {
 
 
         txtSearch = new JTextField();
-        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        txtSearch.setBounds(10, 10, 342, 68);
-        txtSearch.setBorder(new LineBorder(new Color(0x00C0E2), 2,true));
+        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        txtSearch.setBounds(10, 17, 420, 60);
+        txtSearch.setBorder(new RoundedBorder(20));
         txtSearch.setBackground(Color.WHITE);
         PlaceholderSupport.addPlaceholder(txtSearch, "Tìm theo mã/tên ...");
 
 
         btnXuatFile = new PillButton("Xuất file");
-        btnXuatFile.setSize(100, 30);
-        btnXuatFile.setLocation(796, 30);
+        btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnXuatFile.setSize(120, 40);
+        btnXuatFile.setLocation(946, 30);
 
         pnHeader.add(txtSearch);
         pnHeader.add(btnXuatFile);
 
         btnNhapKho = new PillButton("Nhập lại kho");
-        btnNhapKho.setBounds(953, 30, 130, 30);
+        btnNhapKho.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnNhapKho.setBounds(1330, 30, 150, 40);
         pnHeader.add(btnNhapKho);
 
         btnHuyHang = new PillButton("Hủy hàng");
-        btnHuyHang.setBounds(1135, 30, 100, 30);
+        btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnHuyHang.setBounds(1535, 30, 120, 40);
         pnHeader.add(btnHuyHang);
         
         JLabel lblTuNgay = new JLabel("Từ ngày:");
-        lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblTuNgay.setBounds(362, 30, 60, 25);
+        lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        lblTuNgay.setBounds(478, 30, 90, 40);
         pnHeader.add(lblTuNgay);
         
         dateTu = new JDateChooser();
-        dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         dateTu.setDateFormatString("dd/MM/yyyy");
-        dateTu.setBounds(429, 30, 130, 25);
+        dateTu.setBounds(560, 35, 130, 30);
         pnHeader.add(dateTu);
         
         JLabel lblDenNgay = new JLabel("Đến:");
-        lblDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblDenNgay.setBounds(579, 30, 40, 25);
+        lblDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        lblDenNgay.setBounds(743, 26, 80, 40);
         pnHeader.add(lblDenNgay);
         
         dateDen = new JDateChooser();
-        dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         dateDen.setDateFormatString("dd/MM/yyyy");
-        dateDen.setBounds(619, 30, 130, 25);
+        dateDen.setBounds(780, 35, 130, 30);
         pnHeader.add(dateDen);
 
         // ===== CENTER =====

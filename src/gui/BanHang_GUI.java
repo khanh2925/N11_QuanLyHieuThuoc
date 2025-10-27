@@ -14,6 +14,7 @@ import javax.swing.border.*;
 
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
+import customcomponent.RoundedBorder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,28 +52,30 @@ public class BanHang_GUI extends JPanel {
         // Ô tìm kiếm
         txtTimThuoc = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimThuoc, "Tìm theo mã, tên...");
-        txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        txtTimThuoc.setBounds(25, 10, 342, 68);
-        txtTimThuoc.setBorder(new LineBorder(new Color(0x00C0E2), 2, true));
+        txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        txtTimThuoc.setBounds(25, 17, 420, 60);
+        txtTimThuoc.setBorder(new RoundedBorder(20));
         txtTimThuoc.setBackground(Color.WHITE);
         txtTimThuoc.setForeground(Color.GRAY);
         pnCotPhaiHead.add(txtTimThuoc);
         // Nút viên thuốc 2 màu
         JButton btnThemDon = new PillButton("Thêm đơn");
-        btnThemDon.setBounds(400, 20, 169, 48);
+        btnThemDon.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnThemDon.setBounds(490, 30, 120, 40);
         pnCotPhaiHead.add(btnThemDon);
 
-        JPanel pnDonMot = new JPanel();
-        pnDonMot.setBounds(612, 52, 160, 26);
-        pnCotPhaiHead.add(pnDonMot);
-        pnDonMot.setLayout(new BorderLayout(0, 0));
-
-        JButton btnDon1 = new JButton("Đơn Hàng 1");
-        btnDon1.setFont(new Font("Tahoma", Font.PLAIN, 14));
-        pnDonMot.add(btnDon1, BorderLayout.CENTER);
-
         JButton btnXoa = new JButton("X");
-        pnDonMot.add(btnXoa, BorderLayout.EAST);
+        btnXoa.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+        	}
+        });
+        btnXoa.setBounds(813, 51, 39, 26);
+        pnCotPhaiHead.add(btnXoa);
+        
+                JButton btnDon1 = new JButton("Đơn Hàng 1");
+                btnDon1.setBounds(653, 51, 160, 26);
+                pnCotPhaiHead.add(btnDon1);
+                btnDon1.setFont(new Font("Tahoma", Font.PLAIN, 18));
 
         // ===== CENTER (DANH SÁCH SẢN PHẨM) =====
         pnCotPhaiCenter = new JPanel();
@@ -111,10 +114,10 @@ public class BanHang_GUI extends JPanel {
         pnNhanVien.setOpaque(false);
 
         JLabel lblNhanVien = new JLabel("Phạm Quốc Khánh");
-        lblNhanVien.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblNhanVien.setFont(new Font("Segoe UI", Font.BOLD, 18));
 
         JLabel lblThoiGian = new JLabel("15/10/2025 19:00", SwingConstants.RIGHT);
-        lblThoiGian.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblThoiGian.setFont(new Font("Segoe UI", Font.PLAIN, 18));
 
         pnNhanVien.add(lblNhanVien, BorderLayout.WEST);
         pnNhanVien.add(lblThoiGian, BorderLayout.EAST);
@@ -133,7 +136,7 @@ public class BanHang_GUI extends JPanel {
         // Ô tìm khách hàng
         JTextField txtTimKH = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimKH, "Tìm theo số điện thoại");
-        txtTimKH.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        txtTimKH.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         txtTimKH.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
         txtTimKH.setBorder(BorderFactory.createCompoundBorder(
             new LineBorder(new Color(0xCCCCCC), 2, true),
@@ -158,7 +161,7 @@ public class BanHang_GUI extends JPanel {
 
         JLabel lblGiamPhanTram = new JLabel("-5% Cuối tuần");
         lblGiamPhanTram.setForeground(Color.RED);
-        lblGiamPhanTram.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblGiamPhanTram.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblGiamPhanTram.setAlignmentX(0.0f);
         pnMGG.add(lblGiamPhanTram, BorderLayout.NORTH);
         pnCotPhaiRight.add(Box.createVerticalStrut(10));

@@ -35,23 +35,25 @@ import entity.LoaiSanPham;
 import entity.SanPham;
 import enums.DuongDung;
 import enums.HinhThucKM;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class KhuyenMai_GUI extends JPanel {
 
 	private JPanel pnCenter; // vùng trung tâm
 	private JPanel pnHeader; // vùng đầu trang
 	private JPanel pnRight; // vùng cột phải
-	private JTextField txtSearch;
 	private PillButton btnThem;
 	private PillButton btnCapNhat;
 	private DefaultTableModel modelKM;
 	private JTable tblKM;
 	private JScrollPane scrKM;
-	private Color blueMint = new Color(180, 220, 240);
+	private Color blueMint = new Color(33, 150, 243);
 	private Color pinkPastel = new Color(255, 200, 220);
 
 	DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 	DecimalFormat df = new DecimalFormat("#,000.#đ");
+	private JTextField textField;
 
 	public KhuyenMai_GUI() {
 		this.setPreferredSize(new Dimension(1537, 850));
@@ -66,29 +68,34 @@ public class KhuyenMai_GUI extends JPanel {
 		pnHeader = new JPanel();
 		pnHeader.setPreferredSize(new Dimension(1073, 88));
 		pnHeader.setBackground(new Color(0xE3F2F5));
-		pnHeader.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 10));
 		add(pnHeader, BorderLayout.NORTH);
 
-		txtSearch = new JTextField("");
-		PlaceholderSupport.addPlaceholder(txtSearch, "Tìm kiếm khuyến mãi");
-		txtSearch.setForeground(Color.GRAY);
-		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		txtSearch.setPreferredSize(new Dimension(420, 44));
-		txtSearch.setBorder(new RoundedBorder(20));
-
 		btnThem = new PillButton("Thêm");
-		btnThem.setSize(100, 30);
+		btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnThem.setLocation(374, 25);
+		btnThem.setSize(120, 40);
 
 		btnCapNhat = new PillButton("Cập nhật");
-		btnCapNhat.setSize(100, 30);
-
-		pnHeader.add(txtSearch);
+		btnCapNhat.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			}
+		});
+		btnCapNhat.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnCapNhat.setLocation(549, 25);
+		btnCapNhat.setSize(120, 40);
+		pnHeader.setLayout(null);
 		pnHeader.add(btnThem);
 		pnHeader.add(btnCapNhat);
+		
+		textField = new JTextField("");
+		textField.setForeground(Color.GRAY);
+		textField.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		textField.setBorder(new RoundedBorder(20));
+		textField.setBounds(10, 17, 336, 60);
+		pnHeader.add(textField);
 		// ===== CENTER =====
 		pnCenter = new JPanel();
 		pnCenter.setBackground(new Color(255, 128, 192));
-		pnCenter.setLayout(new BorderLayout());
 		add(pnCenter, BorderLayout.CENTER);
 		initTable();
 		LoadKhuyenMai();
@@ -104,6 +111,7 @@ public class KhuyenMai_GUI extends JPanel {
 				return false;
 			}
 		};
+		pnCenter.setLayout(new BorderLayout(0, 0));
 		tblKM = new JTable(modelKM);
 		scrKM = new JScrollPane(tblKM);
 		pnCenter.add(scrKM);
@@ -133,11 +141,12 @@ public class KhuyenMai_GUI extends JPanel {
 	}
 
 	private void formatTable(JTable table) {
-		table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+		table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 18));
 		table.getTableHeader().setBorder(null);
+		table.getTableHeader().setForeground(Color.WHITE);
 
 		table.setRowHeight(28);
-		table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		table.setFont(new Font("Segoe UI", Font.PLAIN, 18));
 		table.setSelectionBackground(new Color(180, 205, 230));
 		table.setShowGrid(false);
 

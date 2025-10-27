@@ -18,6 +18,8 @@ import customcomponent.ClipTooltipRenderer;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class SanPham_GUI extends JPanel {
 
@@ -54,38 +56,53 @@ public class SanPham_GUI extends JPanel {
         pnHeader = new JPanel();
         pnHeader.setPreferredSize(new Dimension(1073, 88));
         pnHeader.setBackground(new Color(0xE3F2F5));
-        pnHeader.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 10));
         add(pnHeader, BorderLayout.NORTH);
 
         txtSearch = new JTextField("");
-        PlaceholderSupport.addPlaceholder(txtSearch, "Tìm kiếm sản phẩm");
+        txtSearch.setBounds(20, 17, 420, 60);
+        PlaceholderSupport.addPlaceholder(txtSearch, "Tìm kiếm sản phẩm theo mã");
         txtSearch.setForeground(Color.GRAY);
-        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         txtSearch.setPreferredSize(new Dimension(420, 44));
         txtSearch.setBorder(new RoundedBorder(20));
 
         pnLoc = new JPanel();
-        pnLoc.setBorder(BorderFactory.createTitledBorder(new RoundedBorder(20), "Lọc và sắp xếp"));
+        pnLoc.setBounds(460, 10, 400, 70);
+        pnLoc.setBorder(BorderFactory.createTitledBorder(new RoundedBorder(20), "Lọc theo tiêu chí"));
         pnLoc.setBackground(new Color(0, 0, 0, 0));
         pnLoc.setPreferredSize(new Dimension(400, 66));
         pnLoc.setLayout(null);
 
         cboLoaiHang = new JComboBox<>();
-        cboLoaiHang.setLocation(20, 18);
-        cboLoaiHang.setSize(150, 30);
+        cboLoaiHang.setFont(new Font("Tahoma", Font.PLAIN, 18));
+        cboLoaiHang.setLocation(75, 19);
+        cboLoaiHang.setSize(250, 40);
         cboLoaiHang.setBackground(Color.white);
         pnLoc.add(cboLoaiHang);
 
         btnThem = new PillButton("Thêm");
-        btnThem.setSize(100, 30);
+        btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnThem.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+        	}
+        });
+        btnThem.setBounds(895, 30, 120, 40);
 
         btnCapNhat = new PillButton("Cập nhật");
-        btnCapNhat.setSize(100, 30);
+        btnCapNhat.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnCapNhat.setBounds(1045, 30, 120, 40);
+        pnHeader.setLayout(null);
 
         pnHeader.add(txtSearch);
         pnHeader.add(pnLoc);
         pnHeader.add(btnThem);
         pnHeader.add(btnCapNhat);
+        
+        PillButton btnXemChiTiet = new PillButton("Cập nhật");
+        btnXemChiTiet.setText("Xem chi tiết");
+        btnXemChiTiet.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnXemChiTiet.setBounds(1210, 30, 140, 40);
+        pnHeader.add(btnXemChiTiet);
 
         // ===== CENTER =====
         pnCenter = new JPanel();
@@ -100,8 +117,7 @@ public class SanPham_GUI extends JPanel {
     private void initTable() {
         String[] cols = {
             "Hình ảnh", "Mã sản phẩm", "Tên sản phẩm", "Loại sản phẩm",
-            "Số đăng ký", "Hoạt chất", "Hàm lượng",
-            "Hãng sản xuất", "Xuất xứ", "Đường dùng",
+            "Số đăng ký", "Đường dùng", // Đã xóa "Hãng sản xuất"
             "Giá nhập", "Giá bán", "Quy cách đóng gói",
             "Kệ bán", "Trạng thái"
         };
@@ -143,10 +159,10 @@ public class SanPham_GUI extends JPanel {
     }
 
     private void formatTable(JTable table) {
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 18));
         table.getTableHeader().setBorder(null);
         table.setRowHeight(28);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         table.setSelectionBackground(new Color(180, 205, 230));
         table.setShowGrid(false);
 
@@ -179,6 +195,7 @@ public class SanPham_GUI extends JPanel {
     }
 
     private void loadSanPham() {
+        // Dữ liệu gốc vẫn giữ nguyên để dễ tham chiếu chỉ số
         String[][] data = {
             {"paracetamol.png", "SP000001", "Paracetamol 500mg", "Thuốc không kê đơn", "SDK-001", "Paracetamol", "500mg", "Traphaco", "Việt Nam", "Uống", "800", "1200", "Hộp 10 vỉ x 10 viên", "Kệ A1", "Đang kinh doanh"},
             {"amoxicillin.png", "SP000002", "Amoxicillin 500mg", "Thuốc kê đơn", "SDK-002", "Amoxicillin", "500mg", "DHG Pharma", "Việt Nam", "Uống", "1000", "1600", "Hộp 10 vỉ x 10 viên", "Kệ A2", "Đang kinh doanh"},
@@ -204,9 +221,11 @@ public class SanPham_GUI extends JPanel {
             Image img = icon.getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
             icon = new ImageIcon(img);
 
+            // Thêm dữ liệu vào model, bỏ qua các chỉ số của cột đã xóa
+            // Cột "Hãng sản xuất" ở chỉ số 7
             modelSP.addRow(new Object[]{
-                icon, sp[1], sp[2], sp[3], sp[4], sp[5], sp[6], sp[7], sp[8],
-                sp[9], df.format(Double.parseDouble(sp[10])),
+                icon, sp[1], sp[2], sp[3], sp[4], sp[9],
+                df.format(Double.parseDouble(sp[10])),
                 df.format(Double.parseDouble(sp[11])), sp[12], sp[13], sp[14]
             });
         }

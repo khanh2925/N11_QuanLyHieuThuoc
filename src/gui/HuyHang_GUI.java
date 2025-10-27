@@ -34,7 +34,6 @@ public class HuyHang_GUI extends JPanel {
 	private JPanel pnCenter; // vùng trung tâm
 	private JPanel pnHeader; // vùng đầu trang
 	private JPanel pnRight; // vùng cột phải
-	private JButton btnThem;
 	private JButton btnXuatFile;
 	private JTextField txtSearch;
 	private DefaultTableModel modelPH;
@@ -49,6 +48,8 @@ public class HuyHang_GUI extends JPanel {
 
 	private Color blueMint = new Color(180, 220, 240);
 	private Color pinkPastel = new Color(255, 200, 220);
+	private JDateChooser dateTu;
+	private JDateChooser dateDen;
 
 	public HuyHang_GUI() {
 		this.setPreferredSize(new Dimension(1537, 850));
@@ -60,59 +61,50 @@ public class HuyHang_GUI extends JPanel {
 		setLayout(new BorderLayout());
 		setPreferredSize(new Dimension(1537, 1168));
 
-		// ===== HEADER =====
 		pnHeader = new JPanel();
 		pnHeader.setPreferredSize(new Dimension(1073, 88));
 		pnHeader.setLayout(null);
 		add(pnHeader, BorderLayout.NORTH);
 
-		txtSearch = new JTextField("");
-		PlaceholderSupport.addPlaceholder(txtSearch, "Tìm kiếm theo tên / số điện thoại");
-		txtSearch.setForeground(Color.GRAY);
-		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		txtSearch.setBounds(20, 27, 250, 44);
-		txtSearch.setBorder(new RoundedBorder(20));
+        txtSearch = new JTextField();
+        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        txtSearch.setBounds(10, 17, 420, 60);
+        txtSearch.setBorder(new RoundedBorder(20));
+        txtSearch.setBackground(Color.WHITE);
 
-		// ===== BỘ LỌC THEO NGÀY =====
-		JLabel lblTuNgay = new JLabel("Từ ngày:");
-		lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		lblTuNgay.setBounds(306, 36, 60, 25);
 
-		com.toedter.calendar.JDateChooser dateTu = new com.toedter.calendar.JDateChooser();
-		dateTu.setDateFormatString("dd/MM/yyyy");
-		dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		dateTu.setBounds(366, 36, 130, 25);
-		dateTu.setDate(new java.util.Date()); // mặc định là hôm nay
-
-		JLabel lblDenNgay = new JLabel("Đến:");
-		lblDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		lblDenNgay.setBounds(511, 36, 40, 25);
-
-		com.toedter.calendar.JDateChooser dateDen = new com.toedter.calendar.JDateChooser();
-		dateDen.setDateFormatString("dd/MM/yyyy");
-		dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		dateDen.setBounds(551, 36, 130, 25);
-
-		// set mặc định là ngày mai
-		java.util.Calendar cal = java.util.Calendar.getInstance();
-		cal.add(java.util.Calendar.DATE, 1);
-		dateDen.setDate(cal.getTime());
-
-		btnThem = new PillButton("Thêm");
-		btnThem.setSize(100, 30);
-		btnThem.setLocation(703, 34);
+        PlaceholderSupport.addPlaceholder(txtSearch, "Tìm theo mã/tên ...");
 
 		btnXuatFile = new PillButton("Xuất file");
-		btnXuatFile.setSize(100, 30);
-		btnXuatFile.setLocation(813, 34);
+		btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnXuatFile.setSize(120, 40);
+		btnXuatFile.setLocation(957, 30);
 
 		pnHeader.add(txtSearch);
-		pnHeader.add(lblTuNgay);
-		pnHeader.add(dateTu);
-		pnHeader.add(lblDenNgay);
-		pnHeader.add(dateDen);
-		pnHeader.add(btnThem);
 		pnHeader.add(btnXuatFile);
+		
+		JLabel lblTuNgay = new JLabel("Từ ngày:");
+		lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		lblTuNgay.setBounds(468, 30, 78, 40);
+		pnHeader.add(lblTuNgay);
+		
+		dateTu = new JDateChooser();
+		dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		dateTu.setDateFormatString("dd/MM/yyyy");
+		dateTu.setBounds(550, 30, 130, 35);
+		pnHeader.add(dateTu);
+		
+		JLabel lblDenNgay = new JLabel("Đến:");
+		lblDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		lblDenNgay.setBounds(700, 33, 50, 25);
+		pnHeader.add(lblDenNgay);
+		
+		dateDen = new JDateChooser();
+		dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		dateDen.setDateFormatString("dd/MM/yyyy");
+		dateDen.setBounds(750, 30, 130, 35);
+		pnHeader.add(dateDen);
+		
 
 		// ===== CENTER =====
 		pnCenter = new JPanel();
