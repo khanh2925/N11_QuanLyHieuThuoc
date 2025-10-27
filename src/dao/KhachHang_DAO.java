@@ -125,6 +125,37 @@ public class KhachHang_DAO {
         }
         return null;
     }
+    // tim theo ten
+    /** Tìm khách hàng theo tên (LIKE) */
+    public ArrayList<KhachHang> getKhachHangTheoTen(String keyword) {
+        ArrayList<KhachHang> ds = new ArrayList<>();
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        String sql = "SELECT MaKhachHang, TenKhachHang, GioiTinh, SoDienThoai, NgaySinh "
+                   + "FROM KhachHang WHERE TenKhachHang LIKE ?";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, "%" + keyword.trim() + "%");
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String ma = rs.getString("MaKhachHang");
+                    String ten = rs.getString("TenKhachHang");
+                    boolean gt = rs.getBoolean("GioiTinh");
+                    String sdt = rs.getString("SoDienThoai");
+                    Date d = rs.getDate("NgaySinh");
+                    LocalDate ns = (d != null) ? d.toLocalDate() : null;
+
+                    ds.add(new KhachHang(ma, ten, gt, sdt, ns));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return ds;
+    }
 
 
 }

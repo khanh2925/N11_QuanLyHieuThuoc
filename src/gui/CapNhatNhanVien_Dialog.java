@@ -193,8 +193,7 @@ public class CapNhatNhanVien_Dialog extends JDialog {
         }
 
         chkQuanLy.setSelected(nhanVienCanCapNhat.isQuanLy());
-        cmbCaLam.setSelectedItem(nhanVienCanCapNhat.getCaLam());
-        
+        cmbCaLam.setSelectedItem(nhanVienCanCapNhat.getCaLam());       
         // <<< 3. NẠP DỮ LIỆU TRẠNG THÁI HIỆN TẠI >>>
         cmbTrangThai.setSelectedItem(nhanVienCanCapNhat.isTrangThai() ? "Đang làm" : "Đã nghỉ");
     }

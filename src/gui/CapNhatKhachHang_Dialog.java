@@ -13,22 +13,21 @@ import javax.swing.border.LineBorder;
 
 import com.toedter.calendar.JDateChooser;
 
+import dao.KhachHang_DAO;
 import entity.KhachHang;
 import entity.NhanVien;
 
 public class CapNhatKhachHang_Dialog extends JDialog {
 
 	 private JTextField txtTenKhachHang;
-	    private JTextField txtSoDienThoai;
-	    private JRadioButton radNam, radNu;
-	    private JDateChooser ngaySinhDateChooser;
-	    private JButton btnThoat;
-	    private JButton btnLuu;
+	 private JTextField txtSoDienThoai;
+	 private JRadioButton radNam, radNu;
+	 private JDateChooser ngaySinhDateChooser;
+	 private JButton btnThoat;
+	 private JButton btnLuu;
     
-
-
-    private KhachHang khachHangCanCapNhat;
-    private boolean isUpdateSuccess = false;
+	 private KhachHang khachHangCanCapNhat = null;
+	 private boolean isUpdateSuccess = false;
 
     public CapNhatKhachHang_Dialog(Frame owner, KhachHang khToUpdate) {
         super(owner, "Cập nhật thông tin khách hàng", true);
@@ -119,6 +118,7 @@ public class CapNhatKhachHang_Dialog extends JDialog {
         btnLuu.setForeground(Color.WHITE);
         btnLuu.setBorder(null);
         getContentPane().add(btnLuu);
+        
 
         btnThoat.addActionListener(e -> dispose());
         btnLuu.addActionListener(e -> onLuuButtonClick());
@@ -144,24 +144,21 @@ public class CapNhatKhachHang_Dialog extends JDialog {
 
     private void onLuuButtonClick() {
         try {
+        	
+        	if (!isValidForm()) return;
+        	
             String ten = txtTenKhachHang.getText();
-            String sdt = txtSoDienThoai.getText();
             boolean gioiTinh = radNam.isSelected();
+            String sdt = txtSoDienThoai.getText();         
             Date selectedDate = ngaySinhDateChooser.getDate();
-            if (selectedDate == null) {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày sinh.", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
             LocalDate ngaySinh = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             
-            if (ngaySinh.isAfter(LocalDate.now().minusYears(18))) {
-                JOptionPane.showMessageDialog(this, "Nhân viên phải đủ 16 tuổi.", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
-                return;
-            }            
+            
+            
             khachHangCanCapNhat.setTenKhachHang(ten);
             khachHangCanCapNhat.setSoDienThoai(sdt);
             khachHangCanCapNhat.setNgaySinh(ngaySinh);
-            khachHangCanCapNhat.setGioiTinh(gioiTinh);           
+            khachHangCanCapNhat.setGioiTinh(gioiTinh);    
             isUpdateSuccess = true;
             dispose();
             
@@ -169,8 +166,50 @@ public class CapNhatKhachHang_Dialog extends JDialog {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
         }
     }
+    private boolean isValidForm() {
+        String ten = txtTenKhachHang.getText() != null ? txtTenKhachHang.getText().trim() : "";
+        if (ten.isEmpty()) {
+            showError("Tên khách hàng không được rỗng.", txtTenKhachHang);
+            return false;
+        }
+        if (ten.length() > 100) {
+            showError("Tên khách hàng không được vượt quá 100 ký tự.", txtTenKhachHang);
+            return false;
+        }
+        if (!ten.matches("^([A-Z][a-z]+)(\\s[A-Z][a-z]+)*$")) {
+       	 	showError("Tên khách hàng phải viết hoa chữ cái đầu", txtTenKhachHang);
+            return false;
+		}
 
-    public boolean isUpdateSuccess() {
+        String sdt = txtSoDienThoai.getText() != null ? txtSoDienThoai.getText().trim() : "";
+        if (!sdt.matches("^0\\d{9}$")) {
+            showError("Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0.", txtSoDienThoai);
+            return false;
+        }     
+        
+
+        Date selectedDate = ngaySinhDateChooser.getDate();
+        if (selectedDate == null) {
+            showError("Vui lòng chọn ngày sinh.", ngaySinhDateChooser);
+            return false;
+        }
+        LocalDate ngaySinh = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+        if (ngaySinh.isAfter(LocalDate.now().minusYears(16))) {
+            showError("Khách hàng phải từ 16 tuổi trở lên.", ngaySinhDateChooser);
+            return false;
+        }
+
+        return true;
+    }
+    // --- Helper: hiển thị lỗi & focus vào control ---
+    private void showError(String message, JComponent c) {
+        JOptionPane.showMessageDialog(this, message, "Lỗi dữ liệu", JOptionPane.WARNING_MESSAGE);
+        if (c != null) c.requestFocus();
+    }
+
+    public boolean isUpdateKHSuccess() {
         return isUpdateSuccess;
     }
+
 }
