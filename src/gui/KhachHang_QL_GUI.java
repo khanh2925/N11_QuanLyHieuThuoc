@@ -1,7 +1,10 @@
 package gui;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ArrayList;
@@ -14,7 +17,7 @@ import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
 import entity.KhachHang;
 
-public class KhachHang_QL_GUI extends JPanel {
+public class KhachHang_QL_GUI extends JPanel implements ActionListener,MouseListener {
 
     private JPanel pnCenter;
     private JPanel pnHeader;
@@ -301,4 +304,40 @@ public class KhachHang_QL_GUI extends JPanel {
             frame.setVisible(true);
         });
     }
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
 }

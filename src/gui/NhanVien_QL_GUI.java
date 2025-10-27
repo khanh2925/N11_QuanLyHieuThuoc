@@ -26,7 +26,6 @@ public class NhanVien_QL_GUI extends JPanel {
     private JPanel pnHeader;
     private JTextField txtTimKiem;
     private JTable table;
-    private JLabel lbThem;
 
     private DefaultTableModel model;
     private TableRowSorter<DefaultTableModel> sorter;
@@ -34,6 +33,7 @@ public class NhanVien_QL_GUI extends JPanel {
     // THAY ĐỔI 1: Chuyển danh sách nhân viên thành biến thành viên
     private List<NhanVien> dsNhanVien;
 	private PillButton btnThem;
+	private PillButton btnSua;
 
     public NhanVien_QL_GUI() {
         setPreferredSize(new Dimension(1537, 850));
@@ -58,32 +58,20 @@ public class NhanVien_QL_GUI extends JPanel {
         txtTimKiem.setBorder(new RoundedBorder(20));
         pnHeader.add(txtTimKiem);
 
-//        ImageIcon icon = new ImageIcon(getClass().getResource("/images/add.png"));
-//        ImagePanel btnThem = new ImagePanel(icon.getImage());
-//        btnThem.setCursor(new Cursor(Cursor.HAND_CURSOR));
-//        btnThem.setBounds(456, 27, 30, 30);
+
+        
         btnThem=new PillButton("Thêm");
         pnHeader.add(btnThem);
+        btnThem.setBounds(456, 30, 120, 40);
         btnThem.setLayout(null);
+        btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
 
-        lbThem = new JLabel("Thêm", SwingConstants.CENTER);
-        lbThem.setBounds(435, 58, 70, 19);
-        pnHeader.add(lbThem);
-        lbThem.setFont(new Font("Arial", Font.BOLD, 16));
-        lbThem.setForeground(Color.BLACK);
-
-        ImageIcon iconSua = new ImageIcon(getClass().getResource("/images/edit.png"));
-        ImagePanel btnSua = new ImagePanel(iconSua.getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
+        
+        btnSua=new PillButton("Sửa");
         btnSua.setLayout(null);
-        btnSua.setBounds(577, 27, 30, 30);
-        btnSua.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnSua.setBounds(637, 29, 120, 40);
         pnHeader.add(btnSua);
-
-        JLabel lblSua = new JLabel("Cập nhật", SwingConstants.CENTER);
-        lblSua.setBounds(553, 55, 70, 25);
-        pnHeader.add(lblSua);
-        lblSua.setFont(new Font("Arial", Font.BOLD, 16));
-        lblSua.setForeground(Color.BLACK);
+        btnSua.setFont(new Font("Segoe UI", Font.BOLD, 18));
         
         btnThem.addMouseListener(new MouseAdapter() {
             @Override

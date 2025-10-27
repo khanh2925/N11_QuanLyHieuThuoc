@@ -12,13 +12,15 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.ActionEvent;
 import com.toedter.calendar.JDateChooser;
 
 import customcomponent.PillButton;
 import customcomponent.RoundedBorder;
 
-public class TongQuanNV_GUI extends JPanel {
+public class TongQuanNV_GUI extends JPanel implements ActionListener, MouseListener {
 
     private JPanel pnCenter;   // vùng trung tâm
     private JPanel pnHeader;   // vùng đầu trang
@@ -334,4 +336,40 @@ public class TongQuanNV_GUI extends JPanel {
             frame.setVisible(true);
         });
     }
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
 }

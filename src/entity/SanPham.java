@@ -3,57 +3,48 @@ package entity;
 import java.util.Objects;
 
 import enums.DuongDung;
+import enums.LoaiSanPham;
 
 
 public class SanPham {
-
+	
     private String maSanPham;
     private String tenSanPham;
     private LoaiSanPham loaiSanPham;
     private String soDangKy;
-    private String hoatChat;
-    private String hamLuong;
-    private String hangSanXuat;
-    private String xuatXu;
     private DonViTinh donViTinh;
     private DuongDung duongDung;
     private double giaNhap;
     private double giaBan;
     private String hinhAnh;
+    private String keBanSanPham;
+    private boolean hoatDong;
+    
+
+
+    // ===== CONSTRUCTOR =====
+    
+    public SanPham() {
+    }
     
     public SanPham(String maSanPham) {
 		this.maSanPham = maSanPham;
 	}
-
-	private String quyCachDongGoi;
-    private String keBanSanPham;
-    private boolean hoatDong;
-
-    // ===== CONSTRUCTOR =====
-
-    public SanPham() {
-    }
-
+    
     public SanPham(String maSanPham, String tenSanPham, LoaiSanPham loaiSanPham, String soDangKy,
-                   String hoatChat, String hamLuong, String hangSanXuat, String xuatXu,
                    DonViTinh donViTinh, DuongDung duongDung,
                    double giaNhap, double giaBan, String hinhAnh,
-                   String quyCachDongGoi, String keBanSanPham, boolean hoatDong) {
+                   String keBanSanPham, boolean hoatDong) {
 
         setMaSanPham(maSanPham);
         setTenSanPham(tenSanPham);
         setLoaiSanPham(loaiSanPham);
         setSoDangKy(soDangKy);
-        setHoatChat(hoatChat);
-        setHamLuong(hamLuong);
-        setHangSanXuat(hangSanXuat);
-        setXuatXu(xuatXu);
         setDonViTinh(donViTinh);
         setDuongDung(duongDung);
         setGiaNhap(giaNhap);
         setGiaBan(giaBan);
         setHinhAnh(hinhAnh);
-        setQuyCachDongGoi(quyCachDongGoi);
         setKeBanSanPham(keBanSanPham);
         setHoatDong(hoatDong);
     }
@@ -63,16 +54,11 @@ public class SanPham {
         this.tenSanPham = sp.tenSanPham;
         this.loaiSanPham = sp.loaiSanPham;
         this.soDangKy = sp.soDangKy;
-        this.hoatChat = sp.hoatChat;
-        this.hamLuong = sp.hamLuong;
-        this.hangSanXuat = sp.hangSanXuat;
-        this.xuatXu = sp.xuatXu;
         this.donViTinh = sp.donViTinh;
         this.duongDung = sp.duongDung;
         this.giaNhap = sp.giaNhap;
         this.giaBan = sp.giaBan;
         this.hinhAnh = sp.hinhAnh;
-        this.quyCachDongGoi = sp.quyCachDongGoi;
         this.keBanSanPham = sp.keBanSanPham;
         this.hoatDong = sp.hoatDong;
     }
@@ -123,45 +109,7 @@ public class SanPham {
         this.soDangKy = soDangKy;
     }
 
-    public String getHoatChat() {
-        return hoatChat;
-    }
-
-    public void setHoatChat(String hoatChat) {
-        if (hoatChat != null && hoatChat.length() > 100)
-            throw new IllegalArgumentException("Hoạt chất không được vượt quá 100 ký tự.");
-        this.hoatChat = hoatChat;
-    }
-
-    public String getHamLuong() {
-        return hamLuong;
-    }
-
-    public void setHamLuong(String hamLuong) {
-        if (hamLuong != null && hamLuong.length() > 50)
-            throw new IllegalArgumentException("Hàm lượng không được vượt quá 50 ký tự.");
-        this.hamLuong = hamLuong;
-    }
-
-    public String getHangSanXuat() {
-        return hangSanXuat;
-    }
-
-    public void setHangSanXuat(String hangSanXuat) {
-        if (hangSanXuat != null && hangSanXuat.length() > 100)
-            throw new IllegalArgumentException("Hãng sản xuất không được vượt quá 100 ký tự.");
-        this.hangSanXuat = hangSanXuat;
-    }
-
-    public String getXuatXu() {
-        return xuatXu;
-    }
-
-    public void setXuatXu(String xuatXu) {
-        if (xuatXu != null && xuatXu.length() > 100)
-            throw new IllegalArgumentException("Xuất xứ không được vượt quá 100 ký tự.");
-        this.xuatXu = xuatXu;
-    }
+ 
 
     public DonViTinh getDonViTinh() {
         return donViTinh;
@@ -227,16 +175,6 @@ public class SanPham {
         if (hinhAnh != null && hinhAnh.length() > 255)
             throw new IllegalArgumentException("Đường dẫn hình ảnh không được vượt quá 255 ký tự.");
         this.hinhAnh = hinhAnh;
-    }
-
-    public String getQuyCachDongGoi() {
-        return quyCachDongGoi;
-    }
-
-    public void setQuyCachDongGoi(String quyCachDongGoi) {
-        if (quyCachDongGoi != null && quyCachDongGoi.length() > 100)
-            throw new IllegalArgumentException("Quy cách đóng gói không được vượt quá 100 ký tự.");
-        this.quyCachDongGoi = quyCachDongGoi;
     }
 
     public String getKeBanSanPham() {
