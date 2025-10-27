@@ -1,7 +1,11 @@
 package gui;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.time.LocalDate;
@@ -11,12 +15,15 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
 
+import connectDB.connectDB;
+import customcomponent.ImagePanel;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
+import dao.KhachHang_DAO;
 import entity.KhachHang;
 
-public class KhachHang_NV_GUI extends JPanel {
+public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseListener {
 
     private JPanel pnCenter;
     private JPanel pnHeader;
@@ -28,14 +35,31 @@ public class KhachHang_NV_GUI extends JPanel {
     private TableRowSorter<DefaultTableModel> sorter;
     private JCheckBox chckbxNam;
     private JCheckBox chckbxNu;
+    private JCheckBox chckbxTangDan;
+    private JCheckBox chckbxGiamDan;
     private JPanel pnLoc;
-
+    private KhachHang_DAO kh_dao;
+    private JButton btnThem;
+    private ThemKhachHang_Dialog dialogThemKH;
+    private CapNhatKhachHang_Dialog dialogCapNhap;
+    private JButton btnCapNhat;
+    
     public KhachHang_NV_GUI() {
         setPreferredSize(new Dimension(1537, 850));
         initialize();
     }
 
     private void initialize() {
+//    	 kết nói database
+//    	
+//    	try {
+//			connectDB.getInstance().connect();
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//    	kh_dao = new KhachHang_DAO();
+    	
+    	
         setLayout(new BorderLayout());
 
         // ===== HEADER =====
@@ -48,30 +72,24 @@ public class KhachHang_NV_GUI extends JPanel {
         txtTimKiem = new JTextField("");
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên / số điện thoại");
         txtTimKiem.setForeground(Color.GRAY);
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         txtTimKiem.setBounds(10, 17, 420, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         pnHeader.add(txtTimKiem);
 
-        // ===== CÁC NÚT BẤM ĐÃ ĐƯỢC CHUYỂN THÀNH JBUTTON THƯỜNG =====
-        JButton btnThem = new PillButton("Thêm khách hàng");
-        btnThem.setText("Thêm");
-        btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnThem.setForeground(Color.BLACK);
-        btnThem.setBackground(new Color(0, 150, 136)); // Màu xanh teal
-        btnThem.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnThem.setBounds(850, 30, 120, 40);
-        btnThem.setBorderPainted(false);
+
+        btnThem=new PillButton("Thêm");
         pnHeader.add(btnThem);
+        btnThem.setBounds(786, 25, 120, 40);
+        btnThem.setLayout(null);
+        btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
+
         
-        JButton btnCapNhat = new PillButton("Cập nhật");
-        btnCapNhat.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnCapNhat.setForeground(Color.BLACK);
-        btnCapNhat.setBackground(new Color(255, 152, 0)); // Màu cam
-        btnCapNhat.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnCapNhat.setBounds(1020, 30, 120, 40);
-        btnCapNhat.setBorderPainted(false);
+        btnCapNhat =new PillButton("Cập nhật");
+        btnCapNhat.setLayout(null);
+        btnCapNhat.setBounds(947, 25, 120, 40);
         pnHeader.add(btnCapNhat);
+        btnCapNhat.setFont(new Font("Segoe UI", Font.BOLD, 18));
         
         // ===== CENTER =====
         pnCenter = new JPanel(new BorderLayout());
@@ -80,7 +98,7 @@ public class KhachHang_NV_GUI extends JPanel {
         add(pnCenter, BorderLayout.CENTER);
 
         // ===== DỮ LIỆU BẢNG =====
-        String[] columnNames = {"Mã khách hàng", "Tên khách hàng", "Giới tính", "Số điện thoại", "Ngày sinh", "Điểm tích lũy"};
+        String[] columnNames = {"Mã khách hàng", "Tên khách hàng", "Giới tính", "Số điện thoại", "Ngày sinh"};
 
         model = new DefaultTableModel(columnNames, 0) {
              @Override
@@ -97,7 +115,7 @@ public class KhachHang_NV_GUI extends JPanel {
         table = new JTable(model);
         
         // ===== CẤU HÌNH GIAO DIỆN BẢNG =====
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         table.setRowHeight(34);
         table.setGridColor(new Color(230, 230, 230));
         table.setShowHorizontalLines(true);
@@ -119,14 +137,13 @@ public class KhachHang_NV_GUI extends JPanel {
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
         table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
         table.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
-        table.getColumnModel().getColumn(5).setCellRenderer(centerRenderer);
 
         table.getColumnModel().getColumn(0).setPreferredWidth(100);
         table.getColumnModel().getColumn(1).setPreferredWidth(220);
         table.getColumnModel().getColumn(2).setPreferredWidth(90);
         table.getColumnModel().getColumn(3).setPreferredWidth(150);
         table.getColumnModel().getColumn(4).setPreferredWidth(120);
-        table.getColumnModel().getColumn(5).setPreferredWidth(120);
+
 
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
@@ -145,35 +162,38 @@ public class KhachHang_NV_GUI extends JPanel {
         pnCenter.add(scrollPane, BorderLayout.CENTER);
 
 
-        // ===== PHẦN LỌC VÀ SẮP XẾP TRÊN HEADER =====
+
         
+        // 1. Khởi tạo pnLoc và thêm nó vào pnHeader
         pnLoc = new JPanel();
         pnLoc.setBorder(new RoundedBorder(20));
-        pnLoc.setBackground(new Color(240, 255, 255));
-        pnLoc.setBounds(460, 9, 361, 70);
+        pnLoc.setBackground(new Color(240, 255, 255)); // Cùng màu nền với header
+        pnLoc.setBounds(459, 9, 284, 70);
         pnHeader.add(pnLoc);
         pnLoc.setLayout(null);
 
+
+       
+
         JLabel lblGioiTinh = new JLabel("Giới tính:");
         lblGioiTinh.setBackground(new Color(240, 255, 255));
-        lblGioiTinh.setBounds(20, 30, 90, 25);
+        lblGioiTinh.setBounds(20, 31, 90, 25);
         lblGioiTinh.setFont(new Font("Tahoma", Font.PLAIN, 18));
         pnLoc.add(lblGioiTinh);
 
         chckbxNam = new JCheckBox("Nam");
-        chckbxNam.setBounds(126, 32, 57, 23);
+        chckbxNam.setBounds(116, 33, 57, 23);
         chckbxNam.setBackground(new Color(240, 255, 255));
         chckbxNam.setFont(new Font("Tahoma", Font.PLAIN, 15));
         pnLoc.add(chckbxNam);
 
         chckbxNu = new JCheckBox("Nữ");
-        chckbxNu.setBounds(223, 32, 57, 23);
+        chckbxNu.setBounds(190, 33, 57, 23);
         chckbxNu.setFont(new Font("Tahoma", Font.PLAIN, 15));
         chckbxNu.setBackground(new Color(240, 255, 255));
         pnLoc.add(chckbxNu);
-        
         JLabel lbLoc = new JLabel("Lọc dữ liệu");
-        lbLoc.setBounds(10, 5, 81, 19);
+        lbLoc.setBounds(10, 5, 100, 14);
         lbLoc.setFont(new Font("Tahoma", Font.PLAIN, 15));
         pnLoc.add(lbLoc);
 
@@ -192,18 +212,12 @@ public class KhachHang_NV_GUI extends JPanel {
             }
             applyFilters();
         };
+        
+        // thêm sự kiện
         chckbxNam.addActionListener(filterListener);
         chckbxNu.addActionListener(filterListener);
-
-        // --- SỰ KIỆN SẮP XẾP ---
-        ActionListener sortListener = e -> {
-            JCheckBox source = (JCheckBox) e.getSource();
-            
-            int diemTichLuyColumnIndex = 5;
-            List<RowSorter.SortKey> sortKeys = new ArrayList<>();
-
-            sorter.setSortKeys(sortKeys);
-        };
+        btnThem.addActionListener(this);
+        btnCapNhat.addActionListener(this);
 
         // --- SỰ KIỆN TÌM KIẾM THEO TEXTFIELD ---
         txtTimKiem.getDocument().addDocumentListener(new DocumentListener() {
@@ -220,6 +234,8 @@ public class KhachHang_NV_GUI extends JPanel {
                 // Not used for plain text fields
             }
         });
+        
+
     }
 
     /**
@@ -266,17 +282,22 @@ public class KhachHang_NV_GUI extends JPanel {
     private void applyFilters() {
         List<RowFilter<Object, Object>> filters = new ArrayList<>();
 
+        // 1. Lọc theo ô tìm kiếm (Tên và SĐT)
         String searchText = txtTimKiem.getText().trim();
+        // Chỉ lọc khi ô tìm kiếm không rỗng và không phải là placeholder
         if (!searchText.isEmpty() && !txtTimKiem.getForeground().equals(Color.GRAY)) {
+            // "(?i)" để tìm kiếm không phân biệt hoa thường
             filters.add(RowFilter.regexFilter("(?i)" + searchText, 1, 3));
         }
 
+        // 2. Lọc theo giới tính
         if (chckbxNam.isSelected()) {
             filters.add(RowFilter.regexFilter("Nam", 2));
         } else if (chckbxNu.isSelected()) {
             filters.add(RowFilter.regexFilter("Nữ", 2));
         }
 
+        // Kết hợp các bộ lọc
         if (filters.isEmpty()) {
             sorter.setRowFilter(null); 
         } else {
@@ -295,4 +316,78 @@ public class KhachHang_NV_GUI extends JPanel {
             frame.setVisible(true);
         });
     }
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+	    Object src = e.getSource();
+
+	    if (src == btnThem) {
+	        ThemKH();
+	        return;
+	    }
+
+	    if (src == btnCapNhat) {
+	    	JFrame frameCapNhat = (JFrame) SwingUtilities.getWindowAncestor(this);
+	    	dialogCapNhap = new CapNhatKhachHang_Dialog(frameCapNhat, null);
+	    	dialogCapNhap.setVisible(true); 
+	    }
+	}
+	// mở diaLog Thêm khách hàng
+	private void MoDiaLogThemKH() {
+		JFrame frameThemKH = (JFrame) SwingUtilities.getWindowAncestor(this);
+        dialogThemKH = new ThemKhachHang_Dialog(frameThemKH);
+        dialogThemKH.setVisible(true); 
+	}
+	
+	// Sk thêm khách hàng
+	private void ThemKH() {
+		MoDiaLogThemKH();
+		
+		
+	}
+	
+	
+	//mở diaLog Cập nhật khách hàng
+	private void moDiaLogCapNhatKH() {
+		JFrame frameCapNhat = (JFrame) SwingUtilities.getWindowAncestor(this);
+	    dialogCapNhap = new CapNhatKhachHang_Dialog(frameCapNhat, null);
+	    dialogCapNhap.setVisible(true); 
+	}
+		
+	// Sk cập nhật khách hàng
+	private void CapNhatKH() {
+		moDiaLogCapNhatKH();
+		
+	}
+
 }
