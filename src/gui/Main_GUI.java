@@ -83,13 +83,7 @@ public class Main_GUI extends JFrame {
 			cardPanel.add(new BanHang_GUI(), "banhang");
 			cardPanel.add(new TraHangNhanVien_GUI(), "trahang");
 			cardPanel.add(new KhachHang_NV_GUI(), "khachhang");
-			cardPanel.add(new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình thông tin cá nhân");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			}, "thongtin");
+			cardPanel.add(new TongQuanNV_GUI(), "tongquan");
 
 			showCard("banhang");
 
@@ -125,6 +119,8 @@ public class Main_GUI extends JFrame {
 					new DonViTinh_QL_GUI());
 			addSubmenuButton("sanpham", "banggia", "Bảng giá", "/images/icon_bang_gia.png",
 					new BangGia_GUI());
+			addSubmenuButton("sanpham", "quycach", "Quy cách đóng gói", "/images/icon_bang_gia.png",
+					new QuyCachDongGoi_GUI());
 			addMenuButton(menu, "Kho", "kho", "/images/icon_kho.png");
 			addSubmenuButton("kho", "nhaphang", "Nhập hàng", "/images/icon_nhap_hang.png", new NhapHang_GUI());
 			addSubmenuButton("kho", "nhacungcap", "Nhà cung cấp", "/images/icon_nha_cung_cap.png",
@@ -138,6 +134,7 @@ public class Main_GUI extends JFrame {
 
 			menu.add(Box.createVerticalGlue());
 		} else {
+			addMenuButton(menu, "Tổng quan", "tongquan", "/images/icon_tong_quan.png");
 			addMenuButton(menu, "Bán hàng", "banhang", "/images/icon_ban_hang.png");
 			addMenuButton(menu, "Tra cứu", "tracuu", "/images/icon_tra_cuu.png");
 			addSubmenuButton("tracuu", "tracuudonhang", "Đơn hàng", "/images/icon_don_hang.png",

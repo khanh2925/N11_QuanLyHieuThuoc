@@ -1,11 +1,3 @@
-/**
- * @author Quốc Khánh
- * @version 2.1
- * @since Oct 15, 2025
- *
- * Mô tả: Giao diện bán hàng - danh sách sản phẩm sinh từ entity SanPham.
- */
-
 package gui;
 
 import java.awt.*;
