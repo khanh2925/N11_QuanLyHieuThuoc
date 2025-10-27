@@ -45,7 +45,6 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
     private CapNhatKhachHang_Dialog dialogCapNhap;
     private JButton btnCapNhat;
     private JFrame frameThemKH;
-    private PillButton btnTim;
     
     private List<KhachHang> dsKhachHang;
     
@@ -95,12 +94,6 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
         btnCapNhat.setBounds(947, 25, 120, 40);
         pnHeader.add(btnCapNhat);
         btnCapNhat.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        
-        btnTim = new PillButton("Tìm");
-        btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnTim.setBounds(1117, 25, 120, 40);
-        btnTim.setLayout(null);
-        pnHeader.add(btnTim);
         
         // ===== CENTER =====
         pnCenter = new JPanel(new BorderLayout());
@@ -233,7 +226,6 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
         chckbxNu.addActionListener(filterListener);
         btnThem.addActionListener(this);
         btnCapNhat.addActionListener(this);
-        btnTim.addActionListener(this);
         
         table.addMouseListener(this);
         
