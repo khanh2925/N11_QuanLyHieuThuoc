@@ -69,13 +69,7 @@ public class Main_GUI extends JFrame {
 			cardPanel.add(new KhachHang_NV_GUI(), "khachhang");
 			cardPanel.add(new KhuyenMai_GUI(), "khuyenmai");
 			cardPanel.add(new NhanVien_QL_GUI(), "nhanvien");
-			cardPanel.add(new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình thống kê");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			}, "thongke");
+			cardPanel.add(new ThongKeDoanhThu_GUI(), "thongke");
 			cardPanel.add(new TongQuanNV_GUI(), "thongtin");
 			showCard("tongquan");
 		} else {

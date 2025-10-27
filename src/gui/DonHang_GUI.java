@@ -71,41 +71,42 @@ public class DonHang_GUI extends JPanel {
 		add(pnHeader, BorderLayout.NORTH);
 
         txtSearch = new JTextField();
-        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        txtSearch.setBounds(10, 10, 342, 68);
-        txtSearch.setBorder(new LineBorder(new Color(0x00C0E2), 2,true));
+        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        txtSearch.setBounds(10, 17, 420, 60);
+        txtSearch.setBorder(new RoundedBorder(20));
         txtSearch.setBackground(Color.WHITE);
 
 
         PlaceholderSupport.addPlaceholder(txtSearch, "Tìm theo mã/tên ...");
 
 		btnXuatFile = new PillButton("Xuất file");
-		btnXuatFile.setSize(100, 30);
-		btnXuatFile.setLocation(801, 30);
+		btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnXuatFile.setSize(120, 40);
+		btnXuatFile.setLocation(950, 30);
 
 		pnHeader.add(txtSearch);
 		pnHeader.add(btnXuatFile);
 		
 		JLabel lblTuNgay = new JLabel("Từ ngày:");
-		lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		lblTuNgay.setBounds(360, 30, 60, 25);
+		lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		lblTuNgay.setBounds(468, 30, 78, 40);
 		pnHeader.add(lblTuNgay);
 		
 		dateTu = new JDateChooser();
-		dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 18));
 		dateTu.setDateFormatString("dd/MM/yyyy");
-		dateTu.setBounds(427, 30, 130, 25);
+		dateTu.setBounds(550, 30, 130, 35);
 		pnHeader.add(dateTu);
 		
 		JLabel lblDenNgay = new JLabel("Đến:");
-		lblDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		lblDenNgay.setBounds(588, 30, 40, 25);
+		lblDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		lblDenNgay.setBounds(700, 33, 50, 25);
 		pnHeader.add(lblDenNgay);
 		
 		dateDen = new JDateChooser();
-		dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 18));
 		dateDen.setDateFormatString("dd/MM/yyyy");
-		dateDen.setBounds(635, 30, 130, 25);
+		dateDen.setBounds(750, 30, 130, 35);
 		pnHeader.add(dateDen);
 		
 
@@ -172,11 +173,11 @@ public class DonHang_GUI extends JPanel {
 
 
 	private void formatTable(JTable table) {
-		table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+		table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 18));
 		table.getTableHeader().setBorder(null);
 
 		table.setRowHeight(28);
-		table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		table.setFont(new Font("Segoe UI", Font.PLAIN, 18));
 		table.setSelectionBackground(new Color(180, 205, 230));
 		table.setShowGrid(false);
 
@@ -199,7 +200,7 @@ public class DonHang_GUI extends JPanel {
 			else if (col.contains("số lượng") || col.contains("sl"))
 				m.getColumn(i).setCellRenderer(rightRenderer);
 			else if (col.contains("giá") || col.contains("tiền"))
-				m.getColumn(i).setCellRenderer(rightRenderer);
+				m.getColumn(i).setCellRenderer(centerRenderer);
 			else if (col.contains("ngày"))
 				m.getColumn(i).setCellRenderer(centerRenderer);
 			else

@@ -8,11 +8,20 @@
 package gui;
 
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 public class App {
 	public static void main(String[] args) {
+		// (Tùy chọn) Cài đặt Look and Feel cho đẹp hơn
+		try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+		
 		SwingUtilities.invokeLater(() -> {
-			new DangNhap_GUI().setVisible(true);
+			// Khởi chạy màn hình loading thay vì màn hình đăng nhập
+			new Loading_GUI(); 
 		});
 	};
 }

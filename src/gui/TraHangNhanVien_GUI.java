@@ -6,6 +6,7 @@ import javax.swing.border.*;
 
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
+import customcomponent.RoundedBorder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,8 +44,8 @@ public class TraHangNhanVien_GUI extends JPanel {
         txtTimThuoc = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimThuoc, "Tìm theo mã, tên...");
         txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        txtTimThuoc.setBounds(25, 10, 342, 68);
-        txtTimThuoc.setBorder(new LineBorder(new Color(0x00C0E2), 2, true));
+        txtTimThuoc.setBounds(25, 17, 420, 60);
+        txtTimThuoc.setBorder(new RoundedBorder(20));
         txtTimThuoc.setBackground(Color.WHITE);
         txtTimThuoc.setForeground(Color.GRAY);
         pnCotPhaiHead.add(txtTimThuoc);

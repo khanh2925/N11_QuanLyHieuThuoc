@@ -19,6 +19,8 @@ import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
 import entity.NhanVien;
 import entity.TaiKhoan;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class NhanVien_QL_GUI extends JPanel {
 
@@ -26,7 +28,6 @@ public class NhanVien_QL_GUI extends JPanel {
     private JPanel pnHeader;
     private JTextField txtTimKiem;
     private JTable table;
-    private JLabel lbThem;
 
     private DefaultTableModel model;
     private TableRowSorter<DefaultTableModel> sorter;
@@ -53,8 +54,8 @@ public class NhanVien_QL_GUI extends JPanel {
         txtTimKiem = new JTextField("");
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên nhân viên / SĐT");
         txtTimKiem.setForeground(Color.GRAY);
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtTimKiem.setBounds(20, 27, 350, 44);
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        txtTimKiem.setBounds(20, 17, 420, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         pnHeader.add(txtTimKiem);
 
@@ -65,25 +66,23 @@ public class NhanVien_QL_GUI extends JPanel {
         btnThem=new PillButton("Thêm");
         pnHeader.add(btnThem);
         btnThem.setLayout(null);
-
-        lbThem = new JLabel("Thêm", SwingConstants.CENTER);
-        lbThem.setBounds(435, 58, 70, 19);
-        pnHeader.add(lbThem);
-        lbThem.setFont(new Font("Arial", Font.BOLD, 16));
-        lbThem.setForeground(Color.BLACK);
-
-        ImageIcon iconSua = new ImageIcon(getClass().getResource("/images/edit.png"));
-        ImagePanel btnSua = new ImagePanel(iconSua.getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
-        btnSua.setLayout(null);
-        btnSua.setBounds(577, 27, 30, 30);
-        btnSua.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        JButton btnadd = new PillButton("Thêm");
+        btnadd.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+        	}
+        });
+        btnadd.setBackground(Color.WHITE);
+        btnadd.setFont(new Font("Tahoma", Font.PLAIN, 18));
+        btnadd.setBounds(500, 30, 120, 40);
+        pnHeader.add(btnadd);
+        
+        JButton btnSua = new PillButton("Cập nhật");
+        btnSua.setFont(new Font("Tahoma", Font.PLAIN, 18));
+        btnSua.setBounds(676, 30, 120, 40);
         pnHeader.add(btnSua);
 
-        JLabel lblSua = new JLabel("Cập nhật", SwingConstants.CENTER);
-        lblSua.setBounds(553, 55, 70, 25);
-        pnHeader.add(lblSua);
-        lblSua.setFont(new Font("Arial", Font.BOLD, 16));
-        lblSua.setForeground(Color.BLACK);
+        ImageIcon iconSua = new ImageIcon(getClass().getResource("/images/edit.png"));
         
         btnThem.addMouseListener(new MouseAdapter() {
             @Override
@@ -96,45 +95,6 @@ public class NhanVien_QL_GUI extends JPanel {
                     dsNhanVien.add(nvMoi); // Thêm vào danh sách chính
                     addNhanVienToTable(nvMoi);
                     JOptionPane.showMessageDialog(owner, "Thêm nhân viên mới thành công!");
-                }
-            }
-        });
-
-        // =================================================================
-        // THÊM SỰ KIỆN CLICK CHO NÚT CẬP NHẬT
-        // =================================================================
-        btnSua.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int selectedRow = table.getSelectedRow();
-                if (selectedRow == -1) {
-                    JOptionPane.showMessageDialog(NhanVien_QL_GUI.this, "Vui lòng chọn một nhân viên để cập nhật.", "Thông báo", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                
-                // Lấy mã nhân viên từ JTable (phải convert về model index nếu có sort)
-                int modelRow = table.convertRowIndexToModel(selectedRow);
-                String maNV = model.getValueAt(modelRow, 0).toString();
-
-                // Tìm nhân viên trong danh sách dsNhanVien
-                NhanVien nvToUpdate = null;
-                for (NhanVien nv : dsNhanVien) {
-                    if (nv.getMaNhanVien().equals(maNV)) {
-                        nvToUpdate = nv;
-                        break;
-                    }
-                }
-                
-                if (nvToUpdate != null) {
-                    JFrame owner = (JFrame) SwingUtilities.getWindowAncestor(NhanVien_QL_GUI.this);
-                    CapNhatNhanVien_Dialog dialog = new CapNhatNhanVien_Dialog(owner, nvToUpdate);
-                    dialog.setVisible(true);
-
-                    // Nếu cập nhật thành công, làm mới lại dòng trong bảng
-                    if (dialog.isUpdateSuccess()) {
-                        updateNhanVienInTable(nvToUpdate, modelRow);
-                        JOptionPane.showMessageDialog(owner, "Cập nhật thông tin thành công!");
-                    }
                 }
             }
         });
@@ -220,7 +180,7 @@ public class NhanVien_QL_GUI extends JPanel {
         }
 
         table = new JTable(model);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         table.setRowHeight(34);
         table.setGridColor(new Color(230, 230, 230));
         table.setShowHorizontalLines(true);
@@ -232,7 +192,7 @@ public class NhanVien_QL_GUI extends JPanel {
         table.setFillsViewportHeight(true);
 
         JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        header.setFont(new Font("Segoe UI", Font.BOLD, 18));
         header.setBackground(new Color(33, 150, 243));
         header.setForeground(Color.WHITE);
         header.setPreferredSize(new Dimension(100, 40));

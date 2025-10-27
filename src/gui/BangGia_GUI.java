@@ -7,6 +7,7 @@ import javax.swing.table.*;
 
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
+import customcomponent.RoundedBorder;
 
 public class BangGia_GUI extends JPanel {
 
@@ -15,6 +16,7 @@ public class BangGia_GUI extends JPanel {
     private JPanel pnLeft;
     private JTextField txtTimThuoc;
     private JTextField txtTiLe;
+    private JPanel pnLoc;
 
     public BangGia_GUI() {
         this.setPreferredSize(new Dimension(1537, 850));
@@ -33,39 +35,54 @@ public class BangGia_GUI extends JPanel {
         add(pnHeader, BorderLayout.NORTH);
 
         // --- Ô tìm kiếm ---
-        txtTimThuoc = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimThuoc, "Tìm theo mã, tên...");
-        txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        txtTimThuoc.setBounds(10, 10, 285, 68);
-        txtTimThuoc.setBorder(new LineBorder(new Color(0x00C0E2), 2, true));
-        txtTimThuoc.setBackground(Color.WHITE);
+        txtTimThuoc = new JTextField("");
+        txtTimThuoc.setBounds(20, 17, 420, 60);
+        PlaceholderSupport.addPlaceholder(txtTimThuoc, "Tìm kiếm sản phẩm theo mã");
         txtTimThuoc.setForeground(Color.GRAY);
+        txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        txtTimThuoc.setPreferredSize(new Dimension(420, 44));
+        txtTimThuoc.setBorder(new RoundedBorder(20));
         pnHeader.add(txtTimThuoc);
+
+        // ===== PANEL LỌC VÀ SẮP XẾP ĐÃ ĐƯỢC LÀM ĐẸP HƠN =====
+        pnLoc = new JPanel(new GridBagLayout());
+        pnLoc.setBounds(460, 9, 600, 70);
+        pnLoc.setOpaque(false); // Làm trong suốt panel
+        
+        TitledBorder titledBorder = BorderFactory.createTitledBorder(" Lọc và Sắp xếp ");
+        titledBorder.setTitleFont(new Font("Segoe UI", Font.BOLD, 14));
+        pnLoc.setBorder(titledBorder);
+        pnHeader.add(pnLoc);
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.anchor = GridBagConstraints.WEST;
 
         // --- Label + ComboBox Loại sản phẩm ---
         JLabel lblLoaiSP = new JLabel("Loại sản phẩm:");
         lblLoaiSP.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        lblLoaiSP.setBounds(320, 15, 130, 25);
-        pnHeader.add(lblLoaiSP);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        pnLoc.add(lblLoaiSP, gbc);
 
         String[] dsLoaiSP = {
-            "Tất cả",
-            "Thuốc giảm đau",
-            "Kháng sinh",
-            "Vitamin & Khoáng chất",
-            "Dược mỹ phẩm",
-            "Thiết bị y tế"
+            "Tất cả", "Thuốc giảm đau", "Kháng sinh",
+            "Vitamin & Khoáng chất", "Dược mỹ phẩm", "Thiết bị y tế"
         };
         JComboBox<String> cbLoaiSP = new JComboBox<>(dsLoaiSP);
         cbLoaiSP.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cbLoaiSP.setBounds(320, 45, 200, 32);
-        pnHeader.add(cbLoaiSP);
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(5, 5, 5, 20);
+        pnLoc.add(cbLoaiSP, gbc);
+        gbc.insets = new Insets(5, 5, 5, 5);
 
         // --- Label + Radio Giá bán ---
         JLabel lblGiaBan = new JLabel("Giá bán:");
         lblGiaBan.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        lblGiaBan.setBounds(550, 15, 80, 25);
-        pnHeader.add(lblGiaBan);
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        pnLoc.add(lblGiaBan, gbc);
 
         JRadioButton rdbTangDan = new JRadioButton("Tăng dần");
         JRadioButton rdbGiamDan = new JRadioButton("Giảm dần");
@@ -75,23 +92,29 @@ public class BangGia_GUI extends JPanel {
 
         rdbTangDan.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         rdbGiamDan.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        rdbTangDan.setBackground(new Color(0xE3F2F5));
-        rdbGiamDan.setBackground(new Color(0xE3F2F5));
-
-        rdbTangDan.setBounds(550, 45, 100, 30);
-        rdbGiamDan.setBounds(660, 45, 100, 30);
-        pnHeader.add(rdbTangDan);
-        pnHeader.add(rdbGiamDan);
+        
+        // ===== SỬA LỖI TẠI ĐÂY =====
+        rdbTangDan.setOpaque(false); // Dùng setOpaque(false) thay vì setBackground
+        rdbGiamDan.setOpaque(false); // Dùng setOpaque(false) thay vì setBackground
+        
         rdbTangDan.setSelected(true);
+        
+        gbc.gridx = 3;
+        gbc.gridy = 0;
+        pnLoc.add(rdbTangDan, gbc);
+
+        gbc.gridx = 4;
+        gbc.gridy = 0;
+        pnLoc.add(rdbGiamDan, gbc);
 
         // ===== LEFT =====
-        pnLeft = new JPanel(null); // 🔥 absolute layout
+        pnLeft = new JPanel(null);
         pnLeft.setPreferredSize(new Dimension(300, 1080));
         pnLeft.setBackground(Color.WHITE);
         pnLeft.setBorder(new EmptyBorder(20, 20, 20, 20));
         add(pnLeft, BorderLayout.WEST);
 
-        // ===== TIÊU ĐỀ =====
+        // ... (Các thành phần còn lại giữ nguyên) ...
         JLabel lblDieuChinhGia = new JLabel("Điều chỉnh giá");
         lblDieuChinhGia.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblDieuChinhGia.setBounds(20, 10, 260, 30);
@@ -101,14 +124,12 @@ public class BangGia_GUI extends JPanel {
         line.setBounds(20, 45, 260, 1);
         pnLeft.add(line);
 
-        // ===== CÔNG THỨC =====
         JLabel lblCongThuc = new JLabel("Giá bán = Giá nhập + Tỉ lệ (%)");
         lblCongThuc.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblCongThuc.setForeground(Color.RED);
         lblCongThuc.setBounds(20, 60, 260, 25);
         pnLeft.add(lblCongThuc);
 
-        // ===== Ô TỈ LỆ =====
         JLabel lblTiLe = new JLabel("Tỉ lệ %:");
         lblTiLe.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblTiLe.setBounds(20, 95, 60, 25);
@@ -131,7 +152,6 @@ public class BangGia_GUI extends JPanel {
         lblPhanTram.setBounds(190, 95, 20, 25);
         pnLeft.add(lblPhanTram);
 
-        // ===== KHOẢNG GIÁ NHẬP =====
         JLabel lblKhoang = new JLabel("Khoảng giá nhập:");
         lblKhoang.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblKhoang.setBounds(20, 135, 200, 25);
@@ -157,13 +177,11 @@ public class BangGia_GUI extends JPanel {
         cbGiaDen.setBounds(150, 165, 100, 30);
         pnLeft.add(cbGiaDen);
 
-        // ===== NÚT ÁP DỤNG =====
         JButton btnApDung = new PillButton("Áp dụng");
         btnApDung.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnApDung.setBounds(80, 210, 120, 35);
         pnLeft.add(btnApDung);
 
-        // ===== BẢNG MỐC GIÁ =====
         String[] cols = {"Giá từ", "Giá đến", "Tỉ lệ (%)"};
         DefaultTableModel modelMoc = new DefaultTableModel(cols, 0);
         JTable tblMocGia = new JTable(modelMoc);
@@ -180,7 +198,6 @@ public class BangGia_GUI extends JPanel {
         sp.setBorder(BorderFactory.createLineBorder(new Color(0xE0E0E0)));
         pnLeft.add(sp);
 
-        // ===== SỰ KIỆN ÁP DỤNG =====
         btnApDung.addActionListener(e -> {
             String tuStr = cbGiaTu.getSelectedItem().toString().trim();
             String denStr = cbGiaDen.getSelectedItem().toString().trim();
@@ -199,7 +216,6 @@ public class BangGia_GUI extends JPanel {
                 return;
             }
 
-            // ✅ Kiểm tra trùng hoặc giao nhau
             for (int i = 0; i < modelMoc.getRowCount(); i++) {
                 double tuCu = parseGia(modelMoc.getValueAt(i, 0).toString());
                 double denCu = parseGia(modelMoc.getValueAt(i, 1).toString());
@@ -215,13 +231,11 @@ public class BangGia_GUI extends JPanel {
             modelMoc.addRow(new Object[]{tuStr, denStr, tile});
         });
 
-        // ===== CENTER =====
         pnCenter = new JPanel(new BorderLayout());
         pnCenter.setBackground(Color.WHITE);
         pnCenter.setBorder(new LineBorder(new Color(200, 200, 200)));
         add(pnCenter, BorderLayout.CENTER);
 
-        // ===== DỮ LIỆU MẪU =====
         String[] columnNames = {"Mã sản phẩm", "Tên sản phẩm", "Giá nhập (VNĐ)", "Giá bán (VNĐ)"};
         DefaultTableModel model = new DefaultTableModel(columnNames, 0);
 
@@ -282,7 +296,6 @@ public class BangGia_GUI extends JPanel {
         pnCenter.add(scrollPane, BorderLayout.CENTER);
     }
 
-    // ===== HÀM HỖ TRỢ PARSE GIÁ =====
     private double parseGia(String giaStr) {
         try {
             giaStr = giaStr.replaceAll("[^\\d]", "");
@@ -293,7 +306,6 @@ public class BangGia_GUI extends JPanel {
         }
     }
 
-    // ===== MAIN TEST =====
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Bảng giá");

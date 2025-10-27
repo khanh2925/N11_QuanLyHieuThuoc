@@ -1,10 +1,3 @@
-/**
- * @author Thanh Kha
- * @version 1.1
- * @since Oct 27, 2025
- *
- * Mô tả: Giao diện quản lý phiếu nhập hàng (bấm Thêm -> mở ThemPhieuNhap_GUI)
- */
 
 package gui;
 

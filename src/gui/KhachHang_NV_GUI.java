@@ -11,7 +11,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
 
-import customcomponent.ImagePanel;
+import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
 import entity.KhachHang;
@@ -22,15 +22,12 @@ public class KhachHang_NV_GUI extends JPanel {
     private JPanel pnHeader;
     private JTextField txtTimKiem;
     private JTable table;
-    private JLabel lbThem;
 
     // === KHAI BÁO BIẾN THÀNH VIÊN ===
     private DefaultTableModel model;
     private TableRowSorter<DefaultTableModel> sorter;
     private JCheckBox chckbxNam;
     private JCheckBox chckbxNu;
-    private JCheckBox chckbxTangDan;
-    private JCheckBox chckbxGiamDan;
     private JPanel pnLoc;
 
     public KhachHang_NV_GUI() {
@@ -52,35 +49,29 @@ public class KhachHang_NV_GUI extends JPanel {
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên / số điện thoại");
         txtTimKiem.setForeground(Color.GRAY);
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtTimKiem.setBounds(10, 27, 336, 44);
+        txtTimKiem.setBounds(10, 17, 420, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         pnHeader.add(txtTimKiem);
 
-        ImageIcon icon = new ImageIcon(getClass().getResource("/images/add.png"));
-        ImagePanel btnThem = new ImagePanel(icon.getImage());
+        // ===== CÁC NÚT BẤM ĐÃ ĐƯỢC CHUYỂN THÀNH JBUTTON THƯỜNG =====
+        JButton btnThem = new PillButton("Thêm khách hàng");
+        btnThem.setText("Thêm");
+        btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnThem.setForeground(Color.BLACK);
+        btnThem.setBackground(new Color(0, 150, 136)); // Màu xanh teal
         btnThem.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnThem.setBounds(1236, 27, 30, 30);
+        btnThem.setBounds(850, 30, 120, 40);
+        btnThem.setBorderPainted(false);
         pnHeader.add(btnThem);
-        btnThem.setLayout(null);
         
-        lbThem = new JLabel("Thêm", SwingConstants.CENTER);
-        lbThem.setBounds(1214, 58, 70, 19);
-        pnHeader.add(lbThem);
-        lbThem.setFont(new Font("Arial", Font.BOLD, 16));
-        lbThem.setForeground(Color.BLACK);
-        
-        ImageIcon iconSua = new ImageIcon(getClass().getResource("/images/edit.png"));
-        ImagePanel btnSua = new ImagePanel(iconSua.getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
-        btnSua.setLayout(null);
-        btnSua.setBounds(1402, 27, 30, 30);
-        btnSua.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        pnHeader.add(btnSua);
-        
-        JLabel lblSua = new JLabel("Cập nhật", SwingConstants.CENTER);
-        lblSua.setBounds(1384, 52, 70, 25);
-        pnHeader.add(lblSua);
-        lblSua.setFont(new Font("Arial", Font.BOLD, 16));
-        lblSua.setForeground(Color.BLACK);
+        JButton btnCapNhat = new PillButton("Cập nhật");
+        btnCapNhat.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnCapNhat.setForeground(Color.BLACK);
+        btnCapNhat.setBackground(new Color(255, 152, 0)); // Màu cam
+        btnCapNhat.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnCapNhat.setBounds(1020, 30, 120, 40);
+        btnCapNhat.setBorderPainted(false);
+        pnHeader.add(btnCapNhat);
         
         // ===== CENTER =====
         pnCenter = new JPanel(new BorderLayout());
@@ -156,52 +147,34 @@ public class KhachHang_NV_GUI extends JPanel {
 
         // ===== PHẦN LỌC VÀ SẮP XẾP TRÊN HEADER =====
         
-        // 1. Khởi tạo pnLoc và thêm nó vào pnHeader
         pnLoc = new JPanel();
         pnLoc.setBorder(new RoundedBorder(20));
-        pnLoc.setBackground(new Color(240, 255, 255)); // Cùng màu nền với header
-        pnLoc.setBounds(370, 11, 759, 66);
+        pnLoc.setBackground(new Color(240, 255, 255));
+        pnLoc.setBounds(460, 9, 361, 70);
         pnHeader.add(pnLoc);
         pnLoc.setLayout(null);
 
-        // 2. Thêm tất cả các thành phần vào BÊN TRONG pnLoc, với tọa độ chính xác
-        JLabel lblimTchLy = new JLabel("Điểm tích lũy:");
-        lblimTchLy.setBounds(44, 30, 120, 25);
-        lblimTchLy.setFont(new Font("Tahoma", Font.PLAIN, 18));
-        pnLoc.add(lblimTchLy);
-
-        chckbxTangDan = new JCheckBox("Tăng dần");
-        chckbxTangDan.setBounds(182, 32, 97, 23);
-        chckbxTangDan.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        chckbxTangDan.setBackground(new Color(240, 255, 255));
-        pnLoc.add(chckbxTangDan);
-
-        chckbxGiamDan = new JCheckBox("Giảm dần");
-        chckbxGiamDan.setBounds(295, 32, 97, 23);
-        chckbxGiamDan.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        chckbxGiamDan.setBackground(new Color(240, 255, 255));
-        pnLoc.add(chckbxGiamDan);
-
         JLabel lblGioiTinh = new JLabel("Giới tính:");
         lblGioiTinh.setBackground(new Color(240, 255, 255));
-        lblGioiTinh.setBounds(454, 30, 90, 25);
+        lblGioiTinh.setBounds(20, 30, 90, 25);
         lblGioiTinh.setFont(new Font("Tahoma", Font.PLAIN, 18));
         pnLoc.add(lblGioiTinh);
 
         chckbxNam = new JCheckBox("Nam");
-        chckbxNam.setBounds(560, 32, 57, 23);
+        chckbxNam.setBounds(126, 32, 57, 23);
         chckbxNam.setBackground(new Color(240, 255, 255));
         chckbxNam.setFont(new Font("Tahoma", Font.PLAIN, 15));
         pnLoc.add(chckbxNam);
 
         chckbxNu = new JCheckBox("Nữ");
-        chckbxNu.setBounds(652, 32, 57, 23);
+        chckbxNu.setBounds(223, 32, 57, 23);
         chckbxNu.setFont(new Font("Tahoma", Font.PLAIN, 15));
         chckbxNu.setBackground(new Color(240, 255, 255));
         pnLoc.add(chckbxNu);
-        JLabel lbLoc = new JLabel("Lọc và sắp xếp");
-        lbLoc.setBounds(10, 5, 81, 14);
-        lbLoc.setFont(new Font("Tahoma", Font.PLAIN, 12));
+        
+        JLabel lbLoc = new JLabel("Lọc dữ liệu");
+        lbLoc.setBounds(10, 5, 81, 19);
+        lbLoc.setFont(new Font("Tahoma", Font.PLAIN, 15));
         pnLoc.add(lbLoc);
 
 
@@ -226,28 +199,11 @@ public class KhachHang_NV_GUI extends JPanel {
         ActionListener sortListener = e -> {
             JCheckBox source = (JCheckBox) e.getSource();
             
-            // Logic tự bỏ chọn checkbox còn lại
-            if (source == chckbxTangDan && chckbxTangDan.isSelected()) {
-                chckbxGiamDan.setSelected(false);
-            } else if (source == chckbxGiamDan && chckbxGiamDan.isSelected()) {
-                chckbxTangDan.setSelected(false);
-                
-
-            }
-            
             int diemTichLuyColumnIndex = 5;
             List<RowSorter.SortKey> sortKeys = new ArrayList<>();
 
-            if (chckbxTangDan.isSelected()) {
-                sortKeys.add(new RowSorter.SortKey(diemTichLuyColumnIndex, SortOrder.ASCENDING));
-            } else if (chckbxGiamDan.isSelected()) {
-                sortKeys.add(new RowSorter.SortKey(diemTichLuyColumnIndex, SortOrder.DESCENDING));
-            }
-
             sorter.setSortKeys(sortKeys);
         };
-        chckbxTangDan.addActionListener(sortListener);
-        chckbxGiamDan.addActionListener(sortListener);
 
         // --- SỰ KIỆN TÌM KIẾM THEO TEXTFIELD ---
         txtTimKiem.getDocument().addDocumentListener(new DocumentListener() {
@@ -310,22 +266,17 @@ public class KhachHang_NV_GUI extends JPanel {
     private void applyFilters() {
         List<RowFilter<Object, Object>> filters = new ArrayList<>();
 
-        // 1. Lọc theo ô tìm kiếm (Tên và SĐT)
         String searchText = txtTimKiem.getText().trim();
-        // Chỉ lọc khi ô tìm kiếm không rỗng và không phải là placeholder
         if (!searchText.isEmpty() && !txtTimKiem.getForeground().equals(Color.GRAY)) {
-            // "(?i)" để tìm kiếm không phân biệt hoa thường
             filters.add(RowFilter.regexFilter("(?i)" + searchText, 1, 3));
         }
 
-        // 2. Lọc theo giới tính
         if (chckbxNam.isSelected()) {
             filters.add(RowFilter.regexFilter("Nam", 2));
         } else if (chckbxNu.isSelected()) {
             filters.add(RowFilter.regexFilter("Nữ", 2));
         }
 
-        // Kết hợp các bộ lọc
         if (filters.isEmpty()) {
             sorter.setRowFilter(null); 
         } else {
