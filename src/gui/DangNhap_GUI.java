@@ -195,7 +195,7 @@ public class DangNhap_GUI extends JFrame {
 						new NhanVien("NV2025100001", "Nguyễn Văn A", false, LocalDate.of(2005, 1, 1), "0987654321",
 								"HCM", true, tk1, "SANG", true),
 						new NhanVien("NV2025100002", "Nguyễn Văn B", false, LocalDate.of(2005, 1, 1), "0987654321",
-								"HCM", true, tk2, "SANG", true));
+								"HCM", false, tk2, "SANG", true));
 
 				NhanVien nvDangNhap = dsnv.stream()
 						.filter(nv -> nv.getTaiKhoan().getTenDangNhap().equals(txtTaiKhoan.getText().trim())

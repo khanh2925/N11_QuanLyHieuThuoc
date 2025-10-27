@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import customcomponent.ImagePanel;
+import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
 import entity.NhaCungCap;
@@ -22,11 +23,12 @@ public class NhaCungCap_GUI extends JPanel {
     private JPanel pnHeader;
     private JTextField txtTimKiem;
     private JTable table;
-    private JLabel lbThem;
 
     // === KHAI BÁO BIẾN THÀNH VIÊN ===
     private DefaultTableModel model;
     private TableRowSorter<DefaultTableModel> sorter;
+    private JButton btnThem;
+    private JButton btnSua;
 
     public NhaCungCap_GUI() {
         setPreferredSize(new Dimension(1537, 850));
@@ -47,38 +49,26 @@ public class NhaCungCap_GUI extends JPanel {
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên nhà cung cấp / SĐT");
         txtTimKiem.setForeground(Color.GRAY);
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtTimKiem.setBounds(20, 27, 350, 44);
+        txtTimKiem.setBounds(20, 17, 420, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         pnHeader.add(txtTimKiem);
+        
+        btnThem = new PillButton("Thêm");
+        btnThem.setFont(new Font("Tahoma", Font.PLAIN, 18));
+        btnThem.setBounds(482, 30, 120, 40);
+        pnHeader.add(btnThem);
+        
+        btnSua = new PillButton("Cập Nhật");
+        btnSua.setFont(new Font("Tahoma", Font.PLAIN, 18));
+        btnSua.setBounds(658, 30, 120, 40);
+        pnHeader.add(btnSua);
 
         // ... (các thành phần khác trong header của bạn)
         ImageIcon iconSearch = new ImageIcon(getClass().getResource("/images/search.png"));
 
         ImageIcon icon = new ImageIcon(getClass().getResource("/images/add.png"));
-        ImagePanel btnThem = new ImagePanel(icon.getImage());
-        btnThem.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnThem.setBounds(456, 27, 30, 30);
-        pnHeader.add(btnThem);
-        btnThem.setLayout(null);
-        
-        lbThem = new JLabel("Thêm", SwingConstants.CENTER);
-        lbThem.setBounds(435, 58, 70, 19);
-        pnHeader.add(lbThem);
-        lbThem.setFont(new Font("Arial", Font.BOLD, 16));
-        lbThem.setForeground(Color.BLACK);
         
         ImageIcon iconSua = new ImageIcon(getClass().getResource("/images/edit.png"));
-        ImagePanel btnSua = new ImagePanel(iconSua.getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
-        btnSua.setLayout(null);
-        btnSua.setBounds(577, 27, 30, 30);
-        btnSua.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        pnHeader.add(btnSua);
-        
-        JLabel lblSua = new JLabel("Cập nhật", SwingConstants.CENTER);
-        lblSua.setBounds(553, 55, 70, 25);
-        pnHeader.add(lblSua);
-        lblSua.setFont(new Font("Arial", Font.BOLD, 16));
-        lblSua.setForeground(Color.BLACK);
 
         // ===== CENTER =====
         pnCenter = new JPanel(new BorderLayout());

@@ -16,6 +16,8 @@ import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
 import entity.DonViTinh;
 import customcomponent.PillButton;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class DonViTinh_QL_GUI extends JPanel {
 
@@ -26,13 +28,17 @@ public class DonViTinh_QL_GUI extends JPanel {
 
     private DefaultTableModel model;
     private TableRowSorter<DefaultTableModel> sorter;
-    
+
     // Biến thành viên để quản lý danh sách
     private List<DonViTinh> dsDonViTinh;
+    private PillButton btnThem;
+    private PillButton btnCapNhat;
+    private PillButton btnXoa;
 
     public DonViTinh_QL_GUI() {
         setPreferredSize(new Dimension(1537, 850));
         initialize();
+        addEvents(); // Thêm phương thức gọi các sự kiện
     }
 
     private void initialize() {
@@ -48,24 +54,25 @@ public class DonViTinh_QL_GUI extends JPanel {
         txtTimKiem = new JTextField("");
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên đơn vị tính...");
         txtTimKiem.setForeground(Color.GRAY);
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtTimKiem.setBounds(20, 27, 350, 44);
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        txtTimKiem.setBounds(10, 17, 420, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         pnHeader.add(txtTimKiem);
         
-        PillButton btnThem = new PillButton("Thêm");
-        btnThem.setBounds(393, 35, 93, 28);
+        btnThem = new PillButton("Thêm");
+        btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnThem.setBounds(520, 27, 120, 40);
         pnHeader.add(btnThem);
         
-        PillButton btnCapNhat = new PillButton("Cập nhật");
-        btnCapNhat.setBounds(496, 35, 100, 28);
+        btnCapNhat = new PillButton("Cập nhật");
+        btnCapNhat.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnCapNhat.setBounds(920, 27, 120, 40);
         pnHeader.add(btnCapNhat);
         
-        PillButton btnXoa = new PillButton("Cập nhật");
-        btnXoa.setText("Xoá");
-        btnXoa.setBounds(604, 35, 93, 28);
+        btnXoa = new PillButton("Xoá");
+        btnXoa.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnXoa.setBounds(720, 27, 120, 40);
         pnHeader.add(btnXoa);
-
 
         // ===== CENTER =====
         pnCenter = new JPanel(new BorderLayout());
@@ -82,14 +89,19 @@ public class DonViTinh_QL_GUI extends JPanel {
         dsDonViTinh.add(new DonViTinh("DVT-005", "Viên", "Sản phẩm dạng viên nén, viên nang"));
 
         String[] columnNames = {"Mã Đơn Vị Tính", "Tên Đơn Vị Tính", "Mô Tả"};
-        model = new DefaultTableModel(columnNames, 0);
+        model = new DefaultTableModel(columnNames, 0) {
+        	@Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Không cho phép chỉnh sửa trực tiếp trên table
+            }
+        };
 
         for (DonViTinh dvt : dsDonViTinh) {
             addDonViTinhToTable(dvt);
         }
 
         table = new JTable(model);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         table.setRowHeight(34);
         table.setGridColor(new Color(230, 230, 230));
         table.setShowHorizontalLines(true);
@@ -101,7 +113,7 @@ public class DonViTinh_QL_GUI extends JPanel {
         table.setFillsViewportHeight(true);
 
         JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        header.setFont(new Font("Segoe UI", Font.BOLD, 18));
         header.setBackground(new Color(33, 150, 243));
         header.setForeground(Color.WHITE);
         header.setPreferredSize(new Dimension(100, 40));
@@ -139,15 +151,99 @@ public class DonViTinh_QL_GUI extends JPanel {
         
         sorter = new TableRowSorter<>(model);
         table.setRowSorter(sorter);
-        
+    }
+
+    /**
+     * Phương thức đăng ký các sự kiện cho component
+     */
+    private void addEvents() {
         txtTimKiem.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
                 applySearchFilter();
             }
         });
+        
+        btnThem.addActionListener(e -> handleThem());
+        btnXoa.addActionListener(e -> handleXoa());
+        btnCapNhat.addActionListener(e -> handleCapNhat());
     }
     
+    /**
+     * Xử lý sự kiện nhấn nút Thêm.
+     * Mở dialog thêm, nhận kết quả và cập nhật vào danh sách và bảng.
+     */
+    private void handleThem() {
+        Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
+        ThemDonViTinh_Dialog dialog = new ThemDonViTinh_Dialog(parentFrame);
+        dialog.setVisible(true);
+        
+        DonViTinh dvtMoi = dialog.getDonViTinhMoi();
+        if (dvtMoi != null) {
+            dsDonViTinh.add(dvtMoi);
+            addDonViTinhToTable(dvtMoi);
+            JOptionPane.showMessageDialog(this, "Thêm đơn vị tính thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+    
+    /**
+     * Xử lý sự kiện nhấn nút Xóa.
+     * Yêu cầu xác nhận, sau đó xóa khỏi danh sách và bảng.
+     */
+    private void handleXoa() {
+        int selectedViewRow = table.getSelectedRow();
+        if (selectedViewRow == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một đơn vị tính để xóa.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        int choice = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa đơn vị tính này?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
+        if (choice == JOptionPane.YES_OPTION) {
+            int modelRow = table.convertRowIndexToModel(selectedViewRow);
+            String maDVT = (String) model.getValueAt(modelRow, 0);
+            
+            // Xóa khỏi danh sách
+            dsDonViTinh.removeIf(dvt -> dvt.getMaDonViTinh().equals(maDVT));
+            
+            // Xóa khỏi bảng
+            model.removeRow(modelRow);
+            
+            JOptionPane.showMessageDialog(this, "Xóa đơn vị tính thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+    
+    /**
+     * Xử lý sự kiện nhấn nút Cập nhật.
+     * Mở dialog cập nhật, nhận kết quả và cập nhật lại danh sách và bảng.
+     */
+    private void handleCapNhat() {
+        int selectedViewRow = table.getSelectedRow();
+        if (selectedViewRow == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một đơn vị tính để cập nhật.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        int modelRow = table.convertRowIndexToModel(selectedViewRow);
+        String maDVT = (String) model.getValueAt(modelRow, 0);
+        
+        // Tìm DonViTinh trong danh sách để cập nhật
+        DonViTinh dvtCanCapNhat = dsDonViTinh.stream()
+            .filter(dvt -> dvt.getMaDonViTinh().equals(maDVT))
+            .findFirst()
+            .orElse(null);
+        
+        if (dvtCanCapNhat != null) {
+            Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
+            CapNhatDonViTinh_Dialog dialog = new CapNhatDonViTinh_Dialog(parentFrame, dvtCanCapNhat);
+            dialog.setVisible(true);
+            
+            if (dialog.isUpdateSuccess()) {
+                updateDonViTinhInTable(dvtCanCapNhat, modelRow);
+                JOptionPane.showMessageDialog(this, "Cập nhật đơn vị tính thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
+    }
+
     private void addDonViTinhToTable(DonViTinh dvt) {
         model.addRow(new Object[]{
             dvt.getMaDonViTinh(),
@@ -166,6 +262,7 @@ public class DonViTinh_QL_GUI extends JPanel {
         if (text.trim().isEmpty()) {
             sorter.setRowFilter(null);
         } else {
+            // Lọc không phân biệt chữ hoa/thường theo Tên Đơn Vị Tính (cột 1)
             sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 1));
         }
     }
