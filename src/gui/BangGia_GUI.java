@@ -44,10 +44,9 @@ public class BangGia_GUI extends JPanel {
         txtTimThuoc.setBorder(new RoundedBorder(20));
         pnHeader.add(txtTimThuoc);
 
-        // ===== PANEL LỌC VÀ SẮP XẾP ĐÃ ĐƯỢC LÀM ĐẸP HƠN =====
-        pnLoc = new JPanel(new GridBagLayout());
+        pnLoc = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
         pnLoc.setBounds(460, 9, 600, 70);
-        pnLoc.setOpaque(false); // Làm trong suốt panel
+        pnLoc.setOpaque(false);
         
         TitledBorder titledBorder = BorderFactory.createTitledBorder(" Lọc và Sắp xếp ");
         titledBorder.setTitleFont(new Font("Segoe UI", Font.BOLD, 14));

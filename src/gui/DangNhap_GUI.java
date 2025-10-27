@@ -42,6 +42,7 @@ public class DangNhap_GUI extends JFrame {
 		setSize(1920, 1080);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setLayout(new BorderLayout());
+//		setUndecorated(true);
 
 		JPanel pnMain = new JPanel(new BorderLayout());
 		add(pnMain, BorderLayout.CENTER);

@@ -12,7 +12,6 @@ import javax.swing.UIManager;
 
 public class App {
 	public static void main(String[] args) {
-		// (Tùy chọn) Cài đặt Look and Feel cho đẹp hơn
 		try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
@@ -20,7 +19,6 @@ public class App {
         }
 		
 		SwingUtilities.invokeLater(() -> {
-			// Khởi chạy màn hình loading thay vì màn hình đăng nhập
 			new Loading_GUI(); 
 		});
 	};
