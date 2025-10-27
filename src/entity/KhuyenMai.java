@@ -3,6 +3,8 @@ package entity;
 import java.time.LocalDate;
 import java.util.Objects;
 
+import enums.HinhThucKM;
+
 public class KhuyenMai {
 
     private String maKM;

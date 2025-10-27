@@ -2,13 +2,9 @@ package entity;
 
 import java.util.Objects;
 
-/**
- * Lớp đại diện cho thông tin Sản phẩm trong hệ thống quản lý hiệu thuốc.
- * 
- * @author Quốc
- * @version 2.2
- * @since 15/10/2025
- */
+import enums.DuongDung;
+
+
 public class SanPham {
 
     private String maSanPham;
@@ -26,7 +22,7 @@ public class SanPham {
     private String hinhAnh;
     private String quyCachDongGoi;
     private String keBanSanPham;
-    private boolean hoatDong; // ✅ đổi sang kiểu primitive để tránh NullPointerException
+    private boolean hoatDong;
 
     // ===== CONSTRUCTOR =====
 
