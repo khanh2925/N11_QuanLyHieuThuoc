@@ -19,9 +19,6 @@ public class NhanVien {
 	public NhanVien() {
 	}
 	
-	public NhanVien(String maNhanVien) {
-		this.maNhanVien = maNhanVien;
-	}
 	
 	public NhanVien(String maNhanVien, String tenNhanVien, boolean gioiTinh, LocalDate ngaySinh, String soDienThoai,
 			String diaChi, boolean quanLy, TaiKhoan taiKhoan, String caLam, boolean trangThai) {

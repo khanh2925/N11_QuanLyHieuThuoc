@@ -1,9 +1,6 @@
-﻿/* ===========================================================
-   RESET DATABASE
-   =========================================================== */
-USE master;
+﻿USE master;
 GO
-DROP DATABASE QuanLyHieuThuoc;
+DROP DATABASE  QuanLyHieuThuoc;
 GO
 CREATE DATABASE QuanLyHieuThuoc;
 GO
@@ -16,33 +13,32 @@ GO
 
 -- 1) DonViTinh
 CREATE TABLE DonViTinh (
-    MaDonViTinh CHAR(7) NOT NULL PRIMARY KEY, -- DVT-xxx
+    MaDonViTinh CHAR(7) NOT NULL PRIMARY KEY,
     TenDonViTinh NVARCHAR(50) NOT NULL CHECK (LEN(LTRIM(RTRIM(TenDonViTinh))) > 0),
     MoTa NVARCHAR(200) NULL,
-    CONSTRAINT CK_DVT_Ma CHECK (MaDonViTinh LIKE 'DVT-[0-9][0-9][0-9]' AND LEN(MaDonViTinh)=7) 
+    CONSTRAINT CK_DVT_Ma CHECK (MaDonViTinh LIKE 'DVT-[0-9][0-9][0-9]' AND LEN(MaDonViTinh)=7)
 );
 
--- 2) SanPham (enum loại + kiểm tra giá theo bậc)
+-- 2) SanPham
 CREATE TABLE SanPham (
-    MaSanPham CHAR(8) NOT NULL PRIMARY KEY, -- SPxxxxxx
-    TenSanPham NVARCHAR(100) NOT NULL CHECK (LEN(LTRIM(RTRIM(TenSanPham))) > 0), 
+    MaSanPham CHAR(8) NOT NULL PRIMARY KEY,
+    TenSanPham NVARCHAR(100) NOT NULL CHECK (LEN(LTRIM(RTRIM(TenSanPham))) > 0),
     LoaiSanPham NVARCHAR(50) NOT NULL
         CHECK (LoaiSanPham IN (N'THUOC', N'VAT_TU', N'THUC_PHAM_BO_SUNG', N'THIET_BI_Y_TE')),
-    SoDangKy NVARCHAR(20) NULL,  
+    SoDangKy NVARCHAR(20) NULL,
     DuongDung NVARCHAR(10) NULL
         CHECK (DuongDung IN (N'UONG', N'TIEM', N'NHO', N'BOI', N'HIT', N'NGAM', N'DAT', N'DAN')),
     GiaNhap FLOAT NOT NULL CHECK (GiaNhap > 0),
-    GiaBan  FLOAT NOT NULL CHECK (GiaBan > 0),
+    GiaBan FLOAT NOT NULL CHECK (GiaBan > 0),
     HinhAnh NVARCHAR(255) NULL,
     KeBanSanPham NVARCHAR(100) NULL,
     HoatDong BIT NOT NULL DEFAULT 1,
-    
+
     CONSTRAINT CK_SP_Ma CHECK (MaSanPham LIKE 'SP[0-9][0-9][0-9][0-9][0-9][0-9]' AND LEN(MaSanPham)=8),
     CONSTRAINT UQ_SP_SoDangKy UNIQUE (SoDangKy),
-    
     CONSTRAINT CK_SP_GiaBan_BacLoiNhuan CHECK (
-        (GiaNhap < 10000  AND GiaBan >= GiaNhap * 1.5) OR
-        (GiaNhap >= 10000 AND GiaNhap < 50000  AND GiaBan >= GiaNhap * 1.3) OR
+        (GiaNhap < 10000 AND GiaBan >= GiaNhap * 1.5) OR
+        (GiaNhap >= 10000 AND GiaNhap < 50000 AND GiaBan >= GiaNhap * 1.3) OR
         (GiaNhap >= 50000 AND GiaNhap < 200000 AND GiaBan >= GiaNhap * 1.2) OR
         (GiaNhap >= 200000 AND GiaBan >= GiaNhap * 1.1)
     )
@@ -50,80 +46,89 @@ CREATE TABLE SanPham (
 
 -- 3) QuyCachDongGoi
 CREATE TABLE QuyCachDongGoi (
-    MaQuyCach INT IDENTITY(1,1) PRIMARY KEY,
+    MaQuyCach CHAR(8) NOT NULL PRIMARY KEY,
     MaSanPham CHAR(8) NOT NULL,
     MaDonViTinh CHAR(7) NOT NULL,
     HeSoQuyDoi INT NOT NULL CHECK (HeSoQuyDoi > 0),
-    TiLeGiam FLOAT NOT NULL DEFAULT 0 CHECK (TiLeGiam >= 0 AND TiLeGiam <= 1), 
+    TiLeGiam FLOAT NOT NULL DEFAULT 0 CHECK (TiLeGiam >= 0 AND TiLeGiam <= 1),
     DonViGoc BIT NOT NULL DEFAULT 0,
+
+    CONSTRAINT CK_QC_Ma CHECK (MaQuyCach LIKE 'QC[0-9][0-9][0-9][0-9][0-9][0-9]' AND LEN(MaQuyCach) = 8),
     CONSTRAINT FK_QC_SanPham FOREIGN KEY (MaSanPham) REFERENCES SanPham(MaSanPham),
     CONSTRAINT FK_QC_DVT FOREIGN KEY (MaDonViTinh) REFERENCES DonViTinh(MaDonViTinh),
-    CONSTRAINT UQ_QC_SP_DVT UNIQUE (MaSanPham, MaDonViTinh) 
+    CONSTRAINT UQ_QC_SP_DVT UNIQUE (MaSanPham, MaDonViTinh),
+    CONSTRAINT CK_QC_DonViGoc_HeSo CHECK (
+        (DonViGoc = 1 AND HeSoQuyDoi = 1)
+        OR
+        (DonViGoc = 0 AND HeSoQuyDoi > 1)
+    )
 );
 
 -- 4) LoSanPham
 CREATE TABLE LoSanPham (
-    MaLo CHAR(9) NOT NULL PRIMARY KEY,    -- LO-xxxxxx
+    MaLo CHAR(9) NOT NULL PRIMARY KEY,
     HanSuDung DATE NOT NULL,
-    SoLuongTon INT NOT NULL DEFAULT 0 CHECK (SoLuongTon >= 0),
+    SoLuongNhap INT NOT NULL CHECK (SoLuongNhap >= 0),
+    SoLuongTon INT NOT NULL CHECK (SoLuongTon >= 0),
     MaSanPham CHAR(8) NOT NULL,
     CONSTRAINT FK_Lo_SP FOREIGN KEY (MaSanPham) REFERENCES SanPham(MaSanPham),
-    CONSTRAINT CK_Lo_Ma CHECK (MaLo LIKE 'LO-[0-9][0-9][0-9][0-9][0-9][0-9]' AND LEN(MaLo)=9) 
+    CONSTRAINT CK_Lo_Ma CHECK (MaLo LIKE 'LO-[0-9][0-9][0-9][0-9][0-9][0-9]' AND LEN(MaLo) = 9),
+    CONSTRAINT CK_Lo_Ton_Nhap CHECK (SoLuongTon <= SoLuongNhap)
 );
 
 -- 5) TaiKhoan
 CREATE TABLE TaiKhoan (
-    MaTaiKhoan CHAR(8) NOT NULL PRIMARY KEY, -- TKxxxxxx
+    MaTaiKhoan CHAR(8) NOT NULL PRIMARY KEY,
     TenDangNhap VARCHAR(30) NOT NULL UNIQUE
-        CHECK (LEN(TenDangNhap) BETWEEN 5 AND 30 AND TenDangNhap NOT LIKE '%[^0-9A-Za-z]%'),
+        CHECK (LEN(TenDangNhap) BETWEEN 5 AND 30 AND TenDangNhap LIKE '%[0-9A-Za-z]%'),
     MatKhau NVARCHAR(100) NOT NULL CHECK (LEN(MatKhau) >= 8),
-    CONSTRAINT CK_TK_Ma CHECK (MaTaiKhoan LIKE 'TK[0-9][0-9][0-9][0-9][0-9][0-9]' AND LEN(MaTaiKhoan)=8) 
+    CONSTRAINT CK_TK_Ma CHECK (MaTaiKhoan LIKE 'TK[0-9][0-9][0-9][0-9][0-9][0-9]' AND LEN(MaTaiKhoan)=8)
 );
 
 -- 6) NhanVien
 CREATE TABLE NhanVien (
-    MaNhanVien CHAR(12) NOT NULL PRIMARY KEY, -- NVyyyyMMxxxx (12)
-    TenNhanVien NVARCHAR(50) NOT NULL CHECK (LEN(LTRIM(RTRIM(TenNhanVien))) > 0),
-    GioiTinh BIT NOT NULL CHECK (GioiTinh IN (0,1)) DEFAULT 1,
+    MaNhanVien CHAR(12) NOT NULL PRIMARY KEY,
+    TenNhanVien NVARCHAR(50) NOT NULL CHECK (LEN(TRIM(TenNhanVien)) > 0),
+    GioiTinh BIT NOT NULL DEFAULT 1,
     NgaySinh DATE NOT NULL CHECK (DATEDIFF(YEAR, NgaySinh, GETDATE()) >= 18),
-    DiaChi NVARCHAR(100) NULL,
-    SoDienThoai CHAR(10) NULL CHECK (LEN(SoDienThoai)=10 AND SoDienThoai LIKE '0[0-9]%'),
-    QuanLy BIT NOT NULL CHECK (QuanLy IN (0,1)) DEFAULT 0,
-    MaTaiKhoan CHAR(8) NULL,
-    CaLamId CHAR(5) NULL CHECK (CaLamId IN ('SANG','CHIEU','TOI')),
+    SoDienThoai CHAR(10) CHECK (LEN(SoDienThoai)=10 AND SoDienThoai LIKE '0[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'),
+    QuanLy BIT NOT NULL DEFAULT 0,
+    MaTaiKhoan CHAR(8) NOT NULL,
+    CaLam VARCHAR(10) NOT NULL CHECK (CaLam IN ('SANG','CHIEU','TOI')),
     TrangThai BIT NOT NULL DEFAULT 1,
+    DiaChi NVARCHAR(100),
     CONSTRAINT FK_NV_TK FOREIGN KEY (MaTaiKhoan) REFERENCES TaiKhoan(MaTaiKhoan),
-    CONSTRAINT CK_NV_Ma CHECK (MaNhanVien LIKE 'NV[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]' AND LEN(MaNhanVien)=12) 
+    CONSTRAINT CK_NV_Ma CHECK (MaNhanVien LIKE 'NV[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]' AND LEN(MaNhanVien)=12)
 );
 
 -- 7) KhachHang
 CREATE TABLE KhachHang (
-    MaKhachHang CHAR(7) NOT NULL PRIMARY KEY, -- KH-xxxx
-    TenKhachHang NVARCHAR(100) NOT NULL CHECK (LEN(LTRIM(RTRIM(TenKhachHang))) > 0),
-	GioiTinh BIT NOT NULL DEFAULT 1 CHECK (GioiTinh IN (0,1)),
-    SoDienThoai CHAR(10) NULL CHECK (LEN(SoDienThoai)=10 AND SoDienThoai LIKE '0[0-9]%'),   
+    MaKhachHang CHAR(7) NOT NULL PRIMARY KEY,
+    TenKhachHang NVARCHAR(100) NOT NULL CHECK (LEN(TRIM(TenKhachHang)) > 0),
+    GioiTinh BIT NOT NULL DEFAULT 1,
+    SoDienThoai CHAR(10) NULL CHECK (LEN(SoDienThoai)=10 AND SoDienThoai LIKE '0[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'),
     NgaySinh DATE NULL CHECK (NgaySinh IS NULL OR DATEDIFF(YEAR, NgaySinh, GETDATE()) >= 6),
     CONSTRAINT CK_KH_Ma CHECK (MaKhachHang LIKE 'KH-[0-9][0-9][0-9][0-9]' AND LEN(MaKhachHang)=7)
 );
 
 -- 8) NhaCungCap
 CREATE TABLE NhaCungCap (
-    MaNhaCungCap CHAR(7) NOT NULL PRIMARY KEY, -- NCC-xxx
-    TenNhaCungCap NVARCHAR(100) NOT NULL CHECK (LEN(LTRIM(RTRIM(TenNhaCungCap))) > 0),
-    DiaChi NVARCHAR(200) NULL,
-    SoDienThoai CHAR(10) NULL CHECK (LEN(SoDienThoai)=10 AND SoDienThoai LIKE '0[0-9]%'),
+    MaNhaCungCap CHAR(7) NOT NULL PRIMARY KEY,
+    TenNhaCungCap NVARCHAR(100) NOT NULL CHECK (LEN(TRIM(TenNhaCungCap)) > 0),
+    DiaChi NVARCHAR(200),
+    SoDienThoai CHAR(10) NOT NULL CHECK (LEN(SoDienThoai)=10 AND SoDienThoai LIKE '0[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'),
     CONSTRAINT CK_NCC_Ma CHECK (MaNhaCungCap LIKE 'NCC-[0-9][0-9][0-9]' AND LEN(MaNhaCungCap)=7)
 );
 
 -- 9) PhieuNhap
 CREATE TABLE PhieuNhap (
-    MaPhieuNhap CHAR(9) NOT NULL PRIMARY KEY, -- PNxxxxxxx
-    NgayNhap DATE NOT NULL CHECK (NgayNhap <= CAST(GETDATE() AS DATE)),
+    MaPhieuNhap CHAR(9) NOT NULL PRIMARY KEY,
+    NgayNhap DATE NOT NULL CHECK (NgayNhap <= GETDATE()),
     MaNhaCungCap CHAR(7) NOT NULL,
     MaNhanVien CHAR(12) NOT NULL,
-    TongTien MONEY NULL CHECK (TongTien >= 0),
+    TongTien DECIMAL(15,2) DEFAULT 0 CHECK (TongTien >= 0),
     CONSTRAINT FK_PN_NCC FOREIGN KEY (MaNhaCungCap) REFERENCES NhaCungCap(MaNhaCungCap),
-    CONSTRAINT FK_PN_NV  FOREIGN KEY (MaNhanVien)    REFERENCES NhanVien(MaNhanVien),
+    CONSTRAINT FK_PN_NV FOREIGN KEY (MaNhanVien) REFERENCES NhanVien(MaNhanVien),
     CONSTRAINT CK_PN_Ma CHECK (MaPhieuNhap LIKE 'PN[0-9][0-9][0-9][0-9][0-9][0-9][0-9]' AND LEN(MaPhieuNhap)=9)
 );
 
@@ -133,7 +138,7 @@ CREATE TABLE ChiTietPhieuNhap (
     MaLo CHAR(9) NOT NULL,
     SoLuongNhap INT NOT NULL CHECK (SoLuongNhap > 0),
     DonGiaNhap DECIMAL(18,2) NOT NULL CHECK (DonGiaNhap > 0),
-    ThanhTien AS (CAST(SoLuongNhap AS DECIMAL(18,2)) * DonGiaNhap) PERSISTED,
+    ThanhTien AS (SoLuongNhap * DonGiaNhap) PERSISTED,
     CONSTRAINT PK_CTPN PRIMARY KEY (MaPhieuNhap, MaLo),
     CONSTRAINT FK_CTPN_PN FOREIGN KEY (MaPhieuNhap) REFERENCES PhieuNhap(MaPhieuNhap),
     CONSTRAINT FK_CTPN_Lo FOREIGN KEY (MaLo) REFERENCES LoSanPham(MaLo)
@@ -141,39 +146,32 @@ CREATE TABLE ChiTietPhieuNhap (
 
 -- 11) KhuyenMai
 CREATE TABLE KhuyenMai (
-    MaKM CHAR(16) NOT NULL PRIMARY KEY, -- KM-YYYYMMDD-ssss (16)
-    TenKM NVARCHAR(200) NOT NULL CHECK (LEN(LTRIM(RTRIM(TenKM))) > 0),
+    MaKM CHAR(16) NOT NULL PRIMARY KEY,
+    TenKM NVARCHAR(200) NOT NULL CHECK (LEN(TRIM(TenKM)) > 0),
     NgayBatDau DATE NOT NULL,
     NgayKetThuc DATE NOT NULL,
-    TrangThai BIT NOT NULL DEFAULT 1 CHECK (TrangThai IN (0,1)),
-    KhuyenMaiHoaDon BIT NOT NULL DEFAULT 0 CHECK (KhuyenMaiHoaDon IN (0,1)),
-    
-    -- ĐÃ SỬA: Chuyển sang NVARCHAR và CHECK ENUM
-    HinhThucKM NVARCHAR(30) NOT NULL 
-        CHECK (HinhThucKM IN ('GIAM_GIA_PHAN_TRAM', 'GIAM_GIA_TIEN', 'TANG_THEM')),
-        
-    GiaTri MONEY NOT NULL CHECK (GiaTri >= 0),
-    
-    -- ĐÃ SỬA: Chuyển sang DECIMAL NOT NULL DEFAULT 0
-    DieuKienApDungHoaDon DECIMAL(18, 2) NOT NULL DEFAULT 0 CHECK (DieuKienApDungHoaDon >= 0),
-    
+    TrangThai BIT NOT NULL DEFAULT 1,
+    KhuyenMaiHoaDon BIT NOT NULL DEFAULT 0,
+    HinhThucKM NVARCHAR(30) NOT NULL CHECK (HinhThucKM IN (N'GIAM_GIA_PHAN_TRAM', N'GIAM_GIA_TIEN', N'TANG_THEM')),
+    GiaTri DECIMAL(18,2) NOT NULL CHECK (GiaTri >= 0),
+    DieuKienApDungHoaDon DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (DieuKienApDungHoaDon >= 0),
     SoLuongToiThieu INT NOT NULL DEFAULT 0 CHECK (SoLuongToiThieu >= 0),
     SoLuongTangThem INT NOT NULL DEFAULT 0 CHECK (SoLuongTangThem >= 0),
     CONSTRAINT CK_KM_Date CHECK (NgayBatDau <= NgayKetThuc),
-    CONSTRAINT CK_KM_Ma CHECK (MaKM LIKE 'KM-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]' AND LEN(MaKM)=16)
+    CONSTRAINT CK_KM_Ma CHECK (MaKM LIKE 'KM-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]')
 );
 
 -- 12) HoaDon
 CREATE TABLE HoaDon (
-    MaHoaDon CHAR(16) NOT NULL PRIMARY KEY, -- HD-YYYYMMDD-ssss (16)
-    NgayLap DATE NOT NULL CHECK (NgayLap <= CAST(GETDATE() AS DATE)),
+    MaHoaDon CHAR(16) NOT NULL PRIMARY KEY,
+    NgayLap DATE NOT NULL CHECK (NgayLap <= GETDATE()),
     MaNhanVien CHAR(12) NOT NULL,
     MaKhachHang CHAR(7) NOT NULL,
-    TongTien DECIMAL(18,2) NULL,
-    ThuocTheoDon BIT NOT NULL DEFAULT 0 CHECK (ThuocTheoDon IN (0,1)),
+    TongTien DECIMAL(18,2) NULL CHECK (TongTien >= 0),
+    ThuocTheoDon BIT NOT NULL DEFAULT 0,
     CONSTRAINT FK_HD_NV FOREIGN KEY (MaNhanVien) REFERENCES NhanVien(MaNhanVien),
     CONSTRAINT FK_HD_KH FOREIGN KEY (MaKhachHang) REFERENCES KhachHang(MaKhachHang),
-    CONSTRAINT CK_HD_Ma CHECK (MaHoaDon LIKE 'HD-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]' AND LEN(MaHoaDon)=16)
+    CONSTRAINT CK_HD_Ma CHECK (MaHoaDon LIKE 'HD-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]')
 );
 
 -- 13) ChiTietHoaDon
@@ -182,8 +180,7 @@ CREATE TABLE ChiTietHoaDon (
     MaSanPham CHAR(8) NOT NULL,
     MaKM CHAR(16) NULL,
     SoLuong INT NOT NULL CHECK (SoLuong > 0),
-    GiaBan MONEY NOT NULL CHECK (GiaBan > 0),
-    ThanhTien AS (CAST(SoLuong AS DECIMAL(18,2)) * CAST(GiaBan AS DECIMAL(18,2))) PERSISTED,
+    GiaBan DECIMAL(18,2) NOT NULL CHECK (GiaBan > 0),
     CONSTRAINT PK_CTHD PRIMARY KEY (MaHoaDon, MaSanPham),
     CONSTRAINT FK_CTHD_HD FOREIGN KEY (MaHoaDon) REFERENCES HoaDon(MaHoaDon),
     CONSTRAINT FK_CTHD_SP FOREIGN KEY (MaSanPham) REFERENCES SanPham(MaSanPham),
@@ -194,7 +191,6 @@ CREATE TABLE ChiTietHoaDon (
 CREATE TABLE ChiTietKhuyenMaiSanPham (
     MaKM CHAR(16) NOT NULL,
     MaSanPham CHAR(8) NOT NULL,
-    GiamGia FLOAT NOT NULL DEFAULT 0 CHECK (GiamGia >= 0),
     CONSTRAINT PK_CTLKM PRIMARY KEY (MaKM, MaSanPham),
     CONSTRAINT FK_CTLKM_KM FOREIGN KEY (MaKM) REFERENCES KhuyenMai(MaKM),
     CONSTRAINT FK_CTLKM_SP FOREIGN KEY (MaSanPham) REFERENCES SanPham(MaSanPham)
@@ -202,25 +198,26 @@ CREATE TABLE ChiTietKhuyenMaiSanPham (
 
 -- 15) PhieuTra
 CREATE TABLE PhieuTra (
-    MaPhieuTra CHAR(8) NOT NULL PRIMARY KEY, -- PTxxxxxx
-    NgayLapPhieu DATE NOT NULL CHECK (NgayLapPhieu <= CAST(GETDATE() AS DATE)),
+    MaPhieuTra CHAR(8) NOT NULL PRIMARY KEY,
+    NgayLap DATE NOT NULL CHECK (NgayLap <= GETDATE()),
     MaNhanVien CHAR(12) NOT NULL,
     MaKhachHang CHAR(7) NOT NULL,
     TongTienHoan DECIMAL(18,2) NULL CHECK (TongTienHoan >= 0),
-    TrangThai NVARCHAR(20) NOT NULL CHECK (TrangThai IN (N'Đã nhập lại hàng', N'Đã huỷ hàng', N'Đang chờ duyệt')),
+    DaDuyet BIT NOT NULL DEFAULT 0,
     CONSTRAINT FK_PT_NV FOREIGN KEY (MaNhanVien) REFERENCES NhanVien(MaNhanVien),
     CONSTRAINT FK_PT_KH FOREIGN KEY (MaKhachHang) REFERENCES KhachHang(MaKhachHang),
-    CONSTRAINT CK_PT_Ma CHECK (MaPhieuTra LIKE 'PT[0-9][0-9][0-9][0-9][0-9][0-9]' AND LEN(MaPhieuTra)=8)
+    CONSTRAINT CK_PT_Ma CHECK (MaPhieuTra LIKE 'PT[0-9][0-9][0-9][0-9][0-9][0-9]')
 );
 
 -- 16) ChiTietPhieuTra
 CREATE TABLE ChiTietPhieuTra (
     MaPhieuTra CHAR(8) NOT NULL,
     MaHoaDon CHAR(16) NOT NULL,
-    MaSanPham CHAR(8) NOT NULL, 
-    LyDoChiTiet NVARCHAR(200) NULL,
+    MaSanPham CHAR(8) NOT NULL,
+    LyDoChiTiet NVARCHAR(200),
     SoLuong INT NOT NULL CHECK (SoLuong > 0),
-    ThanhTienHoan MONEY NOT NULL CHECK (ThanhTienHoan >= 0),
+    ThanhTienHoan DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (ThanhTienHoan >= 0),
+    TrangThai INT NOT NULL DEFAULT 0 CHECK (TrangThai IN (0,1,2)),
     CONSTRAINT PK_CTPT PRIMARY KEY (MaPhieuTra, MaHoaDon, MaSanPham),
     CONSTRAINT FK_CTPT_PT FOREIGN KEY (MaPhieuTra) REFERENCES PhieuTra(MaPhieuTra),
     CONSTRAINT FK_CTPT_CTHD FOREIGN KEY (MaHoaDon, MaSanPham) REFERENCES ChiTietHoaDon(MaHoaDon, MaSanPham)
@@ -228,12 +225,13 @@ CREATE TABLE ChiTietPhieuTra (
 
 -- 17) PhieuHuy
 CREATE TABLE PhieuHuy (
-    MaPhieuHuy CHAR(16) NOT NULL PRIMARY KEY, -- PH-YYYYMMDD-ssss (16)
-    NgayLapPhieu DATE NOT NULL CHECK (NgayLapPhieu <= CAST(GETDATE() AS DATE)),
+    MaPhieuHuy CHAR(16) NOT NULL PRIMARY KEY,
+    NgayLapPhieu DATE NOT NULL CHECK (NgayLapPhieu <= GETDATE()),
     MaNhanVien CHAR(12) NOT NULL,
-    TrangThai BIT NOT NULL DEFAULT 0 CHECK (TrangThai IN (0,1)),
+    TongTienHuy DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (TongTienHuy >= 0),
+    TrangThai BIT NOT NULL DEFAULT 0,
     CONSTRAINT FK_PH_NV FOREIGN KEY (MaNhanVien) REFERENCES NhanVien(MaNhanVien),
-    CONSTRAINT CK_PH_Ma CHECK (MaPhieuHuy LIKE 'PH-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]' AND LEN(MaPhieuHuy)=16)
+    CONSTRAINT CK_PH_Ma CHECK (MaPhieuHuy LIKE 'PH-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]')
 );
 
 -- 18) ChiTietPhieuHuy
@@ -242,148 +240,212 @@ CREATE TABLE ChiTietPhieuHuy (
     MaLo CHAR(9) NOT NULL,
     SoLuongHuy INT NOT NULL CHECK (SoLuongHuy > 0),
     LyDoChiTiet NVARCHAR(500) NULL,
-    DonGiaNhap DECIMAL(18,2) NULL CHECK (DonGiaNhap > 0), 
-    ThanhTien AS (CASE WHEN DonGiaNhap IS NULL THEN NULL
-                       ELSE CAST(SoLuongHuy AS DECIMAL(18,2)) * DonGiaNhap END) PERSISTED,
+    DonGiaNhap DECIMAL(18,2) NOT NULL CHECK (DonGiaNhap > 0),
+    ThanhTien AS (SoLuongHuy * DonGiaNhap) PERSISTED,
     CONSTRAINT PK_CTPH PRIMARY KEY (MaPhieuHuy, MaLo),
     CONSTRAINT FK_CTPH_PH FOREIGN KEY (MaPhieuHuy) REFERENCES PhieuHuy(MaPhieuHuy),
     CONSTRAINT FK_CTPH_Lo FOREIGN KEY (MaLo) REFERENCES LoSanPham(MaLo)
 );
 GO
+USE QuanLyHieuThuoc;
+GO
 
 /* ===========================================================
-   2) DỮ LIỆU MẪU (ĐÃ CHỈNH SỬA VÀ BỔ SUNG)
+   RESET VÀ LÀM SẠCH DỮ LIỆU
    =========================================================== */
 
--- DonViTinh
-INSERT INTO DonViTinh (MaDonViTinh, TenDonViTinh, MoTa) VALUES
-('DVT-001', N'Viên', N'Đơn vị nhỏ nhất'),
-('DVT-002', N'Vỉ',  N'1 vỉ = 10 viên'),
-('DVT-003', N'Hộp', N'1 hộp = 10 vỉ');
-
--- SanPham (GiáBan thỏa bậc lợi nhuận mới)
-INSERT INTO SanPham (MaSanPham, TenSanPham, LoaiSanPham, SoDangKy, DuongDung, GiaNhap, GiaBan, HinhAnh, KeBanSanPham, HoatDong) VALUES
-('SP000001', N'Paracetamol 500mg', N'THUOC', 'VD-12345-22', N'UONG',  250,  400, 'paracetamol.jpg', 'Kệ A1', 1), 
-('SP000002', N'Panadol Extra',      N'THUOC', 'VD-54321-22', N'UONG',  300,  450, 'panadol_extra.jpg','Kệ A2', 1), 
-('SP000003', N'Efferalgan 500mg',  N'THUOC', 'VD-67890-23', N'UONG',  280,  420, 'efferalgan.jpg',    'Kệ B1', 1), 
-('SP000004', N'Vitamin C 500mg',   N'THUC_PHAM_BO_SUNG','VD-55555-24', N'UONG',  200,  300, 'vitaminc.jpg',    'Kệ C1', 1), 
-('SP000005', N'Bông y tế',          N'VAT_TU', 'VD-99999-24', NULL,       50,  100, 'bongyte.jpg',      'Kệ D1', 1); 
-
--- QuyCachDongGoi
-INSERT INTO QuyCachDongGoi (MaSanPham, MaDonViTinh, HeSoQuyDoi, TiLeGiam, DonViGoc) VALUES
-('SP000001','DVT-001',1,0,1), ('SP000001','DVT-002',10,0.05,0),('SP000001','DVT-003',100,0.1,0),
-('SP000002','DVT-001',1,0,1), ('SP000002','DVT-002',10,0.05,0),
-('SP000003','DVT-001',1,0,1), ('SP000003','DVT-002',10,0.05,0),
-('SP000004','DVT-001',1,0,1), ('SP000004','DVT-002',10,0.05,0),
-('SP000005','DVT-001',1,0,1), ('SP000005','DVT-002',10,0.05,0);
-
--- LoSanPham
-INSERT INTO LoSanPham (MaLo, HanSuDung, SoLuongTon, MaSanPham) VALUES
-('LO-000001','2026-03-01',1200,'SP000001'),
-('LO-000002','2026-06-01', 800,'SP000002'),
-('LO-000003','2026-09-01', 600,'SP000003'),
-('LO-000004','2026-12-01', 900,'SP000004'),
-('LO-000005','2026-08-01', 400,'SP000005'),
-('LO-000006','2026-07-15', 100,'SP000001');
-
--- TaiKhoan
-INSERT INTO TaiKhoan (MaTaiKhoan, TenDangNhap, MatKhau) VALUES
-('TK000001','admin','admin@123'),
-('TK000002','nvbanhang','12345678'),
-('TK000003','nvkho','12345678');
-
--- NhanVien
-INSERT INTO NhanVien (MaNhanVien, TenNhanVien, GioiTinh, NgaySinh, DiaChi, SoDienThoai, QuanLy, MaTaiKhoan, CaLamId, TrangThai) VALUES
-('NV2025100001',N'Nguyễn Văn A',1,'1995-05-10',N'Q1, TP.HCM','0909123123',1,'TK000001','SANG',1),
-('NV2025100002',N'Trần Thị B', 0,'1998-02-14',N'Q3, TP.HCM','0909345345',0,'TK000002','CHIEU',1),
-('NV2025100003',N'Lê Quốc C',  1,'1992-09-22',N'Q5, TP.HCM','0909555666',0,'TK000003','TOI',  1);
-
--- KhachHang
-INSERT INTO KhachHang (MaKhachHang, TenKhachHang, GioiTinh, SoDienThoai, NgaySinh) VALUES
-('KH-0001', N'Lê Minh', 1, '0909333444',  '1995-05-12'),
-('KH-0002', N'Ngọc Lan', 0, '0909111222',  '1998-08-20'),
-('KH-0003', N'Trung Kiên', 1, '0909777555', '1990-03-15');
-
-
--- NhaCungCap
-INSERT INTO NhaCungCap (MaNhaCungCap, TenNhaCungCap, DiaChi, SoDienThoai) VALUES
-('NCC-001',N'Dược Hậu Giang',N'Cần Thơ','0292388888'),
-('NCC-002',N'Mekophar',N'HCM','0283939393');
-
--- PhieuNhap + ChiTiet
-INSERT INTO PhieuNhap (MaPhieuNhap, NgayNhap, MaNhaCungCap, MaNhanVien, TongTien) VALUES
-('PN0000001','2025-10-10','NCC-001','NV2025100003',NULL),
-('PN0000002','2025-10-15','NCC-002','NV2025100003',NULL);
-
-INSERT INTO ChiTietPhieuNhap (MaPhieuNhap, MaLo, SoLuongNhap, DonGiaNhap) VALUES
-('PN0000001','LO-000001',1000,250.00),
-('PN0000001','LO-000002', 500,300.00),
-('PN0000002','LO-000003', 400,280.00),
-('PN0000002','LO-000004', 500,200.00),
-('PN0000002','LO-000005', 300, 50.00);
-
-UPDATE PN
-SET TongTien = T.Tong
-FROM PhieuNhap PN
-JOIN ( SELECT MaPhieuNhap, SUM(ThanhTien) AS Tong
-        FROM ChiTietPhieuNhap
-        GROUP BY MaPhieuNhap ) T
- ON PN.MaPhieuNhap = T.MaPhieuNhap;
-
--- KhuyenMai (ĐÃ BỔ SUNG DATA ĐA DẠNG)
-INSERT INTO KhuyenMai (MaKM, TenKM, NgayBatDau, NgayKetThuc, TrangThai, KhuyenMaiHoaDon, HinhThucKM, GiaTri, DieuKienApDungHoaDon, SoLuongToiThieu, SoLuongTangThem) VALUES
--- KM-0001: Giảm phần trăm, không điều kiện HĐ, áp dụng cho SP (sẽ dùng ChiTietKhuyenMaiSanPham)
-('KM-20251001-0001',N'Giảm 10% Paracetamol','2025-10-01','2025-12-31',1,0,N'GIAM_GIA_PHAN_TRAM',10,0.00,0,0),
--- KM-0002: Giảm phần trăm, có điều kiện HĐ > 1tr (áp dụng cho HĐ)
-('KM-20251001-0002',N'Giảm 5% cho hóa đơn >1tr','2025-10-01','2025-12-31',1,1,N'GIAM_GIA_PHAN_TRAM',5,1000000.00,0,0),
--- KM-0003: Giảm tiền cố định (50k), áp dụng cho SP (sẽ dùng ChiTietKhuyenMaiSanPham)
-('KM-20251101-0003',N'Giảm 50K cho Panadol','2025-11-01','2026-01-31',1,0,N'GIAM_GIA_TIEN',50000.00,0.00,0,0),
--- KM-0004: Mua X tặng Y (Tặng thêm), áp dụng cho SP, Mua 5 tặng 1
-('KM-20251201-0004',N'Mua 5 tặng 1 (Vit C)','2025-12-01','2026-02-28',1,0,N'TANG_THEM',0.00,0.00,5,1);
-
-INSERT INTO ChiTietKhuyenMaiSanPham (MaKM, MaSanPham, GiamGia) VALUES
-('KM-20251001-0001','SP000001',10), -- KM-0001 cho SP000001
-('KM-20251001-0001','SP000003',10), -- KM-0001 cho SP000003
-('KM-20251101-0003','SP000002',0);  -- KM-0003 cho SP000002 (GiaTri đã lưu trong KhuyenMai)
-
--- HoaDon + ChiTiet
-INSERT INTO HoaDon (MaHoaDon, NgayLap, MaNhanVien, MaKhachHang, TongTien, ThuocTheoDon) VALUES
-('HD-20251025-0001','2025-10-25','NV2025100001','KH-0001',NULL,0),
-('HD-20251026-0002','2025-10-26','NV2025100002','KH-0002',NULL,0);
-
-INSERT INTO ChiTietHoaDon (MaHoaDon, MaSanPham, MaKM, SoLuong, GiaBan) VALUES
-('HD-20251025-0001','SP000001','KM-20251001-0001',10,400.00),
-('HD-20251025-0001','SP000002',NULL,               5,450.00),
-('HD-20251026-0002','SP000003','KM-20251001-0001',  8,420.00),
-('HD-20251026-0002','SP000004',NULL,               12,300.00);
-
-UPDATE HD
-SET TongTien = T.Tong
-FROM HoaDon HD
-JOIN ( SELECT MaHoaDon, SUM(ThanhTien) AS Tong
-        FROM ChiTietHoaDon
-        GROUP BY MaHoaDon ) T
- ON HD.MaHoaDon = T.MaHoaDon;
-
--- PhieuTra + ChiTiet
-INSERT INTO PhieuTra (MaPhieuTra, NgayLapPhieu, MaNhanVien, MaKhachHang, TongTienHoan, TrangThai) VALUES
-('PT000001','2025-10-27','NV2025100001','KH-0001',NULL,N'Đã nhập lại hàng'); 
-
-INSERT INTO ChiTietPhieuTra (MaPhieuTra, MaHoaDon, MaSanPham, LyDoChiTiet, SoLuong, ThanhTienHoan) VALUES
-('PT000001','HD-20251025-0001','SP000001',N'Khách đổi ý',2,800.00); 
-
-UPDATE PT
-SET TongTienHoan = T.Tong
-FROM PhieuTra PT
-JOIN ( SELECT MaPhieuTra, SUM(ThanhTienHoan) AS Tong
-        FROM ChiTietPhieuTra
-        GROUP BY MaPhieuTra ) T
- ON PT.MaPhieuTra = T.MaPhieuTra;
-
--- PhieuHuy + ChiTiet
-INSERT INTO PhieuHuy (MaPhieuHuy, NgayLapPhieu, MaNhanVien, TrangThai) VALUES
-('PH-20251027-0001','2025-10-27','NV2025100003',1);
-
-INSERT INTO ChiTietPhieuHuy (MaPhieuHuy, MaLo, SoLuongHuy, LyDoChiTiet, DonGiaNhap) VALUES
-('PH-20251027-0001','LO-000006',5,N'Hư hỏng bao bì',250.00);
+-- Tắt kiểm tra ràng buộc khóa ngoại tạm thời để xóa dữ liệu
+EXEC sp_MSforeachtable "ALTER TABLE ? NOCHECK CONSTRAINT all"
 GO
+
+-- Xóa dữ liệu theo thứ tự phụ thuộc
+DELETE FROM ChiTietPhieuTra;
+DELETE FROM PhieuTra;
+DELETE FROM ChiTietHoaDon;
+DELETE FROM HoaDon;
+DELETE FROM ChiTietKhuyenMaiSanPham;
+DELETE FROM KhuyenMai;
+DELETE FROM ChiTietPhieuHuy;
+DELETE FROM PhieuHuy;
+DELETE FROM ChiTietPhieuNhap;
+DELETE FROM PhieuNhap;
+DELETE FROM LoSanPham;
+DELETE FROM QuyCachDongGoi;
+DELETE FROM SanPham;
+DELETE FROM DonViTinh;
+DELETE FROM NhanVien;
+DELETE FROM TaiKhoan;
+DELETE FROM KhachHang;
+DELETE FROM NhaCungCap;
+GO
+
+-- Bật lại kiểm tra ràng buộc khóa ngoại
+EXEC sp_MSforeachtable "ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all"
+GO
+
+/* ===========================================================
+   2) INSERT DỮ LIỆU CƠ BẢN VÀ DANH MỤC (NO NULL)
+   =========================================================== */
+
+-- 1) DonViTinh
+INSERT INTO DonViTinh (MaDonViTinh, TenDonViTinh, MoTa) VALUES
+('DVT-001', N'Viên', N'Đơn vị tính nhỏ nhất cho thuốc viên/con nhộng'),
+('DVT-002', N'Vỉ', N'Đơn vị đóng gói lớn hơn viên'),
+('DVT-003', N'Hộp', N'Đơn vị đóng gói ngoài cùng'),
+('DVT-004', N'Chai', N'Đơn vị tính cho thuốc dạng lỏng/nước'),
+('DVT-005', N'Tuýp', N'Đơn vị tính cho thuốc dạng kem/mỡ bôi'),
+('DVT-006', N'Gói', N'Đơn vị tính cho thuốc bột/pha dung dịch'),
+('DVT-007', N'Cái', N'Đơn vị tính cho vật tư y tế');
+
+
+-- 5) TaiKhoan
+INSERT INTO TaiKhoan (MaTaiKhoan, TenDangNhap, MatKhau) VALUES
+('TK000001', 'admin01', N'Admin@12345'), -- Quản lý
+('TK000002', 'nhanvien01', N'Nv@1234567'), -- Nhân viên bán hàng
+('TK000003', 'nhanvien02', N'Nv@1234567'); -- Nhân viên kho
+
+
+-- 6) NhanVien (NgaySinh >= 18 tuổi, DiaChi luôn có)
+INSERT INTO NhanVien (MaNhanVien, TenNhanVien, GioiTinh, NgaySinh, DiaChi, SoDienThoai, QuanLy, MaTaiKhoan, CaLam, TrangThai) VALUES
+('NV2020102002', N'Trần Thị Mai', 0, '2000-01-15', N'45 Phan Văn Trị, Gò Vấp, TP.HCM', '0987111222', 1, 'TK000001', 'SANG', 1),
+('NV2020102001', N'Lê Văn Tám', 1, '1995-11-20', N'10 Nguyễn Du, Q.1, TP.HCM', '0987333444', 0, 'TK000002', 'CHIEU', 1),
+('NV2020102003', N'Phạm Thu Hà', 0, '2002-03-08', N'99 Lý Thường Kiệt, Q.10, TP.HCM', '0336555666', 0, 'TK000003', 'TOI', 1);
+
+
+-- 7) KhachHang (SoDienThoai, NgaySinh không NULL/luôn có giá trị hợp lệ)
+INSERT INTO KhachHang (MaKhachHang, TenKhachHang, GioiTinh, SoDienThoai, NgaySinh) VALUES
+('KH-0001', N'Khách vãng lai', 1, '0900000000', '1990-01-01'), -- Khách mặc định
+('KH-0002', N'Nguyễn Hoàng Nam', 1, '0912345678', '1985-06-01'),
+('KH-0003', N'Trần Ánh Tuyết', 0, '0398765432', '1998-12-25'),
+('KH-0004', N'Lê Kim Anh', 0, '0909090909', '2015-05-10'); -- Đủ 6 tuổi
+
+
+-- 8) NhaCungCap
+INSERT INTO NhaCungCap (MaNhaCungCap, TenNhaCungCap, DiaChi, SoDienThoai) VALUES
+('NCC-001', N'Công ty Dược phẩm A.B.C', N'123 Đường Nguyễn Trãi, Q.5, TP.HCM', '0901234567'),
+('NCC-002', N'Thiết bị Y tế Hưng Thịnh', N'45 Lê Lợi, Q.1, TP.HCM', '0907654321'),
+('NCC-003', N'Công ty Vật tư Y Tế P.Q.R', N'789 Trường Chinh, Hà Nội', '0369876543');
+
+
+-- 2) SanPham (SoDangKy, DuongDung, HinhAnh, KeBanSanPham đều không NULL)
+INSERT INTO SanPham (MaSanPham, TenSanPham, LoaiSanPham, SoDangKy, DuongDung, GiaNhap, GiaBan, HinhAnh, KeBanSanPham, HoatDong) VALUES
+-- Bậc 1: GiaNhap < 10000 (Lợi nhuận >= 1.5)
+('SP000001', N'Paracetamol 500mg', N'THUOC', 'VD-12345-19', N'UONG', 5000.0, 7500.0, 'paracetamol.png', N'Kệ A-1', 1),
+-- Bậc 2: 10000 <= GiaNhap < 50000 (Lợi nhuận >= 1.3)
+('SP000003', N'Thuốc ho Bổ Phế', N'THUOC', 'HD-99887-22', N'UONG', 40000.0, 52000.0, 'thuoc_ho.png', N'Kệ A-3', 1),
+('SP000004', N'Kem chống hăm Bepanthen', N'THUC_PHAM_BO_SUNG', 'SK-4567-20', N'BOI', 35000.0, 48000.0, 'bepanthen.jpg', N'Kệ B-2', 1),
+-- Bậc 3: 50000 <= GiaNhap < 200000 (Lợi nhuận >= 1.2)
+('SP000005', N'Máy đo huyết áp Omron', N'THIET_BI_Y_TE', 'TTBYT-001', N'DAN', 150000.0, 180000.0, 'huyet_ap.png', N'Kệ E-1', 1),
+('SP000006', N'Vitamin C 1000mg', N'THUC_PHAM_BO_SUNG', 'CN-0011-23', N'UONG', 80000.0, 96000.0, 'vitamin_c.jpg', N'Kệ C-4', 1),
+-- Bậc 4: GiaNhap >= 200000 (Lợi nhuận >= 1.1)
+('SP000007', N'Glucophage 500mg', N'THUOC', 'VD-77777-21', N'UONG', 250000.0, 275000.0, 'glucophage.png', N'Kệ A-2', 1),
+('SP000008', N'Khẩu trang N95 (Hộp 50 cái)', N'VAT_TU', 'VTYT-900', N'NHO', 220000.0, 245000.0, 'khau_trang.jpg', N'Kệ D-1', 1);
+
+
+-- 3) QuyCachDongGoi (Đảm bảo DonViGoc = 1)
+INSERT INTO QuyCachDongGoi (MaQuyCach, MaSanPham, MaDonViTinh, HeSoQuyDoi, TiLeGiam, DonViGoc) VALUES
+('QC000001', 'SP000001', 'DVT-001', 1, 0.00, 1), -- SP000001: Viên (Gốc)
+('QC000002', 'SP000001', 'DVT-002', 10, 0.05, 0), -- Vỉ
+('QC000003', 'SP000003', 'DVT-004', 1, 0.00, 1), -- SP000003: Chai (Gốc)
+('QC000004', 'SP000003', 'DVT-003', 2, 0.10, 0), -- Hộp (2 chai)
+('QC000005', 'SP000006', 'DVT-001', 1, 0.00, 1), -- SP000006: Viên (Gốc)
+('QC000006', 'SP000006', 'DVT-003', 30, 0.15, 0); -- Hộp (30 viên)
+
+
+-- 4) LoSanPham (HanSuDung > GETDATE())
+INSERT INTO LoSanPham (MaLo, HanSuDung, SoLuongNhap, SoLuongTon, MaSanPham) VALUES
+('LO-000001', '2026-10-30', 5000, 4900, 'SP000001'),
+('LO-000002', '2027-01-20', 300, 280, 'SP000004'),
+('LO-000003', '2028-11-11', 50, 50, 'SP000005'),
+('LO-000004', '2026-06-01', 1000, 1000, 'SP000006');
+
+
+-- 9) PhieuNhap
+INSERT INTO PhieuNhap (MaPhieuNhap, NgayNhap, MaNhaCungCap, MaNhanVien, TongTien) VALUES
+('PN0000001', '2025-10-20', 'NCC-001', 'NV2020102001', 25000000.00), -- Tính toán giả định
+('PN0000002', '2025-10-25', 'NCC-002', 'NV2020102001', 7500000.00),
+('PN0000003', '2025-10-28', 'NCC-001', 'NV2020102001', 80000000.00);
+
+
+-- 10) ChiTietPhieuNhap (ThanhTien được tính tự động)
+INSERT INTO ChiTietPhieuNhap (MaPhieuNhap, MaLo, SoLuongNhap, DonGiaNhap) VALUES
+('PN0000001', 'LO-000001', 5000, 5000.00),
+('PN0000002', 'LO-000003', 50, 150000.00),
+('PN0000003', 'LO-000004', 1000, 80000.00);
+
+
+/* ===========================================================
+   3) INSERT DỮ LIỆU KHUYẾN MÃI (FULL CASE)
+   =========================================================== */
+
+-- KM1: Giảm % HĐ (KhuyenMaiHoaDon = 1)
+INSERT INTO KhuyenMai (MaKM, TenKM, NgayBatDau, NgayKetThuc, TrangThai, KhuyenMaiHoaDon, HinhThucKM, GiaTri, DieuKienApDungHoaDon, SoLuongToiThieu, SoLuongTangThem) VALUES
+('KM-20251001-0001', N'Giảm 10% HĐ Lớn', '2025-10-01', '2025-11-30', 1, 1, N'GIAM_GIA_PHAN_TRAM', 10.00, 500000.00, 0, 0);
+
+-- KM2: Giảm tiền HĐ (KhuyenMaiHoaDon = 1)
+INSERT INTO KhuyenMai (MaKM, TenKM, NgayBatDau, NgayKetThuc, TrangThai, KhuyenMaiHoaDon, HinhThucKM, GiaTri, DieuKienApDungHoaDon, SoLuongToiThieu, SoLuongTangThem) VALUES
+('KM-20251101-0002', N'Giảm 50K cho HĐ từ 300K', '2025-11-01', '2025-11-30', 1, 1, N'GIAM_GIA_TIEN', 50000.00, 300000.00, 0, 0);
+
+-- KM3: Giảm % SP (KhuyenMaiHoaDon = 0, GIAM_GIA_PHAN_TRAM) - Không điều kiện SL
+INSERT INTO KhuyenMai (MaKM, TenKM, NgayBatDau, NgayKetThuc, TrangThai, KhuyenMaiHoaDon, HinhThucKM, GiaTri, DieuKienApDungHoaDon, SoLuongToiThieu, SoLuongTangThem) VALUES
+('KM-20251028-0003', N'Giảm 20% Paracetamol', '2025-10-28', '2025-11-05', 1, 0, N'GIAM_GIA_PHAN_TRAM', 20.00, 0.0, 0, 0);
+
+-- KM4: Tặng thêm SP (KhuyenMaiHoaDon = 0, TANG_THEM) - Có điều kiện SL (Mua 5 tặng 1)
+INSERT INTO KhuyenMai (MaKM, TenKM, NgayBatDau, NgayKetThuc, TrangThai, KhuyenMaiHoaDon, HinhThucKM, GiaTri, DieuKienApDungHoaDon, SoLuongToiThieu, SoLuongTangThem) VALUES
+('KM-20251115-0004', N'Mua 5 tặng 1 Vitamin C', '2025-11-15', '2025-12-15', 1, 0, N'TANG_THEM', 0.0, 0.0, 5, 1);
+
+-- KM5: Giảm % SP (KhuyenMaiHoaDon = 0, GIAM_GIA_PHAN_TRAM) - Có điều kiện SL (Mua 3 giảm 15%)
+INSERT INTO KhuyenMai (MaKM, TenKM, NgayBatDau, NgayKetThuc, TrangThai, KhuyenMaiHoaDon, HinhThucKM, GiaTri, DieuKienApDungHoaDon, SoLuongToiThieu, SoLuongTangThem) VALUES
+('KM-20251201-0005', N'Mua 3 hộp Thuốc ho giảm 15%', '2025-12-01', '2025-12-30', 1, 0, N'GIAM_GIA_PHAN_TRAM', 15.00, 0.0, 3, 0);
+
+-- 14) ChiTietKhuyenMaiSanPham
+INSERT INTO ChiTietKhuyenMaiSanPham (MaKM, MaSanPham) VALUES
+('KM-20251028-0003', 'SP000001'), -- Giảm 20% Paracetamol
+('KM-20251115-0004', 'SP000006'), -- Mua 5 tặng 1 Vitamin C
+('KM-20251201-0005', 'SP000003'); -- Mua 3 hộp Thuốc ho giảm 15%
+
+
+/* ===========================================================
+   4) INSERT DỮ LIỆU GIAO DỊCH (NO NULL)
+   =========================================================== */
+
+-- 12) HoaDon (TongTien luôn được tính toán và điền)
+INSERT INTO HoaDon (MaHoaDon, NgayLap, MaNhanVien, MaKhachHang, TongTien, ThuocTheoDon) VALUES
+('HD-20251028-0001', '2025-10-28', 'NV2020102001', 'KH-0002', 170000.00, 0), -- Hóa đơn không đủ điều kiện KM
+('HD-20251028-0002', '2025-10-28', 'NV2020102001', 'KH-0003', 679500.00, 1), -- Hóa đơn đủ điều kiện KM1
+('HD-20251028-0003', '2025-10-28', 'NV2020102001', 'KH-0004', 21450.00, 0); -- Hóa đơn chỉ dùng SP KM3 
+
+
+-- 13) ChiTietHoaDon (MaKM điền NULL nếu không áp dụng)
+INSERT INTO ChiTietHoaDon (MaHoaDon, MaSanPham, MaKM, SoLuong, GiaBan) VALUES
+-- HĐ 0001: Mua SP000004 (Không KM) và SP000005 (Không KM). Tổng: 48000 + 150000 = 198,000
+('HD-20251028-0001', 'SP000004', NULL, 1, 48000.00), 
+('HD-20251028-0001', 'SP000005', NULL, 1, 122000.00), -- 122,000 (Giá bán)
+
+-- HĐ 0002: Tổng trước KM HĐ: (SP000006: 6*96000) + (SP000007: 1*275000) = 576,000 + 275,000 = 851,000.
+-- SP000006 áp dụng KM4 (Tặng thêm): Tính tiền 5 viên, bán 6. Tổng: (5*96000) + 275000 = 480,000 + 275,000 = 755,000
+-- Áp dụng KM1 (10% HĐ > 500k): 755,000 * 90% = 679,500.00 -> Tổng HĐ 0002 là 679,500.00 (Đã điền ở trên)
+('HD-20251028-0002', 'SP000006', 'KM-20251115-0004', 6, 96000.00), 
+('HD-20251028-0002', 'SP000007', NULL, 1, 275000.00),
+
+-- HĐ 0003: Mua SP000001 (KM3: giảm 20%). Tổng: 3*7500 * 80% = 18,000
+('HD-20251028-0003', 'SP000001', 'KM-20251028-0003', 3, 7500.00); -- 3 viên Paracetamol
+
+-- 15) PhieuTra (TongTienHoan luôn tính toán và điền)
+INSERT INTO PhieuTra (MaPhieuTra, NgayLap, MaNhanVien, MaKhachHang, TongTienHoan, DaDuyet) VALUES
+('PT000001', '2025-10-28', 'NV2020102001', 'KH-0003', 96000.00, 1); -- Đã duyệt
+
+-- 16) ChiTietPhieuTra (LyDoChiTiet luôn điền, TrangThai 0/1/2)
+INSERT INTO ChiTietPhieuTra (MaPhieuTra, MaHoaDon, MaSanPham, LyDoChiTiet, SoLuong, ThanhTienHoan, TrangThai) VALUES
+('PT000001', 'HD-20251028-0002', 'SP000006', N'Khách trả lại do mua dư, đã duyệt', 1, 96000.00, 1); -- Nhập lại (TrangThai=1)
+
+-- 17) PhieuHuy
+INSERT INTO PhieuHuy (MaPhieuHuy, NgayLapPhieu, MaNhanVien, TongTienHuy, TrangThai) VALUES
+('PH-20251028-0001', '2025-10-28', 'NV2020102001', 500000.00, 1); -- Đã duyệt
+
+-- 18) ChiTietPhieuHuy (LyDoChiTiet luôn điền)
+INSERT INTO ChiTietPhieuHuy (MaPhieuHuy, MaLo, SoLuongHuy, LyDoChiTiet, DonGiaNhap) VALUES
+('PH-20251028-0001', 'LO-000001', 100, N'Hủy do sản phẩm gần hết hạn sử dụng', 5000.00);
+GO
+
+Select * from NhanVien 

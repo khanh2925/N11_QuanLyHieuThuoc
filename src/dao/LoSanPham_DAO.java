@@ -40,7 +40,7 @@ public class LoSanPham_DAO {
                 SanPham sp = new SanPham();
                 try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
 
-                LoSanPham lo = new LoSanPham(maLo, nsx, hsd, soLuong, sp);
+                LoSanPham lo = new LoSanPham(maLo, hsd, hsd, soLuong, sp);
                 ds.add(lo);
             }
         } catch (SQLException e) {
