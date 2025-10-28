@@ -33,6 +33,10 @@ public class NhanVien {
 		setTrangThai(trangThai);
 	}
 
+	public NhanVien(String maNhanVien) {
+		this.maNhanVien = maNhanVien;
+	}
+
 	public NhanVien(NhanVien nv) {
 		this.maNhanVien = nv.maNhanVien;
 		this.tenNhanVien = nv.tenNhanVien;
