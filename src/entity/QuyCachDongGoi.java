@@ -70,10 +70,10 @@ public class QuyCachDongGoi {
     }
 
     public void setHeSoQuyDoi(int heSoQuyDoi) {
+        kiemTraRangBuocDonViGoc();
         if (heSoQuyDoi <= 0)
             throw new IllegalArgumentException("Hệ số quy đổi phải lớn hơn 0.");
         this.heSoQuyDoi = heSoQuyDoi;
-        kiemTraRangBuocDonViGoc();
     }
 
     public double getTiLeGiam() {

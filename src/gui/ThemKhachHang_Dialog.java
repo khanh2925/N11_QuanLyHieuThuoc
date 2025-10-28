@@ -3,6 +3,8 @@ package gui;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
@@ -16,7 +18,7 @@ import com.toedter.calendar.JDateChooser; // THAY ĐỔI 1: Import class mới t
 import entity.KhachHang;
 
 
-public class ThemKhachHang_Dialog extends JDialog {
+public class ThemKhachHang_Dialog extends JDialog implements ActionListener {
 
     private JTextField txtTenKhachHang;
     private JTextField txtSoDienThoai;
@@ -128,12 +130,13 @@ public class ThemKhachHang_Dialog extends JDialog {
         getContentPane().add(btnThem);
         
         // --- Thêm sự kiện cho các nút ---
-        btnThoat.addActionListener(e -> dispose());
-        btnThem.addActionListener(e -> onThemButtonClick());
+
+        btnThoat.addActionListener(this);
+        btnThem.addActionListener(this);
     }
     //String maKH = String.format("KH-%04d", (int)(System.currentTimeMillis() % 10000));
 
-    private void onThemButtonClick() {
+    private void themKH() {
         try {
         	if(!isvalidForm()) return;
         	
@@ -176,7 +179,7 @@ public class ThemKhachHang_Dialog extends JDialog {
             showError("Tên khách hàng không được vượt quá 100 ký tự.", txtTenKhachHang);
             return false;
         }
-        if (!ten.matches("^([A-Z][a-z]+)(\\s[A-Z][a-z]+)*$")) {
+        if (!ten.matches("^([A-ZÀ-Ỵ][a-zà-ỹ]+)(\\s[A-ZÀ-Ỵ][a-zà-ỹ]+)*$")) {
        	 	showError("Tên khách hàng phải viết hoa chữ cái đầu", txtTenKhachHang);
             return false;
 		}
@@ -208,4 +211,20 @@ public class ThemKhachHang_Dialog extends JDialog {
     public KhachHang getKhachHangMoi() {
         return khachHangMoi;
     }
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		Object o = e.getSource();
+		if(o.equals(btnThem)) {
+			themKH();;
+			return;
+		}
+		
+		if(o.equals(btnThoat)) {
+			dispose();
+			return;
+		}
+
+		
+	}
 }

@@ -3,7 +3,8 @@ package dao;
 import connectDB.connectDB;
 import entity.ChiTietHoaDon;
 import entity.HoaDon;
-import entity.SanPham;
+import entity.LoSanPham; // 💡 Cần import LoSanPham
+import entity.SanPham; // Vẫn cần SanPham để tạo LoSanPham cho các DAO khác (nếu có)
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,9 +14,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChiTietHoaDon_DAO {
+    
+    // 💡 KHAI BÁO THÊM DAO ĐỂ TẢI ĐỐI TƯỢNG LO SẢN PHẨM ĐẦY ĐỦ
+    private final LoSanPham_DAO loSanPhamDAO;
+    
     public ChiTietHoaDon_DAO() {
+        this.loSanPhamDAO = new LoSanPham_DAO(); // 💡 Khởi tạo LoSanPham_DAO
     }
-    public ChiTietHoaDon timKiemChiTietHoaDonBangMa(String maHD, String maSP) {
+
+    /** * Tìm chi tiết hóa đơn theo mã HD và Mã Lô. 
+     * (Giả định bảng ChiTietHoaDon có cột MaLo)
+     */
+    public ChiTietHoaDon timKiemChiTietHoaDonBangMa(String maHD, String maLo) { // 💡 Sửa tham số thành MaLo
         Connection con = null;
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -23,12 +33,12 @@ public class ChiTietHoaDon_DAO {
         try {
             connectDB.getInstance();
             con = connectDB.getConnection();
-            SanPham_DAO sanPhamDAO = new SanPham_DAO();
             
-            String sql = "SELECT * FROM ChiTietHoaDon WHERE MaHoaDon = ? AND MaSanPham = ?";
+            // 💡 SỬA SQL: Tìm kiếm theo MaLo (thay vì MaSanPham)
+            String sql = "SELECT MaLo, SoLuong, GiaBan FROM ChiTietHoaDon WHERE MaHoaDon = ? AND MaLo = ?";
             stmt = con.prepareStatement(sql);
             stmt.setString(1, maHD);
-            stmt.setString(2, maSP);
+            stmt.setString(2, maLo); 
             rs = stmt.executeQuery();
 
             if (rs.next()) {
@@ -38,9 +48,13 @@ public class ChiTietHoaDon_DAO {
                 HoaDon hd = new HoaDon();
                 hd.setMaHoaDon(maHD);
 
-                SanPham sp = sanPhamDAO.getSanPhamTheoMa(maSP);
-
-                return new ChiTietHoaDon(hd, sp, soLuong, giaBan, null);
+                // 💡 LẤY ĐỐI TƯỢNG LO SẢN PHẨM QUA DAO
+                LoSanPham lo = loSanPhamDAO.layLoTheoMa(maLo); 
+                
+                if (lo != null) {
+                    // 💡 TRUYỀN LO SẢN PHẨM VÀO CONSTRUCTOR
+                    return new ChiTietHoaDon(hd, lo, soLuong, giaBan, null); 
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -48,7 +62,6 @@ public class ChiTietHoaDon_DAO {
             try {
                 if (rs != null) rs.close();
                 if (stmt != null) stmt.close();
-                // Không đóng Connection ở đây để giữ kết nối chung
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -56,6 +69,9 @@ public class ChiTietHoaDon_DAO {
         return null;
     }
 
+    /** * Lấy danh sách chi tiết theo Mã Hóa Đơn.
+     * (Giả định bảng ChiTietHoaDon có cột MaLo)
+     */
     public List<ChiTietHoaDon> layDanhSachChiTietTheoMaHD(String maHD) {
         List<ChiTietHoaDon> danhSachChiTiet = new ArrayList<>();
         Connection con = null;
@@ -65,24 +81,27 @@ public class ChiTietHoaDon_DAO {
         try {
             connectDB.getInstance();
             con = connectDB.getConnection();
-            SanPham_DAO sanPhamDAO = new SanPham_DAO();
 
-            String sql = "SELECT * FROM ChiTietHoaDon WHERE MaHoaDon = ?";
+            // 💡 SỬA SQL: Chọn MaLo, SoLuong, GiaBan
+            String sql = "SELECT MaLo, SoLuong, GiaBan FROM ChiTietHoaDon WHERE MaHoaDon = ?";
             stmt = con.prepareStatement(sql);
             stmt.setString(1, maHD);
             rs = stmt.executeQuery();
             
+            HoaDon hd = new HoaDon();
+            hd.setMaHoaDon(maHD);
+            
             while (rs.next()) {
-                String maSP = rs.getString("MaSanPham");
+                String maLo = rs.getString("MaLo"); // 💡 ĐỌC MA LO
                 int soLuong = rs.getInt("SoLuong");
                 double giaBan = rs.getDouble("GiaBan");
 
-                HoaDon hd = new HoaDon();
-                hd.setMaHoaDon(maHD);
-                SanPham sp = sanPhamDAO.getSanPhamTheoMa(maSP);
+                // 💡 LẤY ĐỐI TƯỢNG LO SẢN PHẨM QUA DAO
+                LoSanPham lo = loSanPhamDAO.layLoTheoMa(maLo);
 
-                if (sp != null) {
-                    ChiTietHoaDon cthd = new ChiTietHoaDon(hd, sp, soLuong, giaBan, null);
+                if (lo != null) {
+                    // 💡 TRUYỀN LO SẢN PHẨM VÀO CONSTRUCTOR
+                    ChiTietHoaDon cthd = new ChiTietHoaDon(hd, lo, soLuong, giaBan, null);
                     danhSachChiTiet.add(cthd);
                 }
             }
@@ -99,30 +118,5 @@ public class ChiTietHoaDon_DAO {
         return danhSachChiTiet;
     }
 
-    public boolean themChiTietHoaDon(ChiTietHoaDon cthd) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
-        PreparedStatement stmt = null;
-        
-        try {
-            String sql = "INSERT INTO ChiTietHoaDon (MaHoaDon, MaSanPham, SoLuong, GiaBan) VALUES (?, ?, ?, ?)";
-            stmt = con.prepareStatement(sql);
-            
-            stmt.setString(1, cthd.getHoaDon().getMaHoaDon());
-            stmt.setString(2, cthd.getSanPham().getMaSanPham());
-            stmt.setInt(3, (int) cthd.getSoLuong());
-            stmt.setDouble(4, cthd.getGiaBan());
 
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (stmt != null) stmt.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-        return false;
-    }
 }

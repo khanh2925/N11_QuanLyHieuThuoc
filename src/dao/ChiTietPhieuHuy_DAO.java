@@ -16,8 +16,7 @@ public class ChiTietPhieuHuy_DAO {
 
     public ChiTietPhieuHuy_DAO() {
     }
-
-
+ 
     public List<ChiTietPhieuHuy> timKiemChiTietPhieuHuyBangMa(String maPhieuHuy) {
         List<ChiTietPhieuHuy> danhSachChiTiet = new ArrayList<>();
         Connection con = null;
@@ -33,7 +32,7 @@ public class ChiTietPhieuHuy_DAO {
             stmt = con.prepareStatement(sql);
             stmt.setString(1, maPhieuHuy);
             rs = stmt.executeQuery();
-            
+
             PhieuHuy ph = new PhieuHuy();
             ph.setMaPhieuHuy(maPhieuHuy);
 
@@ -41,10 +40,13 @@ public class ChiTietPhieuHuy_DAO {
                 int soLuongHuy = rs.getInt("SoLuongHuy");
                 String lyDo = rs.getString("LyDoChiTiet");
                 String maLo = rs.getString("MaLo");
+                // === SỬA LỖI 1: Lấy thêm DonGiaNhap từ ResultSet ===
+                double donGiaNhap = rs.getDouble("DonGiaNhap");
 
-                LoSanPham lo = loSanPhamDAO.getLoSanPhamTheoMa(maLo);
+                LoSanPham lo = loSanPhamDAO.layLoTheoMa(maLo);
                 if (lo != null) {
-                    ChiTietPhieuHuy ct = new ChiTietPhieuHuy(ph, soLuongHuy, lyDo, lo, lo.getSanPham().getGiaNhap());
+                    // === SỬA LỖI 2: Truyền đúng donGiaNhap vào constructor ===
+                    ChiTietPhieuHuy ct = new ChiTietPhieuHuy(ph, lo, soLuongHuy, donGiaNhap, lyDo);
                     danhSachChiTiet.add(ct);
                 }
             }
@@ -61,9 +63,7 @@ public class ChiTietPhieuHuy_DAO {
         return danhSachChiTiet;
     }
 
-    /**
-     * Thêm một dòng chi tiết mới vào phiếu hủy và cập nhật tồn kho (sử dụng transaction).
-     */
+
     public boolean themChiTietPhieuHuy(ChiTietPhieuHuy ct) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
@@ -73,12 +73,14 @@ public class ChiTietPhieuHuy_DAO {
         try {
             con.setAutoCommit(false); // Bắt đầu transaction
 
-            String sqlInsert = "INSERT INTO ChiTietPhieuHuy (MaPhieuHuy, MaLo, SoLuongHuy, LyDoChiTiet) VALUES (?, ?, ?, ?)";
+            // === SỬA LỖI: Thêm cột DonGiaNhap vào câu lệnh INSERT ===
+            String sqlInsert = "INSERT INTO ChiTietPhieuHuy (MaPhieuHuy, MaLo, SoLuongHuy, DonGiaNhap, LyDoChiTiet) VALUES (?, ?, ?, ?, ?)";
             stmtInsert = con.prepareStatement(sqlInsert);
             stmtInsert.setString(1, ct.getPhieuHuy().getMaPhieuHuy());
             stmtInsert.setString(2, ct.getLoSanPham().getMaLo());
             stmtInsert.setInt(3, ct.getSoLuongHuy());
-            stmtInsert.setString(4, ct.getLyDoChiTiet());
+            stmtInsert.setDouble(4, ct.getDonGiaNhap()); // Thêm giá trị cho DonGiaNhap
+            stmtInsert.setString(5, ct.getLyDoChiTiet());
             stmtInsert.executeUpdate();
 
             String sqlUpdate = "UPDATE LoSanPham SET SoLuongTon = SoLuongTon - ? WHERE MaLo = ?";
@@ -110,13 +112,15 @@ public class ChiTietPhieuHuy_DAO {
 
     /**
      * Xóa một dòng chi tiết khỏi phiếu hủy và hoàn lại tồn kho (sử dụng transaction).
+     * @param ct Đối tượng ChiTietPhieuHuy cần xóa.
+     * @return true nếu xóa thành công, false nếu thất bại.
      */
     public boolean xoaChiTietPhieuHuy(ChiTietPhieuHuy ct) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
         PreparedStatement stmtDelete = null;
         PreparedStatement stmtUpdate = null;
-        
+
         try {
             con.setAutoCommit(false); // Bắt đầu transaction
 

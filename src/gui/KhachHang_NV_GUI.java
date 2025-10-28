@@ -388,11 +388,11 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
 	private void CapNhatKH() {
 
 		int selectRow = table.getSelectedRow();
-		if( selectRow ==-1) {
+		if( selectRow == -1) {
 			JOptionPane.showMessageDialog(null, "Vui lòng chọn khách hàng để cập nhật");
 			return;
 		}
-		 int modelRow = table.convertRowIndexToModel(selectRow);
+		 
 		 String maKH = model.getValueAt(selectRow, 0).toString();
 		 
 		 KhachHang khUpdate = null;

@@ -5,16 +5,17 @@ import java.util.Objects;
 public class ChiTietHoaDon {
 
     private HoaDon hoaDon;
-    private SanPham sanPham;
+    private LoSanPham loSanPham; 
     private double soLuong;
     private double giaBan;
     private KhuyenMai khuyenMai;
 
     public ChiTietHoaDon() {}
 
-    public ChiTietHoaDon(HoaDon hoaDon, SanPham sanPham, double soLuong, double giaBan, KhuyenMai khuyenMai) {
+    // Constructor đã được cập nhật để dùng LoSanPham thay vì SanPham
+    public ChiTietHoaDon(HoaDon hoaDon, LoSanPham loSanPham, double soLuong, double giaBan, KhuyenMai khuyenMai) {
         setHoaDon(hoaDon);
-        setSanPham(sanPham);
+        setLoSanPham(loSanPham); // 💡 Dùng LoSanPham
         setSoLuong(soLuong);
         setGiaBan(giaBan);
         setKhuyenMai(khuyenMai);
@@ -22,13 +23,13 @@ public class ChiTietHoaDon {
 
     public ChiTietHoaDon(ChiTietHoaDon other) {
         this.hoaDon = other.hoaDon;
-        this.sanPham = other.sanPham;
+        this.loSanPham = other.loSanPham; // 💡 Dùng LoSanPham
         this.soLuong = other.soLuong;
         this.giaBan = other.giaBan;
         this.khuyenMai = other.khuyenMai;
     }
 
-    // 🔹 Thành tiền dẫn xuất
+    // 🔹 Thành tiền dẫn xuất (GIỮ NGUYÊN)
     public double getThanhTien() {
         double thanhTienChuaGiam = this.soLuong * this.giaBan;
 
@@ -64,11 +65,25 @@ public class ChiTietHoaDon {
         this.hoaDon = hoaDon;
     }
 
-    public SanPham getSanPham() { return sanPham; }
+    // 💡 GETTER/SETTER CHO LO SAN PHAM (THAY THẾ SanPham)
+    public LoSanPham getLoSanPham() { return loSanPham; }
+    public void setLoSanPham(LoSanPham loSanPham) {
+        if (loSanPham == null) throw new IllegalArgumentException("Lô sản phẩm không được null.");
+        this.loSanPham = loSanPham;
+    }
+
+    // 💡 PHƯƠNG THỨC HỖ TRỢ ĐỂ GIỮ CÁC HÀM CŨ KHÔNG BỊ LỖI BIÊN DỊCH
+    // VÍ DỤ: Nếu phương thức cũ gọi cthd.getSanPham().getMaSanPham()
+    public SanPham getSanPham() { 
+        return loSanPham != null ? loSanPham.getSanPham() : null;
+    }
+    // Hủy setSanPham vì không cần thiết sau khi đã có setLoSanPham
     public void setSanPham(SanPham sanPham) {
         if (sanPham == null) throw new IllegalArgumentException("Sản phẩm không được null.");
-        this.sanPham = sanPham;
+        // Bắt buộc phải tạo LoSanPham nếu dùng hàm này:
+        // throw new UnsupportedOperationException("Sử dụng setLoSanPham thay vì setSanPham.");
     }
+    
 
     public double getSoLuong() { return soLuong; }
     public void setSoLuong(double soLuong) {
@@ -91,25 +106,29 @@ public class ChiTietHoaDon {
         this.khuyenMai = khuyenMai;
     }
 
+    // 💡 GIỮ NGUYÊN PHƯƠNG THỨC NÀY
     @Override
     public String toString() {
         return String.format("CTHD[%s - %s] SL=%.0f, Giá=%.0f, Thành tiền=%.0f%s",
                 hoaDon != null ? hoaDon.getMaHoaDon() : "N/A",
-                sanPham != null ? sanPham.getTenSanPham() : "N/A",
+                getSanPham() != null ? getSanPham().getTenSanPham() : "N/A",
                 soLuong, giaBan, getThanhTien(),
                 khuyenMai != null ? ", KM=" + khuyenMai.getHinhThuc() : "");
     }
 
+    // 💡 GIỮ NGUYÊN PHƯƠNG THỨC NÀY (Đã sửa lại logic để dùng LoSanPham)
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof ChiTietHoaDon)) return false;
         ChiTietHoaDon that = (ChiTietHoaDon) o;
-        return Objects.equals(hoaDon, that.hoaDon) && Objects.equals(sanPham, that.sanPham);
+        // Dùng LoSanPham thay vì SanPham để xác định sự bằng nhau
+        return Objects.equals(hoaDon, that.hoaDon) && Objects.equals(loSanPham, that.loSanPham);
     }
 
+    // 💡 GIỮ NGUYÊN PHƯƠNG THỨC NÀY (Đã sửa lại logic để dùng LoSanPham)
     @Override
     public int hashCode() {
-        return Objects.hash(hoaDon, sanPham);
+        return Objects.hash(hoaDon, loSanPham);
     }
 }

@@ -64,7 +64,9 @@ public class PhieuNhap {
     public NhanVien getNhanVien() {
         return nhanVien;
     }
-
+    public void setTongTien(double tongTien) {
+        this.tongTien = tongTien;
+    }
     public void setNhanVien(NhanVien nhanVien) {
         if (nhanVien == null) {
             throw new IllegalArgumentException("Nhân viên không được null.");

@@ -1,64 +1,68 @@
 package gui;
 
 import java.awt.*;
+import java.sql.SQLException;
 import java.util.List;
-import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
-
+import connectDB.connectDB;
+import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
-import customcomponent.PillButton;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
+import dao.DonViTinh_DAO;
+import dao.QuyCachDongGoi_DAO;
+import dao.SanPham_DAO;
+import entity.DonViTinh;
+import entity.QuyCachDongGoi;
+import entity.SanPham;
+import enums.LoaiSanPham;
 
 public class QuyCachDongGoi_GUI extends JPanel {
 
-    private JPanel pnCenter;
-    private JPanel pnHeader;
-    private JTextField txtTimKiem;
     private JTable table;
     private DefaultTableModel model;
-
-    // ===== Dữ liệu mẫu =====
-    private static class QuyCachDongGoi {
-        private String maQCDG;
-        private String sanPham;
-        private String donViTinh;
-        private int heSoQuyDoi;
-        private double tiLeGiam;
-        private boolean donViGoc;
-
-        public QuyCachDongGoi(String maQCDG, String sanPham, String donViTinh,
-                              int heSoQuyDoi, double tiLeGiam, boolean donViGoc) {
-            this.maQCDG = maQCDG;
-            this.sanPham = sanPham;
-            this.donViTinh = donViTinh;
-            this.heSoQuyDoi = heSoQuyDoi;
-            this.tiLeGiam = tiLeGiam;
-            this.donViGoc = donViGoc;
-        }
-    }
-
+    private QuyCachDongGoi_DAO qcdg_DAO;
+    private SanPham_DAO sp_DAO;
+    private DonViTinh_DAO dvt_DAO;
     private List<QuyCachDongGoi> dsQuyCach;
+    private List<SanPham> dsSanPham;
+    private List<DonViTinh> dsDonViTinh;
 
     public QuyCachDongGoi_GUI() {
         setPreferredSize(new Dimension(1537, 850));
+        
+        qcdg_DAO = new QuyCachDongGoi_DAO();
+        sp_DAO = new SanPham_DAO();
+        dvt_DAO = new DonViTinh_DAO();
+        
+        try {
+            connectDB.getInstance().connect();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Không thể kết nối đến cơ sở dữ liệu.", "Lỗi Kết Nối", JOptionPane.ERROR_MESSAGE);
+        }
+
         initialize();
+        loadAllDataFromDatabase();
+    }
+
+    private void loadAllDataFromDatabase() {
+        dsQuyCach = qcdg_DAO.layTatCaQuyCachDongGoi();
+        dsSanPham = sp_DAO.layTatCaSanPham();
+        dsDonViTinh = dvt_DAO.getAllDonViTinh();
+        loadDataTable();
     }
 
     private void initialize() {
         setLayout(new BorderLayout());
-
-        // ===== HEADER =====
-        pnHeader = new JPanel();
+        JPanel pnHeader = new JPanel();
         pnHeader.setPreferredSize(new Dimension(1073, 88));
         pnHeader.setBackground(new Color(0xE3F2F5));
         pnHeader.setLayout(null);
         add(pnHeader, BorderLayout.NORTH);
 
-        txtTimKiem = new JTextField("");
+        JTextField txtTimKiem = new JTextField("");
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên sản phẩm...");
         txtTimKiem.setForeground(Color.GRAY);
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 18));
@@ -68,10 +72,6 @@ public class QuyCachDongGoi_GUI extends JPanel {
 
         PillButton btnThem = new PillButton("Thêm");
         btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnThem.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
         btnThem.setBounds(504, 30, 120, 40);
         pnHeader.add(btnThem);
 
@@ -85,37 +85,104 @@ public class QuyCachDongGoi_GUI extends JPanel {
         btnXoa.setBounds(860, 30, 120, 40);
         pnHeader.add(btnXoa);
 
-        // ===== CENTER =====
-        pnCenter = new JPanel(new BorderLayout());
+        JPanel pnCenter = new JPanel(new BorderLayout());
         pnCenter.setBackground(Color.WHITE);
         pnCenter.setBorder(new LineBorder(new Color(200, 200, 200)));
         add(pnCenter, BorderLayout.CENTER);
 
-        // ===== DỮ LIỆU MẪU =====
-        dsQuyCach = new ArrayList<>();
-        dsQuyCach.add(new QuyCachDongGoi("QCDG-001", "Paracetamol 500mg", "Viên", 1, 0.0, true));
-        dsQuyCach.add(new QuyCachDongGoi("QCDG-002", "Paracetamol 500mg", "Vỉ", 10, 0.05, false));
-        dsQuyCach.add(new QuyCachDongGoi("QCDG-003", "Paracetamol 500mg", "Hộp", 50, 0.10, false));
+        String[] columnNames = {"Mã Quy Cách", "Sản Phẩm", "Đơn Vị Tính", "Loại Sản Phẩm", "Hệ Số", "Tỉ Lệ Giảm", "Đơn Vị Gốc"};
+        model = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        table = new JTable(model);
+        setupTable();
 
-        String[] columnNames = {"Mã Quy Cách", "Sản Phẩm", "Đơn Vị Tính", "Hệ Số Quy Đổi", "Tỉ Lệ Giảm", "Đơn Vị Gốc"};
-        model = new DefaultTableModel(columnNames, 0);
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        pnCenter.add(scrollPane, BorderLayout.CENTER);
+        
+        btnThem.addActionListener(e -> handleThem());
+        btnCapNhat.addActionListener(e -> handleCapNhat());
+    }
+    
+    private void handleThem() {
+        Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
+        ThemQuyCachDongGoi_Dialog dialog = new ThemQuyCachDongGoi_Dialog(parentFrame, dsSanPham, dsDonViTinh);
+        dialog.setVisible(true);
 
-        for (QuyCachDongGoi qc : dsQuyCach) {
-            model.addRow(new Object[]{
-                    qc.maQCDG,
-                    qc.sanPham,
-                    qc.donViTinh,
-                    qc.heSoQuyDoi,
-                    String.format("%.0f%%", qc.tiLeGiam * 100),
-                    qc.donViGoc ? "Có" : "Không"
-            });
+        QuyCachDongGoi quyCachMoi = dialog.getQuyCachMoi();
+        if (quyCachMoi != null) {
+            if (qcdg_DAO.themQuyCachDongGoi(quyCachMoi)) {
+                loadAllDataFromDatabase();
+                JOptionPane.showMessageDialog(this, "Thêm quy cách thành công!");
+            } else {
+                JOptionPane.showMessageDialog(this, "Thêm quy cách thất bại. Dữ liệu có thể đã tồn tại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+    
+    private void handleCapNhat() {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một quy cách để cập nhật.", "Thông Báo", JOptionPane.WARNING_MESSAGE);
+            return;
         }
 
-        // ===== TABLE =====
-        table = new JTable(model);
+        QuyCachDongGoi qcCanCapNhat = dsQuyCach.get(selectedRow);
+        
+        Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
+        CapNhatQuyCachDongGoi_Dialog dialog = new CapNhatQuyCachDongGoi_Dialog(parentFrame, qcCanCapNhat, dsSanPham, dsDonViTinh);
+        dialog.setVisible(true);
+        
+        if (dialog.isUpdateSuccess()) {
+            if (qcdg_DAO.capNhatQuyCachDongGoi(qcCanCapNhat)) {
+                updateRowInTable(selectedRow, qcCanCapNhat);
+                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+            } else {
+                 JOptionPane.showMessageDialog(this, "Cập nhật thất bại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void loadDataTable() {
+        model.setRowCount(0);
+        if (dsQuyCach != null) {
+            for (QuyCachDongGoi qc : dsQuyCach) {
+                addRowToTable(qc);
+            }
+        }
+    }
+
+    private void addRowToTable(QuyCachDongGoi qc) {
+        model.addRow(new Object[]{
+            qc.getMaQuyCach(),
+            qc.getSanPham().getTenSanPham(),
+            qc.getDonViTinh().getTenDonViTinh(),
+            qc.getSanPham().getLoaiSanPham().getTenLoai(),
+            qc.getHeSoQuyDoi(),
+            String.format("%.0f%%", qc.getTiLeGiam() * 100),
+            qc.isDonViGoc() ? "Có" : "Không"
+        });
+    }
+
+    private void updateRowInTable(int rowIndex, QuyCachDongGoi qc) {
+        model.setValueAt(qc.getSanPham().getTenSanPham(), rowIndex, 1);
+        model.setValueAt(qc.getDonViTinh().getTenDonViTinh(), rowIndex, 2);
+        model.setValueAt(qc.getSanPham().getLoaiSanPham().getTenLoai(), rowIndex, 3);
+        model.setValueAt(qc.getHeSoQuyDoi(), rowIndex, 4);
+        model.setValueAt(String.format("%.0f%%", qc.getTiLeGiam() * 100), rowIndex, 5);
+        model.setValueAt(qc.isDonViGoc() ? "Có" : "Không", rowIndex, 6);
+    }
+    
+    private void setupTable() {
         table.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         table.setRowHeight(34);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setGridColor(new Color(230, 230, 230));
+        table.setShowGrid(true);
         table.setShowHorizontalLines(true);
         table.setShowVerticalLines(false);
         table.setSelectionBackground(new Color(204, 229, 255));
@@ -130,27 +197,28 @@ public class QuyCachDongGoi_GUI extends JPanel {
         header.setForeground(Color.WHITE);
         header.setPreferredSize(new Dimension(100, 40));
         header.setReorderingAllowed(false);
-
+        
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
         DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
         leftRenderer.setHorizontalAlignment(SwingConstants.LEFT);
-
+        
         table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
         table.getColumnModel().getColumn(1).setCellRenderer(leftRenderer);
         table.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
         table.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
         table.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);
         table.getColumnModel().getColumn(5).setCellRenderer(centerRenderer);
-
-        table.getColumnModel().getColumn(0).setPreferredWidth(130);
+        table.getColumnModel().getColumn(6).setCellRenderer(centerRenderer);
+        
+        table.getColumnModel().getColumn(0).setPreferredWidth(120);
         table.getColumnModel().getColumn(1).setPreferredWidth(300);
-        table.getColumnModel().getColumn(2).setPreferredWidth(150);
-        table.getColumnModel().getColumn(3).setPreferredWidth(120);
-        table.getColumnModel().getColumn(4).setPreferredWidth(100);
-        table.getColumnModel().getColumn(5).setPreferredWidth(120);
+        table.getColumnModel().getColumn(2).setPreferredWidth(120);
+        table.getColumnModel().getColumn(3).setPreferredWidth(150);
+        table.getColumnModel().getColumn(4).setPreferredWidth(80);
+        table.getColumnModel().getColumn(5).setPreferredWidth(100);
+        table.getColumnModel().getColumn(6).setPreferredWidth(100);
 
-        // Tô màu xen kẽ hàng
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
@@ -163,10 +231,6 @@ public class QuyCachDongGoi_GUI extends JPanel {
                 return c;
             }
         });
-
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        pnCenter.add(scrollPane, BorderLayout.CENTER);
     }
 
     public static void main(String[] args) {

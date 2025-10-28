@@ -5,184 +5,166 @@ import java.time.Period;
 import java.util.Objects;
 
 public class NhanVien {
-	private String maNhanVien;
-	private String tenNhanVien;
-	private boolean gioiTinh;
-	private LocalDate ngaySinh;
-	private String soDienThoai;
-	private String diaChi;
-	private boolean quanLy;
-	private TaiKhoan taiKhoan;
-	private String caLam;
-	private boolean trangThai;
 
-	public NhanVien() {
-	}
+    private String maNhanVien;
+    private String tenNhanVien;
+    private boolean gioiTinh;
+    private LocalDate ngaySinh;
+    private String soDienThoai;
+    private String diaChi;
+    private boolean quanLy;
+    private String caLam;
+    private boolean trangThai;
 
-	public NhanVien(String maNhanVien, String tenNhanVien, boolean gioiTinh, LocalDate ngaySinh, String soDienThoai,
-			String diaChi, boolean quanLy, TaiKhoan taiKhoan, String caLam, boolean trangThai) {
-		setMaNhanVien(maNhanVien);
-		setTenNhanVien(tenNhanVien);
-		setGioiTinh(gioiTinh);
-		setNgaySinh(ngaySinh);
-		setSoDienThoai(soDienThoai);
-		setDiaChi(diaChi);
-		setQuanLy(quanLy);
-		setTaiKhoan(taiKhoan);
-		setCaLam(caLam);
-		setTrangThai(trangThai);
-	}
+    // ===== CONSTRUCTORS =====
+    public NhanVien(String maNhanVien, String tenNhanVien, boolean gioiTinh,
+                    LocalDate ngaySinh, String soDienThoai, String diaChi,
+                    boolean quanLy, String caLam, boolean trangThai) {
+        setMaNhanVien(maNhanVien);
+        setTenNhanVien(tenNhanVien);
+        setGioiTinh(gioiTinh);
+        setNgaySinh(ngaySinh);
+        setSoDienThoai(soDienThoai);
+        setDiaChi(diaChi);
+        setQuanLy(quanLy);
+        setCaLam(caLam);
+        setTrangThai(trangThai);
+    }
 
-	public NhanVien(String maNhanVien) {
+    public NhanVien(String maNhanVien) {
+        this.maNhanVien = maNhanVien;
+    }
+
+    public NhanVien(String maNhanVien, String tenNhanVien) {
 		this.maNhanVien = maNhanVien;
-	}
-
-	public NhanVien(NhanVien nv) {
-		this.maNhanVien = nv.maNhanVien;
-		this.tenNhanVien = nv.tenNhanVien;
-		this.gioiTinh = nv.gioiTinh;
-		this.ngaySinh = nv.ngaySinh;
-		this.soDienThoai = nv.soDienThoai;
-		this.diaChi = nv.diaChi;
-		this.quanLy = nv.quanLy;
-		this.taiKhoan = nv.taiKhoan;
-		this.trangThai = nv.trangThai;
-	}
-
-	public String getMaNhanVien() {
-		return maNhanVien;
-	}
-
-	public void setMaNhanVien(String maNhanVien) {
-		if (maNhanVien != null && maNhanVien.matches("^NV\\d{10}$")) {
-			this.maNhanVien = maNhanVien;
-		} else {
-			throw new IllegalArgumentException("Mã nhân viên không hợp lệ. Định dạng yêu cầu: NVyyyyMMxxxx");
-		}
-	}
-
-	public String getTenNhanVien() {
-		return tenNhanVien;
-	}
-
-	public void setTenNhanVien(String tenNhanVien) {
-		if (tenNhanVien == null || tenNhanVien.trim().isEmpty()) {
-			throw new IllegalArgumentException("Họ tên không được rỗng.");
-		}
-		if (tenNhanVien.length() > 50) {
-			throw new IllegalArgumentException("Họ tên không được vượt quá 50 ký tự.");
-		}
 		this.tenNhanVien = tenNhanVien;
 	}
 
-	public boolean isGioiTinh() {
-		return gioiTinh;
-	}
+	// Constructor rút gọn dùng khi login hoặc join
+    public NhanVien(String maNhanVien, String tenNhanVien, String caLam, boolean trangThai) {
+        this.maNhanVien = maNhanVien;
+        this.tenNhanVien = tenNhanVien;
+        this.caLam = caLam;
+        this.trangThai = trangThai;
+    }
 
-	public void setGioiTinh(boolean gioiTinh) {
-		this.gioiTinh = gioiTinh;
-	}
+    // ===== GETTERS / SETTERS =====
+    public String getMaNhanVien() {
+        return maNhanVien;
+    }
 
-	public LocalDate getNgaySinh() {
-		return ngaySinh;
-	}
+    public void setMaNhanVien(String maNhanVien) {
+        // Cập nhật regex để khớp với CSDL (NV + 10 số)
+        if (maNhanVien != null && maNhanVien.matches("^NV\\d{10}$")) {
+            this.maNhanVien = maNhanVien;
+        } else {
+            // Nới lỏng ràng buộc để chấp nhận mã khi khởi tạo
+            // throw new IllegalArgumentException("Mã nhân viên không hợp lệ. Định dạng: NV + 10 số");
+             this.maNhanVien = maNhanVien;
+        }
+    }
 
-	public void setNgaySinh(LocalDate ngaySinh) {
-		if (ngaySinh == null || Period.between(ngaySinh, LocalDate.now()).getYears() < 18) {
-			throw new IllegalArgumentException("Nhân viên phải đủ 18 tuổi trở lên.");
-		}
-		this.ngaySinh = ngaySinh;
-	}
+    public String getTenNhanVien() {
+        return tenNhanVien;
+    }
 
-	public String getSoDienThoai() {
-		return soDienThoai;
-	}
+    public void setTenNhanVien(String tenNhanVien) {
+        if (tenNhanVien == null || tenNhanVien.trim().isEmpty())
+            throw new IllegalArgumentException("Tên nhân viên không được rỗng.");
+        if (tenNhanVien.length() > 50)
+            throw new IllegalArgumentException("Tên nhân viên không được vượt quá 50 ký tự.");
+        this.tenNhanVien = tenNhanVien.trim();
+    }
 
-	public void setSoDienThoai(String soDienThoai) {
-		if (soDienThoai != null && !soDienThoai.matches("^0\\d{9}$")) {
-			throw new IllegalArgumentException("Số điện thoại không hợp lệ (phải có 10 số, bắt đầu bằng 0).");
-		}
-		this.soDienThoai = soDienThoai;
-	}
+    public boolean isGioiTinh() {
+        return gioiTinh;
+    }
 
-	public String getDiaChi() {
-		return diaChi;
-	}
+    public void setGioiTinh(boolean gioiTinh) {
+        this.gioiTinh = gioiTinh;
+    }
 
-	public void setDiaChi(String diaChi) {
-		if (diaChi != null && diaChi.length() > 100) {
-			throw new IllegalArgumentException("Địa chỉ quá dài (tối đa 100 ký tự).");
-		}
-		this.diaChi = diaChi;
-	}
+    public LocalDate getNgaySinh() {
+        return ngaySinh;
+    }
 
-	public boolean isQuanLy() {
-		return quanLy;
-	}
+    public void setNgaySinh(LocalDate ngaySinh) {
+        // CSDL cho phép NULL
+        if (ngaySinh != null && Period.between(ngaySinh, LocalDate.now()).getYears() < 18)
+            throw new IllegalArgumentException("Nhân viên phải đủ 18 tuổi trở lên.");
+        this.ngaySinh = ngaySinh;
+    }
 
-	public void setQuanLy(boolean quanLy) {
-		this.quanLy = quanLy;
-	}
+    public String getSoDienThoai() {
+        return soDienThoai;
+    }
 
-	public TaiKhoan getTaiKhoan() {
-		return taiKhoan;
-	}
+    public void setSoDienThoai(String soDienThoai) {
+        if (soDienThoai != null && !soDienThoai.matches("^0\\d{9}$"))
+            throw new IllegalArgumentException("Số điện thoại không hợp lệ (phải 10 số, bắt đầu bằng 0).");
+        this.soDienThoai = soDienThoai;
+    }
 
-	public void setTaiKhoan(TaiKhoan taiKhoan) {
-		if (taiKhoan == null) {
-			throw new IllegalArgumentException("Tài khoản không tồn tại.");
-		}
-		this.taiKhoan = taiKhoan;
-	}
+    public String getDiaChi() {
+        return diaChi;
+    }
 
-	public String getCaLam() {
-		return caLam;
-	}
+    public void setDiaChi(String diaChi) {
+        if (diaChi != null && diaChi.length() > 100)
+            throw new IllegalArgumentException("Địa chỉ quá dài (tối đa 100 ký tự).");
+        this.diaChi = diaChi;
+    }
 
-	public void setCaLam(String caLam) {
-	    if (caLam == null || caLam.trim().isEmpty()) {
-	        throw new IllegalArgumentException("Ca làm không được rỗng.");
-	    }
+    public boolean isQuanLy() {
+        return quanLy;
+    }
 
-	    // Chuẩn hóa chuỗi về chữ hoa không khoảng trắng
-	    String ca = caLam.trim().toUpperCase();
+    public void setQuanLy(boolean quanLy) {
+        this.quanLy = quanLy;
+    }
 
-	    if (ca.equals("SANG") || ca.equals("CHIEU") || ca.equals("TOI")) {
-	        this.caLam = ca;
-	    } else {
-	        throw new IllegalArgumentException("Ca làm không hợp lệ. Chỉ chấp nhận: SANG, CHIEU, TOI.");
-	    }
-	}
+    public String getCaLam() {
+        return caLam;
+    }
 
- // ca lam combox String
+    public void setCaLam(String caLam) {
+        if (caLam == null || caLam.trim().isEmpty())
+            throw new IllegalArgumentException("Ca làm không được rỗng.");
+        String ca = caLam.trim().toUpperCase();
+        // Cập nhật để khớp với CSDL (SANG, CHIEU, TOI)
+        if (ca.equals("SANG") || ca.equals("CHIEU") || ca.equals("TOI"))
+            this.caLam = ca;
+        else
+            throw new IllegalArgumentException("Ca làm không hợp lệ. Chỉ chấp nhận: SANG, CHIEU, TOI.");
+    }
 
-	public boolean isTrangThai() {
-		return trangThai;
-	}
+    public boolean isTrangThai() {
+        return trangThai;
+    }
 
-	public void setTrangThai(boolean trangThai) {
-		this.trangThai = trangThai;
-	}
+    public void setTrangThai(boolean trangThai) {
+        this.trangThai = trangThai;
+    }
 
-	@Override
-	public String toString() {
-		return "NhanVien{" + "maNhanVien='" + maNhanVien + '\'' + ", tenNhanVien='" + tenNhanVien + '\'' + ", gioiTinh="
-				+ gioiTinh + ", ngaySinh=" + ngaySinh + ", soDienThoai='" + soDienThoai + '\'' + ", diaChi='" + diaChi
-				+ '\'' + ", quanLy=" + quanLy + ", taiKhoan=" + taiKhoan + ", caLam=" + caLam + ", trangThai=" + trangThai + '\'' + '}';
-	}
+    // ===== OVERRIDES =====
+    @Override
+    public String toString() {
+        return String.format(
+            "NhanVien{ma='%s', ten='%s', ca='%s', quanLy=%s, trangThai=%s}",
+            maNhanVien, tenNhanVien, caLam, quanLy, trangThai
+        );
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (o == null || getClass() != o.getClass())
-			return false;
-		NhanVien nhanVien = (NhanVien) o;
-		return Objects.equals(maNhanVien, nhanVien.maNhanVien);
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof NhanVien)) return false;
+        NhanVien that = (NhanVien) o;
+        return Objects.equals(maNhanVien, that.maNhanVien);
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(maNhanVien);
-	}
+    @Override
+    public int hashCode() {
+        return Objects.hash(maNhanVien);
+    }
 }

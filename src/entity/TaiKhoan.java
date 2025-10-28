@@ -7,16 +7,28 @@ public class TaiKhoan {
     private String maTaiKhoan;
     private String tenDangNhap;
     private String matKhau;
+    private NhanVien nhanVien; // ✅ lưu nhân viên
 
-    public TaiKhoan() {}
+    // ===== CONSTRUCTORS =====
 
-    public TaiKhoan(String maTaiKhoan, String tenDangNhap, String matKhau) {
-        setMaTaiKhoan(maTaiKhoan);
-        setTenDangNhap(tenDangNhap);
-        setMatKhau(matKhau);
+
+
+
+    // ✅ Constructor rút gọn cho login JOIN NhanVien
+    public TaiKhoan(String tenDangNhap, String matKhau, NhanVien nhanVien) {
+        this.tenDangNhap = tenDangNhap;
+        this.matKhau = matKhau;
+        this.nhanVien = nhanVien;
     }
 
-    // ===== GETTERS / SETTERS =====
+    public TaiKhoan(String maTaiKhoan, String tenDangNhap, String matKhau, NhanVien nhanVien) {
+		this.maTaiKhoan = maTaiKhoan;
+		this.tenDangNhap = tenDangNhap;
+		this.matKhau = matKhau;
+		this.nhanVien = nhanVien;
+	}
+
+	// ===== GETTERS / SETTERS =====
     public String getMaTaiKhoan() {
         return maTaiKhoan;
     }
@@ -47,10 +59,23 @@ public class TaiKhoan {
         this.matKhau = matKhau;
     }
 
+    public NhanVien getNhanVien() {
+        return nhanVien;
+    }
+
+    public void setNhanVien(NhanVien nhanVien) {
+        this.nhanVien = nhanVien;
+    }
+
     // ===== OVERRIDES =====
     @Override
     public String toString() {
-        return String.format("TaiKhoan{ma='%s', tenDangNhap='%s'}", maTaiKhoan, tenDangNhap);
+        return String.format(
+            "TaiKhoan{ma='%s', tenDangNhap='%s', nhanVien='%s'}",
+            maTaiKhoan,
+            tenDangNhap,
+            nhanVien != null ? nhanVien.getTenNhanVien() : "null"
+        );
     }
 
     @Override

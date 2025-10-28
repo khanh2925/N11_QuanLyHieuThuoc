@@ -38,7 +38,7 @@ public class ChiTietKhuyenMaiSanPham_DAO {
             while (rs.next()) {
                 String maSP = rs.getString("MaSanPham");
 
-                SanPham sp = sanPhamDAO.getSanPhamTheoMa(maSP);
+                SanPham sp = sanPhamDAO.laySanPhamTheoMa(maSP);
                 KhuyenMai km = khuyenMaiDAO.timKhuyenMaiTheoMa(maKM);
 
                 if (sp != null && km != null) {

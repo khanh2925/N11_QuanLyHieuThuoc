@@ -21,7 +21,7 @@ public class CapNhatSanPham_Dialog extends JDialog implements ActionListener {
     private JButton btnLuu, btnThoat, btnChonAnh;
 
     private SanPham sanPhamCanCapNhat;
-    private SanPham_DAO sanPhamDAO = new SanPham_DAO();
+    private final SanPham_DAO sanPhamDAO = new SanPham_DAO();
     private boolean isUpdated = false;
 
     public CapNhatSanPham_Dialog(Frame owner, SanPham sp) {
@@ -97,13 +97,13 @@ public class CapNhatSanPham_Dialog extends JDialog implements ActionListener {
         getContentPane().add(lblGiaBanTuDong);
 
         txtGiaNhap.addActionListener(e -> capNhatGiaBanTuDong());
-        txtGiaNhap.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
+        txtGiaNhap.addFocusListener(new FocusAdapter() {
+            public void focusLost(FocusEvent evt) {
                 capNhatGiaBanTuDong();
             }
         });
 
-        // --- Cột 2 ---
+        // --- Cột phải ---
         JLabel lblSoDK = new JLabel("Số đăng ký:");
         lblSoDK.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblSoDK.setBounds(390, 110, 200, 25);
@@ -145,9 +145,8 @@ public class CapNhatSanPham_Dialog extends JDialog implements ActionListener {
         btnChonAnh.setBackground(new Color(0x3B82F6));
         btnChonAnh.setForeground(Color.WHITE);
         btnChonAnh.setBorder(null);
-        getContentPane().add(btnChonAnh);
-
         btnChonAnh.addActionListener(this);
+        getContentPane().add(btnChonAnh);
 
         chkHoatDong = new JCheckBox("Đang hoạt động");
         chkHoatDong.setFont(new Font("Segoe UI", Font.PLAIN, 16));
@@ -161,6 +160,7 @@ public class CapNhatSanPham_Dialog extends JDialog implements ActionListener {
         btnLuu.setBackground(new Color(0x10B981));
         btnLuu.setForeground(Color.WHITE);
         btnLuu.setBorder(null);
+        btnLuu.addActionListener(this);
         getContentPane().add(btnLuu);
 
         btnThoat = new JButton("Thoát");
@@ -169,13 +169,11 @@ public class CapNhatSanPham_Dialog extends JDialog implements ActionListener {
         btnThoat.setBackground(new Color(0x6B7280));
         btnThoat.setForeground(Color.WHITE);
         btnThoat.setBorder(null);
-        getContentPane().add(btnThoat);
-
-        btnLuu.addActionListener(this);
         btnThoat.addActionListener(this);
+        getContentPane().add(btnThoat);
     }
 
-    // ======================= LOAD DỮ LIỆU VÀ TÍNH TOÁN =======================
+    // ======================= LOAD DỮ LIỆU =======================
     private void loadDataToForm() {
         lblMaSP.setText(sanPhamCanCapNhat.getMaSanPham());
         txtTenSanPham.setText(sanPhamCanCapNhat.getTenSanPham());
@@ -221,7 +219,8 @@ public class CapNhatSanPham_Dialog extends JDialog implements ActionListener {
             JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle("Chọn ảnh sản phẩm");
             if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-                txtHinhAnh.setText(chooser.getSelectedFile().getName());
+                File file = chooser.getSelectedFile();
+                txtHinhAnh.setText(file.getName());
             }
         } else if (src.equals(btnLuu)) {
             handleLuuAction();
@@ -230,13 +229,13 @@ public class CapNhatSanPham_Dialog extends JDialog implements ActionListener {
 
     private void handleLuuAction() {
         try {
-            String ten = txtTenSanPham.getText();
+            String ten = txtTenSanPham.getText().trim();
             LoaiSanPham loai = (LoaiSanPham) cmbLoaiSanPham.getSelectedItem();
-            String soDK = txtSoDangKy.getText().trim().isEmpty() ? null : txtSoDangKy.getText();
+            String soDK = txtSoDangKy.getText().trim().isEmpty() ? null : txtSoDangKy.getText().trim();
             DuongDung dd = (DuongDung) cmbDuongDung.getSelectedItem();
-            double giaNhap = Double.parseDouble(txtGiaNhap.getText());
-            String hinhAnh = txtHinhAnh.getText();
-            String keBan = txtKeBanSanPham.getText();
+            double giaNhap = Double.parseDouble(txtGiaNhap.getText().trim());
+            String hinhAnh = txtHinhAnh.getText().trim();
+            String keBan = txtKeBanSanPham.getText().trim();
             boolean hoatDong = chkHoatDong.isSelected();
 
             sanPhamCanCapNhat.setTenSanPham(ten);
@@ -248,7 +247,7 @@ public class CapNhatSanPham_Dialog extends JDialog implements ActionListener {
             sanPhamCanCapNhat.setKeBanSanPham(keBan);
             sanPhamCanCapNhat.setHoatDong(hoatDong);
 
-            if (sanPhamDAO.updateSanPham(sanPhamCanCapNhat)) {
+            if (sanPhamDAO.capNhatSanPham(sanPhamCanCapNhat)) { // ✅ gọi đúng tên DAO
                 JOptionPane.showMessageDialog(this, "Cập nhật thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 isUpdated = true;
                 dispose();
