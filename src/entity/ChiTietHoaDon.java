@@ -7,11 +7,10 @@ public class ChiTietHoaDon {
     private HoaDon hoaDon;
     private SanPham sanPham;
     private double soLuong;
-    private KhuyenMai khuyenMai;
     private double giaBan;
+    private KhuyenMai khuyenMai;
 
-    public ChiTietHoaDon() {
-    }
+    public ChiTietHoaDon() {}
 
     public ChiTietHoaDon(HoaDon hoaDon, SanPham sanPham, double soLuong, double giaBan, KhuyenMai khuyenMai) {
         setHoaDon(hoaDon);
@@ -25,116 +24,86 @@ public class ChiTietHoaDon {
         this.hoaDon = other.hoaDon;
         this.sanPham = other.sanPham;
         this.soLuong = other.soLuong;
-        this.khuyenMai = other.khuyenMai;
         this.giaBan = other.giaBan;
+        this.khuyenMai = other.khuyenMai;
     }
 
+    // 🔹 Thành tiền dẫn xuất
     public double getThanhTien() {
-        // Tính thành tiền ban đầu trước khi áp dụng khuyến mãi
         double thanhTienChuaGiam = this.soLuong * this.giaBan;
 
-        // Nếu không có khuyến mãi, trả về giá trị ban đầu ngay lập tức
-        if (khuyenMai == null) {
-            return thanhTienChuaGiam;
-        }
+        if (khuyenMai == null) return thanhTienChuaGiam;
 
-        double giaTriGiam = 0;
-
-        // Sử dụng switch-case để xử lý các loại hình khuyến mãi rõ ràng hơn
+        // Nếu khuyến mãi là loại hóa đơn → bỏ qua (chỉ áp ở tổng hóa đơn)
+        if (khuyenMai.isKhuyenMaiHoaDon()) return thanhTienChuaGiam;
+        double giam = 0;
         switch (khuyenMai.getHinhThuc()) {
             case GIAM_GIA_PHAN_TRAM:
-                giaTriGiam = thanhTienChuaGiam * (khuyenMai.getGiaTri() / 100.0);
+                giam = thanhTienChuaGiam * (khuyenMai.getGiaTri() / 100.0);
                 break;
-
             case GIAM_GIA_TIEN:
-                giaTriGiam = khuyenMai.getGiaTri();
+                giam = khuyenMai.getGiaTri();
                 break;
-                
             case TANG_THEM:
-                // Khuyến mãi dạng tặng kèm không làm thay đổi thành tiền của sản phẩm này
-                giaTriGiam = 0;
+                // Nếu đủ điều kiện thì cộng thêm sản phẩm, nhưng không thay đổi tiền
+                giam = 0;
                 break;
-                
             default:
-                // Mặc định không giảm giá nếu không xác định được hình thức
-                giaTriGiam = 0;
+                giam = 0;
                 break;
         }
 
-        // Tính thành tiền cuối cùng sau khi đã trừ đi giá trị giảm
-        double thanhTienSauGiam = thanhTienChuaGiam - giaTriGiam;
-
-        // Đảm bảo thành tiền không bao giờ là số âm
+        double thanhTienSauGiam = thanhTienChuaGiam - giam;
         return Math.max(0, thanhTienSauGiam);
     }
 
-    public HoaDon getHoaDon() {
-        return hoaDon;
-    }
-
+    // ===== GETTERS / SETTERS =====
+    public HoaDon getHoaDon() { return hoaDon; }
     public void setHoaDon(HoaDon hoaDon) {
-        if (hoaDon == null) {
-            throw new IllegalArgumentException("Hóa đơn không tồn tại.");
-        }
+        if (hoaDon == null) throw new IllegalArgumentException("Hóa đơn không được null.");
         this.hoaDon = hoaDon;
     }
 
-    public SanPham getSanPham() {
-        return sanPham;
-    }
-
+    public SanPham getSanPham() { return sanPham; }
     public void setSanPham(SanPham sanPham) {
-        if (sanPham == null) {
-            throw new IllegalArgumentException("Sản phẩm không tồn tại.");
-        }
+        if (sanPham == null) throw new IllegalArgumentException("Sản phẩm không được null.");
         this.sanPham = sanPham;
     }
 
-    public double getSoLuong() {
-        return soLuong;
-    }
-
+    public double getSoLuong() { return soLuong; }
     public void setSoLuong(double soLuong) {
-        if (soLuong <= 0) {
-            throw new IllegalArgumentException("Số lượng phải lớn hơn 0.");
-        }
+        if (soLuong <= 0) throw new IllegalArgumentException("Số lượng phải > 0.");
         this.soLuong = soLuong;
     }
 
-    public KhuyenMai getKhuyenMai() {
-        return khuyenMai;
-    }
-
-    public void setKhuyenMai(KhuyenMai khuyenMai) {
-        this.khuyenMai = khuyenMai;
-    }
-
-    public double getGiaBan() {
-        return giaBan;
-    }
-
+    public double getGiaBan() { return giaBan; }
     public void setGiaBan(double giaBan) {
-        if (giaBan <= 0) {
-            throw new IllegalArgumentException("Giá bán phải lớn hơn 0.");
-        }
+        if (giaBan <= 0) throw new IllegalArgumentException("Giá bán phải > 0.");
         this.giaBan = giaBan;
+    }
+
+    public KhuyenMai getKhuyenMai() { return khuyenMai; }
+    public void setKhuyenMai(KhuyenMai khuyenMai) {
+        // 🔹 Nếu khuyến mãi theo hóa đơn → không được gán cho chi tiết
+        if (khuyenMai != null && khuyenMai.isKhuyenMaiHoaDon()) {
+            throw new IllegalArgumentException("Không thể gán khuyến mãi hóa đơn cho chi tiết sản phẩm.");
+        }
+        this.khuyenMai = khuyenMai;
     }
 
     @Override
     public String toString() {
-        return "ChiTietHoaDon{" +
-                "hoaDon=" + (hoaDon != null ? hoaDon.getMaHoaDon() : "N/A") +
-                ", sanPham=" + (sanPham != null ? sanPham.getTenSanPham() : "N/A") +
-                ", soLuong=" + soLuong +
-                ", giaBan=" + giaBan +
-                ", thanhTien=" + getThanhTien() +
-                '}';
+        return String.format("CTHD[%s - %s] SL=%.0f, Giá=%.0f, Thành tiền=%.0f%s",
+                hoaDon != null ? hoaDon.getMaHoaDon() : "N/A",
+                sanPham != null ? sanPham.getTenSanPham() : "N/A",
+                soLuong, giaBan, getThanhTien(),
+                khuyenMai != null ? ", KM=" + khuyenMai.getHinhThuc() : "");
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof ChiTietHoaDon)) return false;
         ChiTietHoaDon that = (ChiTietHoaDon) o;
         return Objects.equals(hoaDon, that.hoaDon) && Objects.equals(sanPham, that.sanPham);
     }

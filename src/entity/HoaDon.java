@@ -20,7 +20,7 @@
 	    }
 	
 	    public HoaDon(String maHoaDon, String maKhachHang, LocalDate ngayLap, NhanVien nhanVien, KhuyenMai khuyenMai, boolean thuocTheoDon) {
-	        this.maHoaDon = maHoaDon;
+	        setMaHoaDon(maHoaDon);
 	        setMaKhachHang(maKhachHang);
 	        setNgayLap(ngayLap);
 	        setNhanVien(nhanVien);
@@ -28,6 +28,7 @@
 	        setThuocTheoDon(thuocTheoDon);
 	        this.chiTietHoaDonList = new ArrayList<>();
 	    }
+
 	
 	    public HoaDon(HoaDon other) {
 	        this.maHoaDon = other.maHoaDon;
