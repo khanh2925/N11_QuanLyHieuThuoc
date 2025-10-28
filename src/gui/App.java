@@ -14,7 +14,7 @@ public class App {
 	public static void main(String[] args) {
 		// (Tùy chọn) Cài đặt Look and Feel cho đẹp hơn
 		try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+//            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
             e.printStackTrace();
         }

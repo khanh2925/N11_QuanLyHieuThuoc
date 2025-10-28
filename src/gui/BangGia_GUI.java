@@ -44,68 +44,58 @@ public class BangGia_GUI extends JPanel {
         txtTimThuoc.setBorder(new RoundedBorder(20));
         pnHeader.add(txtTimThuoc);
 
-        // ===== PANEL LỌC VÀ SẮP XẾP ĐÃ ĐƯỢC LÀM ĐẸP HƠN =====
+        // ===== PANEL LỌC VÀ SẮP XẾP =====
         pnLoc = new JPanel(new GridBagLayout());
         pnLoc.setBounds(460, 9, 600, 70);
-        pnLoc.setOpaque(false); // Làm trong suốt panel
-        
+        pnLoc.setOpaque(false);
         TitledBorder titledBorder = BorderFactory.createTitledBorder(" Lọc và Sắp xếp ");
         titledBorder.setTitleFont(new Font("Segoe UI", Font.BOLD, 14));
         pnLoc.setBorder(titledBorder);
         pnHeader.add(pnLoc);
-        
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.anchor = GridBagConstraints.WEST;
 
-        // --- Label + ComboBox Loại sản phẩm ---
+        // === Các component trong pnLoc (fix lỗi add nhiều lần) ===
+        GridBagConstraints gbc1 = (GridBagConstraints) gbc.clone();
+        gbc1.gridx = 0; gbc1.gridy = 0;
         JLabel lblLoaiSP = new JLabel("Loại sản phẩm:");
         lblLoaiSP.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        pnLoc.add(lblLoaiSP, gbc);
+        pnLoc.add(lblLoaiSP, gbc1);
 
-        String[] dsLoaiSP = {
-            "Tất cả", "Thuốc giảm đau", "Kháng sinh",
-            "Vitamin & Khoáng chất", "Dược mỹ phẩm", "Thiết bị y tế"
-        };
+        GridBagConstraints gbc2 = (GridBagConstraints) gbc.clone();
+        gbc2.gridx = 1; gbc2.gridy = 0;
+        gbc2.insets = new Insets(5, 5, 5, 20);
+        String[] dsLoaiSP = {"Tất cả", "Thuốc giảm đau", "Kháng sinh", "Vitamin & Khoáng chất", "Dược mỹ phẩm", "Thiết bị y tế"};
         JComboBox<String> cbLoaiSP = new JComboBox<>(dsLoaiSP);
         cbLoaiSP.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.insets = new Insets(5, 5, 5, 20);
-        pnLoc.add(cbLoaiSP, gbc);
-        gbc.insets = new Insets(5, 5, 5, 5);
+        pnLoc.add(cbLoaiSP, gbc2);
 
-        // --- Label + Radio Giá bán ---
+        GridBagConstraints gbc3 = (GridBagConstraints) gbc.clone();
+        gbc3.gridx = 2; gbc3.gridy = 0;
         JLabel lblGiaBan = new JLabel("Giá bán:");
         lblGiaBan.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        gbc.gridx = 2;
-        gbc.gridy = 0;
-        pnLoc.add(lblGiaBan, gbc);
+        pnLoc.add(lblGiaBan, gbc3);
 
+        GridBagConstraints gbc4 = (GridBagConstraints) gbc.clone();
+        gbc4.gridx = 3; gbc4.gridy = 0;
         JRadioButton rdbTangDan = new JRadioButton("Tăng dần");
+        rdbTangDan.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        rdbTangDan.setOpaque(false);
+        rdbTangDan.setSelected(true);
+        pnLoc.add(rdbTangDan, gbc4);
+
+        GridBagConstraints gbc5 = (GridBagConstraints) gbc.clone();
+        gbc5.gridx = 4; gbc5.gridy = 0;
         JRadioButton rdbGiamDan = new JRadioButton("Giảm dần");
+        rdbGiamDan.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        rdbGiamDan.setOpaque(false);
+        pnLoc.add(rdbGiamDan, gbc5);
+
         ButtonGroup groupGia = new ButtonGroup();
         groupGia.add(rdbTangDan);
         groupGia.add(rdbGiamDan);
-
-        rdbTangDan.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        rdbGiamDan.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        
-        // ===== SỬA LỖI TẠI ĐÂY =====
-        rdbTangDan.setOpaque(false); // Dùng setOpaque(false) thay vì setBackground
-        rdbGiamDan.setOpaque(false); // Dùng setOpaque(false) thay vì setBackground
-        
-        rdbTangDan.setSelected(true);
-        
-        gbc.gridx = 3;
-        gbc.gridy = 0;
-        pnLoc.add(rdbTangDan, gbc);
-
-        gbc.gridx = 4;
-        gbc.gridy = 0;
-        pnLoc.add(rdbGiamDan, gbc);
 
         // ===== LEFT =====
         pnLeft = new JPanel(null);
@@ -114,7 +104,6 @@ public class BangGia_GUI extends JPanel {
         pnLeft.setBorder(new EmptyBorder(20, 20, 20, 20));
         add(pnLeft, BorderLayout.WEST);
 
-        // ... (Các thành phần còn lại giữ nguyên) ...
         JLabel lblDieuChinhGia = new JLabel("Điều chỉnh giá");
         lblDieuChinhGia.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblDieuChinhGia.setBounds(20, 10, 260, 30);
@@ -198,39 +187,7 @@ public class BangGia_GUI extends JPanel {
         sp.setBorder(BorderFactory.createLineBorder(new Color(0xE0E0E0)));
         pnLeft.add(sp);
 
-        btnApDung.addActionListener(e -> {
-            String tuStr = cbGiaTu.getSelectedItem().toString().trim();
-            String denStr = cbGiaDen.getSelectedItem().toString().trim();
-            String tile = txtTiLe.getText().trim();
-
-            if (tuStr.isEmpty() || denStr.isEmpty() || tile.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Vui lòng nhập đầy đủ thông tin!");
-                return;
-            }
-
-            double tu = parseGia(tuStr);
-            double den = parseGia(denStr);
-
-            if (den <= tu) {
-                JOptionPane.showMessageDialog(null, "Khoảng giá không hợp lệ (Giá đến phải lớn hơn giá từ)!");
-                return;
-            }
-
-            for (int i = 0; i < modelMoc.getRowCount(); i++) {
-                double tuCu = parseGia(modelMoc.getValueAt(i, 0).toString());
-                double denCu = parseGia(modelMoc.getValueAt(i, 1).toString());
-
-                if (!(den < tuCu || tu > denCu)) {
-                    JOptionPane.showMessageDialog(null,
-                        String.format("Khoảng giá %.0f - %.0f đã trùng hoặc giao với khoảng %.0f - %.0f!",
-                                      tu, den, tuCu, denCu));
-                    return;
-                }
-            }
-
-            modelMoc.addRow(new Object[]{tuStr, denStr, tile});
-        });
-
+        // ===== CENTER =====
         pnCenter = new JPanel(new BorderLayout());
         pnCenter.setBackground(Color.WHITE);
         pnCenter.setBorder(new LineBorder(new Color(200, 200, 200)));
