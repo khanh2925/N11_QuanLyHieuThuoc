@@ -2,24 +2,47 @@ package entity;
 
 import java.util.Objects;
 
+/**
+ * Entity: QuyCachDongGoi
+ * 
+ * Mô tả:
+ *  - Biểu diễn các cách đóng gói của một sản phẩm.
+ *  - Mỗi sản phẩm có thể có nhiều đơn vị (viên, vỉ, hộp...).
+ *  - Nếu là đơn vị gốc → HeSoQuyDoi = 1.
+ *  - Nếu không gốc → HeSoQuyDoi > 1.
+ */
 public class QuyCachDongGoi {
 
-    private DonViTinh donViTinh; // Đơn vị quy đổi sang đơn vị gốc
-    private SanPham sanPham;     // Sản phẩm tương ứng
-    private int heSoQuyDoi;      // Hệ số quy đổi: ví dụ 10 viên = 1 vỉ → 10
-    private double tiLeGiam;     // Tỷ lệ giảm giá theo đơn vị này (nếu có)
-    private boolean donViGoc;    // Có phải đơn vị gốc hay không?
+    private String maQuyCach;      // QCxxxxxx
+    private DonViTinh donViTinh;   // FK: Đơn vị tính
+    private SanPham sanPham;       // FK: Sản phẩm
+    private int heSoQuyDoi;        // VD: 10 viên = 1 vỉ
+    private double tiLeGiam;       // 0–1
+    private boolean donViGoc;      // Có phải đơn vị gốc hay không?
 
-    public QuyCachDongGoi() {
-    }
+    // ===== CONSTRUCTORS =====
+    public QuyCachDongGoi() {}
 
-    public QuyCachDongGoi(DonViTinh donViTinh, SanPham sanPham,
+    public QuyCachDongGoi(String maQuyCach, DonViTinh donViTinh, SanPham sanPham,
                           int heSoQuyDoi, double tiLeGiam, boolean donViGoc) {
+        setMaQuyCach(maQuyCach);
         setDonViTinh(donViTinh);
         setSanPham(sanPham);
         setHeSoQuyDoi(heSoQuyDoi);
         setTiLeGiam(tiLeGiam);
         setDonViGoc(donViGoc);
+        kiemTraRangBuocDonViGoc();
+    }
+
+    // ===== GETTERS / SETTERS =====
+    public String getMaQuyCach() {
+        return maQuyCach;
+    }
+
+    public void setMaQuyCach(String maQuyCach) {
+        if (maQuyCach == null || !maQuyCach.matches("^QC\\d{6}$"))
+            throw new IllegalArgumentException("Mã quy cách không hợp lệ (định dạng: QCxxxxxx).");
+        this.maQuyCach = maQuyCach;
     }
 
     public DonViTinh getDonViTinh() {
@@ -50,6 +73,7 @@ public class QuyCachDongGoi {
         if (heSoQuyDoi <= 0)
             throw new IllegalArgumentException("Hệ số quy đổi phải lớn hơn 0.");
         this.heSoQuyDoi = heSoQuyDoi;
+        kiemTraRangBuocDonViGoc();
     }
 
     public double getTiLeGiam() {
@@ -68,8 +92,24 @@ public class QuyCachDongGoi {
 
     public void setDonViGoc(boolean donViGoc) {
         this.donViGoc = donViGoc;
+        kiemTraRangBuocDonViGoc();
     }
 
+    /**
+     *  Kiểm tra ràng buộc:
+     * - Nếu là đơn vị gốc → HeSoQuyDoi = 1
+     * - Nếu không gốc → HeSoQuyDoi > 1
+     */
+    private void kiemTraRangBuocDonViGoc() {
+        if (heSoQuyDoi > 0) {
+            if (donViGoc && heSoQuyDoi != 1)
+                throw new IllegalArgumentException("Đơn vị gốc phải có hệ số quy đổi = 1.");
+            if (!donViGoc && heSoQuyDoi == 1)
+                throw new IllegalArgumentException("Đơn vị không gốc phải có hệ số quy đổi > 1.");
+        }
+    }
+
+    // ===== OVERRIDES =====
     @Override
     public String toString() {
         return String.format("%s - %s (x%d, Giảm %.0f%%)%s",
@@ -83,7 +123,7 @@ public class QuyCachDongGoi {
 
     @Override
     public int hashCode() {
-        return Objects.hash(sanPham, donViTinh);
+        return Objects.hash(maQuyCach);
     }
 
     @Override
@@ -91,7 +131,6 @@ public class QuyCachDongGoi {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
         QuyCachDongGoi other = (QuyCachDongGoi) obj;
-        return Objects.equals(sanPham, other.sanPham)
-                && Objects.equals(donViTinh, other.donViTinh);
+        return Objects.equals(maQuyCach, other.maQuyCach);
     }
 }

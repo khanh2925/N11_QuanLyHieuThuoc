@@ -19,8 +19,7 @@ public class SanPham_DAO {
         Connection con = connectDB.getConnection();
 
         String sql = "SELECT MaSanPham, TenSanPham, LoaiSanPham, SoDangKy, DuongDung, " +
-                     "GiaNhap, GiaBan, HinhAnh, KeBanSanPham, HoatDong " +
-                     "FROM SanPham";
+                     "GiaNhap, GiaBan, HinhAnh, KeBanSanPham, HoatDong FROM SanPham";
 
         try (Statement st = con.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
@@ -29,7 +28,6 @@ public class SanPham_DAO {
                 String maSP   = rs.getString("MaSanPham");
                 String ten    = rs.getString("TenSanPham");
 
-                // LoaiSanPham (ENUM theo VARCHAR lưu name())
                 LoaiSanPham loai = null;
                 String lspStr = rs.getString("LoaiSanPham");
                 if (lspStr != null) {
@@ -38,7 +36,6 @@ public class SanPham_DAO {
 
                 String soDK   = rs.getString("SoDangKy");
 
-                // DuongDung (ENUM theo VARCHAR lưu name())
                 DuongDung dd  = null;
                 String ddStr  = rs.getString("DuongDung");
                 if (ddStr != null) {
@@ -46,12 +43,11 @@ public class SanPham_DAO {
                 }
 
                 double giaNhap = rs.getDouble("GiaNhap");
-                double giaBan  = rs.getDouble("GiaBan");
                 String hinhAnh = rs.getString("HinhAnh");
                 String keBan   = rs.getString("KeBanSanPham");
                 boolean hoatDong = rs.getBoolean("HoatDong");
 
-                SanPham sp = new SanPham(maSP, ten, loai, soDK, dd, giaNhap, giaBan, hinhAnh, keBan, hoatDong);
+                SanPham sp = new SanPham(maSP, ten, loai, soDK, dd, giaNhap, hinhAnh, keBan, hoatDong);
                 ds.add(sp);
             }
         } catch (SQLException e) {
@@ -65,10 +61,10 @@ public class SanPham_DAO {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
 
-        String sql = "INSERT INTO SanPham " +
-                     "(MaSanPham, TenSanPham, LoaiSanPham, SoDangKy, DuongDung, " +
-                     " GiaNhap, GiaBan, HinhAnh, KeBanSanPham, HoatDong) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        sp.capNhatGiaBanTheoHeSo(); // tính lại giá bán trước khi lưu
+
+        String sql = "INSERT INTO SanPham (MaSanPham, TenSanPham, LoaiSanPham, SoDangKy, DuongDung, " +
+                     "GiaNhap, GiaBan, HinhAnh, KeBanSanPham, HoatDong) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, sp.getMaSanPham());
@@ -77,13 +73,12 @@ public class SanPham_DAO {
             ps.setString(4, sp.getSoDangKy());
             ps.setString(5, sp.getDuongDung() != null ? sp.getDuongDung().name() : null);
             ps.setDouble(6, sp.getGiaNhap());
-            ps.setDouble(7, sp.getGiaBan());
+            ps.setDouble(7, sp.getGiaBan()); // vẫn được truy cập vì lấy getter
             ps.setString(8, sp.getHinhAnh());
             ps.setString(9, sp.getKeBanSanPham());
             ps.setBoolean(10, sp.isHoatDong());
 
             return ps.executeUpdate() > 0;
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -95,9 +90,10 @@ public class SanPham_DAO {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
 
-        String sql = "UPDATE SanPham SET TenSanPham=?, LoaiSanPham=?, SoDangKy=?, " +
-                     "DuongDung=?, GiaNhap=?, GiaBan=?, HinhAnh=?, KeBanSanPham=?, HoatDong=? " +
-                     "WHERE MaSanPham=?";
+        sp.capNhatGiaBanTheoHeSo(); // tính lại giá bán trước khi lưu
+
+        String sql = "UPDATE SanPham SET TenSanPham=?, LoaiSanPham=?, SoDangKy=?, DuongDung=?, " +
+                     "GiaNhap=?, GiaBan=?, HinhAnh=?, KeBanSanPham=?, HoatDong=? WHERE MaSanPham=?";
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, sp.getTenSanPham());
@@ -112,7 +108,6 @@ public class SanPham_DAO {
             ps.setString(10, sp.getMaSanPham());
 
             return ps.executeUpdate() > 0;
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -125,11 +120,9 @@ public class SanPham_DAO {
         Connection con = connectDB.getConnection();
 
         String sql = "DELETE FROM SanPham WHERE MaSanPham = ?";
-
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, maSanPham);
             return ps.executeUpdate() > 0;
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -142,37 +135,30 @@ public class SanPham_DAO {
         Connection con = connectDB.getConnection();
 
         String sql = "SELECT MaSanPham, TenSanPham, LoaiSanPham, SoDangKy, DuongDung, " +
-                     "GiaNhap, GiaBan, HinhAnh, KeBanSanPham, HoatDong " +
-                     "FROM SanPham WHERE MaSanPham = ?";
+                     "GiaNhap, GiaBan, HinhAnh, KeBanSanPham, HoatDong FROM SanPham WHERE MaSanPham = ?";
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, maSanPham);
-
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    String ten    = rs.getString("TenSanPham");
-
+                    String ten = rs.getString("TenSanPham");
                     LoaiSanPham loai = null;
                     String lspStr = rs.getString("LoaiSanPham");
                     if (lspStr != null) {
                         try { loai = LoaiSanPham.valueOf(lspStr); } catch (IllegalArgumentException ignore) {}
                     }
-
-                    String soDK   = rs.getString("SoDangKy");
-
-                    DuongDung dd  = null;
-                    String ddStr  = rs.getString("DuongDung");
+                    String soDK = rs.getString("SoDangKy");
+                    DuongDung dd = null;
+                    String ddStr = rs.getString("DuongDung");
                     if (ddStr != null) {
                         try { dd = DuongDung.valueOf(ddStr); } catch (IllegalArgumentException ignore) {}
                     }
-
                     double giaNhap = rs.getDouble("GiaNhap");
-                    double giaBan  = rs.getDouble("GiaBan");
                     String hinhAnh = rs.getString("HinhAnh");
-                    String keBan   = rs.getString("KeBanSanPham");
+                    String keBan = rs.getString("KeBanSanPham");
                     boolean hoatDong = rs.getBoolean("HoatDong");
 
-                    return new SanPham(maSanPham, ten, loai, soDK, dd, giaNhap, giaBan, hinhAnh, keBan, hoatDong);
+                    return new SanPham(maSanPham, ten, loai, soDK, dd, giaNhap, hinhAnh, keBan, hoatDong);
                 }
             }
         } catch (SQLException e) {
@@ -181,7 +167,7 @@ public class SanPham_DAO {
         return null;
     }
 
-    /** Tìm kiếm theo tên (LIKE) */
+    /** Tìm kiếm theo tên */
     public ArrayList<SanPham> searchSanPhamTheoTen(String keyword) {
         ArrayList<SanPham> ds = new ArrayList<>();
         connectDB.getInstance();
@@ -193,33 +179,28 @@ public class SanPham_DAO {
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, "%" + (keyword == null ? "" : keyword.trim()) + "%");
-
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    String maSP   = rs.getString("MaSanPham");
-                    String ten    = rs.getString("TenSanPham");
-
+                    String maSP = rs.getString("MaSanPham");
+                    String ten = rs.getString("TenSanPham");
                     LoaiSanPham loai = null;
                     String lspStr = rs.getString("LoaiSanPham");
                     if (lspStr != null) {
                         try { loai = LoaiSanPham.valueOf(lspStr); } catch (IllegalArgumentException ignore) {}
                     }
-
-                    String soDK   = rs.getString("SoDangKy");
-
-                    DuongDung dd  = null;
-                    String ddStr  = rs.getString("DuongDung");
+                    String soDK = rs.getString("SoDangKy");
+                    DuongDung dd = null;
+                    String ddStr = rs.getString("DuongDung");
                     if (ddStr != null) {
                         try { dd = DuongDung.valueOf(ddStr); } catch (IllegalArgumentException ignore) {}
                     }
-
                     double giaNhap = rs.getDouble("GiaNhap");
-                    double giaBan  = rs.getDouble("GiaBan");
                     String hinhAnh = rs.getString("HinhAnh");
-                    String keBan   = rs.getString("KeBanSanPham");
+                    String keBan = rs.getString("KeBanSanPham");
                     boolean hoatDong = rs.getBoolean("HoatDong");
 
-                    ds.add(new SanPham(maSP, ten, loai, soDK, dd, giaNhap, giaBan, hinhAnh, keBan, hoatDong));
+                    SanPham sp = new SanPham(maSP, ten, loai, soDK, dd, giaNhap, hinhAnh, keBan, hoatDong);
+                    ds.add(sp);
                 }
             }
         } catch (SQLException e) {
@@ -228,8 +209,7 @@ public class SanPham_DAO {
         return ds;
     }
 
-    /** Lấy danh sách sản phẩm với quy cách nhỏ nhất (HeSoQuyDoi thấp nhất) */
-    /** Lấy danh sách sản phẩm với quy cách nhỏ nhất (HeSoQuyDoi thấp nhất, join DonViTinh) */
+    /** Giữ nguyên hàm lấy sản phẩm với quy cách nhỏ nhất */
     public ArrayList<Object[]> getSanPhamKemQuyCachNhoNhat() {
         ArrayList<Object[]> ds = new ArrayList<>();
         connectDB.getInstance();
@@ -253,15 +233,15 @@ public class SanPham_DAO {
              ResultSet rs = st.executeQuery(sql)) {
 
             while (rs.next()) {
-                String maSP      = rs.getString("MaSanPham");
-                String ten       = rs.getString("TenSanPham");
-                String loai      = rs.getString("LoaiSanPham");
-                String soDK      = rs.getString("SoDangKy");
+                String maSP = rs.getString("MaSanPham");
+                String ten = rs.getString("TenSanPham");
+                String loai = rs.getString("LoaiSanPham");
+                String soDK = rs.getString("SoDangKy");
                 String duongDung = rs.getString("DuongDung");
-                double giaNhap   = rs.getDouble("GiaNhap");
-                double giaBan    = rs.getDouble("GiaBan");
-                String hinhAnh   = rs.getString("HinhAnh");
-                String keBan     = rs.getString("KeBanSanPham");
+                double giaNhap = rs.getDouble("GiaNhap");
+                double giaBan = rs.getDouble("GiaBan");
+                String hinhAnh = rs.getString("HinhAnh");
+                String keBan = rs.getString("KeBanSanPham");
                 boolean hoatDong = rs.getBoolean("HoatDong");
                 String donViTinh = rs.getString("TenDonViTinh");
 
@@ -269,16 +249,14 @@ public class SanPham_DAO {
                     hinhAnh, maSP, ten, loai, soDK,
                     duongDung == null ? "" : duongDung,
                     giaNhap, giaBan,
-                    donViTinh != null ? donViTinh : "", // hiển thị “Viên/Vỉ/Hộp”
+                    donViTinh != null ? donViTinh : "",
                     keBan,
                     hoatDong ? "Đang kinh doanh" : "Ngừng bán"
                 });
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return ds;
     }
-
 }
