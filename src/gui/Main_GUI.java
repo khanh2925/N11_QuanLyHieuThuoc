@@ -47,6 +47,7 @@ public class Main_GUI extends JFrame {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setSize(1920, 1080);
 		setLocationRelativeTo(null);
+		setUndecorated(true);
 
 		JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 		split.setDividerLocation(MENU_WIDTH);
@@ -111,8 +112,6 @@ public class Main_GUI extends JFrame {
 				new SanPham_GUI());
 			addSubmenuButton("sanpham", "donvitinh", "Đơn vị tính", "/images/icon_don_vi_tinh.png",
 					new DonViTinh_QL_GUI());
-			addSubmenuButton("sanpham", "banggia", "Bảng giá", "/images/icon_bang_gia.png",
-					new BangGia_GUI());
 			addSubmenuButton("sanpham", "quycach", "Quy cách đóng gói", "/images/icon_bang_gia.png",
 					new QuyCachDongGoi_GUI());
 			addMenuButton(menu, "Kho", "kho", "/images/icon_kho.png");

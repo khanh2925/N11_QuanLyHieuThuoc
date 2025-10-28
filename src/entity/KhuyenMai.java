@@ -15,14 +15,16 @@ public class KhuyenMai {
     private boolean khuyenMaiHoaDon;
     private HinhThucKM hinhThuc;
     private double giaTri;
-    private String dieuKienApDungHoaDon;
+    private double dieuKienApDungHoaDon; // ← Đổi sang kiểu double
     private int soLuongToiThieu;
     private int soLuongTangThem;
 
     public KhuyenMai() {
     }
 
-    public KhuyenMai(String maKM, String tenKM, LocalDate ngayBatDau, LocalDate ngayKetThuc, boolean trangThai, boolean khuyenMaiHoaDon, HinhThucKM hinhThuc, double giaTri, String dieuKienApDungHoaDon, int soLuongToiThieu, int soLuongTangThem) {
+    public KhuyenMai(String maKM, String tenKM, LocalDate ngayBatDau, LocalDate ngayKetThuc,
+                     boolean trangThai, boolean khuyenMaiHoaDon, HinhThucKM hinhThuc,
+                     double giaTri, double dieuKien, int soLuongToiThieu, int soLuongTangThem) {
         setMaKM(maKM);
         setTenKM(tenKM);
         setNgayBatDau(ngayBatDau);
@@ -31,7 +33,7 @@ public class KhuyenMai {
         setKhuyenMaiHoaDon(khuyenMaiHoaDon);
         setHinhThuc(hinhThuc);
         setGiaTri(giaTri);
-        setDieuKienApDungHoaDon(dieuKienApDungHoaDon);
+        setDieuKienApDungHoaDon(dieuKien);
         setSoLuongToiThieu(soLuongToiThieu);
         setSoLuongTangThem(soLuongTangThem);
     }
@@ -78,7 +80,7 @@ public class KhuyenMai {
     }
 
     public void setNgayBatDau(LocalDate ngayBatDau) {
-         if (ngayBatDau == null) {
+        if (ngayBatDau == null) {
             throw new IllegalArgumentException("Ngày bắt đầu không được rỗng.");
         }
         if (this.ngayKetThuc != null && ngayBatDau.isAfter(this.ngayKetThuc)) {
@@ -139,12 +141,15 @@ public class KhuyenMai {
         this.giaTri = giaTri;
     }
 
-    public String getDieuKienApDungHoaDon() {
+    public double getDieuKienApDungHoaDon() {
         return dieuKienApDungHoaDon;
     }
 
-    public void setDieuKienApDungHoaDon(String dieuKienApDungHoaDon) {
-        this.dieuKienApDungHoaDon = dieuKienApDungHoaDon;
+    public void setDieuKienApDungHoaDon(double dieuKien) {
+        if (dieuKien < 0) {
+            throw new IllegalArgumentException("Điều kiện áp dụng hóa đơn không hợp lệ.");
+        }
+        this.dieuKienApDungHoaDon = dieuKien;
     }
 
     public int getSoLuongToiThieu() {
@@ -180,7 +185,7 @@ public class KhuyenMai {
                 ", khuyenMaiHoaDon=" + khuyenMaiHoaDon +
                 ", hinhThuc=" + hinhThuc +
                 ", giaTri=" + giaTri +
-                ", dieuKienApDungHoaDon='" + dieuKienApDungHoaDon + '\'' +
+                ", dieuKienApDungHoaDon=" + dieuKienApDungHoaDon +
                 ", soLuongToiThieu=" + soLuongToiThieu +
                 ", soLuongTangThem=" + soLuongTangThem +
                 '}';

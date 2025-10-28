@@ -9,8 +9,8 @@ import java.awt.event.MouseListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.time.LocalDate;
+import java.util.ArrayList; // Đã đổi từ List sang ArrayList để khớp với DAO
 import java.util.List;
-import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
@@ -35,31 +35,35 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
     private TableRowSorter<DefaultTableModel> sorter;
     private JCheckBox chckbxNam;
     private JCheckBox chckbxNu;
-    private JCheckBox chckbxTangDan;
-    private JCheckBox chckbxGiamDan;
     private JPanel pnLoc;
+    
+    // --- DAO ---
     private KhachHang_DAO kh_dao;
+    
     private JButton btnThem;
     private ThemKhachHang_Dialog dialogThemKH;
     private CapNhatKhachHang_Dialog dialogCapNhap;
     private JButton btnCapNhat;
-    
+
     public KhachHang_NV_GUI() {
         setPreferredSize(new Dimension(1537, 850));
+
+        // BƯỚC 1: KẾT NỐI DATABASE & KHỞI TẠO DAO
+        try {
+            connectDB.getInstance().connect();
+            System.out.println("Kết nối CSDL thành công!");
+        } catch (Exception e) {
+            System.out.println("Kết nối CSDL thất bại!");
+            e.printStackTrace();
+            // Hiển thị thông báo lỗi cho người dùng nếu cần
+            JOptionPane.showMessageDialog(this, "Không thể kết nối đến cơ sở dữ liệu.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+        kh_dao = new KhachHang_DAO();
+
         initialize();
     }
 
     private void initialize() {
-//    	 kết nói database
-//    	
-//    	try {
-//			connectDB.getInstance().connect();
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//    	kh_dao = new KhachHang_DAO();
-    	
-    	
         setLayout(new BorderLayout());
 
         // ===== HEADER =====
@@ -77,20 +81,18 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
         txtTimKiem.setBorder(new RoundedBorder(20));
         pnHeader.add(txtTimKiem);
 
-
-        btnThem=new PillButton("Thêm");
+        btnThem = new PillButton("Thêm");
         pnHeader.add(btnThem);
         btnThem.setBounds(786, 25, 120, 40);
         btnThem.setLayout(null);
         btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
 
-        
-        btnCapNhat =new PillButton("Cập nhật");
+        btnCapNhat = new PillButton("Cập nhật");
         btnCapNhat.setLayout(null);
         btnCapNhat.setBounds(947, 25, 120, 40);
         pnHeader.add(btnCapNhat);
         btnCapNhat.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        
+
         // ===== CENTER =====
         pnCenter = new JPanel(new BorderLayout());
         pnCenter.setBackground(Color.WHITE);
@@ -99,21 +101,19 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
 
         // ===== DỮ LIỆU BẢNG =====
         String[] columnNames = {"Mã khách hàng", "Tên khách hàng", "Giới tính", "Số điện thoại", "Ngày sinh"};
-
         model = new DefaultTableModel(columnNames, 0) {
-             @Override
-             public Class<?> getColumnClass(int columnIndex) {
-                 if (columnIndex == 5) {
-                     return Integer.class;
-                 }
-                 return super.getColumnClass(columnIndex);
-             }
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                // Không cho phép chỉnh sửa trực tiếp trên table
+                return false;
+            }
         };
-        
-        loadTableData(); // Tải dữ liệu mẫu vào bảng
 
         table = new JTable(model);
-        
+
+        // BƯỚC 2: TẢI DỮ LIỆU TỪ CSDL VÀO BẢNG
+        refreshTableData();
+
         // ===== CẤU HÌNH GIAO DIỆN BẢNG =====
         table.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         table.setRowHeight(34);
@@ -144,7 +144,6 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
         table.getColumnModel().getColumn(3).setPreferredWidth(150);
         table.getColumnModel().getColumn(4).setPreferredWidth(120);
 
-
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
@@ -161,19 +160,13 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
         scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         pnCenter.add(scrollPane, BorderLayout.CENTER);
 
-
-
-        
-        // 1. Khởi tạo pnLoc và thêm nó vào pnHeader
+        // ===== BỘ LỌC =====
         pnLoc = new JPanel();
         pnLoc.setBorder(new RoundedBorder(20));
         pnLoc.setBackground(new Color(240, 255, 255)); // Cùng màu nền với header
         pnLoc.setBounds(459, 9, 284, 70);
         pnHeader.add(pnLoc);
         pnLoc.setLayout(null);
-
-
-       
 
         JLabel lblGioiTinh = new JLabel("Giới tính:");
         lblGioiTinh.setBackground(new Color(240, 255, 255));
@@ -192,11 +185,11 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
         chckbxNu.setFont(new Font("Tahoma", Font.PLAIN, 15));
         chckbxNu.setBackground(new Color(240, 255, 255));
         pnLoc.add(chckbxNu);
+        
         JLabel lbLoc = new JLabel("Lọc dữ liệu");
         lbLoc.setBounds(10, 5, 100, 14);
         lbLoc.setFont(new Font("Tahoma", Font.PLAIN, 15));
         pnLoc.add(lbLoc);
-
 
         // ===== SỰ KIỆN LỌC VÀ SẮP XẾP =====
         sorter = new TableRowSorter<>(model);
@@ -213,7 +206,7 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
             applyFilters();
         };
         
-        // thêm sự kiện
+        // Thêm sự kiện
         chckbxNam.addActionListener(filterListener);
         chckbxNu.addActionListener(filterListener);
         btnThem.addActionListener(this);
@@ -221,57 +214,30 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
 
         // --- SỰ KIỆN TÌM KIẾM THEO TEXTFIELD ---
         txtTimKiem.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                applyFilters();
-            }
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                applyFilters();
-            }
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                // Not used for plain text fields
-            }
+            @Override public void insertUpdate(DocumentEvent e) { applyFilters(); }
+            @Override public void removeUpdate(DocumentEvent e) { applyFilters(); }
+            @Override public void changedUpdate(DocumentEvent e) { /* Not used for plain text fields */ }
         });
-        
-
     }
 
     /**
-     * Tải dữ liệu mẫu vào table model.
+     * Tải/Tải lại dữ liệu từ CSDL vào table model.
      */
-    private void loadTableData() {
-        List<KhachHang> dsKhachHang = new ArrayList<>();
-        dsKhachHang.add(new KhachHang("KH-0001", "Nguyễn Văn A", true, "0901234567", LocalDate.of(1995, 5, 12)));
-        dsKhachHang.add(new KhachHang("KH-0002", "Trần Thị B", false, "0912345678", LocalDate.of(2000, 8, 20)));
-        dsKhachHang.add(new KhachHang("KH-0003", "Lê Minh C", true, "0923456789", LocalDate.of(1988, 3, 5)));
-        dsKhachHang.add(new KhachHang("KH-0004", "Phạm Ngọc D", false, "0934567890", LocalDate.of(1999, 12, 30)));
-        dsKhachHang.add(new KhachHang("KH-0005", "Võ Thanh E", true, "0945678901", LocalDate.of(1992, 7, 18)));
-        dsKhachHang.add(new KhachHang("KH-0006", "Bùi Thị F", false, "0956789012", LocalDate.of(1997, 9, 10)));
-        dsKhachHang.add(new KhachHang("KH-0007", "Đặng Hoàng G", true, "0967890123", LocalDate.of(1985, 2, 22)));
-        dsKhachHang.add(new KhachHang("KH-0008", "Phan Thị H", false, "0978901234", LocalDate.of(1998, 4, 8)));
-        dsKhachHang.add(new KhachHang("KH-0009", "Ngô Minh I", true, "0989012345", LocalDate.of(1993, 11, 15)));
-        dsKhachHang.add(new KhachHang("KH-0010", "Huỳnh Thị K", false, "0990123456", LocalDate.of(2001, 1, 25)));
-        dsKhachHang.add(new KhachHang("KH-0011", "Trịnh Công L", true, "0902345678", LocalDate.of(1990, 6, 2)));
-        dsKhachHang.add(new KhachHang("KH-0012", "Đoàn Thị M", false, "0913456789", LocalDate.of(1996, 8, 14)));
-        dsKhachHang.add(new KhachHang("KH-0013", "Lâm Hữu N", true, "0924567890", LocalDate.of(1989, 3, 28)));
-        dsKhachHang.add(new KhachHang("KH-0014", "Tạ Thị O", false, "0935678901", LocalDate.of(1994, 5, 9)));
-        dsKhachHang.add(new KhachHang("KH-0015", "Hồ Nhật P", true, "0946789012", LocalDate.of(1998, 10, 19)));
-        dsKhachHang.add(new KhachHang("KH-0016", "Lý Thị Q", false, "0957890123", LocalDate.of(2002, 12, 2)));
-        dsKhachHang.add(new KhachHang("KH-0017", "Trương Văn R", true, "0968901234", LocalDate.of(1991, 7, 11)));
-        dsKhachHang.add(new KhachHang("KH-0018", "Đinh Thị S", false, "0979012345", LocalDate.of(1993, 9, 22)));
-        dsKhachHang.add(new KhachHang("KH-0019", "Cao Văn T", true, "0980123456", LocalDate.of(1987, 4, 30)));
-        dsKhachHang.add(new KhachHang("KH-0020", "Nguyễn Thị U", false, "0991234567", LocalDate.of(1999, 11, 5)));
+    private void refreshTableData() {
+        // Xóa tất cả các hàng hiện có trong model
+        model.setRowCount(0);
+        
+        // Lấy danh sách khách hàng từ CSDL thông qua DAO
+        ArrayList<KhachHang> dsKhachHang = kh_dao.getAllKhachHang();
 
+        // Thêm từng khách hàng vào model
         for (KhachHang kh : dsKhachHang) {
             model.addRow(new Object[]{
                 kh.getMaKhachHang(),
                 kh.getTenKhachHang(),
                 kh.isGioiTinh() ? "Nam" : "Nữ",
                 kh.getSoDienThoai(),
-                kh.getNgaySinh(),
-                
+                kh.getNgaySinh()
             });
         }
     }
@@ -284,9 +250,7 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
 
         // 1. Lọc theo ô tìm kiếm (Tên và SĐT)
         String searchText = txtTimKiem.getText().trim();
-        // Chỉ lọc khi ô tìm kiếm không rỗng và không phải là placeholder
-        if (!searchText.isEmpty() && !txtTimKiem.getForeground().equals(Color.GRAY)) {
-            // "(?i)" để tìm kiếm không phân biệt hoa thường
+        if (!searchText.isEmpty() && !searchText.equals("Tìm kiếm theo tên / số điện thoại")) {
             filters.add(RowFilter.regexFilter("(?i)" + searchText, 1, 3));
         }
 
@@ -298,17 +262,13 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
         }
 
         // Kết hợp các bộ lọc
-        if (filters.isEmpty()) {
-            sorter.setRowFilter(null); 
-        } else {
-            sorter.setRowFilter(RowFilter.andFilter(filters)); 
-        }
+        sorter.setRowFilter(filters.isEmpty() ? null : RowFilter.andFilter(filters));
     }
-    
+
     // ===== MAIN =====
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Ql khách hàng");
+            JFrame frame = new JFrame("Quản lý khách hàng");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1280, 800);
             frame.setLocationRelativeTo(null);
@@ -317,77 +277,47 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
         });
     }
 
-	@Override
-	public void mouseClicked(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object src = e.getSource();
 
-	@Override
-	public void mousePressed(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+        if (src == btnThem) {
+            ThemKH();
+        } else if (src == btnCapNhat) {
+            CapNhatKH();
+        }
+    }
 
-	@Override
-	public void mouseReleased(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+    // mở diaLog Thêm khách hàng
+    private void MoDiaLogThemKH() {
+        JFrame frameThemKH = (JFrame) SwingUtilities.getWindowAncestor(this);
+        // dialogThemKH = new ThemKhachHang_Dialog(frameThemKH); // Giả sử bạn có dialog này
+        // dialogThemKH.setVisible(true); 
+        // Sau khi dialog đóng, cần gọi refreshTableData()
+    }
 
-	@Override
-	public void mouseEntered(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+    // Sk thêm khách hàng
+    private void ThemKH() {
+        MoDiaLogThemKH();
+    }
 
-	@Override
-	public void mouseExited(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+    // mở diaLog Cập nhật khách hàng
+    private void moDiaLogCapNhatKH() {
+        JFrame frameCapNhat = (JFrame) SwingUtilities.getWindowAncestor(this);
+        // dialogCapNhap = new CapNhatKhachHang_Dialog(frameCapNhat, null); // Giả sử bạn có dialog này
+        // dialogCapNhap.setVisible(true);
+        // Sau khi dialog đóng, cần gọi refreshTableData()
+    }
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-	    Object src = e.getSource();
-
-	    if (src == btnThem) {
-	        ThemKH();
-	        return;
-	    }
-
-	    if (src == btnCapNhat) {
-	    	JFrame frameCapNhat = (JFrame) SwingUtilities.getWindowAncestor(this);
-	    	dialogCapNhap = new CapNhatKhachHang_Dialog(frameCapNhat, null);
-	    	dialogCapNhap.setVisible(true); 
-	    }
-	}
-	// mở diaLog Thêm khách hàng
-	private void MoDiaLogThemKH() {
-		JFrame frameThemKH = (JFrame) SwingUtilities.getWindowAncestor(this);
-        dialogThemKH = new ThemKhachHang_Dialog(frameThemKH);
-        dialogThemKH.setVisible(true); 
-	}
-	
-	// Sk thêm khách hàng
-	private void ThemKH() {
-		MoDiaLogThemKH();
-		
-		
-	}
-	
-	
-	//mở diaLog Cập nhật khách hàng
-	private void moDiaLogCapNhatKH() {
-		JFrame frameCapNhat = (JFrame) SwingUtilities.getWindowAncestor(this);
-	    dialogCapNhap = new CapNhatKhachHang_Dialog(frameCapNhat, null);
-	    dialogCapNhap.setVisible(true); 
-	}
-		
-	// Sk cập nhật khách hàng
-	private void CapNhatKH() {
-		moDiaLogCapNhatKH();
-		
-	}
-
+    // Sk cập nhật khách hàng
+    private void CapNhatKH() {
+        moDiaLogCapNhatKH();
+    }
+    
+    // Các phương thức mouse listener không sử dụng
+    @Override public void mouseClicked(MouseEvent e) {}
+    @Override public void mousePressed(MouseEvent e) {}
+    @Override public void mouseReleased(MouseEvent e) {}
+    @Override public void mouseEntered(MouseEvent e) {}
+    @Override public void mouseExited(MouseEvent e) {}
 }
