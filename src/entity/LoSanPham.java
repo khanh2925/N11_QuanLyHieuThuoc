@@ -3,14 +3,7 @@ package entity;
 import java.time.LocalDate;
 import java.util.Objects;
 
-/**
- * Entity: LoSanPham
- *
- * Mô tả:
- *  - Đại diện cho một lô hàng nhập của sản phẩm.
- *  - Lưu hạn sử dụng, số lượng nhập, số lượng tồn.
- *  - Có thể kiểm tra xem lô đã hết hạn hay chưa.
- */
+
 public class LoSanPham {
 
     private String maLo;           // VD: LO-000001
