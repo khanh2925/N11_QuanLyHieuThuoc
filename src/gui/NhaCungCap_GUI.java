@@ -8,9 +8,12 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.*;
 
 import connectDB.connectDB;
@@ -170,6 +173,24 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         
         // đưa dữ liệu lên table
         loadTableData();
+
+        // --- SỰ KIỆN TÌM KIẾM THEO TEXTFIELD ---
+        txtTimKiem.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                applyFilters();
+            }
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                applyFilters();
+            }
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                // Not used for plain text fields
+            }
+        });
+        
+  
      
         
     }
@@ -194,6 +215,23 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
             });
         }
     }
+    
+    private void applyFilters() {
+        List<RowFilter<Object, Object>> filters = new ArrayList<>();
+
+        // --- Lọc theo tên và SĐT ---
+        String text = txtTimKiem.getText().trim();
+        if (!text.isEmpty() && !txtTimKiem.getForeground().equals(Color.GRAY)) {
+            filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(text), 1, 3));
+        }
+
+        if (filters.isEmpty()) {
+            sorter.setRowFilter(null);
+        } else {
+            sorter.setRowFilter(RowFilter.andFilter(filters));
+        }
+    }
+
     
     // ===== PHƯƠNG THỨC LỌC DỮ LIỆU TRÊN BẢNG (ĐẶT Ở ĐÂY) =====
 

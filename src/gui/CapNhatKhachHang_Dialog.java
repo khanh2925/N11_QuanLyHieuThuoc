@@ -176,7 +176,7 @@ public class CapNhatKhachHang_Dialog extends JDialog {
             showError("Tên khách hàng không được vượt quá 100 ký tự.", txtTenKhachHang);
             return false;
         }
-        if (!ten.matches("^([A-Z][a-z]+)(\\s[A-Z][a-z]+)*$")) {
+        if (!ten.matches("^([A-ZÀ-Ỵ][a-zà-ỹ]+)(\\s[A-ZÀ-Ỵ][a-zà-ỹ]+)*$")) {
        	 	showError("Tên khách hàng phải viết hoa chữ cái đầu", txtTenKhachHang);
             return false;
 		}
