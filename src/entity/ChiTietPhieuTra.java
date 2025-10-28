@@ -9,9 +9,8 @@ public class ChiTietPhieuTra {
     private String lyDoChiTiet;
     private int soLuong;
     private double thanhTienHoan; 
-    private int trangThai; // 0=Chờ duyệt, 1=Nhập lại hàng, 2=Huỷ hàng
+    private int trangThai;
 
-    // ===== CONSTRUCTORS =====
     public ChiTietPhieuTra() {}
 
     public ChiTietPhieuTra(PhieuTra phieuTra, ChiTietHoaDon chiTietHoaDon,
@@ -21,7 +20,7 @@ public class ChiTietPhieuTra {
         setLyDoChiTiet(lyDoChiTiet);
         setSoLuong(soLuong);
         setTrangThai(trangThai);
-        capNhatThanhTienHoan(); // ✅ tự động tính
+        capNhatThanhTienHoan();
     }
 
     public ChiTietPhieuTra(ChiTietPhieuTra other) {

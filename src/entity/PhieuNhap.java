@@ -10,7 +10,7 @@ public class PhieuNhap {
     private LocalDate ngayNhap;
     private NhaCungCap nhaCungCap;
     private NhanVien nhanVien;
-    private double tongTien; 
+    private double tongTien;
     private List<ChiTietPhieuNhap> chiTietPhieuNhapList;
 
     public PhieuNhap() {}
@@ -23,7 +23,7 @@ public class PhieuNhap {
         setNhaCungCap(nhaCungCap);
         setNhanVien(nhanVien);
         setChiTietPhieuNhapList(chiTietPhieuNhapList);
-        capNhatTongTienTheoChiTiet();
+        // Constructor này gọi capNhatTongTienTheoChiTiet() sau khi set list, nên ok
     }
 
     // ===== GETTER / SETTER =====
@@ -75,16 +75,32 @@ public class PhieuNhap {
     public double getTongTien() {
         return tongTien;
     }
+
+    /**
+     * === SỬA LỖI: Thêm setter này ===
+     * Dùng để DAO gán giá trị TongTien đọc từ CSDL
+     * cho các phương thức không tải chi tiết (như layDanhSachPhieuNhap).
+     */
+    public void setTongTien(double tongTien) {
+        this.tongTien = tongTien;
+    }
+    
     public List<ChiTietPhieuNhap> getChiTietPhieuNhapList() {
         return chiTietPhieuNhapList;
     }
 
+    /**
+     * Khi danh sách chi tiết được set hoặc thay đổi,
+     * tổng tiền sẽ được tính lại tự động.
+     */
     public void setChiTietPhieuNhapList(List<ChiTietPhieuNhap> chiTietPhieuNhapList) {
         this.chiTietPhieuNhapList = chiTietPhieuNhapList;
-        capNhatTongTienTheoChiTiet();
+        capNhatTongTienTheoChiTiet(); // Gọi hàm tính toán sau khi set list
     }
 
-    /** ✅ Hàm tính lại tổng tiền từ danh sách chi tiết phiếu nhập */
+    /**
+     * Thuộc tính dẫn xuất: Tính tổng tiền dựa trên danh sách chi tiết hiện có.
+     */
     public void capNhatTongTienTheoChiTiet() {
         if (chiTietPhieuNhapList == null || chiTietPhieuNhapList.isEmpty()) {
             this.tongTien = 0;
@@ -92,14 +108,20 @@ public class PhieuNhap {
         }
         double tong = 0;
         for (ChiTietPhieuNhap ctpn : chiTietPhieuNhapList) {
-            tong += ctpn.getDonGiaNhap() * ctpn.getSoLuongNhap();
+            // Đảm bảo ctpn không null và có giá trị hợp lệ
+            if (ctpn != null) {
+                tong += ctpn.getThanhTien(); // Nên dùng getThanhTien() đã tính sẵn
+            }
         }
-        this.tongTien = Math.round(tong);
+        // Làm tròn đến 2 chữ số thập phân nếu cần, hoặc dùng Math.round như cũ
+        this.tongTien = Math.round(tong * 100.0) / 100.0; 
+        // this.tongTien = Math.round(tong); // Hoặc làm tròn đến số nguyên nếu bạn muốn
     }
 
     @Override
     public String toString() {
-        return String.format("PhieuNhap{ma='%s', ngay=%s, tongTien=%.0f}", maPhieuNhap, ngayNhap, tongTien);
+        // Nên hiển thị 2 số lẻ cho tiền tệ
+        return String.format("PhieuNhap{ma='%s', ngay=%s, tongTien=%.2f}", maPhieuNhap, ngayNhap, tongTien);
     }
 
     @Override

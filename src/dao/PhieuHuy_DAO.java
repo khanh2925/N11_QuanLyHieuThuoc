@@ -81,21 +81,23 @@ public class PhieuHuy_DAO {
             con = connectDB.getConnection();
             LoSanPham_DAO loSanPhamDAO = new LoSanPham_DAO();
             
-            String sql = "SELECT * FROM ChiTietPhieuHuy WHERE MaPhieuHuy = ?";
+            String sql = "SELECT MaLo, SoLuongHuy, LyDoChiTiet, DonGiaNhap FROM ChiTietPhieuHuy WHERE MaPhieuHuy = ?";
             stmt = con.prepareStatement(sql);
             stmt.setString(1, maPhieuHuy);
             rs = stmt.executeQuery();
             
+            PhieuHuy phTam = new PhieuHuy();
+            phTam.setMaPhieuHuy(maPhieuHuy);
+
             while (rs.next()) {
                 String maLo = rs.getString("MaLo");
                 int soLuongHuy = rs.getInt("SoLuongHuy");
                 String lyDo = rs.getString("LyDoChiTiet");
+                double donGiaNhap = rs.getDouble("DonGiaNhap");
 
-                LoSanPham lo = loSanPhamDAO.getLoSanPhamTheoMa(maLo);
+                LoSanPham lo = loSanPhamDAO.timLoSanPhamTheoMa(maLo);
                 if (lo != null) {
-                    // Constructor của ChiTietPhieuHuy yêu cầu PhieuHuy, nhưng ở đây ta chỉ có mã
-                    // Ta sẽ tạm thời truyền null để lấy danh sách chi tiết
-                    ChiTietPhieuHuy ct = new ChiTietPhieuHuy(null, soLuongHuy, lyDo, lo, lo.getSanPham().getGiaNhap());
+                    ChiTietPhieuHuy ct = new ChiTietPhieuHuy(phTam, lo, soLuongHuy, donGiaNhap, lyDo);
                     danhSachChiTiet.add(ct);
                 }
             }
@@ -125,16 +127,18 @@ public class PhieuHuy_DAO {
         try {
             con.setAutoCommit(false); // Bắt đầu transaction
 
-            String sqlPhieuHuy = "INSERT INTO PhieuHuy (MaPhieuHuy, NgayLapPhieu, MaNhanVien, TrangThai) VALUES (?, ?, ?, ?)";
+            String sqlPhieuHuy = "INSERT INTO PhieuHuy (MaPhieuHuy, NgayLapPhieu, MaNhanVien, TongTienHuy, TrangThai) VALUES (?, ?, ?, ?, ?)";
             stmtPhieuHuy = con.prepareStatement(sqlPhieuHuy);
             stmtPhieuHuy.setString(1, ph.getMaPhieuHuy());
             stmtPhieuHuy.setDate(2, Date.valueOf(ph.getNgayLapPhieu()));
             stmtPhieuHuy.setString(3, ph.getNhanVien().getMaNhanVien());
-            stmtPhieuHuy.setBoolean(4, ph.isTrangThai());
+            stmtPhieuHuy.setDouble(4, ph.getTongTien());
+            stmtPhieuHuy.setBoolean(5, ph.isTrangThai());
             stmtPhieuHuy.executeUpdate();
 
-            String sqlChiTiet = "INSERT INTO ChiTietPhieuHuy (MaPhieuHuy, MaLo, SoLuongHuy, LyDoChiTiet) VALUES (?, ?, ?, ?)";
+            String sqlChiTiet = "INSERT INTO ChiTietPhieuHuy (MaPhieuHuy, MaLo, SoLuongHuy, LyDoChiTiet, DonGiaNhap) VALUES (?, ?, ?, ?, ?)";
             String sqlUpdateSoLuong = "UPDATE LoSanPham SET SoLuongTon = SoLuongTon - ? WHERE MaLo = ?";
+            
             stmtChiTiet = con.prepareStatement(sqlChiTiet);
             stmtUpdate = con.prepareStatement(sqlUpdateSoLuong);
 
@@ -143,6 +147,7 @@ public class PhieuHuy_DAO {
                 stmtChiTiet.setString(2, ct.getLoSanPham().getMaLo());
                 stmtChiTiet.setInt(3, ct.getSoLuongHuy());
                 stmtChiTiet.setString(4, ct.getLyDoChiTiet());
+                stmtChiTiet.setDouble(5, ct.getDonGiaNhap());
                 stmtChiTiet.addBatch();
 
                 stmtUpdate.setInt(1, ct.getSoLuongHuy());
@@ -232,7 +237,6 @@ public class PhieuHuy_DAO {
                 e.printStackTrace();
             }
         }
-        // Trả về mã đầu tiên trong ngày nếu có lỗi
         String dateString = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         return "PH-" + dateString + "-0001";
     }

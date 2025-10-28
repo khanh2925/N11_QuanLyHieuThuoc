@@ -24,6 +24,7 @@ public class ChiTietPhieuTra_DAO {
 
     public List<ChiTietPhieuTra> timKiemChiTietBangMaPhieuTra(String maPhieuTra) {
         List<ChiTietPhieuTra> danhSachChiTiet = new ArrayList<>();
+        // SỬA LỖI 1: Đổi tên cột LyDoTra -> LyDoChiTiet
         String sql = "SELECT * FROM ChiTietPhieuTra WHERE MaPhieuTra = ?";
 
         try (PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -32,22 +33,16 @@ public class ChiTietPhieuTra_DAO {
                 while (rs.next()) {
                     String maHoaDon = rs.getString("MaHoaDon");
                     String maSanPham = rs.getString("MaSanPham");
-                    String lyDoTra = rs.getString("LyDoTra");
+                    String lyDoChiTiet = rs.getString("LyDoChiTiet");
                     int soLuong = rs.getInt("SoLuong");
-                    // Đọc trạng thái kiểu NVARCHAR từ DB
-                    String trangThaiDB = rs.getString("TrangThai");
+                    int trangThai = rs.getInt("TrangThai");
 
-                    // Chuyển đổi NVARCHAR -> boolean cho entity
-                    boolean trangThaiEntity = trangThaiDB != null && trangThaiDB.equalsIgnoreCase("Đã xử lý");
-
-                    // Lấy đối tượng ChiTietHoaDon từ DAO tương ứng
                     ChiTietHoaDon cthd = chiTietHoaDonDAO.timKiemChiTietHoaDonBangMa(maHoaDon, maSanPham);
                     if (cthd != null) {
-                        // Tạo đối tượng PhieuTra tạm chỉ với mã để đưa vào constructor
                         PhieuTra pt = new PhieuTra();
                         pt.setMaPhieuTra(maPhieuTra);
 
-                        ChiTietPhieuTra ctpt = new ChiTietPhieuTra(pt, cthd, lyDoTra, soLuong, trangThaiEntity);
+                        ChiTietPhieuTra ctpt = new ChiTietPhieuTra(pt, cthd, lyDoChiTiet, soLuong, trangThai);
                         danhSachChiTiet.add(ctpt);
                     }
                 }
@@ -57,8 +52,11 @@ public class ChiTietPhieuTra_DAO {
         }
         return danhSachChiTiet;
     }
+
+
     public boolean themChiTietPhieuTra(ChiTietPhieuTra ctpt) {
-        String sql = "INSERT INTO ChiTietPhieuTra (MaPhieuTra, MaHoaDon, MaSanPham, LyDoTra, SoLuong, ThanhTienHoan, TrangThai) " +
+        // SỬA LỖI 1: Đổi tên cột LyDoTra -> LyDoChiTiet
+        String sql = "INSERT INTO ChiTietPhieuTra (MaPhieuTra, MaHoaDon, MaSanPham, LyDoChiTiet, SoLuong, ThanhTienHoan, TrangThai) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setString(1, ctpt.getPhieuTra().getMaPhieuTra());
@@ -67,10 +65,7 @@ public class ChiTietPhieuTra_DAO {
             stmt.setString(4, ctpt.getLyDoChiTiet());
             stmt.setInt(5, ctpt.getSoLuong());
             stmt.setDouble(6, ctpt.getThanhTienHoan());
-
-            // Chuyển đổi boolean -> NVARCHAR cho DB
-            String trangThaiDB = ctpt.isTrangThai() ? "Đã xử lý" : "Chờ xử lý";
-            stmt.setString(7, trangThaiDB);
+            stmt.setInt(7, ctpt.getTrangThai());
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -78,15 +73,16 @@ public class ChiTietPhieuTra_DAO {
             return false;
         }
     }
-    
-    public boolean capNhatTrangThaiChiTiet(String maPhieuTra, String maHoaDon, String maSanPham, String trangThaiMoi) {
+
+
+    public boolean capNhatTrangThaiChiTiet(String maPhieuTra, String maHoaDon, String maSanPham, int trangThaiMoi) {
         String sql = "UPDATE ChiTietPhieuTra SET TrangThai = ? WHERE MaPhieuTra = ? AND MaHoaDon = ? AND MaSanPham = ?";
         try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, trangThaiMoi);
+            stmt.setInt(1, trangThaiMoi);
             stmt.setString(2, maPhieuTra);
             stmt.setString(3, maHoaDon);
             stmt.setString(4, maSanPham);
-            
+
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();

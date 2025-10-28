@@ -11,14 +11,14 @@ public class PhieuTra {
     private KhachHang khachHang;
     private NhanVien nhanVien;
     private LocalDate ngayLap;
-    private boolean daDuyet; // ✅ true = Đã duyệt, false = Đang chờ duyệt
+    private boolean daDuyet; // true = Đã duyệt, false = Đang chờ duyệt
     private double tongTienHoan;
     private List<ChiTietPhieuTra> chiTietPhieuTraList;
 
     public PhieuTra() {
         this.chiTietPhieuTraList = new ArrayList<>();
         this.ngayLap = LocalDate.now();
-        this.daDuyet = false;
+        this.daDuyet = false; // Mặc định là chờ duyệt
         this.tongTienHoan = 0;
     }
 
@@ -30,7 +30,6 @@ public class PhieuTra {
         setNgayLap(ngayLap);
         setDaDuyet(daDuyet);
         setChiTietPhieuTraList(chiTietPhieuTraList);
-        capNhatTongTienHoan();
     }
 
     // ===== GETTERS / SETTERS =====
@@ -90,36 +89,53 @@ public class PhieuTra {
         return tongTienHoan;
     }
 
+    /**
+     * === THÊM SETTER NÀY ===
+     * Dùng bởi DAO khi đọc giá trị TongTienHoan từ CSDL cho các view tóm tắt
+     * (không tải chi tiết để tính toán lại).
+     */
+    public void setTongTienHoan(double tongTienHoan) {
+        this.tongTienHoan = tongTienHoan;
+    }
+
     public List<ChiTietPhieuTra> getChiTietPhieuTraList() {
         return chiTietPhieuTraList;
     }
 
+    /**
+     * Khi set danh sách chi tiết, tự động tính lại tổng tiền hoàn.
+     */
     public void setChiTietPhieuTraList(List<ChiTietPhieuTra> chiTietPhieuTraList) {
         if (chiTietPhieuTraList == null)
             throw new IllegalArgumentException("Danh sách chi tiết phiếu trả không được null.");
         this.chiTietPhieuTraList = chiTietPhieuTraList;
-        capNhatTongTienHoan();
+        capNhatTongTienHoan(); // Tính lại tổng tiền sau khi set list
     }
 
-    // ===== BUSINESS LOGIC =====
 
-    /** ✅ Tự động cập nhật tổng tiền hoàn dựa trên chi tiết hợp lệ */
+    /**
+     * Thuộc tính dẫn xuất: Tự động cập nhật tổng tiền hoàn dựa trên chi tiết hợp lệ.
+     * Chỉ tính những chi tiết có trạng thái là "Huỷ hàng" (trangThai == 2).
+     */
     public void capNhatTongTienHoan() {
+        if (chiTietPhieuTraList == null || chiTietPhieuTraList.isEmpty()) {
+            this.tongTienHoan = 0;
+            return;
+        }
         double tong = 0;
         for (ChiTietPhieuTra ct : chiTietPhieuTraList) {
             if (ct != null && ct.getThanhTienHoan() > 0 && ct.isHoanTien()) {
                 tong += ct.getThanhTienHoan();
             }
         }
-        this.tongTienHoan = tong;
+        this.tongTienHoan = Math.round(tong * 100.0) / 100.0;
     }
 
-    /** ✅ Lấy trạng thái hiển thị text */
+    /** Lấy trạng thái hiển thị text */
     public String getTrangThaiText() {
         return daDuyet ? "Đã duyệt" : "Đang chờ duyệt";
     }
 
-    // ===== OVERRIDES =====
 
     @Override
     public String toString() {
