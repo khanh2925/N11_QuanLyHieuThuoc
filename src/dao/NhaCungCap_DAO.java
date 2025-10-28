@@ -10,114 +10,86 @@ import entity.NhaCungCap;
 public class NhaCungCap_DAO {
 
     public NhaCungCap_DAO() {}
-
-    /** Lấy toàn bộ nhà cung cấp */
-    public ArrayList<NhaCungCap> getAllNhaCungCap() {
-        ArrayList<NhaCungCap> ds = new ArrayList<>();
+    
+    public List<NhaCungCap> getAllNhaCungCap() {
+        List<NhaCungCap> ds = new ArrayList<>();
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
 
-        String sql = "SELECT MaNhaCungCap, TenNhaCungCap, SoDienThoai, DiaChi FROM NhaCungCap";
-
-        try (Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
+        String sql = "SELECT MaNhaCungCap, TenNhaCungCap, SoDienThoai, DiaChi FROM NhaCungCap ORDER BY MaNhaCungCap";
+        try (Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
                 String ma = rs.getString("MaNhaCungCap");
                 String ten = rs.getString("TenNhaCungCap");
                 String sdt = rs.getString("SoDienThoai");
-                String diaChi = rs.getString("DiaChi");
-                ds.add(new NhaCungCap(ma, ten, sdt, diaChi));
+                String dia = rs.getString("DiaChi");
+                ds.add(new NhaCungCap(ma, ten, sdt, dia));
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return ds;
     }
 
-    /** Thêm nhà cung cấp */
     public boolean createNhaCungCap(NhaCungCap ncc) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
 
         String sql = "INSERT INTO NhaCungCap (MaNhaCungCap, TenNhaCungCap, SoDienThoai, DiaChi) VALUES (?, ?, ?, ?)";
-
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, ncc.getMaNhaCungCap());
-            stmt.setString(2, ncc.getTenNhaCungCap());
-            stmt.setString(3, ncc.getSoDienThoai());
-            stmt.setString(4, ncc.getDiaChi());
-            return stmt.executeUpdate() > 0;
-
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, ncc.getMaNhaCungCap());
+            ps.setString(2, ncc.getTenNhaCungCap());
+            ps.setString(3, ncc.getSoDienThoai());
+            ps.setString(4, ncc.getDiaChi());
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) {
+            // trùng khóa, vi phạm unique phone (nếu DB có), ...
             e.printStackTrace();
+            return false;
         }
-        return false;
     }
-
-    /** Cập nhật nhà cung cấp  */
+    
+    // update
     public boolean updateNhaCungCap(NhaCungCap ncc) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
 
-        String sql = "UPDATE NhaCungCap SET TenNhaCungCap = ?, SoDienThoai = ?, DiaChi = ? WHERE MaNhaCungCap = ?";
-
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, ncc.getTenNhaCungCap());
-            stmt.setString(2, ncc.getSoDienThoai());
-            stmt.setString(3, ncc.getDiaChi());
-            stmt.setString(4, ncc.getMaNhaCungCap());
-            return stmt.executeUpdate() > 0;
-
+        String sql = "UPDATE NhaCungCap " +
+                     "SET TenNhaCungCap = ?, SoDienThoai = ?, DiaChi = ? " +
+                     "WHERE MaNhaCungCap = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, ncc.getTenNhaCungCap());
+            ps.setString(2, ncc.getSoDienThoai());
+            ps.setString(3, ncc.getDiaChi());
+            ps.setString(4, ncc.getMaNhaCungCap());
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.printStackTrace(); // có thể do unique phone hoặc lỗi khác
+            return false;
         }
-        return false;
     }
 
-    /** Tìm kiếm nhà cung cấp theo mã  */
-    public NhaCungCap getNhaCungCapTheoMa(String maNCC) {
+
+    /** Sinh mã NCC theo pattern NCC-xxx (3 chữ số) hoặc NCC-000001 nếu bạn muốn 6 chữ số, tùy sửa SQL */
+    public String generateId() {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
 
-        String sql = "SELECT MaNhaCungCap, TenNhaCungCap, SoDienThoai, DiaChi FROM NhaCungCap WHERE MaNhaCungCap = ?";
+        // Nếu mã của bạn là NCC-001, NCC-002... dùng SUBSTRING sau ký tự thứ 5.
+        String sql = "SELECT MAX(CAST(SUBSTRING(MaNhaCungCap, 5, 10) AS INT)) AS MaxNum " +
+                     "FROM NhaCungCap WHERE MaNhaCungCap LIKE 'NCC-%'";
 
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, maNCC);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    String ten = rs.getString("TenNhaCungCap");
-                    String sdt = rs.getString("SoDienThoai");
-                    String diaChi = rs.getString("DiaChi");
-                    return new NhaCungCap(maNCC, ten, sdt, diaChi);
-                }
+        try (Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            int next = 1;
+            if (rs.next()) {
+                next = rs.getInt("MaxNum") + 1;
             }
+            return String.format("NCC-%03d", next); // ví dụ NCC-021
         } catch (SQLException e) {
             e.printStackTrace();
+            return "NCC-001";
         }
-        return null; // không tìm thấy
     }
-
-   
-    /** Xóa nhà cung cấp theo mã */
-    public boolean deleteNhaCungCap(String maNCC) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
-
-        String sql = "DELETE FROM NhaCungCap WHERE MaNhaCungCap = ?";
-
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, maNCC);
-            return stmt.executeUpdate() > 0;
-
-        } catch (SQLException e) {
-            e.printStackTrace(); 
-        }
-        return false;
-    }
-    
-
-
 }
