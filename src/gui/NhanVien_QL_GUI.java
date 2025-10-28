@@ -137,64 +137,32 @@ public class NhanVien_QL_GUI extends JPanel {
         dsNhanVien = new ArrayList<>();
         try {
         	TaiKhoan tk1 = new TaiKhoan("TK123456", "user01", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424268", "Nguyễn Văn An", true, LocalDate.of(1990, 5, 15), "0901234567", "123 Lê Lợi, Quận 1, TPHCM", false, tk1, "Sáng", true));
+            dsNhanVien.add(new NhanVien("NV1729424268", "Nguyễn Văn An", true, LocalDate.of(1990, 5, 15), "0901234567", "123 Lê Lợi, Quận 1, TPHCM", false, tk1, "SANG", true));
             
             TaiKhoan tk2 = new TaiKhoan("TK123457", "user02", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424269", "Trần Thị Bình", false, LocalDate.of(1995, 8, 20), "0912345678", "456 Nguyễn Trãi, Quận 5, TPHCM", false, tk2, "Chiều", true));
+            dsNhanVien.add(new NhanVien("NV1729424269", "Trần Thị Bình", false, LocalDate.of(1995, 8, 20), "0912345678", "456 Nguyễn Trãi, Quận 5, TPHCM", false, tk2, "SANG", true));
             
             TaiKhoan tk3 = new TaiKhoan("TK123458", "admin01", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424270", "Lê Hoàng Cường", true, LocalDate.of(1988, 1, 30), "0987654321", "789 CMT8, Q.Tân Bình, TPHCM", true, tk3, "Hành chính", true));
+            dsNhanVien.add(new NhanVien("NV1729424270", "Lê Hoàng Cường", true, LocalDate.of(1988, 1, 30), "0987654321", "789 CMT8, Q.Tân Bình, TPHCM", true, tk3, "SANG", true));
             
             TaiKhoan tk4 = new TaiKhoan("TK123459", "dungpham", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424271", "Phạm Thị Dung", false, LocalDate.of(2001, 11, 10), "0933445566", "101 Võ Văn Ngân, TP.Thủ Đức", false, tk4, "Sáng", true));
+            dsNhanVien.add(new NhanVien("NV1729424271", "Phạm Thị Dung", false, LocalDate.of(2001, 11, 10), "0933445566", "101 Võ Văn Ngân, TP.Thủ Đức", false, tk4, "SANG", true));
             
             TaiKhoan tk5 = new TaiKhoan("TK123460", "longvo", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424272", "Võ Minh Long", true, LocalDate.of(1999, 3, 25), "0977889900", "222 Pasteur, Quận 3, TPHCM", false, tk5, "Tối", false));
+            dsNhanVien.add(new NhanVien("NV1729424272", "Võ Minh Long", true, LocalDate.of(1999, 3, 25), "0977889900", "222 Pasteur, Quận 3, TPHCM", false, tk5, "SANG", false));
             
             TaiKhoan tk6 = new TaiKhoan("TK123461", "ngocdo", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424273", "Đỗ Thị Ngọc", false, LocalDate.of(2002, 7, 7), "0909090909", "333 Lê Văn Sỹ, Quận Phú Nhuận", false, tk6, "Chiều", true));
+            dsNhanVien.add(new NhanVien("NV1729424273", "Đỗ Thị Ngọc", false, LocalDate.of(2002, 7, 7), "0909090909", "333 Lê Văn Sỹ, Quận Phú Nhuận", false, tk6, "SANG", true));
             
             TaiKhoan tk7 = new TaiKhoan("TK123462", "haivan", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424274", "Hoàng Văn Hải", true, LocalDate.of(1992, 9, 1), "0918273645", "55 Nguyễn Xí, Quận Bình Thạnh", false, tk7, "Tối", true));
+            dsNhanVien.add(new NhanVien("NV1729424274", "Hoàng Văn Hải", true, LocalDate.of(1992, 9, 1), "0918273645", "55 Nguyễn Xí, Quận Bình Thạnh", false, tk7, "SANG", true));
             
             TaiKhoan tk8 = new TaiKhoan("TK123463", "lanmai", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424275", "Mai Thị Lan", false, LocalDate.of(1998, 12, 12), "0944556677", "88 An Dương Vương, Quận 6", false, tk8, "Sáng", true));
+            dsNhanVien.add(new NhanVien("NV1729424275", "Mai Thị Lan", false, LocalDate.of(1998, 12, 12), "0944556677", "88 An Dương Vương, Quận 6", false, tk8, "SANG", true));
             
             TaiKhoan tk9 = new TaiKhoan("TK123464", "toanbui", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424276", "Bùi Thế Toàn", true, LocalDate.of(1996, 4, 18), "0965874123", "12 Trường Chinh, Quận 12", false, tk9, "Hành chính", true));
+            dsNhanVien.add(new NhanVien("NV1729424276", "Bùi Thế Toàn", true, LocalDate.of(1996, 4, 18), "0965874123", "12 Trường Chinh, Quận 12", false, tk9, "SANG", true));
             
-            TaiKhoan tk10 = new TaiKhoan("TK123465", "linhdang", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424277", "Đặng Thùy Linh", false, LocalDate.of(2000, 2, 29), "0903147258", "77 Lũy Bán Bích, Quận Tân Phú", false, tk10, "Chiều", false));
-
-            TaiKhoan tk11 = new TaiKhoan("TK123466", "huyngo", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424278", "Ngô Gia Huy", true, LocalDate.of(1993, 6, 8), "0978945612", "99 Hùng Vương, Quận 10", false, tk11, "Tối", true));
-            
-            TaiKhoan tk12 = new TaiKhoan("TK123467", "thaovu", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424279", "Vũ Thị Thảo", false, LocalDate.of(1997, 10, 3), "0915789456", "234 Cộng Hòa, Quận Tân Bình", false, tk12, "Sáng", true));
-            
-            TaiKhoan tk13 = new TaiKhoan("TK123468", "admin02", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424280", "Lý Minh Kha", true, LocalDate.of(1989, 7, 22), "0988776655", "46 Hậu Giang, Quận 6", true, tk13, "Hành chính", true));
-            
-            TaiKhoan tk14 = new TaiKhoan("TK123469", "kimanh", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424281", "Hồ Thị Kim Anh", false, LocalDate.of(2003, 3, 14), "0922334455", "35/8 Nguyễn Văn Luông, Quận 6", false, tk14, "Chiều", true));
-            
-            TaiKhoan tk15 = new TaiKhoan("TK123470", "phongtx", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424282", "Trịnh Xuân Phong", true, LocalDate.of(1991, 11, 27), "0966778899", "18/A Nguyễn Ảnh Thủ, Hóc Môn", false, tk15, "Tối", true));
-            
-            TaiKhoan tk16 = new TaiKhoan("TK123471", "duongnt", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424283", "Nguyễn Thùy Dương", false, LocalDate.of(1994, 8, 5), "0908123789", "Khu chế xuất Tân Thuận, Quận 7", false, tk16, "Sáng", true));
-            
-            TaiKhoan tk17 = new TaiKhoan("TK123472", "minhdinh", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424284", "Đinh Công Minh", true, LocalDate.of(1995, 1, 1), "0911223344", "200 Lý Thường Kiệt, Quận 11", false, tk17, "Chiều", false));
-            
-            TaiKhoan tk18 = new TaiKhoan("TK123473", "nganluu", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424285", "Lưu Bích Ngân", false, LocalDate.of(1999, 5, 19), "0938475619", "Đường số 12, Bình Hưng Hòa, Bình Tân", false, tk18, "Hành chính", true));
-            
-            TaiKhoan tk19 = new TaiKhoan("TK123474", "tungphan", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424286", "Phan Thanh Tùng", true, LocalDate.of(1990, 10, 9), "0977665544", "5/2 Quang Trung, Quận Gò Vấp", false, tk19, "Tối", true));
-            
-            TaiKhoan tk20 = new TaiKhoan("TK123475", "suongtran", "Password@123");
-            dsNhanVien.add(new NhanVien("NV1729424287", "Trần Ngọc Sương", false, LocalDate.of(2001, 6, 24), "0947382910", "432 Âu Cơ, Quận Tân Bình", false, tk20, "Sáng", true));
             
         } catch (IllegalArgumentException e) {
             e.printStackTrace();

@@ -42,7 +42,7 @@ public class SanPham {
         setSoDangKy(soDangKy);
         setDuongDung(duongDung);
         setGiaNhap(giaNhap);
-        capNhatGiaBanTheoHeSo(); // ✅ tự tính giá bán theo hệ số
+        capNhatGiaBanTheoHeSo();
         setHinhAnh(hinhAnh);
         setKeBanSanPham(keBanSanPham);
         setHoatDong(hoatDong);
@@ -132,15 +132,6 @@ public class SanPham {
         return giaBan;
     }
 
-    // ❌ Không public setter giá bán — giá bán luôn được tính tự động
-    private void setGiaBan(double giaBan) {
-        this.giaBan = giaBan;
-    }
-
-    /**
-     * ✅ Tính lại giá bán dựa theo hệ số lợi nhuận từ giá nhập.
-     * Vẫn lưu kết quả vào thuộc tính (để ghi vào DB hoặc hiển thị lại).
-     */
     public void capNhatGiaBanTheoHeSo() {
         if (giaNhap <= 0) return;
 

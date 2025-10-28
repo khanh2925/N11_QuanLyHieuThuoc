@@ -140,11 +140,21 @@ public class NhanVien {
 	}
 
 	public void setCaLam(String caLam) {
-		if (caLam == null || caLam.trim().isEmpty()) {
-			throw new IllegalArgumentException("Ca làm không được rỗng.");
-		}
-		this.caLam = caLam;
+	    if (caLam == null || caLam.trim().isEmpty()) {
+	        throw new IllegalArgumentException("Ca làm không được rỗng.");
+	    }
+
+	    // Chuẩn hóa chuỗi về chữ hoa không khoảng trắng
+	    String ca = caLam.trim().toUpperCase();
+
+	    if (ca.equals("SANG") || ca.equals("CHIEU") || ca.equals("TOI")) {
+	        this.caLam = ca;
+	    } else {
+	        throw new IllegalArgumentException("Ca làm không hợp lệ. Chỉ chấp nhận: SANG, CHIEU, TOI.");
+	    }
 	}
+
+ // ca lam combox String
 
 	public boolean isTrangThai() {
 		return trangThai;
