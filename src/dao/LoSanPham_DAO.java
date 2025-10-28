@@ -24,14 +24,13 @@ public class LoSanPham_DAO {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
 
-        String sql = "SELECT MaLo, NgaySanXuat, HanSuDung, SoLuong, MaSanPham FROM LoSanPham";
+        String sql = "SELECT MaLo, HanSuDung, SoLuongTon, MaSanPham FROM LoSanPham";
 
         try (Statement st = con.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
 
             while (rs.next()) {
                 String maLo = rs.getString("MaLo");
-                LocalDate nsx = rs.getDate("NgaySanXuat").toLocalDate();
                 LocalDate hsd = rs.getDate("HanSuDung").toLocalDate();
                 int soLuong = rs.getInt("SoLuong");
                 String maSP = rs.getString("MaSanPham");
@@ -40,7 +39,7 @@ public class LoSanPham_DAO {
                 SanPham sp = new SanPham();
                 try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
 
-                LoSanPham lo = new LoSanPham(maLo, nsx, hsd, soLuong, sp);
+                LoSanPham lo = new LoSanPham(maLo, hsd, soLuong, sp);
                 ds.add(lo);
             }
         } catch (SQLException e) {
@@ -54,19 +53,18 @@ public class LoSanPham_DAO {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
 
-        String sql = "INSERT INTO LoSanPham (MaLo, NgaySanXuat, HanSuDung, SoLuong, MaSanPham) "
+        String sql = "INSERT INTO LoSanPham (MaLo, HanSuDung, SoLuongTon, MaSanPham) "
                    + "VALUES (?, ?, ?, ?, ?)";
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, lo.getMaLo());
-            ps.setDate(2, Date.valueOf(lo.getNgaySanXuat()));
-            ps.setDate(3, Date.valueOf(lo.getHanSuDung()));
-            ps.setInt(4, lo.getSoLuong());
-            ps.setString(5, lo.getSanPham() != null ? lo.getSanPham().getMaSanPham() : null);
+            ps.setDate(2, Date.valueOf(lo.getHanSuDung()));
+            ps.setInt(3, lo.getSoLuongTon());
+            ps.setString(4, lo.getSanPham() != null ? lo.getSanPham().getMaSanPham() : null);
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace(); // trùng PK/ FK... sẽ in ở đây
+            e.printStackTrace();
         }
         return false;
     }
@@ -76,15 +74,14 @@ public class LoSanPham_DAO {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
 
-        String sql = "UPDATE LoSanPham SET NgaySanXuat = ?, HanSuDung = ?, SoLuong = ?, MaSanPham = ? "
+        String sql = "UPDATE LoSanPham SET HanSuDung = ?, SoLuongTon = ?, MaSanPham = ? "
                    + "WHERE MaLo = ?";
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setDate(1, Date.valueOf(lo.getNgaySanXuat()));
-            ps.setDate(2, Date.valueOf(lo.getHanSuDung()));
-            ps.setInt(3, lo.getSoLuong());
-            ps.setString(4, lo.getSanPham() != null ? lo.getSanPham().getMaSanPham() : null);
-            ps.setString(5, lo.getMaLo());
+            ps.setDate(1, Date.valueOf(lo.getHanSuDung()));
+            ps.setInt(2, lo.getSoLuongTon());
+            ps.setString(3, lo.getSanPham() != null ? lo.getSanPham().getMaSanPham() : null);
+            ps.setString(4, lo.getMaLo());
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -104,7 +101,7 @@ public class LoSanPham_DAO {
             ps.setString(1, maLo);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace(); // nếu bị ràng buộc FK (CTNhap/CTXuat...) DB sẽ báo lỗi tại đây
+            e.printStackTrace(); 
         }
         return false;
     }
@@ -114,7 +111,7 @@ public class LoSanPham_DAO {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
 
-        String sql = "SELECT MaLo, NgaySanXuat, HanSuDung, SoLuong, MaSanPham "
+        String sql = "SELECT MaLo, HanSuDung, SoLuongTon, MaSanPham "
                    + "FROM LoSanPham WHERE MaLo = ?";
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
@@ -122,20 +119,19 @@ public class LoSanPham_DAO {
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    LocalDate nsx = rs.getDate("NgaySanXuat").toLocalDate();
                     LocalDate hsd = rs.getDate("HanSuDung").toLocalDate();
-                    int soLuong = rs.getInt("SoLuong");
+                    int soLuong = rs.getInt("SoLuongTon");
                     String maSP = rs.getString("MaSanPham");
 
                     SanPham sp = new SanPham();
                     try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
 
-                    return new LoSanPham(maLo, nsx, hsd, soLuong, sp);
+                    return new LoSanPham(maLo, hsd, soLuong, sp);
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return null; // không tìm thấy
+        return null;
     }
 }

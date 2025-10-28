@@ -45,7 +45,7 @@ public class HoaDon_DAO {
                 // KhachHang kh = khachHangDAO.timKiemKhachHangBangMa(maKH); // Entity HoaDon chỉ cần mã KH
 
                 // KhuyenMai là null vì DB không có
-                HoaDon hd = new HoaDon(maHD, maKH, ngayLap, nv, null, thuocTheoDon);
+                HoaDon hd = new HoaDon
 
                 List<ChiTietHoaDon> dsChiTiet = chiTietHoaDonDAO.layDanhSachChiTietTheoMaHD(maHD);
                 hd.setChiTietHoaDonList(dsChiTiet);

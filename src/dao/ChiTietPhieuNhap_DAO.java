@@ -29,7 +29,7 @@ public class ChiTietPhieuNhap_DAO {
         try {
             connectDB.getInstance();
             con = connectDB.getConnection();
-            LoSanPham_DAO loSanPhamDAO = new LoSanPham_DAO(); // Khởi tạo DAO cục bộ
+            LoSanPham_DAO loSanPhamDAO = new LoSanPham_DAO();
 
             String sql = "SELECT * FROM ChiTietPhieuNhap WHERE MaPhieuNhap = ?";
             stmt = con.prepareStatement(sql);

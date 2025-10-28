@@ -4,12 +4,18 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.sql.SQLException;
 import java.text.DecimalFormat;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -19,32 +25,46 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 
+import connectDB.connectDB;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
+import dao.ChiTietPhieuNhap_DAO;
+import dao.PhieuNhap_DAO;
+import entity.ChiTietPhieuNhap;
+import entity.PhieuNhap;
 
-public class NhapHang_GUI extends JPanel {
+public class NhapHang_GUI extends JPanel implements ActionListener, MouseListener {
 
-    private JPanel pnCenter;
-    private JPanel pnHeader;
-    private JPanel pnRight;
-    private PillButton btnThem;
-    private PillButton btnXuatFile;
-    private DefaultTableModel modelPN;
-    private JTable tblPN;
-    private JScrollPane scrCTPN;
-    private DefaultTableModel modelCTPN;
-    private JScrollPane scrPN;
-    private JTable tblCTPN;
+    private static final long serialVersionUID = 1L;
+    private JPanel pnCenter, pnHeader, pnRight;
+    private PillButton btnThem, btnXuatFile;
+    private DefaultTableModel modelPN, modelCTPN;
+    private JTable tblPN, tblCTPN;
     private JTextField txtSearch;
 
-    DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    DecimalFormat df = new DecimalFormat("#,###đ");
+    private final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private final DecimalFormat df = new DecimalFormat("#,###đ");
 
-    private Color blueMint = new Color(180, 220, 240);
-    private Color pinkPastel = new Color(255, 200, 220);
+    private final Color blueMint = new Color(180, 220, 240);
+    private final Color pinkPastel = new Color(255, 200, 220);
+
+    // Khai báo các DAO
+    private PhieuNhap_DAO phieuNhapDAO;
+    private ChiTietPhieuNhap_DAO chiTietPhieuNhapDAO;
 
     public NhapHang_GUI() {
+        // Khởi tạo DAO
+        phieuNhapDAO = new PhieuNhap_DAO();
+        chiTietPhieuNhapDAO = new ChiTietPhieuNhap_DAO();
+        
+        try {
+            connectDB.getInstance().connect();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Lỗi kết nối CSDL", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+
         this.setPreferredSize(new Dimension(1537, 850));
         initialize();
     }
@@ -84,29 +104,17 @@ public class NhapHang_GUI extends JPanel {
         dateDen.setDateFormatString("dd/MM/yyyy");
         dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         dateDen.setBounds(735, 35, 130, 30);
-
-        java.util.Calendar cal = java.util.Calendar.getInstance();
-        cal.add(java.util.Calendar.DATE, 1);
-        dateDen.setDate(cal.getTime());
-
-        // ==== Nút thêm phiếu ====
+        dateDen.setDate(new java.util.Date());
+        
         btnThem = new PillButton("Thêm");
         btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnThem.setBounds(922, 30, 120, 40);
-
-        // Giữ nguyên sự kiện (nếu có màn ThemPhieuNhap_GUI)
-        btnThem.addActionListener(e -> {
-            java.awt.Window win = SwingUtilities.getWindowAncestor(this);
-            if (win instanceof JFrame frame) {
-                frame.setContentPane(new ThemPhieuNhap_GUI());
-                frame.revalidate();
-                frame.repaint();
-            }
-        });
+        btnThem.addActionListener(this);
 
         btnXuatFile = new PillButton("Xuất file");
         btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnXuatFile.setBounds(1068, 30, 120, 40);
+        btnXuatFile.addActionListener(this);
 
         pnHeader.add(txtSearch);
         pnHeader.add(lblTuNgay);
@@ -122,31 +130,31 @@ public class NhapHang_GUI extends JPanel {
 
         // ===== RIGHT =====
         pnRight = new JPanel();
-        pnRight.setPreferredSize(new Dimension(600, 1080));
-        pnRight.setBackground(new Color(0, 128, 255));
+        pnRight.setPreferredSize(new Dimension(700, 1080));
         pnRight.setLayout(new javax.swing.BoxLayout(pnRight, javax.swing.BoxLayout.Y_AXIS));
         add(pnRight, BorderLayout.EAST);
 
         initTable();
-        LoadPhieuNhap(); // nạp data fake
+        loadDataPhieuNhap(); // Thay thế dữ liệu fake
     }
 
     private void initTable() {
+        // Bảng phiếu nhập
         String[] phieuNhapCols = {"Mã PN", "Ngày lập phiếu", "Nhân Viên", "NCC", "Tổng tiền"};
         modelPN = new DefaultTableModel(phieuNhapCols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         tblPN = new JTable(modelPN);
-        scrPN = new JScrollPane(tblPN);
-        pnCenter.add(scrPN);
+        pnCenter.add(new JScrollPane(tblPN));
+        tblPN.addMouseListener(this); // Thêm sự kiện click
 
+        // Bảng chi tiết phiếu nhập
         String[] cTPhieuCols = {"Mã lô", "Mã SP", "Tên SP", "SL nhập", "Đơn giá", "Thành tiền"};
         modelCTPN = new DefaultTableModel(cTPhieuCols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         tblCTPN = new JTable(modelCTPN);
-        scrCTPN = new JScrollPane(tblCTPN);
-        pnRight.add(scrCTPN);
+        pnRight.add(new JScrollPane(tblCTPN));
 
         formatTable(tblPN);
         tblPN.setSelectionBackground(blueMint);
@@ -156,98 +164,103 @@ public class NhapHang_GUI extends JPanel {
         tblCTPN.setSelectionBackground(pinkPastel);
         tblCTPN.getTableHeader().setBackground(blueMint);
     }
-
-    /** Data fake thuần tuý, không dùng entity/enums */
-    public void LoadPhieuNhap() {
-        // ==== PHIẾU NHẬP (master) ====
-        // fields: maPN, ngayLap, tenNV, tenNCC, tongTien (sẽ tính từ chi tiết)
-        Object[][] pnData = {
-            { "PN001", LocalDate.of(2025, 10, 18), "Lê Thanh Kha", "Công ty Dược Hậu Giang", 0.0 },
-            { "PN002", LocalDate.of(2025, 10, 20), "Trần Thị B",   "Mekophar",               0.0 }
-        };
-
-        // ==== CHI TIẾT (detail) ====
-        // fields: (maPN), maLo, maSP, tenSP, slNhap, donGia
-        Object[][] ctData = {
-            { "PN001", "LO000001", "SP000001", "Paracetamol 500mg", 50, 800.0 },
-            { "PN001", "LO000002", "SP000002", "Vitamin C 1000mg",  30, 1200.0 },
-            { "PN002", "LO000003", "SP000003", "Efferalgan 500mg",  40, 950.0 },
-            { "PN002", "LO000004", "SP000004", "Bông y tế",         80, 120.0 }
-        };
-
-        // Tính tổng tiền cho từng PN từ ctData
-        for (int i = 0; i < pnData.length; i++) {
-            String maPN = pnData[i][0].toString();
-            double tong = 0.0;
-            for (Object[] ct : ctData) {
-                if (maPN.equals(ct[0])) {
-                    int sl = (int) ct[4];
-                    double donGia = ((Number) ct[5]).doubleValue();
-                    tong += sl * donGia;
-                }
-            }
-            pnData[i][4] = tong;
-        }
-
-        // Đổ master
+    
+    // Nạp dữ liệu Phiếu Nhập từ CSDL
+    private void loadDataPhieuNhap() {
         modelPN.setRowCount(0);
-        for (Object[] pn : pnData) {
+        List<PhieuNhap> dsPhieuNhap = phieuNhapDAO.layTatCaPhieuNhap();
+        for (PhieuNhap pn : dsPhieuNhap) {
             modelPN.addRow(new Object[]{
-                pn[0],
-                ((LocalDate) pn[1]).format(fmt),
-                pn[2],
-                pn[3],
-                df.format(((Number) pn[4]).doubleValue())
+                pn.getMaPhieuNhap(),
+                pn.getNgayNhap().format(fmt),
+                pn.getNhanVien().getTenNhanVien(),
+                pn.getNhaCungCap().getTenNhaCungCap(),
+                df.format(pn.getTongTien())
             });
         }
+    }
 
-        // Đổ detail
+    // Nạp dữ liệu Chi Tiết Phiếu Nhập từ CSDL
+    private void loadDataChiTietPhieuNhap(String maPhieuNhap) {
         modelCTPN.setRowCount(0);
-        for (Object[] ct : ctData) {
-            int sl = (int) ct[4];
-            double donGia = ((Number) ct[5]).doubleValue();
-            double thanhTien = sl * donGia;
+        List<ChiTietPhieuNhap> dsChiTiet = chiTietPhieuNhapDAO.timKiemChiTietPhieuNhapBangMa(maPhieuNhap);
+        for (ChiTietPhieuNhap ct : dsChiTiet) {
             modelCTPN.addRow(new Object[]{
-                ct[1], // Mã lô
-                ct[2], // Mã SP
-                ct[3], // Tên SP
-                sl,
-                df.format(donGia),
-                df.format(thanhTien)
+                ct.getLoSanPham().getMaLo(),
+                ct.getLoSanPham().getSanPham().getMaSanPham(),
+                ct.getLoSanPham().getSanPham().getTenSanPham(),
+                ct.getSoLuongNhap(),
+                df.format(ct.getDonGiaNhap()),
+                df.format(ct.getThanhTien())
             });
         }
     }
 
     private void formatTable(JTable table) {
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        table.getTableHeader().setBorder(null);
-        table.setRowHeight(28);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        table.setSelectionBackground(new Color(180, 205, 230));
-        table.setShowGrid(false);
+    	  table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 18));
+          table.getTableHeader().setBorder(null);
+          table.setRowHeight(28);
+          table.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+          table.setSelectionBackground(new Color(180, 205, 230));
+          table.setShowGrid(false);
 
-        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
-        center.setHorizontalAlignment(JLabel.CENTER);
-        DefaultTableCellRenderer right = new DefaultTableCellRenderer();
-        right.setHorizontalAlignment(JLabel.RIGHT);
-        DefaultTableCellRenderer left = new DefaultTableCellRenderer();
-        left.setHorizontalAlignment(JLabel.LEFT);
+          DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+          center.setHorizontalAlignment(JLabel.CENTER);
+          DefaultTableCellRenderer right = new DefaultTableCellRenderer();
+          right.setHorizontalAlignment(JLabel.RIGHT);
+          DefaultTableCellRenderer left = new DefaultTableCellRenderer();
+          left.setHorizontalAlignment(JLabel.LEFT);
 
-        TableColumnModel m = table.getColumnModel();
-        for (int i = 0; i < m.getColumnCount(); i++) {
-            String col = m.getColumn(i).getHeaderValue().toString().toLowerCase();
-            if (col.contains("mã")) m.getColumn(i).setCellRenderer(center);
-            else if (col.contains("số lượng") || col.contains("sl")) m.getColumn(i).setCellRenderer(right);
-            else if (col.contains("giá") || col.contains("tiền")) m.getColumn(i).setCellRenderer(right);
-            else if (col.contains("ngày")) m.getColumn(i).setCellRenderer(center);
-            else m.getColumn(i).setCellRenderer(left);
-        }
-        table.getTableHeader().setReorderingAllowed(false);
+          TableColumnModel m = table.getColumnModel();
+          for (int i = 0; i < m.getColumnCount(); i++) {
+              String col = m.getColumn(i).getHeaderValue().toString().toLowerCase();
+              if (col.contains("mã")) m.getColumn(i).setCellRenderer(center);
+              else if (col.contains("số lượng") || col.contains("sl")) m.getColumn(i).setCellRenderer(right);
+              else if (col.contains("giá") || col.contains("tiền")) m.getColumn(i).setCellRenderer(right);
+              else if (col.contains("ngày")) m.getColumn(i).setCellRenderer(center);
+              else m.getColumn(i).setCellRenderer(left);
+          }
+          table.getTableHeader().setReorderingAllowed(false);
     }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        if (e.getSource().equals(tblPN)) {
+            int row = tblPN.getSelectedRow();
+            if (row != -1) {
+                String maPhieuNhap = modelPN.getValueAt(row, 0).toString();
+                loadDataChiTietPhieuNhap(maPhieuNhap);
+            }
+        }
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object o = e.getSource();
+        if (o.equals(btnThem)) {
+            // Logic chuyển trang của bạn
+            java.awt.Window win = SwingUtilities.getWindowAncestor(this);
+            if (win instanceof JFrame frame) {
+                // Tạm thời comment lại để tránh lỗi nếu ThemPhieuNhap_GUI chưa có
+                // frame.setContentPane(new ThemPhieuNhap_GUI()); 
+                // frame.revalidate();
+                // frame.repaint();
+                JOptionPane.showMessageDialog(this, "Chức năng Thêm Phiếu Nhập đang được phát triển.");
+            }
+        } else if (o.equals(btnXuatFile)) {
+             JOptionPane.showMessageDialog(this, "Chức năng Xuất File đang được phát triển.");
+        }
+    }
+
+    // Các phương thức mouse listener khác không cần thiết
+    @Override public void mousePressed(MouseEvent e) {}
+    @Override public void mouseReleased(MouseEvent e) {}
+    @Override public void mouseEntered(MouseEvent e) {}
+    @Override public void mouseExited(MouseEvent e) {}
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Quản lý phiếu nhập - Data Fake");
+            JFrame frame = new JFrame("Quản lý phiếu nhập");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1280, 800);
             frame.setLocationRelativeTo(null);
