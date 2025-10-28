@@ -1,47 +1,48 @@
 package entity;
 
 import java.util.Objects;
-
 import enums.DuongDung;
 import enums.LoaiSanPham;
 
-
+/**
+ * @author
+ * @version 2.0
+ * @since Oct 2025
+ *
+ * Mô tả:
+ *  - Lưu trữ thông tin sản phẩm trong hiệu thuốc.
+ *  - Giá bán là thuộc tính DẪN XUẤT CÓ LƯU: tự động tính theo giá nhập nhưng vẫn được lưu DB.
+ */
 public class SanPham {
-	
+
     private String maSanPham;
     private String tenSanPham;
     private LoaiSanPham loaiSanPham;
     private String soDangKy;
     private DuongDung duongDung;
     private double giaNhap;
-    private double giaBan;
+    private double giaBan; // ✅ dẫn xuất có lưu
     private String hinhAnh;
     private String keBanSanPham;
     private boolean hoatDong;
-    
 
+    // ===== CONSTRUCTORS =====
+    public SanPham() {}
 
-    // ===== CONSTRUCTOR =====
-    
-    public SanPham() {
-    }
-    
     public SanPham(String maSanPham) {
-		this.maSanPham = maSanPham;
-	}
-    
-    public SanPham(String maSanPham, String tenSanPham, LoaiSanPham loaiSanPham, String soDangKy,
-                    DuongDung duongDung,
-                   double giaNhap, double giaBan, String hinhAnh,
-                   String keBanSanPham, boolean hoatDong) {
+        this.maSanPham = maSanPham;
+    }
 
+    public SanPham(String maSanPham, String tenSanPham, LoaiSanPham loaiSanPham, String soDangKy,
+                   DuongDung duongDung, double giaNhap, String hinhAnh,
+                   String keBanSanPham, boolean hoatDong) {
         setMaSanPham(maSanPham);
         setTenSanPham(tenSanPham);
         setLoaiSanPham(loaiSanPham);
         setSoDangKy(soDangKy);
         setDuongDung(duongDung);
         setGiaNhap(giaNhap);
-        setGiaBan(giaBan);
+        capNhatGiaBanTheoHeSo(); // ✅ tự tính giá bán theo hệ số
         setHinhAnh(hinhAnh);
         setKeBanSanPham(keBanSanPham);
         setHoatDong(hoatDong);
@@ -60,7 +61,7 @@ public class SanPham {
         this.hoatDong = sp.hoatDong;
     }
 
-    // ===== GETTER / SETTER =====
+    // ===== GETTERS / SETTERS =====
 
     public String getMaSanPham() {
         return maSanPham;
@@ -83,7 +84,7 @@ public class SanPham {
             throw new IllegalArgumentException("Tên sản phẩm không được rỗng.");
         if (tenSanPham.length() > 100)
             throw new IllegalArgumentException("Tên sản phẩm không được vượt quá 100 ký tự.");
-        this.tenSanPham = tenSanPham;
+        this.tenSanPham = tenSanPham.trim();
     }
 
     public LoaiSanPham getLoaiSanPham() {
@@ -112,7 +113,7 @@ public class SanPham {
 
     public void setDuongDung(DuongDung duongDung) {
         if (duongDung == null)
-            throw new IllegalArgumentException("Đường dùng không tồn tại.");
+            throw new IllegalArgumentException("Đường dùng không được null.");
         this.duongDung = duongDung;
     }
 
@@ -124,32 +125,32 @@ public class SanPham {
         if (giaNhap <= 0)
             throw new IllegalArgumentException("Giá nhập phải lớn hơn 0.");
         this.giaNhap = giaNhap;
+        capNhatGiaBanTheoHeSo(); // ✅ tự động cập nhật giá bán mỗi khi đổi giá nhập
     }
 
     public double getGiaBan() {
         return giaBan;
     }
 
-    public void setGiaBan(double giaBan) {
-        if (giaBan <= 0)
-            throw new IllegalArgumentException("Giá bán phải lớn hơn 0.");
+    // ❌ Không public setter giá bán — giá bán luôn được tính tự động
+    private void setGiaBan(double giaBan) {
+        this.giaBan = giaBan;
+    }
 
-        if (this.giaNhap <= 0)
-            throw new IllegalStateException("Cần nhập giá nhập trước khi xác định giá bán.");
+    /**
+     * ✅ Tính lại giá bán dựa theo hệ số lợi nhuận từ giá nhập.
+     * Vẫn lưu kết quả vào thuộc tính (để ghi vào DB hoặc hiển thị lại).
+     */
+    public void capNhatGiaBanTheoHeSo() {
+        if (giaNhap <= 0) return;
 
-        // Tính hệ số lợi nhuận tối thiểu
         double heSoLoiNhuan;
-        if (this.giaNhap < 10000) heSoLoiNhuan = 1.5;
-        else if (this.giaNhap < 50000) heSoLoiNhuan = 1.3;
-        else if (this.giaNhap < 200000) heSoLoiNhuan = 1.2;
+        if (giaNhap < 10000) heSoLoiNhuan = 1.5;
+        else if (giaNhap < 50000) heSoLoiNhuan = 1.3;
+        else if (giaNhap < 200000) heSoLoiNhuan = 1.2;
         else heSoLoiNhuan = 1.1;
 
-        double giaBanToiThieu = this.giaNhap * heSoLoiNhuan;
-
-        if (giaBan < giaBanToiThieu)
-            throw new IllegalArgumentException("Giá bán phải cao hơn giá nhập theo tỷ lệ lợi nhuận tối thiểu.");
-
-        this.giaBan = giaBan; // ✅ giữ nguyên giá người nhập, không ép về giá tối thiểu
+        this.giaBan = Math.round(giaNhap * heSoLoiNhuan);
     }
 
     public String getHinhAnh() {
@@ -180,18 +181,17 @@ public class SanPham {
         this.hoatDong = hoatDong;
     }
 
-    // ===== OVERRIDE =====
-
+    // ===== OVERRIDES =====
     @Override
     public String toString() {
-        return String.format("SanPham{ma='%s', ten='%s', giaBan=%.0f, hoatDong=%s}",
-                maSanPham, tenSanPham, giaBan, hoatDong);
+        return String.format("SanPham{ma='%s', ten='%s', giaNhap=%.0f, giaBan=%.0f, hoatDong=%s}",
+                maSanPham, tenSanPham, giaNhap, giaBan, hoatDong);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof SanPham)) return false;
         SanPham sp = (SanPham) o;
         return Objects.equals(maSanPham, sp.maSanPham);
     }
