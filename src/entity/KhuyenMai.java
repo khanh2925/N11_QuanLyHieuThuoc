@@ -70,7 +70,8 @@ public class KhuyenMai {
         this.ngayKetThuc = ngayKetThuc;
     }
 
-    public boolean isTrangThai() { return trangThai; }
+    public boolean isTrangThai() 
+    { return trangThai; }
     public void setTrangThai(boolean trangThai) { this.trangThai = trangThai; }
 
     public boolean isKhuyenMaiHoaDon() { return khuyenMaiHoaDon; }

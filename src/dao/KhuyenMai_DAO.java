@@ -139,15 +139,18 @@ public class KhuyenMai_DAO {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
         PreparedStatement stmt = null;
-        
+
         try {
-            String sql = "UPDATE KhuyenMai SET TenKM = ?, NgayBatDau = ?, NgayKetThuc = ?, TrangThai = ?, " + 
+            km.capNhatTrangThaiTuDong();
+
+            String sql = "UPDATE KhuyenMai SET TenKM = ?, NgayBatDau = ?, NgayKetThuc = ?, TrangThai = ?, " +
                          "KhuyenMaiHoaDon = ?, HinhThucKM = ?, GiaTri = ?, DieuKienApDungHoaDon = ?, " +
                          "SoLuongToiThieu = ?, SoLuongTangThem = ? WHERE MaKM = ?";
             stmt = con.prepareStatement(sql);
             stmt.setString(1, km.getTenKM());
             stmt.setDate(2, Date.valueOf(km.getNgayBatDau()));
             stmt.setDate(3, Date.valueOf(km.getNgayKetThuc()));
+            // Lấy trạng thái đã được cập nhật tự động
             stmt.setBoolean(4, km.isTrangThai());
             stmt.setBoolean(5, km.isKhuyenMaiHoaDon());
             stmt.setString(6, km.getHinhThuc().name());

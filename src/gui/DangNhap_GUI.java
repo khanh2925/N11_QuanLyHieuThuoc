@@ -8,8 +8,12 @@ import java.awt.Font;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.List;
+// import java.util.List; // Không dùng list cứng nữa
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -22,9 +26,13 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 
+import connectDB.connectDB; // Import connectDB
 import customcomponent.ImagePanel;
 import customcomponent.PillButton;
 import customcomponent.RoundedBorder;
+// Import DAO và Entity
+import dao.NhanVien_DAO;
+import dao.TaiKhoan_DAO;
 import entity.NhanVien;
 import entity.TaiKhoan;
 
@@ -32,8 +40,26 @@ public class DangNhap_GUI extends JFrame {
 
 	private JTextField txtTaiKhoan;
 	private JPasswordField txtMatKhau;
+	
+	// Khai báo DAO
+	private TaiKhoan_DAO taiKhoan_DAO;
+	private NhanVien_DAO nhanVien_DAO;
 
 	public DangNhap_GUI() {
+		// Khởi tạo DAO
+		taiKhoan_DAO = new TaiKhoan_DAO();
+		nhanVien_DAO = new NhanVien_DAO();
+		
+		// Kết nối CSDL
+		try {
+			connectDB.getInstance().connect();
+			System.out.println("Kết nối CSDL thành công!");
+		} catch (SQLException e) {
+			System.err.println("Lỗi kết nối CSDL:");
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(this, "Không thể kết nối đến cơ sở dữ liệu.", "Lỗi Kết Nối", JOptionPane.ERROR_MESSAGE);
+		}
+		
 		initialize();
 	}
 
@@ -96,6 +122,11 @@ public class DangNhap_GUI extends JFrame {
 		txtTaiKhoan.setMargin(new Insets(5, 15, 5, 15));
 		pnFormDangNhap.add(txtTaiKhoan);
 		addPlaceholder(txtTaiKhoan, "Nhập tài khoản của bạn");
+		
+		// Test data
+		txtTaiKhoan.setText("admin01");
+		txtTaiKhoan.setForeground(Color.BLACK);
+
 
 		JLabel lblMatKhau = new JLabel("Mật khẩu");
 		lblMatKhau.setFont(new Font("Arial", Font.PLAIN, 24));
@@ -119,6 +150,12 @@ public class DangNhap_GUI extends JFrame {
 		txtMatKhau.setMargin(new Insets(5, 15, 5, 45));
 		pnFormDangNhap.add(txtMatKhau);
 		addPlaceholder(txtMatKhau, "Nhập mật khẩu của bạn");
+		
+		// Test data
+		txtMatKhau.setText("Admin@12345");
+		txtMatKhau.setForeground(Color.BLACK);
+		txtMatKhau.setEchoChar('●');
+
 
 		// === Icon mắt ===
 		ImageIcon iconOpen = new ImageIcon(new ImageIcon(getClass().getResource("/images/eye_open.png")).getImage()
@@ -138,10 +175,16 @@ public class DangNhap_GUI extends JFrame {
 
 		// Trạng thái mặc định: ẩn mật khẩu
 		final boolean[] isHidden = { true };
-		txtMatKhau.setEchoChar('●');
+		// txtMatKhau.setEchoChar('●'); // Đã set ở trên
 
 		// Sự kiện click vào nút mắt
 		btnTogglePassword.addActionListener(e -> {
+			// Bỏ qua nếu là placeholder
+			String passText = new String(txtMatKhau.getPassword());
+			if (passText.equals("Nhập mật khẩu của bạn")) {
+				return;
+			}
+			
 			if (isHidden[0]) {
 				// Hiện mật khẩu
 				txtMatKhau.setEchoChar((char) 0);
@@ -174,48 +217,49 @@ public class DangNhap_GUI extends JFrame {
 		btnQuenMK.setFocusPainted(false);
 		btnQuenMK.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
+		// === SỰ KIỆN NÚT ĐĂNG NHẬP ===
 		btnDangNhap.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-//				String taiKhoan = txtTaiKhoan.getText();
-//				String matKhau = new String(txtMatKhau.getPassword());
-//				// Kiểm tra dữ liệu nhập
-//				if (taiKhoan.equals("admin") && matKhau.equals("admin123")) {
-//			        addPlaceholder(txtTaiKhoan, "Nhập tài khoản của bạn");
-//			        addPlaceholder(txtMatKhau, "Nhập mật khẩu của bạn");
-//		            frame.setContentPane(new Main_GUI());
-//					// Chuyển đến giao diện chính của ứng dụng
-//				} else {
-//					JOptionPane.showMessageDialog(frame, "Tài khoản hoặc mật khẩu không đúng.", "Lỗi đăng nhập",
-//							JOptionPane.ERROR_MESSAGE);
-//			        addPlaceholder(txtTaiKhoan, "Nhập tài khoản của bạn");
-//			        addPlaceholder(txtMatKhau, "Nhập mật khẩu của bạn");
-//				}
-				TaiKhoan tk1 = new TaiKhoan("TK000001", "admin", "Admin123@");
-				TaiKhoan tk2 = new TaiKhoan("TK000002", "nhanvien1", "Nhanvien1@");
-				List<NhanVien> dsnv = List.of(
-						new NhanVien("NV2025100001", "Nguyễn Văn A", false, LocalDate.of(2005, 1, 1), "0987654321",
-								"HCM", true, tk1, "SANG", true),
-						new NhanVien("NV2025100002", "Nguyễn Văn B", false, LocalDate.of(2005, 1, 1), "0987654321",
-								"HCM", false, tk2, "SANG", true));
+				String tenDangNhap = txtTaiKhoan.getText().trim();
+				String matKhau = new String(txtMatKhau.getPassword()).trim();
 
-				NhanVien nvDangNhap = dsnv.stream()
-						.filter(nv -> nv.getTaiKhoan().getTenDangNhap().equals(txtTaiKhoan.getText().trim())
-								&& nv.getTaiKhoan().getMatKhau().equals(new String(txtMatKhau.getPassword()).trim()))
-						.findFirst().orElse(null);
+				// Kiểm tra rỗng
+				if (tenDangNhap.isEmpty() || tenDangNhap.equals("Nhập tài khoản của bạn")) {
+					JOptionPane.showMessageDialog(null, "Vui lòng nhập tên tài khoản!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+					txtTaiKhoan.requestFocus();
+					return;
+				}
+				if (matKhau.isEmpty() || matKhau.equals("Nhập mật khẩu của bạn")) {
+					JOptionPane.showMessageDialog(null, "Vui lòng nhập mật khẩu!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+					txtMatKhau.requestFocus();
+					return;
+				}
+				
+				// --- Logic kiểm tra đăng nhập ---
+				// Do DAO và Entity của bạn không đồng bộ với CSDL (ví dụ NhanVien_DAO truy vấn cột MaTaiKhoan không tồn tại trong bảng NhanVien),
+				// nên tôi sẽ viết logic truy vấn trực tiếp ở đây để đảm bảo đúng với CSDL bạn cung cấp.
+				
+				NhanVien nvDangNhap = getNhanVienDangNhap(tenDangNhap, matKhau);
 
 				if (nvDangNhap != null) {
+					// Kiểm tra trạng thái
+					if(!nvDangNhap.isTrangThai()) {
+						JOptionPane.showMessageDialog(null, "Tài khoản này đã bị khóa. Vui lòng liên hệ quản lý.", "Đăng nhập thất bại",
+								JOptionPane.ERROR_MESSAGE);
+						return;
+					}
+					
 					JOptionPane.showMessageDialog(null,
 							"Đăng nhập thành công!\nXin chào " + nvDangNhap.getTenNhanVien() + " ("
 									+ (nvDangNhap.isQuanLy() ? "Quản lý" : "Nhân viên") + ")",
 							"Thành công", JOptionPane.INFORMATION_MESSAGE);
 					dispose();
-					// Mở Main_GUI
+					// Mở Main_GUI và truyền nhân viên đăng nhập vào
 					new Main_GUI(nvDangNhap).setVisible(true);;
 				} else {
 					JOptionPane.showMessageDialog(null, "Sai tài khoản hoặc mật khẩu!", "Đăng nhập thất bại",
 							JOptionPane.ERROR_MESSAGE);
-					System.out.println(txtTaiKhoan.getText().trim());
-					System.out.println(new String(txtMatKhau.getPassword()));
+					System.out.println("Thất bại: " + tenDangNhap + " / " + matKhau);
 				}
 			}
 		});
@@ -244,8 +288,78 @@ public class DangNhap_GUI extends JFrame {
 
 		return pnFormDangNhap;
 	}
+	
+	/**
+	 * Kiểm tra thông tin đăng nhập và lấy thông tin Nhân Viên tương ứng.
+	 * Phương thức này truy vấn CSDL dựa trên SCHEMA bạn cung cấp (TaiKhoan JOIN NhanVien)
+	 * @param tenDangNhap
+	 * @param matKhau
+	 * @return Đối tượng NhanVien nếu đăng nhập thành công, ngược lại trả về null
+	 */
+	private NhanVien getNhanVienDangNhap(String tenDangNhap, String matKhau) {
+		NhanVien nv = null;
+		Connection con = connectDB.getConnection();
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+		
+		// Câu SQL này JOIN 2 bảng dựa trên CSDL bạn cung cấp
+		String sql = "SELECT nv.*, tk.MaTaiKhoan, tk.TenDangNhap, tk.MatKhau "
+				   + "FROM NhanVien nv "
+				   + "JOIN TaiKhoan tk ON nv.MaNhanVien = tk.MaNhanVien "
+				   + "WHERE tk.TenDangNhap = ? AND tk.MatKhau = ?";
+		
+		try {
+			stmt = con.prepareStatement(sql);
+			stmt.setString(1, tenDangNhap);
+			stmt.setString(2, matKhau); // Lưu ý: CSDL đang lưu mật khẩu dạng clear text
+			
+			rs = stmt.executeQuery();
+			
+			if(rs.next()) {
+				// 1. Tạo đối tượng Tài Khoản
+				String maTK = rs.getString("MaTaiKhoan");
+				String tenDN = rs.getString("TenDangNhap");
+				String mk = rs.getString("MatKhau");
+				TaiKhoan tk = new TaiKhoan(maTK, tenDN, mk);
+				
+				// 2. Tạo đối tượng Nhân Viên
+				String maNV = rs.getString("MaNhanVien");
+				String tenNV = rs.getString("TenNhanVien");
+				boolean gioiTinh = rs.getBoolean("GioiTinh");
+				LocalDate ngaySinh = rs.getDate("NgaySinh").toLocalDate();
+				String sdt = rs.getString("SoDienThoai");
+				String diaChi = rs.getString("DiaChi");
+				boolean quanLy = rs.getBoolean("QuanLy");
+				String caLam = rs.getString("CaLam");
+				boolean trangThai = rs.getBoolean("TrangThai");
+				
+				// Khởi tạo nhân viên
+				nv = new NhanVien(maNV, tenNV, gioiTinh, ngaySinh, sdt, diaChi, quanLy, tk, caLam, trangThai);
+			}
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(this, "Lỗi khi truy vấn dữ liệu đăng nhập.", "Lỗi SQL", JOptionPane.ERROR_MESSAGE);
+		} finally {
+			// Đóng kết nối
+			try {
+				if(rs != null) rs.close();
+				if(stmt != null) stmt.close();
+				// Không đóng Connection ở đây để có thể tái sử dụng
+			} catch (SQLException e2) {
+				e2.printStackTrace();
+			}
+		}
+		
+		return nv;
+	}
 
 	private void addPlaceholder(JTextField field, String placeholder) {
+		// Nếu field đã có text (do set test data) thì không set placeholder
+		if(!field.getText().isEmpty() && !field.getText().equals(placeholder)) {
+			return;
+		}
+
 		field.setText(placeholder);
 		field.setForeground(Color.GRAY);
 

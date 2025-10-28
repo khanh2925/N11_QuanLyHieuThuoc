@@ -43,7 +43,7 @@ public class ChiTietPhieuHuy_DAO {
                 // === SỬA LỖI 1: Lấy thêm DonGiaNhap từ ResultSet ===
                 double donGiaNhap = rs.getDouble("DonGiaNhap");
 
-                LoSanPham lo = loSanPhamDAO.getLoSanPhamTheoMa(maLo);
+                LoSanPham lo = loSanPhamDAO.timLoSanPhamTheoMa(maLo);
                 if (lo != null) {
                     // === SỬA LỖI 2: Truyền đúng donGiaNhap vào constructor ===
                     ChiTietPhieuHuy ct = new ChiTietPhieuHuy(ph, lo, soLuongHuy, donGiaNhap, lyDo);

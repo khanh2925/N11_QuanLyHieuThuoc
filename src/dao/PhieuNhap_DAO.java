@@ -242,4 +242,59 @@ public class PhieuNhap_DAO {
         
         return "PN0000001"; // Trả về mã đầu tiên nếu có lỗi
     }
+    public List<PhieuNhap> timKiemPhieuNhap(String keyword, java.util.Date tuNgay, java.util.Date denNgay) {
+        List<PhieuNhap> dsPhieuNhap = new ArrayList<>();
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        String sql = "SELECT pn.MaPhieuNhap, pn.NgayNhap, pn.TongTien, " +
+                     "nv.MaNhanVien, nv.TenNhanVien, " +
+                     "ncc.MaNhaCungCap, ncc.TenNhaCungCap " +
+                     "FROM PhieuNhap pn " +
+                     "JOIN NhanVien nv ON pn.MaNhanVien = nv.MaNhanVien " +
+                     "JOIN NhaCungCap ncc ON pn.MaNhaCungCap = ncc.MaNhaCungCap " +
+                     "WHERE (pn.MaPhieuNhap LIKE ? OR ncc.TenNhaCungCap LIKE ? OR nv.TenNhanVien LIKE ?) " +
+                     "AND pn.NgayNhap BETWEEN ? AND ?";
+
+        try {
+            stmt = con.prepareStatement(sql);
+            String keywordParam = "%" + keyword + "%";
+            stmt.setString(1, keywordParam);
+            stmt.setString(2, keywordParam);
+            stmt.setString(3, keywordParam);
+            stmt.setDate(4, new java.sql.Date(tuNgay.getTime()));
+            stmt.setDate(5, new java.sql.Date(denNgay.getTime()));
+            
+            rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                NhanVien nv = new NhanVien(rs.getString("MaNhanVien"));
+                nv.setTenNhanVien(rs.getString("TenNhanVien"));
+                
+                NhaCungCap ncc = new NhaCungCap(rs.getString("MaNhaCungCap"));
+                ncc.setTenNhaCungCap(rs.getString("TenNhaCungCap"));
+
+                PhieuNhap pn = new PhieuNhap();
+                pn.setMaPhieuNhap(rs.getString("MaPhieuNhap"));
+                pn.setNgayNhap(rs.getDate("NgayNhap").toLocalDate());
+                pn.setNhanVien(nv);
+                pn.setNhaCungCap(ncc);
+                pn.setTongTien(rs.getDouble("TongTien"));
+                
+                dsPhieuNhap.add(pn);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (stmt != null) stmt.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return dsPhieuNhap;
+    }
 }
