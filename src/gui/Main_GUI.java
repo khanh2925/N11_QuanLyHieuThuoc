@@ -33,21 +33,20 @@ public class Main_GUI extends JFrame {
 	private JLabel lblUserTop;
 
 	public Main_GUI(NhanVien nv) {
-		this.nvDangNhap = nv; // GÁN TRƯỚC
-		buildUI(); // rồi mới dựng UI
-		hienThongTinNhanVien();
-	}
-
-	public Main_GUI() {
-		this(null); // ⬅️ constructor mặc định gọi qua constructor chính
-	}
-
-	private void buildUI() { // ⬅️ DI CHUYỂN NỘI DUNG từ constructor mặc định vào đây
+		this.nvDangNhap = nv;
 		setTitle("Hiệu thuốc Hòa An - Hệ thống quản lý");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setSize(1920, 1080);
 		setLocationRelativeTo(null);
+		buildUI();
+		hienThongTinNhanVien();
+	}
 
+	public Main_GUI() {
+		this(null);
+	}
+
+	private void buildUI() { // ⬅️ DI CHUYỂN NỘI DUNG từ constructor mặc định vào đây
 		JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 		split.setDividerLocation(MENU_WIDTH);
 		split.setDividerSize(0);
@@ -56,7 +55,7 @@ public class Main_GUI extends JFrame {
 
 		add(split);
 
-		boolean isQL = nvDangNhap != null && nvDangNhap.isQuanLy(); // ⬅️ CHỐT NULL-SAFE
+		boolean isQL = nvDangNhap != null && nvDangNhap.isQuanLy();
 		if (isQL) { // Thêm các panel chức năng - sau này gắn tên panel vào đây
 			cardPanel.add(new JPanel(new GridBagLayout()) {
 				{
@@ -65,22 +64,24 @@ public class Main_GUI extends JFrame {
 					add(lbl);
 				}
 			}, "tongquan");
-
+			cardPanel.add(new ThongKeDoanhThu_GUI(), "thongke");
+			cardPanel.add(new DonHang_GUI(), "donhang");
+			cardPanel.add(new NhapHang_GUI(), "nhaphang");
+			cardPanel.add(new HuyHang_GUI(), "xuathuy");
+			cardPanel.add(new QLTraHang_GUI(), "trahang");
+			cardPanel.add(new NhaCungCap_GUI(), "nhacungcap");
 			cardPanel.add(new KhachHang_NV_GUI(), "khachhang");
 			cardPanel.add(new KhuyenMai_GUI(), "khuyenmai");
 			cardPanel.add(new NhanVien_QL_GUI(), "nhanvien");
-			cardPanel.add(new ThongKeDoanhThu_GUI(), "thongke");
-			cardPanel.add(new TongQuanNV_GUI(), "thongtin");
+//			cardPanel.add(new TongQuanNV_GUI(), "thongtin");
 			showCard("tongquan");
 		} else {
-			// Thêm các panel chức năng - sau này gắn tên panel vào đây
+			cardPanel.add(new TongQuanNV_GUI(), "tongquan");
 			cardPanel.add(new BanHang_GUI(), "banhang");
 			cardPanel.add(new TraHangNhanVien_GUI(), "trahang");
+			cardPanel.add(new HuyHang_GUI(), "xuathuy");
 			cardPanel.add(new KhachHang_NV_GUI(), "khachhang");
-			cardPanel.add(new TongQuanNV_GUI(), "tongquan");
-
 			showCard("banhang");
-
 		}
 	}
 
@@ -92,54 +93,90 @@ public class Main_GUI extends JFrame {
 								// BoxLayout(menu, BoxLayout.Y_AXIS));
 		menu.setBackground(new Color(199, 234, 239));
 
+		// Logo
 		ImageIcon iconLogo = new ImageIcon(getClass().getResource("/images/Logo.png"));
-		Image scaled = iconLogo.getImage().getScaledInstance(LOGO_WIDTH, LOGO_WIDTH, Image.SCALE_SMOOTH); // chỉnh kích
-																											// logo
+		// chỉnh kích thước logo
+		Image scaled = iconLogo.getImage().getScaledInstance(LOGO_WIDTH, LOGO_WIDTH, Image.SCALE_SMOOTH);
 		JLabel logo = new JLabel(new ImageIcon(scaled));
 		logo.setAlignmentX(Component.LEFT_ALIGNMENT);
 		menu.add(logo);
 
+		// Thêm menu button dựa theo role nhân viên
 		boolean isQL = nvDangNhap != null && nvDangNhap.isQuanLy();
 		if (isQL) {
 			addMenuButton(menu, "Tổng quan", "tongquan", "/images/icon_tong_quan.png");
-			addMenuButton(menu, "Đơn hàng", "donhang", "/images/icon_don_hang.png");
-			addSubmenuButton("donhang", "danhsachdonhang", "Đơn hàng", "/images/icon_danh_sach.png", new DonHang_GUI());
-			addSubmenuButton("donhang", "danhsachdontrahang", "Đơn trả hàng", "/images/icon_tra_hang.png",
-					new QLTraHang_GUI());
+			addMenuButton(menu, "Thống kê - Báo cáo", "thongke", "/images/icon_thong_ke.png");
+
+			addMenuButton(menu, "Quản lý đơn hàng", "donhang", "/images/icon_don_hang.png");
+			addMenuButton(menu, "Quản lý nhập hàng", "nhaphang", "/images/icon_nhap_hang.png");
+			addMenuButton(menu, "Quản lý xuất huỷ", "xuathuy", "/images/icon_xuat_huy.png");
+			addMenuButton(menu, "Quản lý trả hàng", "trahang", "/images/icon_tra_hang.png");
+
 			addMenuButton(menu, "Sản phẩm", "sanpham", "/images/icon_san_pham.png");
 			addSubmenuButton("sanpham", "danhsachsanpham", "Danh sách sản phẩm", "/images/icon_danh_sach.png",
-				new SanPham_GUI());
+					new SanPham_GUI());
 			addSubmenuButton("sanpham", "donvitinh", "Đơn vị tính", "/images/icon_don_vi_tinh.png",
 					new DonViTinh_QL_GUI());
-			addSubmenuButton("sanpham", "banggia", "Bảng giá", "/images/icon_bang_gia.png",
-					new BangGia_GUI());
+			addSubmenuButton("sanpham", "banggia", "Bảng giá", "/images/icon_bang_gia.png", new BangGia_GUI());
 			addSubmenuButton("sanpham", "quycach", "Quy cách đóng gói", "/images/icon_bang_gia.png",
 					new QuyCachDongGoi_GUI());
-			addMenuButton(menu, "Kho", "kho", "/images/icon_kho.png");
-			addSubmenuButton("kho", "nhaphang", "Nhập hàng", "/images/icon_nhap_hang.png", new NhapHang_GUI());
-			addSubmenuButton("kho", "nhacungcap", "Nhà cung cấp", "/images/icon_nha_cung_cap.png",
-					new NhaCungCap_GUI());
-			addSubmenuButton("kho", "xuathuy", "Xuất huỷ", "/images/icon_xuat_huy.png", new HuyHang_GUI());
-			addMenuButton(menu, "Khách hàng", "khachhang", "/images/icon_khach_hang.png");
-			addMenuButton(menu, "Khuyến mãi", "khuyenmai", "/images/icon_khuyen_mai.png");
-			addMenuButton(menu, "Nhân viên", "nhanvien", "/images/icon_nhan_vien.png");
-			addMenuButton(menu, "Thống kê - Báo cáo", "thongke", "/images/icon_thong_ke.png");
-			addMenuButton(menu, "Thông tin cá nhân", "thongtin", "/images/icon_thong_tin.png");
+
+			addMenuButton(menu, "Quản lý nhà cung cấp", "nhacungcap", "/images/icon_nha_cung_cap.png");
+
+			addMenuButton(menu, "Quẩn lý khách hàng", "khachhang", "/images/icon_khach_hang.png");
+			addMenuButton(menu, "Quản lý khuyến mãi", "khuyenmai", "/images/icon_khuyen_mai.png");
+			addMenuButton(menu, "Quản lý nhân viên", "nhanvien", "/images/icon_nhan_vien.png");
+//			addMenuButton(menu, "Thông tin cá nhân", "thongtin", "/images/icon_thong_tin.png");
 
 			menu.add(Box.createVerticalGlue());
 		} else {
 			addMenuButton(menu, "Tổng quan", "tongquan", "/images/icon_tong_quan.png");
 			addMenuButton(menu, "Bán hàng", "banhang", "/images/icon_ban_hang.png");
+			addMenuButton(menu, "Trả hàng", "trahang", "/images/icon_tra_hang.png");
+			addMenuButton(menu, "Xuất huỷ", "xuathuy", "/images/icon_xuat_huy.png");
+
 			addMenuButton(menu, "Tra cứu", "tracuu", "/images/icon_tra_cuu.png");
 			addSubmenuButton("tracuu", "tracuudonhang", "Đơn hàng", "/images/icon_don_hang.png",
 					new TraCuuDonHang_GUI());
-			addSubmenuButton("tracuu", "tracuudonhangtra", "Đơn trả hàng", "/images/icon_tra_hang.png",
+			addSubmenuButton("tracuu", "tracuudontrahang", "Đơn trả hàng", "/images/icon_tra_hang.png",
 					new TraCuuDonTraHang_GUI());
+			addSubmenuButton("tracuu", "tracuudonhuyhang", "Đơn huỷ hàng", "/images/icon_xuat_huy.png",
+					new JPanel(new GridBagLayout()) {
+						{
+							JLabel lbl = new JLabel("Màn hình tra cứu đơn huỷ hàng");
+							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+							add(lbl);
+						}
+					});
+			addSubmenuButton("tracuu", "tracuusanpham", "Sản phẩm", "/images/icon_san_pham.png",
+					new JPanel(new GridBagLayout()) {
+						{
+							JLabel lbl = new JLabel("Màn hình tra cứu sản phẩm");
+							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+							add(lbl);
+						}
+					});
+			addSubmenuButton("tracuu", "tracuukhuyenmai", "Khuyến mãi", "/images/icon_khuyen_mai.png",
+					new JPanel(new GridBagLayout()) {
+						{
+							JLabel lbl = new JLabel("Màn hình tra cứu khuyến mãi");
+							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+							add(lbl);
+						}
+					});
+			addSubmenuButton("tracuu", "tracuukhachhang", "Khách hàng", "/images/icon_khach_hang.png",
+					new JPanel(new GridBagLayout()) {
+						{
+							JLabel lbl = new JLabel("Màn hình tra cứu khách hàng");
+							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+							add(lbl);
+						}
+					});
 			addSubmenuButton("tracuu", "tracuukesanpham", "Kệ sản phẩm", "/images/icon_ke_sp.png",
 					new TraCuuKeSanPham_GUI());
-			addMenuButton(menu, "Trả hàng", "trahang", "/images/icon_tra_hang.png");
-			addMenuButton(menu, "Khách hàng", "khachhang", "/images/icon_khach_hang.png");
-			addMenuButton(menu, "Thông tin cá nhân", "thongtin", "/images/icon_thong_tin.png");
+
+			addMenuButton(menu, "Quản lý khách hàng", "khachhang", "/images/icon_khach_hang.png");
+//			addMenuButton(menu, "Thông tin cá nhân", "thongtin", "/images/icon_thong_tin.png");
 
 			menu.add(Box.createVerticalGlue());
 		}
@@ -161,7 +198,25 @@ public class Main_GUI extends JFrame {
 		btn.setBorder(null);
 		btn.setFont(new Font("SansSerif", Font.BOLD, 16));
 		// Thêm icon nhỏ phía trước
-		ImageIcon icon = new ImageIcon(getClass().getResource(iconPath));
+//		ImageIcon icon = new ImageIcon(getClass().getResource(iconPath));
+		ImageIcon icon = null;
+		if (iconPath == null || iconPath.trim().isEmpty()) {
+			System.err.println("⚠️ [Main_GUI] Icon path is null or empty for menu: " + text);
+		} else {
+			URL url = getClass().getResource(iconPath);
+			if (url == null) {
+				System.err.println("❌ [Main_GUI] Icon not found for menu: " + text + " | Path: " + iconPath);
+				try {
+					String base = getClass().getProtectionDomain().getCodeSource().getLocation().toExternalForm();
+					System.err.println("🔍 [Main_GUI] Base classpath: " + base);
+				} catch (Exception ex) {
+					System.err.println("⚠️ [Main_GUI] Cannot determine base classpath: " + ex.getMessage());
+				}
+			} else {
+				icon = new ImageIcon(url);
+				System.out.println("✅ [Main_GUI] Loaded icon: " + iconPath + " for menu: " + text);
+			}
+		}
 		// Scale kích thước icon
 		Image scaledIcon = icon.getImage().getScaledInstance(MENU_ICON_WIDTH, MENU_ICON_WIDTH, Image.SCALE_SMOOTH);
 		btn.setIcon(new ImageIcon(scaledIcon));
