@@ -22,7 +22,7 @@ public class ThemSanPham_Dialog extends JDialog implements ActionListener {
     private JButton btnThem, btnThoat, btnChonAnh;
 
     private SanPham sanPhamMoi;
-    private SanPham_DAO sanPhamDAO = new SanPham_DAO();
+    private final SanPham_DAO sanPhamDAO = new SanPham_DAO();
     private boolean isCreated = false;
     private final Random random = new Random();
 
@@ -42,7 +42,7 @@ public class ThemSanPham_Dialog extends JDialog implements ActionListener {
         lblTitle.setBounds(260, 20, 280, 35);
         getContentPane().add(lblTitle);
 
-        // Cột 1
+        // --- CỘT TRÁI ---
         JLabel lblTen = new JLabel("Tên sản phẩm:");
         lblTen.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblTen.setBounds(40, 80, 200, 25);
@@ -88,7 +88,7 @@ public class ThemSanPham_Dialog extends JDialog implements ActionListener {
             }
         });
 
-        // Cột 2
+        // --- CỘT PHẢI ---
         JLabel lblSoDK = new JLabel("Số đăng ký:");
         lblSoDK.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblSoDK.setBounds(390, 80, 200, 25);
@@ -139,11 +139,11 @@ public class ThemSanPham_Dialog extends JDialog implements ActionListener {
         chkHoatDong.setBounds(40, 420, 200, 35);
         getContentPane().add(chkHoatDong);
 
-        // Nút
+        // --- NÚT ---
         btnThem = new JButton("Thêm");
         btnThem.setBounds(490, 500, 110, 35);
         btnThem.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnThem.setBackground(new Color(0x3B82F6));
+        btnThem.setBackground(new Color(0x10B981));
         btnThem.setForeground(Color.WHITE);
         btnThem.setBorder(null);
         getContentPane().add(btnThem);
@@ -190,7 +190,8 @@ public class ThemSanPham_Dialog extends JDialog implements ActionListener {
             JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle("Chọn ảnh sản phẩm");
             if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-                txtHinhAnh.setText(chooser.getSelectedFile().getName());
+                File file = chooser.getSelectedFile();
+                txtHinhAnh.setText(file.getName());
             }
         } else if (src.equals(btnThem)) {
             handleThemAction();
@@ -199,29 +200,41 @@ public class ThemSanPham_Dialog extends JDialog implements ActionListener {
 
     private void handleThemAction() {
         try {
+            // ====== VALIDATE ======
+            if (txtTenSanPham.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Tên sản phẩm không được trống!");
+                return;
+            }
+            if (txtGiaNhap.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Giá nhập không được trống!");
+                return;
+            }
+
+            // ====== TẠO DỮ LIỆU ======
             String maSP = String.format("SP%06d", random.nextInt(1000000));
             String ten = txtTenSanPham.getText().trim();
             LoaiSanPham loai = (LoaiSanPham) cmbLoaiSanPham.getSelectedItem();
-            String soDK = txtSoDangKy.getText().trim().isEmpty() ? null : txtSoDangKy.getText();
+            String soDK = txtSoDangKy.getText().trim().isEmpty() ? null : txtSoDangKy.getText().trim();
             DuongDung dd = (DuongDung) cmbDuongDung.getSelectedItem();
-            double giaNhap = Double.parseDouble(txtGiaNhap.getText());
-            String hinhAnh = txtHinhAnh.getText();
-            String keBan = txtKeBanSanPham.getText();
+            double giaNhap = Double.parseDouble(txtGiaNhap.getText().trim());
+            String hinhAnh = txtHinhAnh.getText().trim();
+            String keBan = txtKeBanSanPham.getText().trim();
             boolean hoatDong = chkHoatDong.isSelected();
 
-            // Tạo đối tượng và tự tính giá bán
             sanPhamMoi = new SanPham(maSP, ten, loai, soDK, dd, giaNhap, hinhAnh, keBan, hoatDong);
 
-            if (sanPhamDAO.createSanPham(sanPhamMoi)) {
+            if (sanPhamDAO.themSanPham(sanPhamMoi)) { // ✅ đúng tên hàm DAO
                 JOptionPane.showMessageDialog(this, "Thêm sản phẩm thành công!");
                 isCreated = true;
                 dispose();
             } else {
-                JOptionPane.showMessageDialog(this, "Thêm thất bại! Kiểm tra dữ liệu hoặc mã trùng.");
+                JOptionPane.showMessageDialog(this, "Thêm thất bại! Kiểm tra dữ liệu hoặc mã trùng.", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
 
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Giá nhập phải là số!", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage(), "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage(), "Lỗi không xác định", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -229,7 +242,7 @@ public class ThemSanPham_Dialog extends JDialog implements ActionListener {
         return isCreated;
     }
 
-    // ==== Test ====
+    // ==== TEST ====
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             ThemSanPham_Dialog dlg = new ThemSanPham_Dialog(null);

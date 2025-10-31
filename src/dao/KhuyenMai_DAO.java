@@ -15,11 +15,6 @@ public class KhuyenMai_DAO {
     public KhuyenMai_DAO() {
     }
 
-    /**
-     * Tìm kiếm một chương trình khuyến mãi dựa vào mã.
-     * @param maKM Mã khuyến mãi cần tìm.
-     * @return Đối tượng KhuyenMai nếu tìm thấy, null nếu không.
-     */
     public KhuyenMai timKhuyenMaiTheoMa(String maKM) {
         Connection con = null;
         PreparedStatement stmt = null;
@@ -42,7 +37,7 @@ public class KhuyenMai_DAO {
                 boolean kmHoaDon = rs.getBoolean("KhuyenMaiHoaDon");
                 HinhThucKM hinhThuc = HinhThucKM.valueOf(rs.getString("HinhThucKM"));
                 double giaTri = rs.getDouble("GiaTri");
-                String dieuKien = rs.getString("DieuKienApDungHoaDon");
+                double dieuKien = rs.getDouble("DieuKienApDungHoaDon");
                 int slToiThieu = rs.getInt("SoLuongToiThieu");
                 int slTangThem = rs.getInt("SoLuongTangThem");
 
@@ -62,10 +57,6 @@ public class KhuyenMai_DAO {
         return null;
     }
 
-    /**
-     * Lấy tất cả các chương trình khuyến mãi.
-     * @return Danh sách các đối tượng KhuyenMai.
-     */
     public List<KhuyenMai> layTatCaKhuyenMai() {
         List<KhuyenMai> ds = new ArrayList<>();
         Connection con = null;
@@ -76,16 +67,26 @@ public class KhuyenMai_DAO {
             connectDB.getInstance();
             con = connectDB.getConnection();
 
-            String sql = "SELECT MaKM FROM KhuyenMai ORDER BY NgayBatDau DESC";
+            String sql = "SELECT * FROM KhuyenMai ORDER BY NgayBatDau DESC";
             stmt = con.createStatement();
             rs = stmt.executeQuery(sql);
 
             while (rs.next()) {
-                // Tái sử dụng phương thức tìm theo mã để tránh lặp code
-                KhuyenMai km = timKhuyenMaiTheoMa(rs.getString("MaKM"));
-                if (km != null) {
-                    ds.add(km);
-                }
+                 String maKM = rs.getString("MaKM");
+                String tenKM = rs.getString("TenKM");
+                LocalDate ngayBatDau = rs.getDate("NgayBatDau").toLocalDate();
+                LocalDate ngayKetThuc = rs.getDate("NgayKetThuc").toLocalDate();
+                boolean trangThai = rs.getBoolean("TrangThai");
+                boolean kmHoaDon = rs.getBoolean("KhuyenMaiHoaDon");
+                HinhThucKM hinhThuc = HinhThucKM.valueOf(rs.getString("HinhThucKM"));
+                double giaTri = rs.getDouble("GiaTri");
+                double dieuKien = rs.getDouble("DieuKienApDungHoaDon");
+                int slToiThieu = rs.getInt("SoLuongToiThieu");
+                int slTangThem = rs.getInt("SoLuongTangThem");
+                
+                KhuyenMai km = new KhuyenMai(maKM, tenKM, ngayBatDau, ngayKetThuc, trangThai, kmHoaDon,
+                        hinhThuc, giaTri, dieuKien, slToiThieu, slTangThem);
+                ds.add(km);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -100,11 +101,6 @@ public class KhuyenMai_DAO {
         return ds;
     }
 
-    /**
-     * Thêm một chương trình khuyến mãi mới.
-     * @param km Đối tượng KhuyenMai cần thêm.
-     * @return true nếu thành công, false nếu thất bại.
-     */
     public boolean themKhuyenMai(KhuyenMai km) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
@@ -121,9 +117,9 @@ public class KhuyenMai_DAO {
             stmt.setDate(4, Date.valueOf(km.getNgayKetThuc()));
             stmt.setBoolean(5, km.isTrangThai());
             stmt.setBoolean(6, km.isKhuyenMaiHoaDon());
-            stmt.setString(7, km.getHinhThuc().name()); // Chuyển Enum sang String để lưu
+            stmt.setString(7, km.getHinhThuc().name()); 
             stmt.setDouble(8, km.getGiaTri());
-            stmt.setString(9, km.getDieuKienApDungHoaDon());
+            stmt.setDouble(9, km.getDieuKienApDungHoaDon());
             stmt.setInt(10, km.getSoLuongToiThieu());
             stmt.setInt(11, km.getSoLuongTangThem());
             return stmt.executeUpdate() > 0;
@@ -138,12 +134,43 @@ public class KhuyenMai_DAO {
         }
         return false;
     }
+    
+    public boolean capNhatKhuyenMai(KhuyenMai km) {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+        PreparedStatement stmt = null;
+        
+        try {
+            String sql = "UPDATE KhuyenMai SET TenKM = ?, NgayBatDau = ?, NgayKetThuc = ?, TrangThai = ?, " + 
+                         "KhuyenMaiHoaDon = ?, HinhThucKM = ?, GiaTri = ?, DieuKienApDungHoaDon = ?, " +
+                         "SoLuongToiThieu = ?, SoLuongTangThem = ? WHERE MaKM = ?";
+            stmt = con.prepareStatement(sql);
+            stmt.setString(1, km.getTenKM());
+            stmt.setDate(2, Date.valueOf(km.getNgayBatDau()));
+            stmt.setDate(3, Date.valueOf(km.getNgayKetThuc()));
+            stmt.setBoolean(4, km.isTrangThai());
+            stmt.setBoolean(5, km.isKhuyenMaiHoaDon());
+            stmt.setString(6, km.getHinhThuc().name());
+            stmt.setDouble(7, km.getGiaTri());
+            stmt.setDouble(8, km.getDieuKienApDungHoaDon());
+            stmt.setInt(9, km.getSoLuongToiThieu());
+            stmt.setInt(10, km.getSoLuongTangThem());
+            stmt.setString(11, km.getMaKM());
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (stmt != null) stmt.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
 
-    /**
-     * Tạo mã khuyến mãi tự động theo ngày.
-     * @return Mã khuyến mãi mới có dạng KM-yyyymmdd-xxxx.
-     */
     public String taoMaKhuyenMai() {
+        // ... (phương thức này không thay đổi)
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
         PreparedStatement stmt = null;
@@ -172,7 +199,6 @@ public class KhuyenMai_DAO {
                 e.printStackTrace();
             }
         }
-        // Trả về mã đầu tiên trong ngày nếu có lỗi
         String dateString = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         return "KM-" + dateString + "-0001";
     }

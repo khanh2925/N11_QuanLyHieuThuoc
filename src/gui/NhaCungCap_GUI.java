@@ -1,13 +1,23 @@
 package gui;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.*;
+
+import connectDB.connectDB;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,9 +25,11 @@ import customcomponent.ImagePanel;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
+import dao.NhaCungCap_DAO;
+import entity.KhachHang;
 import entity.NhaCungCap;
 
-public class NhaCungCap_GUI extends JPanel {
+public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListener {
 
     private JPanel pnCenter;
     private JPanel pnHeader;
@@ -29,6 +41,12 @@ public class NhaCungCap_GUI extends JPanel {
     private TableRowSorter<DefaultTableModel> sorter;
     private JButton btnThem;
     private JButton btnSua;
+    private NhaCungCap_DAO nhaCC_dao;
+    private List<NhaCungCap> dsNhaCungCap;
+	private JFrame frameThemNCC;
+	private ThemNhaCungCap_Dialog dialogThemNCC;
+	private JFrame frameCapNhapNCC;
+	private ThemNhaCungCap_Dialog dialogCapNhapNCC;
 
     public NhaCungCap_GUI() {
         setPreferredSize(new Dimension(1537, 850));
@@ -46,29 +64,24 @@ public class NhaCungCap_GUI extends JPanel {
         add(pnHeader, BorderLayout.NORTH);
 
         txtTimKiem = new JTextField("");
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên nhà cung cấp / SĐT");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên/ sđt nhà cung cấp");
         txtTimKiem.setForeground(Color.GRAY);
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtTimKiem.setBounds(20, 17, 420, 60);
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        txtTimKiem.setBounds(10, 17, 420, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         pnHeader.add(txtTimKiem);
         
-        btnThem = new PillButton("Thêm");
-        btnThem.setFont(new Font("Tahoma", Font.PLAIN, 18));
-        btnThem.setBounds(482, 30, 120, 40);
+        btnThem=new PillButton("Thêm");
         pnHeader.add(btnThem);
+        btnThem.setBounds(465, 26, 120, 40);
+        btnThem.setLayout(null);
+        btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
         
-        btnSua = new PillButton("Cập Nhật");
-        btnSua.setFont(new Font("Tahoma", Font.PLAIN, 18));
-        btnSua.setBounds(658, 30, 120, 40);
+        btnSua =new PillButton("Cập nhật");
+        btnSua.setLayout(null);
+        btnSua.setBounds(614, 26, 120, 40);
         pnHeader.add(btnSua);
-
-        // ... (các thành phần khác trong header của bạn)
-        ImageIcon iconSearch = new ImageIcon(getClass().getResource("/images/search.png"));
-
-        ImageIcon icon = new ImageIcon(getClass().getResource("/images/add.png"));
-        
-        ImageIcon iconSua = new ImageIcon(getClass().getResource("/images/edit.png"));
+        btnSua.setFont(new Font("Segoe UI", Font.BOLD, 18));
 
         // ===== CENTER =====
         pnCenter = new JPanel(new BorderLayout());
@@ -77,29 +90,6 @@ public class NhaCungCap_GUI extends JPanel {
         add(pnCenter, BorderLayout.CENTER);
 
         List<NhaCungCap> dsNhaCungCap = new ArrayList<>();
-        dsNhaCungCap.add(new NhaCungCap("NCC-021", "Công Ty TNHH Dược Phẩm Trung Ương CPC1", "0901234561", "356 Nguyễn Trãi, Thanh Xuân, Hà Nội"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-022", "Công Ty CP Dược Phẩm OPC", "0912345672", "1010 Nguyễn Văn Linh, Quận 7, TP.HCM"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-023", "Công Ty TNHH Dược Phẩm Eco Pharma", "0923456783", "27 Trường Chinh, Đà Nẵng"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-024", "Công Ty CP Dược Phẩm Hà Tây", "0934567894", "15 Nguyễn Du, Hà Đông, Hà Nội"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-025", "Công Ty CP Dược Hậu Giang", "0945678905", "288 Bis Nguyễn Văn Cừ, Quận Ninh Kiều, Cần Thơ"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-026", "Công Ty CP Pymepharco", "0956789016", "166-170 Nguyễn Huệ, TP. Tuy Hòa, Phú Yên"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-027", "Công Ty TNHH United Pharma Việt Nam", "0967890127", "KCN VSIP, Bình Dương"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-028", "Công Ty TNHH Sanofi Việt Nam", "0978901238", "KCN Sài Đồng, Long Biên, Hà Nội"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-029", "Công Ty TNHH Dược Phẩm Traphaco", "0989012349", "75 Yên Ninh, Ba Đình, Hà Nội"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-030", "Công Ty CP Dược Phẩm Imexpharm", "0990123450", "KCN Việt Nam – Singapore, Bình Dương"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-031", "Công Ty CP Dược Danapha", "0902123456", "KCN Liên Chiểu, Đà Nẵng"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-032", "Công Ty CP Dược Phẩm Vimedimex", "0913234567", "46 Tô Hiến Thành, Hai Bà Trưng, Hà Nội"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-033", "Công Ty CP Dược Phẩm Mekophar", "0924345678", "297 Trần Hưng Đạo, Quận 1, TP.HCM"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-034", "Công Ty TNHH Trang Thiết Bị Y Tế Hoàng Gia", "0935456789", "45 Trần Hưng Đạo, Quận 5, TP.HCM"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-035", "Công Ty TNHH Dược Liệu Đông Y An Thịnh", "0946567890", "Tân Bình, TP.HCM"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-036", "Công Ty TNHH Dược Mỹ Phẩm Lotus", "0957678901", "Quận 3, TP.HCM"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-037", "Công Ty CP Dược Phẩm Bidiphar", "0968789012", "498 Nguyễn Thái Học, Quy Nhơn, Bình Định"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-038", "Công Ty TNHH Dược Phẩm Thành Công", "0979890123", "Đà Lạt, Lâm Đồng"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-039", "Công Ty TNHH Vật Tư Y Tế Kim Long", "0980901234", "Huế"));
-        dsNhaCungCap.add(new NhaCungCap("NCC-040", "Công Ty TNHH Dược Phẩm Minh Châu", "0991012345", "Long An"));
-
-
-
         String[] columnNames = {"Mã nhà cung cấp", "Tên nhà cung cấp", "Số điện thoại", "Địa chỉ"};
         model = new DefaultTableModel(columnNames, 0);
 
@@ -169,7 +159,79 @@ public class NhaCungCap_GUI extends JPanel {
                 applySearchFilter();
             }
         });
+        
+        try {
+			connectDB.getInstance().connect();
+        } catch (Exception e) {
+			e.printStackTrace();
+		}
+        
+        nhaCC_dao = new NhaCungCap_DAO();        
+        btnThem.addActionListener(this);
+        btnSua.addActionListener(this);
+        table.addMouseListener(this);
+        
+        // đưa dữ liệu lên table
+        loadTableData();
+
+        // --- SỰ KIỆN TÌM KIẾM THEO TEXTFIELD ---
+        txtTimKiem.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                applyFilters();
+            }
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                applyFilters();
+            }
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                // Not used for plain text fields
+            }
+        });
+        
+  
+     
+        
     }
+    
+    private void loadTableData() {
+        dsNhaCungCap = new ArrayList<>();
+        model.setRowCount(0);
+        
+        try {
+			dsNhaCungCap = nhaCC_dao.getAllNhaCungCap();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+        for (NhaCungCap ncc : dsNhaCungCap) {
+            model.addRow(new Object[]{
+            	ncc.getMaNhaCungCap(),
+                ncc.getTenNhaCungCap(),
+                ncc.getSoDienThoai(),
+                ncc.getDiaChi(),
+                
+            });
+        }
+    }
+    
+    private void applyFilters() {
+        List<RowFilter<Object, Object>> filters = new ArrayList<>();
+
+        // --- Lọc theo tên và SĐT ---
+        String text = txtTimKiem.getText().trim();
+        if (!text.isEmpty() && !txtTimKiem.getForeground().equals(Color.GRAY)) {
+            filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(text), 1, 3));
+        }
+
+        if (filters.isEmpty()) {
+            sorter.setRowFilter(null);
+        } else {
+            sorter.setRowFilter(RowFilter.andFilter(filters));
+        }
+    }
+
     
     // ===== PHƯƠNG THỨC LỌC DỮ LIỆU TRÊN BẢNG (ĐẶT Ở ĐÂY) =====
 
@@ -207,4 +269,93 @@ public class NhaCungCap_GUI extends JPanel {
             frame.setVisible(true);
         });
     }
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void moDialogCapNhat() {
+		int viewRow = table.getSelectedRow();
+		if (viewRow < 0) {
+			JOptionPane.showMessageDialog(this, "Vui lòng chọn 1 nhà cung cấp để cập nhật.", "Thông báo",
+					JOptionPane.INFORMATION_MESSAGE);
+			return;
+		}
+		int modelRow = table.convertRowIndexToModel(viewRow);
+
+		String ma = (String) model.getValueAt(modelRow, 0);
+		String ten = (String) model.getValueAt(modelRow, 1);
+		String sdt = (String) model.getValueAt(modelRow, 2);
+		String diaC = (String) model.getValueAt(modelRow, 3);
+
+		// object hiện tại
+		NhaCungCap nccDangChon = new NhaCungCap(ma, ten, sdt, diaC);
+
+		Window owner = SwingUtilities.getWindowAncestor(this);
+		CapNhatNhaCungCap_Dialog dlg = new CapNhatNhaCungCap_Dialog(owner instanceof Frame ? (Frame) owner : null,
+				nccDangChon);
+		dlg.setVisible(true);
+
+		NhaCungCap capNhat = dlg.getNhaCungCapCapNhat();
+		if (capNhat != null) {
+			// Reload toàn bộ để đảm bảo nhất quán
+			loadTableData();
+
+			// tìm lại supplier vừa cập nhật để giữ selection
+			for (int i = 0; i < model.getRowCount(); i++) {
+				if (capNhat.getMaNhaCungCap().equals(model.getValueAt(i, 0))) {
+					int vRow = table.convertRowIndexToView(i);
+					table.getSelectionModel().setSelectionInterval(vRow, vRow);
+					table.scrollRectToVisible(table.getCellRect(vRow, 0, true));
+					break;
+				}
+			}
+		}
+	}
+	
+	private void MoDiaLogThemNCC() {
+		frameThemNCC = (JFrame) SwingUtilities.getWindowAncestor(this);
+        dialogThemNCC = new ThemNhaCungCap_Dialog(frameThemNCC);
+        dialogThemNCC.setVisible(true); 
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+	    Object src = e.getSource();
+	    if (src == btnThem) {
+	    	MoDiaLogThemNCC();
+	    	loadTableData();
+	    } else if (src == btnSua) {
+	        moDialogCapNhat();
+	    }
+	}
+
+	
+	
 }

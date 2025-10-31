@@ -8,15 +8,18 @@ public class ChiTietPhieuNhap {
     private LoSanPham loSanPham;
     private int soLuongNhap;
     private double donGiaNhap;
+    private double thanhTien; 
 
-    public ChiTietPhieuNhap() {
-    }
+    // ===== CONSTRUCTORS =====
+    public ChiTietPhieuNhap() {}
 
-    public ChiTietPhieuNhap(PhieuNhap phieuNhap, LoSanPham loSanPham, int soLuongNhap, double donGiaNhap) {
+    public ChiTietPhieuNhap(PhieuNhap phieuNhap, LoSanPham loSanPham,
+                             int soLuongNhap, double donGiaNhap) {
         setPhieuNhap(phieuNhap);
         setLoSanPham(loSanPham);
         setSoLuongNhap(soLuongNhap);
         setDonGiaNhap(donGiaNhap);
+        capNhatThanhTien(); // ✅ tự động tính sau khi set
     }
 
     public ChiTietPhieuNhap(ChiTietPhieuNhap other) {
@@ -24,19 +27,17 @@ public class ChiTietPhieuNhap {
         this.loSanPham = other.loSanPham;
         this.soLuongNhap = other.soLuongNhap;
         this.donGiaNhap = other.donGiaNhap;
+        this.thanhTien = other.thanhTien;
     }
 
-    public double getThanhTien() {
-        return this.soLuongNhap * this.donGiaNhap;
-    }
-
+    // ===== GETTERS / SETTERS =====
     public PhieuNhap getPhieuNhap() {
         return phieuNhap;
     }
 
     public void setPhieuNhap(PhieuNhap phieuNhap) {
         if (phieuNhap == null) {
-            throw new IllegalArgumentException("Phiếu nhập không tồn tại.");
+            throw new IllegalArgumentException("Phiếu nhập không được null.");
         }
         this.phieuNhap = phieuNhap;
     }
@@ -47,7 +48,7 @@ public class ChiTietPhieuNhap {
 
     public void setLoSanPham(LoSanPham loSanPham) {
         if (loSanPham == null) {
-            throw new IllegalArgumentException("Lô sản phẩm không tồn tại.");
+            throw new IllegalArgumentException("Lô sản phẩm không được null.");
         }
         this.loSanPham = loSanPham;
     }
@@ -61,6 +62,7 @@ public class ChiTietPhieuNhap {
             throw new IllegalArgumentException("Số lượng nhập phải lớn hơn 0.");
         }
         this.soLuongNhap = soLuongNhap;
+        capNhatThanhTien(); // ✅ cập nhật lại khi thay đổi
     }
 
     public double getDonGiaNhap() {
@@ -72,25 +74,35 @@ public class ChiTietPhieuNhap {
             throw new IllegalArgumentException("Đơn giá nhập phải lớn hơn 0.");
         }
         this.donGiaNhap = donGiaNhap;
+        capNhatThanhTien(); // ✅ cập nhật lại khi thay đổi
     }
 
+    public double getThanhTien() {
+        return thanhTien;
+    }
+
+    public void capNhatThanhTien() {
+        this.thanhTien = Math.round(soLuongNhap * donGiaNhap * 100.0) / 100.0;
+    }
+
+    // ===== OVERRIDES =====
     @Override
     public String toString() {
-        return "ChiTietPhieuNhap{" +
-                "phieuNhap=" + (phieuNhap != null ? phieuNhap.getMaPhieuNhap() : "N/A") +
-                ", loSanPham=" + (loSanPham != null ? loSanPham.getMaLo() : "N/A") +
-                ", soLuongNhap=" + soLuongNhap +
-                ", donGiaNhap=" + donGiaNhap +
-                ", thanhTien=" + getThanhTien() +
-                '}';
+        return String.format(
+                "ChiTietPhieuNhap{phieuNhap='%s', lo='%s', SL=%d, donGia=%.2f, thanhTien=%.2f}",
+                phieuNhap != null ? phieuNhap.getMaPhieuNhap() : "N/A",
+                loSanPham != null ? loSanPham.getMaLo() : "N/A",
+                soLuongNhap, donGiaNhap, thanhTien
+        );
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof ChiTietPhieuNhap)) return false;
         ChiTietPhieuNhap that = (ChiTietPhieuNhap) o;
-        return Objects.equals(phieuNhap, that.phieuNhap) && Objects.equals(loSanPham, that.loSanPham);
+        return Objects.equals(phieuNhap, that.phieuNhap) &&
+               Objects.equals(loSanPham, that.loSanPham);
     }
 
     @Override

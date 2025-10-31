@@ -8,8 +8,8 @@ import java.awt.Font;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.*;
-import java.time.LocalDate;
-import java.util.List;
+// import java.time.LocalDate; // Không cần thiết
+// import java.util.List; // Không cần thiết
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -27,19 +27,27 @@ import customcomponent.PillButton;
 import customcomponent.RoundedBorder;
 import entity.NhanVien;
 import entity.TaiKhoan;
+import dao.TaiKhoan_DAO; // 💡 Dùng DAO
+import entity.Session; // 💡 Dùng Session
 
 public class DangNhap_GUI extends JFrame {
 
 	private JTextField txtTaiKhoan;
 	private JPasswordField txtMatKhau;
+    
+    // Khởi tạo DAO
+    private final TaiKhoan_DAO tkDao = new TaiKhoan_DAO();
 
 	public DangNhap_GUI() {
+        // Thiết lập màn hình hiển thị toàn bộ
+        setExtendedState(JFrame.MAXIMIZED_BOTH); 
 		initialize();
+        setVisible(true); // Hiển thị khung sau khi khởi tạo
 	}
 
 	private void initialize() {
 		setTitle("Đăng nhập");
-		setSize(1920, 1080);
+		// setSize(1920, 1080); // Đã dùng setExtendedState
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setLayout(new BorderLayout());
 
@@ -111,9 +119,12 @@ public class DangNhap_GUI extends JFrame {
 		// === Ô nhập mật khẩu ===
 		txtMatKhau = new JPasswordField();
 		txtMatKhau.setFont(new Font("Arial", Font.PLAIN, 20));
-		txtMatKhau.setBounds(60, 558, inputWidth - 60, inputHeight);
+		// NOTE: Vị trí của JPasswordField phải được căn chỉnh thủ công
+		// Đã căn lại vị trí, nhưng để trong JLayeredPane hoặc null layout phức tạp
+		// Tạm thời dùng vị trí này để tránh xung đột với placeholder
+		txtMatKhau.setBounds(50, 558, inputWidth, inputHeight); // Dùng vị trí và kích thước của pnMatKhau
 		txtMatKhau.setOpaque(false);
-		txtMatKhau.setBorder(null);
+		txtMatKhau.setBorder(new RoundedBorder(20)); // Cần có border trùng với pnMatKhau để hiệu ứng nhìn đồng nhất
 
 		txtMatKhau.setMargin(new Insets(5, 15, 5, 45));
 		pnFormDangNhap.add(txtMatKhau);
@@ -127,7 +138,7 @@ public class DangNhap_GUI extends JFrame {
 
 		// === Nút hiện/ẩn mật khẩu ===
 		JButton btnTogglePassword = new JButton(iconOpen); // mặc định ẩn mật khẩu → hiện icon "mắt mở"
-		btnTogglePassword.setBounds(50 + inputWidth - 50, 558, 40, inputHeight);
+		btnTogglePassword.setBounds(50 + inputWidth - 45, 558 + 5, 30, 40); // Căn chỉnh lại vị trí nút mắt
 		btnTogglePassword.setFocusPainted(false);
 		btnTogglePassword.setBorderPainted(false);
 		btnTogglePassword.setContentAreaFilled(false);
@@ -137,7 +148,11 @@ public class DangNhap_GUI extends JFrame {
 
 		// Trạng thái mặc định: ẩn mật khẩu
 		final boolean[] isHidden = { true };
-		txtMatKhau.setEchoChar('●');
+		// Đặt EchoChar mặc định trong addPlaceholder, nếu text không phải là placeholder
+		if (!txtMatKhau.getText().equals("Nhập mật khẩu của bạn")) {
+		    txtMatKhau.setEchoChar('●');
+		}
+
 
 		// Sự kiện click vào nút mắt
 		btnTogglePassword.addActionListener(e -> {
@@ -161,10 +176,6 @@ public class DangNhap_GUI extends JFrame {
 		pnFormDangNhap.add(btnDangNhap);
 
 		JButton btnQuenMK = new JButton("Quên mật khẩu?");
-		btnQuenMK.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-			}
-		});
 		btnQuenMK.setFont(new Font("Arial", Font.ITALIC, 16));
 		btnQuenMK.setForeground(new Color(0xD32F2F));
 		btnQuenMK.setBounds(403, 732, 179, 30);
@@ -173,51 +184,8 @@ public class DangNhap_GUI extends JFrame {
 		btnQuenMK.setFocusPainted(false);
 		btnQuenMK.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-		btnDangNhap.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-//				String taiKhoan = txtTaiKhoan.getText();
-//				String matKhau = new String(txtMatKhau.getPassword());
-//				// Kiểm tra dữ liệu nhập
-//				if (taiKhoan.equals("admin") && matKhau.equals("admin123")) {
-//			        addPlaceholder(txtTaiKhoan, "Nhập tài khoản của bạn");
-//			        addPlaceholder(txtMatKhau, "Nhập mật khẩu của bạn");
-//		            frame.setContentPane(new Main_GUI());
-//					// Chuyển đến giao diện chính của ứng dụng
-//				} else {
-//					JOptionPane.showMessageDialog(frame, "Tài khoản hoặc mật khẩu không đúng.", "Lỗi đăng nhập",
-//							JOptionPane.ERROR_MESSAGE);
-//			        addPlaceholder(txtTaiKhoan, "Nhập tài khoản của bạn");
-//			        addPlaceholder(txtMatKhau, "Nhập mật khẩu của bạn");
-//				}
-				TaiKhoan tk1 = new TaiKhoan("TK000001", "admin", "Admin123@");
-				TaiKhoan tk2 = new TaiKhoan("TK000002", "nhanvien1", "Nhanvien1@");
-				List<NhanVien> dsnv = List.of(
-						new NhanVien("NV2025100001", "Nguyễn Văn A", false, LocalDate.of(2005, 1, 1), "0987654321",
-								"HCM", true, tk1, "SANG", true),
-						new NhanVien("NV2025100002", "Nguyễn Văn B", false, LocalDate.of(2005, 1, 1), "0987654321",
-								"HCM", false, tk2, "SANG", true));
-
-				NhanVien nvDangNhap = dsnv.stream()
-						.filter(nv -> nv.getTaiKhoan().getTenDangNhap().equals(txtTaiKhoan.getText().trim())
-								&& nv.getTaiKhoan().getMatKhau().equals(new String(txtMatKhau.getPassword()).trim()))
-						.findFirst().orElse(null);
-
-				if (nvDangNhap != null) {
-					JOptionPane.showMessageDialog(null,
-							"Đăng nhập thành công!\nXin chào " + nvDangNhap.getTenNhanVien() + " ("
-									+ (nvDangNhap.isQuanLy() ? "Quản lý" : "Nhân viên") + ")",
-							"Thành công", JOptionPane.INFORMATION_MESSAGE);
-					dispose();
-					// Mở Main_GUI
-					new Main_GUI(nvDangNhap).setVisible(true);;
-				} else {
-					JOptionPane.showMessageDialog(null, "Sai tài khoản hoặc mật khẩu!", "Đăng nhập thất bại",
-							JOptionPane.ERROR_MESSAGE);
-					System.out.println(txtTaiKhoan.getText().trim());
-					System.out.println(new String(txtMatKhau.getPassword()));
-				}
-			}
-		});
+		// 💡 THAY THẾ LOGIC CŨ BẰNG HÀM XỬ LÝ ĐĂNG NHẬP
+		btnDangNhap.addActionListener(e -> xuLyDangNhap());
 
 		btnQuenMK.addMouseListener(new MouseAdapter() {
 			@Override
@@ -243,6 +211,56 @@ public class DangNhap_GUI extends JFrame {
 
 		return pnFormDangNhap;
 	}
+
+	/**
+     * 💡 HÀM XỬ LÝ SỰ KIỆN ĐĂNG NHẬP (Dùng DAO và Session)
+     */
+	private void xuLyDangNhap() {
+        String tenDangNhap = txtTaiKhoan.getText().trim();
+        // Chuyển JPasswordField thành String an toàn
+        String matKhau = new String(txtMatKhau.getPassword()).trim(); 
+        
+        // Lấy placeholder
+        String placeholderTK = "Nhập tài khoản của bạn";
+        String placeholderMK = "Nhập mật khẩu của bạn";
+
+        // 1. Kiểm tra rỗng (hoặc còn placeholder)
+        if (tenDangNhap.isEmpty() || tenDangNhap.equals(placeholderTK) || matKhau.isEmpty() || matKhau.equals(placeholderMK)) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập Tên đăng nhập và Mật khẩu hợp lệ.", "Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // 2. Gọi DAO để xác thực
+        TaiKhoan taiKhoan = tkDao.dangNhap(tenDangNhap, matKhau); // Hàm đã có join NhanVien
+        
+        if (taiKhoan != null) {
+            // Đăng nhập thành công
+            NhanVien nvDangNhap = taiKhoan.getNhanVien();
+            System.out.println(taiKhoan);
+            
+            // 3. Lưu Session
+            Session.getInstance().setTaiKhoanDangNhap(taiKhoan);
+
+            JOptionPane.showMessageDialog(this,
+                    "Đăng nhập thành công!\nXin chào " + nvDangNhap.getTenNhanVien() + " ("
+                    + (nvDangNhap.isQuanLy() ? "Quản lý" : "Nhân viên") + ")",
+                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+            // 4. Đóng màn hình đăng nhập
+            this.dispose(); 
+
+            // 5. Mở màn hình chính (Main_GUI)
+            new Main_GUI(nvDangNhap).setVisible(true);
+
+        } else {
+            // Đăng nhập thất bại
+            JOptionPane.showMessageDialog(this, "Tên đăng nhập hoặc Mật khẩu không đúng.", "Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
+            // Xóa trường mật khẩu để nhập lại
+            txtMatKhau.setText(""); 
+            addPlaceholder(txtMatKhau, placeholderMK); // Đặt lại placeholder
+        }
+    }
+
 
 	private void addPlaceholder(JTextField field, String placeholder) {
 		field.setText(placeholder);

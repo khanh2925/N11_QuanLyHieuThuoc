@@ -7,37 +7,37 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.Date;
+import java.util.concurrent.ThreadLocalRandom;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
-import com.toedter.calendar.JDateChooser; // THAY ĐỔI 1: Import class mới từ thư viện JCalendar
-
+import com.toedter.calendar.JDateChooser; // Sử dụng thư viện JCalendar
+import dao.TaiKhoan_DAO; // Cần dùng để kiểm tra tên đăng nhập
 import entity.NhanVien;
 import entity.TaiKhoan;
 
 public class ThemNhanVien_Dialog extends JDialog {
 
     private JTextField txtTenNhanVien;
-    private JTextField txtEmail;
+    private JTextField txtTenDangNhap;
     private JTextField txtDiaChi;
     private JTextField txtSoDienThoai;
     private JPasswordField txtMatKhau;
-
-    // THAY ĐỔI 2: Khai báo JDateChooser thay cho DateChooser cũ
     private JDateChooser ngaySinhDateChooser;
-
     private JRadioButton radNam, radNu;
     private JCheckBox chkQuanLy;
     private JComboBox<String> cmbCaLam;
-
     private JButton btnThem;
     private JButton btnThoat;
 
-    private NhanVien nhanVienMoi = null;
+    // Đối tượng trả về sau khi thêm thành công
+    private TaiKhoan taiKhoanMoi = null;
+    private TaiKhoan_DAO taiKhoan_DAO; // Thêm DAO để kiểm tra
 
     public ThemNhanVien_Dialog(Frame owner) {
         super(owner, "Thêm nhân viên", true);
+        this.taiKhoan_DAO = new TaiKhoan_DAO(); // Khởi tạo DAO
         initialize();
     }
 
@@ -46,16 +46,12 @@ public class ThemNhanVien_Dialog extends JDialog {
         setLocationRelativeTo(getParent());
         getContentPane().setBackground(Color.WHITE);
         getContentPane().setLayout(null);
-
-        // ... (Code cho các component khác không thay đổi) ...
         
-        // --- Tiêu đề Dialog ---
         JLabel lblTitle = new JLabel("Thêm nhân viên");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
         lblTitle.setBounds(225, 20, 200, 35);
         getContentPane().add(lblTitle);
 
-        // --- Tên nhân viên ---
         JLabel lblTen = new JLabel("Tên nhân viên:");
         lblTen.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblTen.setBounds(40, 80, 120, 25);
@@ -66,18 +62,16 @@ public class ThemNhanVien_Dialog extends JDialog {
         txtTenNhanVien.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         getContentPane().add(txtTenNhanVien);
 
-        // --- Email (Tên đăng nhập) ---
-        JLabel lblEmail = new JLabel("Tên đăng nhập:");
-        lblEmail.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblEmail.setBounds(340, 80, 200, 25);
-        getContentPane().add(lblEmail);
+        JLabel lblTenDangNhap = new JLabel("Tên đăng nhập:");
+        lblTenDangNhap.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        lblTenDangNhap.setBounds(340, 80, 200, 25);
+        getContentPane().add(lblTenDangNhap);
 
-        txtEmail = new JTextField();
-        txtEmail.setBounds(340, 110, 250, 35);
-        txtEmail.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        getContentPane().add(txtEmail);
+        txtTenDangNhap = new JTextField();
+        txtTenDangNhap.setBounds(340, 110, 250, 35);
+        txtTenDangNhap.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        getContentPane().add(txtTenDangNhap);
 
-        // --- Địa chỉ ---
         JLabel lblDiaChi = new JLabel("Địa chỉ:");
         lblDiaChi.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblDiaChi.setBounds(40, 160, 120, 25);
@@ -88,7 +82,6 @@ public class ThemNhanVien_Dialog extends JDialog {
         txtDiaChi.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         getContentPane().add(txtDiaChi);
 
-        // --- Số điện thoại ---
         JLabel lblSdt = new JLabel("Số điện thoại:");
         lblSdt.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblSdt.setBounds(340, 160, 120, 25);
@@ -99,22 +92,17 @@ public class ThemNhanVien_Dialog extends JDialog {
         txtSoDienThoai.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         getContentPane().add(txtSoDienThoai);
         
-        // --- Ngày sinh ---
         JLabel lblNgaySinh = new JLabel("Ngày sinh:");
         lblNgaySinh.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblNgaySinh.setBounds(40, 240, 120, 25);
         getContentPane().add(lblNgaySinh);
 
-        // THAY ĐỔI 3: Khởi tạo JDateChooser và thiết lập định dạng ngày tháng
-        ngaySinhDateChooser = new JDateChooser(); // Sử dụng constructor của JDateChooser
+        ngaySinhDateChooser = new JDateChooser();
         ngaySinhDateChooser.setBounds(40, 270, 250, 35);
-        ngaySinhDateChooser.setDateFormatString("dd-MM-yyyy"); // Đặt định dạng hiển thị
+        ngaySinhDateChooser.setDateFormatString("dd-MM-yyyy");
         ngaySinhDateChooser.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         getContentPane().add(ngaySinhDateChooser);
 
-        // ... (Code cho các component còn lại không thay đổi) ...
-
-        // --- Giới tính ---
         JLabel lblGioiTinh = new JLabel("Giới tính:");
         lblGioiTinh.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblGioiTinh.setBounds(340, 240, 120, 25);
@@ -137,7 +125,6 @@ public class ThemNhanVien_Dialog extends JDialog {
         bgGioiTinh.add(radNam);
         bgGioiTinh.add(radNu);
         
-        // --- Vai trò & Ca làm ---
         chkQuanLy = new JCheckBox("Là quản lý");
         chkQuanLy.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         chkQuanLy.setBackground(Color.WHITE);
@@ -149,11 +136,11 @@ public class ThemNhanVien_Dialog extends JDialog {
         lblCaLam.setBounds(340, 320, 120, 25);
         getContentPane().add(lblCaLam);
         
-        cmbCaLam = new JComboBox<>(new String[]{"Sáng", "Chiều", "Tối", "Hành chính"});
+        // Cập nhật ca làm cho khớp CSDL
+        cmbCaLam = new JComboBox<>(new String[]{"SANG", "CHIEU", "TOI"});
         cmbCaLam.setBounds(340, 350, 250, 35);
         getContentPane().add(cmbCaLam);
 
-        // --- Mật khẩu ---
         JLabel lblMatKhau = new JLabel("Mật khẩu:");
         lblMatKhau.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblMatKhau.setBounds(40, 400, 120, 25);
@@ -164,11 +151,10 @@ public class ThemNhanVien_Dialog extends JDialog {
         txtMatKhau.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         getContentPane().add(txtMatKhau);
 
-        // --- Các nút ---
         btnThoat = new JButton("Thoát");
         btnThoat.setBounds(480, 500, 110, 35);
         btnThoat.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnThoat.setBackground(new Color(0x3B82F6));
+        btnThoat.setBackground(new Color(0x6B7280)); // Màu xám
         btnThoat.setForeground(Color.WHITE);
         btnThoat.setBorder(null);
         btnThoat.setFocusPainted(false);
@@ -177,48 +163,55 @@ public class ThemNhanVien_Dialog extends JDialog {
         btnThem = new JButton("Thêm");
         btnThem.setBounds(350, 500, 110, 35);
         btnThem.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnThem.setBackground(Color.LIGHT_GRAY);
-        btnThem.setBorder(new LineBorder(Color.GRAY));
+        btnThem.setBackground(new Color(0x3B82F6)); // Màu xanh
+        btnThem.setForeground(Color.WHITE);
+        btnThem.setBorder(null);
         getContentPane().add(btnThem);
         
-        // --- Thêm sự kiện cho các nút ---
         btnThoat.addActionListener(e -> dispose());
         btnThem.addActionListener(e -> onThemButtonClick());
     }
 
     private void onThemButtonClick() {
         try {
-            // ... (Lấy dữ liệu các trường text không đổi) ...
+            // 1. Lấy dữ liệu từ các trường
             String ten = txtTenNhanVien.getText();
-            String email = txtEmail.getText();
+            String tenDangNhap = txtTenDangNhap.getText();
             String diaChi = txtDiaChi.getText();
             String sdt = txtSoDienThoai.getText();
             String matKhau = new String(txtMatKhau.getPassword());
             
-            // THAY ĐỔI 4: Lấy ngày từ JDateChooser bằng phương thức getDate()
-            Date selectedDate = ngaySinhDateChooser.getDate(); // Sử dụng getDate()
+            Date selectedDate = ngaySinhDateChooser.getDate();
             if (selectedDate == null) {
                 JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày sinh.", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            // Phần còn lại của logic chuyển đổi và kiểm tra tuổi không thay đổi
             LocalDate ngaySinh = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
-            if (ngaySinh.isAfter(LocalDate.now().minusYears(18))) {
-                JOptionPane.showMessageDialog(this, "Nhân viên phải đủ 18 tuổi.", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            
             boolean gioiTinh = radNam.isSelected();
             boolean isQuanLy = chkQuanLy.isSelected();
             String caLam = cmbCaLam.getSelectedItem().toString();
+            boolean trangThai = true; // Nhân viên mới luôn đang làm
 
-            String maTK = String.format("TK%06d", (int) (Math.random() * 1000000));
-            String maNV = String.format("NV%s", String.valueOf(System.currentTimeMillis()).substring(3));
+            // 2. Kiểm tra nghiệp vụ (ví dụ: tên đăng nhập tồn tại)
+            if (taiKhoan_DAO.isUsernameExists(tenDangNhap)) {
+                JOptionPane.showMessageDialog(this, "Tên đăng nhập đã tồn tại.", "Lỗi trùng lặp", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-            TaiKhoan tk = new TaiKhoan(maTK, email, matKhau); 
-            this.nhanVienMoi = new NhanVien(maNV, ten, gioiTinh, ngaySinh, sdt, diaChi, isQuanLy, tk, caLam, true);
+            // 3. Tạo mã tự động theo định dạng CSDL
+            // Mã NV: NV + 10 số (dùng 10 số cuối của timestamp)
+            String maNV = "NV" + String.valueOf(System.currentTimeMillis() % 10000000000L);
+            // Mã TK: TK + 6 số (dùng 6 số cuối của timestamp)
+            String maTK = "TK" + String.valueOf(System.currentTimeMillis() % 1000000L);
+
+            // 4. Tạo đối tượng NhanVien
+            NhanVien nv = new NhanVien(maNV, ten, gioiTinh, ngaySinh, sdt, diaChi, isQuanLy, caLam, trangThai);
             
+            // 5. Tạo đối tượng TaiKhoan
+            this.taiKhoanMoi = new TaiKhoan(maTK, tenDangNhap, matKhau, nv);
+            
+            // 6. Đóng dialog
             dispose();
             
         } catch (IllegalArgumentException | DateTimeParseException ex) {
@@ -228,7 +221,10 @@ public class ThemNhanVien_Dialog extends JDialog {
         }
     }
 
-    public NhanVien getNhanVienMoi() {
-        return nhanVienMoi;
+    /**
+     * Phương thức để NhanVien_QL_GUI gọi để lấy đối tượng mới
+     */
+    public TaiKhoan getTaiKhoanMoi() {
+        return taiKhoanMoi;
     }
 }

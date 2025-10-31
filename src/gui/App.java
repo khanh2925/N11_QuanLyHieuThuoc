@@ -21,7 +21,7 @@ public class App {
 		
 		SwingUtilities.invokeLater(() -> {
 			// Khởi chạy màn hình loading thay vì màn hình đăng nhập
-			new Loading_GUI(); 
+			new DangNhap_GUI(); 
 		});
 	};
 }

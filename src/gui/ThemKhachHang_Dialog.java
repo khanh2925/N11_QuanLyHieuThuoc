@@ -3,6 +3,8 @@ package gui;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
@@ -16,7 +18,7 @@ import com.toedter.calendar.JDateChooser; // THAY ĐỔI 1: Import class mới t
 import entity.KhachHang;
 
 
-public class ThemKhachHang_Dialog extends JDialog {
+public class ThemKhachHang_Dialog extends JDialog implements ActionListener {
 
     private JTextField txtTenKhachHang;
     private JTextField txtSoDienThoai;
@@ -128,33 +130,23 @@ public class ThemKhachHang_Dialog extends JDialog {
         getContentPane().add(btnThem);
         
         // --- Thêm sự kiện cho các nút ---
-        btnThoat.addActionListener(e -> dispose());
-        btnThem.addActionListener(e -> onThemButtonClick());
+
+        btnThoat.addActionListener(this);
+        btnThem.addActionListener(this);
     }
+    //String maKH = String.format("KH-%04d", (int)(System.currentTimeMillis() % 10000));
 
-    private void onThemButtonClick() {
+    private void themKH() {
         try {
-            // ... (Lấy dữ liệu các trường text không đổi) ...
+        	if(!isvalidForm()) return;
+        	
+        	String maKH = String.format("KH-%04d", (int)(System.currentTimeMillis() % 10000));
             String ten = txtTenKhachHang.getText();
-            String sdt = txtSoDienThoai.getText();
-            
-            // THAY ĐỔI 4: Lấy ngày từ JDateChooser bằng phương thức getDate()
-            Date selectedDate = ngaySinhDateChooser.getDate(); // Sử dụng getDate()
-            if (selectedDate == null) {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày sinh.", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            // Phần còn lại của logic chuyển đổi và kiểm tra tuổi không thay đổi
-            LocalDate ngaySinh = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-            if (ngaySinh.isAfter(LocalDate.now().minusYears(18))) {
-                JOptionPane.showMessageDialog(this, "Nhân viên phải đủ 18 tuổi.", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            
             boolean gioiTinh = radNam.isSelected();
-            String maKH = String.format("NV%s", String.valueOf(System.currentTimeMillis()).substring(3));
-
+            String sdt = txtSoDienThoai.getText();
+            Date selectedDate = ngaySinhDateChooser.getDate();
+            LocalDate ngaySinh = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                      
             this.khachHangMoi = new KhachHang(maKH, ten, gioiTinh, sdt, ngaySinh);           
             dispose();
             
@@ -176,7 +168,8 @@ public class ThemKhachHang_Dialog extends JDialog {
 
 
  // === HÀM VALIDATE CHÍNH ===
-    private boolean validateForm() {
+    private boolean isvalidForm() {
+    	String maKH = String.format("KH-%04d", (int)(System.currentTimeMillis() % 10000));
         String ten = txtTenKhachHang.getText() != null ? txtTenKhachHang.getText().trim() : "";
         if (ten.isEmpty()) {
             showError("Tên khách hàng không được rỗng.", txtTenKhachHang);
@@ -186,7 +179,7 @@ public class ThemKhachHang_Dialog extends JDialog {
             showError("Tên khách hàng không được vượt quá 100 ký tự.", txtTenKhachHang);
             return false;
         }
-        if (!ten.matches("^[A-Z][a-z]+$")) {
+        if (!ten.matches("^([A-ZÀ-Ỵ][a-zà-ỹ]+)(\\s[A-ZÀ-Ỵ][a-zà-ỹ]+)*$")) {
        	 	showError("Tên khách hàng phải viết hoa chữ cái đầu", txtTenKhachHang);
             return false;
 		}
@@ -206,7 +199,7 @@ public class ThemKhachHang_Dialog extends JDialog {
         LocalDate ngaySinh = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
         if (ngaySinh.isAfter(LocalDate.now().minusYears(16))) {
-            showError("Khách hàng phải từ 6 tuổi trở lên.", ngaySinhDateChooser);
+            showError("Khách hàng phải từ 16 tuổi trở lên.", ngaySinhDateChooser);
             return false;
         }
 
@@ -215,7 +208,23 @@ public class ThemKhachHang_Dialog extends JDialog {
 
 
 
-    public KhachHang getNhanVienMoi() {
+    public KhachHang getKhachHangMoi() {
         return khachHangMoi;
     }
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		Object o = e.getSource();
+		if(o.equals(btnThem)) {
+			themKH();;
+			return;
+		}
+		
+		if(o.equals(btnThoat)) {
+			dispose();
+			return;
+		}
+
+		
+	}
 }

@@ -7,200 +7,154 @@ import connectDB.connectDB;
 import entity.QuyCachDongGoi;
 import entity.DonViTinh;
 import entity.SanPham;
+import enums.DuongDung;
+import enums.LoaiSanPham;
 
 public class QuyCachDongGoi_DAO {
 
     public QuyCachDongGoi_DAO() {}
 
-    /** Lấy tất cả quy cách đóng gói */
-    public ArrayList<QuyCachDongGoi> getAllQuyCachDongGoi() {
+    /** Lấy tất cả quy cách đóng gói với thông tin chi tiết (JOIN 3 bảng) */
+    public ArrayList<QuyCachDongGoi> layTatCaQuyCachDongGoi() {
         ArrayList<QuyCachDongGoi> ds = new ArrayList<>();
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
 
-        String sql = "SELECT MaSanPham, MaDonViTinh, HeSoQuyDoi, TiLeGiam, DonViGoc FROM QuyCachDongGoi";
+        String sql = "SELECT qc.MaQuyCach, qc.HeSoQuyDoi, qc.TiLeGiam, qc.DonViGoc, " +
+                     "sp.MaSanPham, sp.TenSanPham, sp.LoaiSanPham, sp.SoDangKy, sp.DuongDung, sp.GiaNhap, sp.HinhAnh, sp.KeBanSanPham, sp.HoatDong, " +
+                     "dvt.MaDonViTinh, dvt.TenDonViTinh, dvt.MoTa " +
+                     "FROM QuyCachDongGoi qc " +
+                     "JOIN SanPham sp ON qc.MaSanPham = sp.MaSanPham " +
+                     "JOIN DonViTinh dvt ON qc.MaDonViTinh = dvt.MaDonViTinh";
+        
         try (Statement st = con.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
 
             while (rs.next()) {
-                String maSP  = rs.getString("MaSanPham");
-                String maDVT = rs.getString("MaDonViTinh");
-                int heSo     = rs.getInt("HeSoQuyDoi");
-                double tlg   = rs.getDouble("TiLeGiam");
-                boolean goc  = rs.getBoolean("DonViGoc");
+                String maQC = rs.getString("MaQuyCach");
+                try {
+                    DonViTinh dvt = new DonViTinh(rs.getString("MaDonViTinh"), rs.getString("TenDonViTinh"), rs.getString("MoTa"));
 
-                SanPham sp = new SanPham();
-                try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
+                    // ===== SỬA ĐỔI TẠI ĐÂY: Xử lý Enum trực tiếp bằng valueOf =====
+                    
+                    // 1. Chuyển đổi LoaiSanPham
+                    LoaiSanPham loai = null;
+                    String loaiSPStr = rs.getString("LoaiSanPham");
+                    if (loaiSPStr != null && !loaiSPStr.trim().isEmpty()) {
+                        try {
+                            // Sử dụng valueOf(), cần đảm bảo chuỗi khớp chính xác tên hằng số (viết hoa)
+                            loai = LoaiSanPham.valueOf(loaiSPStr.trim().toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            System.err.println("Giá trị LoaiSanPham không hợp lệ từ CSDL cho MaQuyCach '" + maQC + "': '" + loaiSPStr + "'");
+                            // Có thể gán giá trị mặc định hoặc bỏ qua bản ghi này tùy nghiệp vụ
+                        }
+                    }
 
-                DonViTinh dvt = new DonViTinh();
-                try { dvt.setMaDonViTinh(maDVT); } catch (IllegalArgumentException ignore) {}
+                    // 2. Chuyển đổi DuongDung
+                    DuongDung dd = null;
+                    String duongDungStr = rs.getString("DuongDung");
+                    if (duongDungStr != null && !duongDungStr.trim().isEmpty()) {
+                        try {
+                             // Sử dụng valueOf(), cần đảm bảo chuỗi khớp chính xác tên hằng số (viết hoa)
+                            dd = DuongDung.valueOf(duongDungStr.trim().toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            System.err.println("Giá trị DuongDung không hợp lệ từ CSDL cho MaQuyCach '" + maQC + "': '" + duongDungStr + "'");
+                        }
+                    }
 
-                ds.add(new QuyCachDongGoi(dvt, sp, heSo, tlg, goc));
+                    // =========================================================
+
+                    SanPham sp = new SanPham(
+                        rs.getString("MaSanPham"), 
+                        rs.getString("TenSanPham"),
+                        loai, // Sử dụng biến enum đã được chuyển đổi
+                        rs.getString("SoDangKy"),
+                        dd,   // Sử dụng biến enum đã được chuyển đổi
+                        rs.getDouble("GiaNhap"),
+                        rs.getString("HinhAnh"),
+                        rs.getString("KeBanSanPham"),
+                        rs.getBoolean("HoatDong")
+                    );
+
+                    QuyCachDongGoi qc = new QuyCachDongGoi(
+                        maQC, dvt, sp,
+                        rs.getInt("HeSoQuyDoi"),
+                        rs.getDouble("TiLeGiam"),
+                        rs.getBoolean("DonViGoc")
+                    );
+                    ds.add(qc);
+                } catch (IllegalArgumentException e) {
+                    // Bắt lỗi validation từ các hàm khởi tạo của Entity (ví dụ HeSoQuyDoi sai)
+                    System.err.println("Lỗi dữ liệu không hợp lệ từ CSDL cho MaQuyCach '" + maQC + "': " + e.getMessage());
+                }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.printStackTrace(); // Lỗi kết nối hoặc câu SQL
         }
         return ds;
     }
 
-    /** Lấy DS quy cách theo mã sản phẩm */
-    public ArrayList<QuyCachDongGoi> getQuyCachTheoSanPham(String maSanPham) {
-        ArrayList<QuyCachDongGoi> ds = new ArrayList<>();
+    /** Tạo mã quy cách mới */
+    public String taoMaQuyCach() {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
-
-        String sql = "SELECT MaSanPham, MaDonViTinh, HeSoQuyDoi, TiLeGiam, DonViGoc " +
-                     "FROM QuyCachDongGoi WHERE MaSanPham = ?";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, maSanPham);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    String maDVT = rs.getString("MaDonViTinh");
-                    int heSo     = rs.getInt("HeSoQuyDoi");
-                    double tlg   = rs.getDouble("TiLeGiam");
-                    boolean goc  = rs.getBoolean("DonViGoc");
-
-                    SanPham sp = new SanPham();
-                    try { sp.setMaSanPham(maSanPham); } catch (IllegalArgumentException ignore) {}
-
-                    DonViTinh dvt = new DonViTinh();
-                    try { dvt.setMaDonViTinh(maDVT); } catch (IllegalArgumentException ignore) {}
-
-                    ds.add(new QuyCachDongGoi(dvt, sp, heSo, tlg, goc));
+        String sql = "SELECT TOP 1 MaQuyCach FROM QuyCachDongGoi ORDER BY MaQuyCach DESC";
+        try (Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            if (rs.next()) {
+                String lastMa = rs.getString("MaQuyCach");
+                // Đảm bảo chuỗi có dạng QCxxxxxx trước khi cắt và parse
+                if (lastMa != null && lastMa.matches("^QC\\d{6}$")) {
+                     int lastNum = Integer.parseInt(lastMa.substring(2));
+                     return String.format("QC%06d", lastNum + 1);
                 }
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NumberFormatException e) { // Bắt thêm NumberFormatException
             e.printStackTrace();
         }
-        return ds;
-    }
-
-    /** Lấy 1 quy cách theo khóa kép (MaSanPham + MaDonViTinh) */
-    public QuyCachDongGoi getQuyCachTheoKhoa(String maSanPham, String maDonViTinh) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
-
-        String sql = "SELECT MaSanPham, MaDonViTinh, HeSoQuyDoi, TiLeGiam, DonViGoc " +
-                     "FROM QuyCachDongGoi WHERE MaSanPham = ? AND MaDonViTinh = ?";
-
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, maSanPham);
-            ps.setString(2, maDonViTinh);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    int heSo     = rs.getInt("HeSoQuyDoi");
-                    double tlg   = rs.getDouble("TiLeGiam");
-                    boolean goc  = rs.getBoolean("DonViGoc");
-
-                    SanPham sp = new SanPham();
-                    try { sp.setMaSanPham(maSanPham); } catch (IllegalArgumentException ignore) {}
-
-                    DonViTinh dvt = new DonViTinh();
-                    try { dvt.setMaDonViTinh(maDonViTinh); } catch (IllegalArgumentException ignore) {}
-
-                    return new QuyCachDongGoi(dvt, sp, heSo, tlg, goc);
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null; // không thấy
+        return "QC000001"; // Mã mặc định nếu có lỗi hoặc chưa có bản ghi nào
     }
 
     /** Thêm quy cách */
-    public boolean createQuyCachDongGoi(QuyCachDongGoi q) {
+    public boolean themQuyCachDongGoi(QuyCachDongGoi q) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
-
-        String sql = "INSERT INTO QuyCachDongGoi (MaSanPham, MaDonViTinh, HeSoQuyDoi, TiLeGiam, DonViGoc) " +
-                     "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO QuyCachDongGoi (MaQuyCach, MaSanPham, MaDonViTinh, HeSoQuyDoi, TiLeGiam, DonViGoc) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, q.getSanPham() != null ? q.getSanPham().getMaSanPham() : null);
-            ps.setString(2, q.getDonViTinh() != null ? q.getDonViTinh().getMaDonViTinh() : null);
+            ps.setString(1, q.getMaQuyCach());
+            ps.setString(2, q.getSanPham().getMaSanPham());
+            ps.setString(3, q.getDonViTinh().getMaDonViTinh());
+            ps.setInt(4, q.getHeSoQuyDoi());
+            ps.setDouble(5, q.getTiLeGiam());
+            ps.setBoolean(6, q.isDonViGoc());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace(); // Log lỗi SQL
+            // Có thể kiểm tra mã lỗi SQL để biết chi tiết (vd: vi phạm khóa ngoại, unique constraint)
+            // if (e.getErrorCode() == ...) { ... }
+        }
+        return false;
+    }
+
+    /** Cập nhật quy cách (theo khóa chính MaQuyCach) */
+    public boolean capNhatQuyCachDongGoi(QuyCachDongGoi q) {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+        // Cập nhật cả MaSanPham và MaDonViTinh để phòng trường hợp thay đổi
+        String sql = "UPDATE QuyCachDongGoi SET MaSanPham = ?, MaDonViTinh = ?, HeSoQuyDoi = ?, TiLeGiam = ?, DonViGoc = ? WHERE MaQuyCach = ?";
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, q.getSanPham().getMaSanPham());
+            ps.setString(2, q.getDonViTinh().getMaDonViTinh());
             ps.setInt(3, q.getHeSoQuyDoi());
             ps.setDouble(4, q.getTiLeGiam());
             ps.setBoolean(5, q.isDonViGoc());
+            ps.setString(6, q.getMaQuyCach());
             return ps.executeUpdate() > 0;
-
-        } catch (SQLException e) {
-            e.printStackTrace(); // trùng PK kép / FK...
-        }
-        return false;
-    }
-
-    /** Cập nhật quy cách (theo khóa kép) */
-    public boolean updateQuyCachDongGoi(QuyCachDongGoi q) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
-
-        String sql = "UPDATE QuyCachDongGoi SET HeSoQuyDoi = ?, TiLeGiam = ?, DonViGoc = ? " +
-                     "WHERE MaSanPham = ? AND MaDonViTinh = ?";
-
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, q.getHeSoQuyDoi());
-            ps.setDouble(2, q.getTiLeGiam());
-            ps.setBoolean(3, q.isDonViGoc());
-            ps.setString(4, q.getSanPham() != null ? q.getSanPham().getMaSanPham() : null);
-            ps.setString(5, q.getDonViTinh() != null ? q.getDonViTinh().getMaDonViTinh() : null);
-            return ps.executeUpdate() > 0;
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return false;
-    }
-
-    /** Xóa quy cách theo khóa kép */
-    public boolean deleteQuyCachDongGoi(String maSanPham, String maDonViTinh) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
-
-        String sql = "DELETE FROM QuyCachDongGoi WHERE MaSanPham = ? AND MaDonViTinh = ?";
-
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, maSanPham);
-            ps.setString(2, maDonViTinh);
-            return ps.executeUpdate() > 0;
-
-        } catch (SQLException e) {
-            e.printStackTrace(); // nếu bị tham chiếu ở nơi khác -> DB ném lỗi ở đây
-        }
-        return false;
-    }
-
-    /** Tìm quy cách là ĐƠN VỊ GỐC của 1 sản phẩm (nếu có) */
-    public QuyCachDongGoi getDonViGocCuaSanPham(String maSanPham) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
-
-        String sql = "SELECT MaSanPham, MaDonViTinh, HeSoQuyDoi, TiLeGiam, DonViGoc " +
-                     "FROM QuyCachDongGoi WHERE MaSanPham = ? AND DonViGoc = 1";
-
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, maSanPham);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    String maDVT = rs.getString("MaDonViTinh");
-                    int heSo     = rs.getInt("HeSoQuyDoi");
-                    double tlg   = rs.getDouble("TiLeGiam");
-                    boolean goc  = rs.getBoolean("DonViGoc");
-
-                    SanPham sp = new SanPham();
-                    try { sp.setMaSanPham(maSanPham); } catch (IllegalArgumentException ignore) {}
-
-                    DonViTinh dvt = new DonViTinh();
-                    try { dvt.setMaDonViTinh(maDVT); } catch (IllegalArgumentException ignore) {}
-
-                    return new QuyCachDongGoi(dvt, sp, heSo, tlg, goc);
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null; // không có đơn vị gốc
     }
 }

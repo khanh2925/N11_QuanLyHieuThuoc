@@ -9,7 +9,9 @@ import java.awt.event.MouseListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.*;
@@ -22,6 +24,7 @@ import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
 import dao.KhachHang_DAO;
 import entity.KhachHang;
+import entity.NhanVien;
 
 public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseListener {
 
@@ -35,14 +38,15 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
     private TableRowSorter<DefaultTableModel> sorter;
     private JCheckBox chckbxNam;
     private JCheckBox chckbxNu;
-    private JCheckBox chckbxTangDan;
-    private JCheckBox chckbxGiamDan;
     private JPanel pnLoc;
     private KhachHang_DAO kh_dao;
     private JButton btnThem;
     private ThemKhachHang_Dialog dialogThemKH;
     private CapNhatKhachHang_Dialog dialogCapNhap;
     private JButton btnCapNhat;
+    private JFrame frameThemKH;
+    
+    private List<KhachHang> dsKhachHang;
     
     public KhachHang_NV_GUI() {
         setPreferredSize(new Dimension(1537, 850));
@@ -51,14 +55,14 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
 
     private void initialize() {
 //    	 kết nói database
-//    	
-//    	try {
-//			connectDB.getInstance().connect();
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//    	kh_dao = new KhachHang_DAO();
-    	
+  	
+    	try {
+				connectDB.getInstance().connect();
+		} catch (Exception e) {
+				e.printStackTrace();
+		}
+  		kh_dao = new KhachHang_DAO();
+   	
     	
         setLayout(new BorderLayout());
 
@@ -70,7 +74,7 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
         add(pnHeader, BorderLayout.NORTH);
 
         txtTimKiem = new JTextField("");
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên / số điện thoại");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã/ tên  khách hàng");
         txtTimKiem.setForeground(Color.GRAY);
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         txtTimKiem.setBounds(10, 17, 420, 60);
@@ -110,7 +114,7 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
              }
         };
         
-        loadTableData(); // Tải dữ liệu mẫu vào bảng
+        loadTableData(); 
 
         table = new JTable(model);
         
@@ -143,7 +147,9 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
         table.getColumnModel().getColumn(2).setPreferredWidth(90);
         table.getColumnModel().getColumn(3).setPreferredWidth(150);
         table.getColumnModel().getColumn(4).setPreferredWidth(120);
-
+        
+        // format table
+        formatTable(table);
 
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
@@ -209,6 +215,8 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
                 chckbxNu.setSelected(false);
             } else if (source == chckbxNu && chckbxNu.isSelected()) {
                 chckbxNam.setSelected(false);
+                
+                
             }
             applyFilters();
         };
@@ -218,7 +226,9 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
         chckbxNu.addActionListener(filterListener);
         btnThem.addActionListener(this);
         btnCapNhat.addActionListener(this);
-
+        
+        table.addMouseListener(this);
+        
         // --- SỰ KIỆN TÌM KIẾM THEO TEXTFIELD ---
         txtTimKiem.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -242,27 +252,14 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
      * Tải dữ liệu mẫu vào table model.
      */
     private void loadTableData() {
-        List<KhachHang> dsKhachHang = new ArrayList<>();
-        dsKhachHang.add(new KhachHang("KH-0001", "Nguyễn Văn A", true, "0901234567", LocalDate.of(1995, 5, 12)));
-        dsKhachHang.add(new KhachHang("KH-0002", "Trần Thị B", false, "0912345678", LocalDate.of(2000, 8, 20)));
-        dsKhachHang.add(new KhachHang("KH-0003", "Lê Minh C", true, "0923456789", LocalDate.of(1988, 3, 5)));
-        dsKhachHang.add(new KhachHang("KH-0004", "Phạm Ngọc D", false, "0934567890", LocalDate.of(1999, 12, 30)));
-        dsKhachHang.add(new KhachHang("KH-0005", "Võ Thanh E", true, "0945678901", LocalDate.of(1992, 7, 18)));
-        dsKhachHang.add(new KhachHang("KH-0006", "Bùi Thị F", false, "0956789012", LocalDate.of(1997, 9, 10)));
-        dsKhachHang.add(new KhachHang("KH-0007", "Đặng Hoàng G", true, "0967890123", LocalDate.of(1985, 2, 22)));
-        dsKhachHang.add(new KhachHang("KH-0008", "Phan Thị H", false, "0978901234", LocalDate.of(1998, 4, 8)));
-        dsKhachHang.add(new KhachHang("KH-0009", "Ngô Minh I", true, "0989012345", LocalDate.of(1993, 11, 15)));
-        dsKhachHang.add(new KhachHang("KH-0010", "Huỳnh Thị K", false, "0990123456", LocalDate.of(2001, 1, 25)));
-        dsKhachHang.add(new KhachHang("KH-0011", "Trịnh Công L", true, "0902345678", LocalDate.of(1990, 6, 2)));
-        dsKhachHang.add(new KhachHang("KH-0012", "Đoàn Thị M", false, "0913456789", LocalDate.of(1996, 8, 14)));
-        dsKhachHang.add(new KhachHang("KH-0013", "Lâm Hữu N", true, "0924567890", LocalDate.of(1989, 3, 28)));
-        dsKhachHang.add(new KhachHang("KH-0014", "Tạ Thị O", false, "0935678901", LocalDate.of(1994, 5, 9)));
-        dsKhachHang.add(new KhachHang("KH-0015", "Hồ Nhật P", true, "0946789012", LocalDate.of(1998, 10, 19)));
-        dsKhachHang.add(new KhachHang("KH-0016", "Lý Thị Q", false, "0957890123", LocalDate.of(2002, 12, 2)));
-        dsKhachHang.add(new KhachHang("KH-0017", "Trương Văn R", true, "0968901234", LocalDate.of(1991, 7, 11)));
-        dsKhachHang.add(new KhachHang("KH-0018", "Đinh Thị S", false, "0979012345", LocalDate.of(1993, 9, 22)));
-        dsKhachHang.add(new KhachHang("KH-0019", "Cao Văn T", true, "0980123456", LocalDate.of(1987, 4, 30)));
-        dsKhachHang.add(new KhachHang("KH-0020", "Nguyễn Thị U", false, "0991234567", LocalDate.of(1999, 11, 5)));
+        dsKhachHang = new ArrayList<>();
+        model.setRowCount(0);
+        
+        try {
+			dsKhachHang = kh_dao.getAllKhachHang();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
         for (KhachHang kh : dsKhachHang) {
             model.addRow(new Object[]{
@@ -282,29 +279,26 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
     private void applyFilters() {
         List<RowFilter<Object, Object>> filters = new ArrayList<>();
 
-        // 1. Lọc theo ô tìm kiếm (Tên và SĐT)
-        String searchText = txtTimKiem.getText().trim();
-        // Chỉ lọc khi ô tìm kiếm không rỗng và không phải là placeholder
-        if (!searchText.isEmpty() && !txtTimKiem.getForeground().equals(Color.GRAY)) {
-            // "(?i)" để tìm kiếm không phân biệt hoa thường
-            filters.add(RowFilter.regexFilter("(?i)" + searchText, 1, 3));
+        // --- Lọc theo tên và SĐT ---
+        String text = txtTimKiem.getText().trim();
+        if (!text.isEmpty() && !txtTimKiem.getForeground().equals(Color.GRAY)) {
+            filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(text), 1, 3));
         }
 
-        // 2. Lọc theo giới tính
+        // --- Lọc theo giới tính ---
         if (chckbxNam.isSelected()) {
-            filters.add(RowFilter.regexFilter("Nam", 2));
+            filters.add(RowFilter.regexFilter("(?i)Nam", 2));
         } else if (chckbxNu.isSelected()) {
-            filters.add(RowFilter.regexFilter("Nữ", 2));
+            filters.add(RowFilter.regexFilter("(?i)Nữ", 2));
         }
 
-        // Kết hợp các bộ lọc
         if (filters.isEmpty()) {
-            sorter.setRowFilter(null); 
+            sorter.setRowFilter(null);
         } else {
-            sorter.setRowFilter(RowFilter.andFilter(filters)); 
+            sorter.setRowFilter(RowFilter.andFilter(filters));
         }
     }
-    
+
     // ===== MAIN =====
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -357,37 +351,117 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
 	    }
 
 	    if (src == btnCapNhat) {
-	    	JFrame frameCapNhat = (JFrame) SwingUtilities.getWindowAncestor(this);
-	    	dialogCapNhap = new CapNhatKhachHang_Dialog(frameCapNhat, null);
-	    	dialogCapNhap.setVisible(true); 
+	    	 CapNhatKH();
+	    	 return;
 	    }
+	    
+
 	}
+	
+	
+
 	// mở diaLog Thêm khách hàng
 	private void MoDiaLogThemKH() {
-		JFrame frameThemKH = (JFrame) SwingUtilities.getWindowAncestor(this);
+		frameThemKH = (JFrame) SwingUtilities.getWindowAncestor(this);
         dialogThemKH = new ThemKhachHang_Dialog(frameThemKH);
         dialogThemKH.setVisible(true); 
 	}
 	
+	
+
+	
 	// Sk thêm khách hàng
 	private void ThemKH() {
 		MoDiaLogThemKH();
+		KhachHang khMoi = dialogThemKH.getKhachHangMoi();
+		if (kh_dao.createKhachHang(khMoi)) {
+			addKhachHangToTable(khMoi);
+			JOptionPane.showMessageDialog(frameThemKH, "Thêm khách hàng thành công");
+		} else {
+			JOptionPane.showMessageDialog(frameThemKH, "Thêm khách hàng thất bại!!!");
+		}
 		
 		
 	}
 	
-	
-	//mở diaLog Cập nhật khách hàng
-	private void moDiaLogCapNhatKH() {
-		JFrame frameCapNhat = (JFrame) SwingUtilities.getWindowAncestor(this);
-	    dialogCapNhap = new CapNhatKhachHang_Dialog(frameCapNhat, null);
-	    dialogCapNhap.setVisible(true); 
-	}
-		
 	// Sk cập nhật khách hàng
 	private void CapNhatKH() {
-		moDiaLogCapNhatKH();
+
+		int selectRow = table.getSelectedRow();
+		if( selectRow == -1) {
+			JOptionPane.showMessageDialog(null, "Vui lòng chọn khách hàng để cập nhật");
+			return;
+		}
+		 
+		 String maKH = model.getValueAt(selectRow, 0).toString();
+		 
+		 KhachHang khUpdate = null;
+		 for(KhachHang kh : dsKhachHang) {
+			 if(kh.getMaKhachHang().equals(maKH)) {
+				 khUpdate = kh;
+				 break;
+			 }
+		 }
+		 if(khUpdate != null) {
+			 JFrame frameCapNhat = (JFrame) SwingUtilities.getWindowAncestor(this);
+			    dialogCapNhap = new CapNhatKhachHang_Dialog(frameCapNhat, khUpdate);
+			    dialogCapNhap.setVisible(true); 
+			    
+			  if (dialogCapNhap.isUpdateKHSuccess())  {
+				  if(kh_dao.updateKhachHang(khUpdate)) {
+					 updateKhachHangInTable(khUpdate, selectRow);
+					  JOptionPane.showMessageDialog(frameCapNhat, "Cập nhật thông tin thành công!");
+				  }
+			  } else {
+				  JOptionPane.showMessageDialog(frameThemKH, "Cập nhật khách hàng thất bại!!!");
+			  }
+			  
+		 }
 		
 	}
 
+	 private void addKhachHangToTable(KhachHang kh) {
+	        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+	        model.addRow(new Object[]{
+	            kh.getMaKhachHang(),
+	            kh.getTenKhachHang(),
+	            kh.isGioiTinh() ? "Nam" : "Nữ", 
+	            kh.getSoDienThoai(),
+	            kh.getNgaySinh().format(dtf),     
+
+	        });
+	    }
+	
+	 private void updateKhachHangInTable(KhachHang kh, int row) {
+	        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+	        model.setValueAt(kh.getTenKhachHang(), row, 1);
+	        model.setValueAt(kh.isGioiTinh() ? "Nam" : "Nữ", row, 2);
+	        model.setValueAt(kh.getSoDienThoai(), row, 3);
+	        model.setValueAt(kh.getNgaySinh().format(dtf), row, 4);
+
+	    }
+	 private void formatTable(JTable table) {
+	        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 18));
+	        table.getTableHeader().setBorder(null);
+	        table.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+	        table.setRowHeight(28);
+	        table.setShowGrid(false);
+	        table.getTableHeader().setReorderingAllowed(false);
+	        table.setSelectionBackground(new Color(180, 205, 230));
+
+	        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+	        center.setHorizontalAlignment(JLabel.CENTER);
+	        DefaultTableCellRenderer right = new DefaultTableCellRenderer();
+	        right.setHorizontalAlignment(JLabel.RIGHT);
+	        DefaultTableCellRenderer left = new DefaultTableCellRenderer();
+	        left.setHorizontalAlignment(JLabel.LEFT);
+
+	        TableColumnModel m = table.getColumnModel();
+	        for (int i = 0; i < m.getColumnCount(); i++) {
+	            String col = m.getColumn(i).getHeaderValue().toString().toLowerCase();
+	            if (col.contains("mã")) m.getColumn(i).setCellRenderer(center);
+	            else if (col.contains("giá") || col.contains("tiền")) m.getColumn(i).setCellRenderer(right);
+	            else m.getColumn(i).setCellRenderer(left);
+	        }
+	    }
 }

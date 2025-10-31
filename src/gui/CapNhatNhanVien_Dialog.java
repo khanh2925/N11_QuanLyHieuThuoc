@@ -12,50 +12,50 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 
 import com.toedter.calendar.JDateChooser;
-
+import dao.TaiKhoan_DAO; // Cần dùng để kiểm tra tên đăng nhập
 import entity.NhanVien;
+import entity.TaiKhoan; // Import TaiKhoan
 
 public class CapNhatNhanVien_Dialog extends JDialog {
 
     private JTextField txtTenNhanVien;
-    private JTextField txtEmail;
+    private JTextField txtTenDangNhap;
     private JTextField txtDiaChi;
     private JTextField txtSoDienThoai;
     private JPasswordField txtMatKhau;
-  
     private JDateChooser ngaySinhDateChooser;
-    
     private JRadioButton radNam, radNu;
     private JCheckBox chkQuanLy;
     private JComboBox<String> cmbCaLam;
-    private JComboBox<String> cmbTrangThai; // <<< 1. KHAI BÁO COMPONENT MỚI
+    private JComboBox<String> cmbTrangThai; // Thêm ComboBox trạng thái
     private JButton btnLuu;
     private JButton btnThoat;
 
-    private NhanVien nhanVienCanCapNhat;
+    // Thay đổi 1: Nhận vào TaiKhoan thay vì NhanVien
+    private TaiKhoan taiKhoanCanCapNhat;
     private boolean isUpdateSuccess = false;
+    private TaiKhoan_DAO taiKhoan_DAO;
 
-    public CapNhatNhanVien_Dialog(Frame owner, NhanVien nvToUpdate) {
+    // Thay đổi 2: Sửa constructor
+    public CapNhatNhanVien_Dialog(Frame owner, TaiKhoan tkToUpdate) {
         super(owner, "Cập nhật thông tin nhân viên", true);
-        this.nhanVienCanCapNhat = nvToUpdate;
+        this.taiKhoanCanCapNhat = tkToUpdate;
+        this.taiKhoan_DAO = new TaiKhoan_DAO();
         initialize();
-        populateData();
+        populateData(); // Nạp dữ liệu
     }
 
     private void initialize() {
-        // Tăng chiều cao Dialog để có chỗ cho component mới
-        setSize(650, 650); 
+        setSize(650, 650); // Tăng chiều cao
         setLocationRelativeTo(getParent());
         getContentPane().setBackground(Color.WHITE);
         setLayout(null);
 
-        // --- Tiêu đề Dialog ---
         JLabel lblTitle = new JLabel("Cập nhật thông tin");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
         lblTitle.setBounds(225, 20, 250, 35);
         getContentPane().add(lblTitle);
 
-        // ... (Các component cũ giữ nguyên vị trí) ...
         JLabel lblTen = new JLabel("Tên nhân viên:");
         lblTen.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblTen.setBounds(40, 80, 120, 25);
@@ -65,14 +65,14 @@ public class CapNhatNhanVien_Dialog extends JDialog {
         txtTenNhanVien.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         getContentPane().add(txtTenNhanVien);
 
-        JLabel lblEmail = new JLabel("Tên đăng nhập:");
-        lblEmail.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblEmail.setBounds(340, 80, 200, 25);
-        getContentPane().add(lblEmail);
-        txtEmail = new JTextField();
-        txtEmail.setBounds(340, 110, 250, 35);
-        txtEmail.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        getContentPane().add(txtEmail);
+        JLabel lblTenDangNhap = new JLabel("Tên đăng nhập:");
+        lblTenDangNhap.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        lblTenDangNhap.setBounds(340, 80, 200, 25);
+        getContentPane().add(lblTenDangNhap);
+        txtTenDangNhap = new JTextField();
+        txtTenDangNhap.setBounds(340, 110, 250, 35);
+        txtTenDangNhap.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        getContentPane().add(txtTenDangNhap);
 
         JLabel lblDiaChi = new JLabel("Địa chỉ:");
         lblDiaChi.setFont(new Font("Segoe UI", Font.PLAIN, 16));
@@ -127,7 +127,6 @@ public class CapNhatNhanVien_Dialog extends JDialog {
         chkQuanLy.setBounds(40, 320, 120, 35);
         getContentPane().add(chkQuanLy);
         
-        // <<< 2. THÊM UI CHO TRẠNG THÁI >>>
         JLabel lblTrangThai = new JLabel("Trạng thái:");
         lblTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblTrangThai.setBounds(180, 320, 120, 25);
@@ -140,22 +139,22 @@ public class CapNhatNhanVien_Dialog extends JDialog {
         lblCaLam.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblCaLam.setBounds(340, 320, 120, 25);
         getContentPane().add(lblCaLam);
-        cmbCaLam = new JComboBox<>(new String[]{"Sáng", "Chiều", "Tối", "Hành chính"});
+        // Cập nhật ca làm cho khớp CSDL
+        cmbCaLam = new JComboBox<>(new String[]{"SANG", "CHIEU", "TOI"});
         cmbCaLam.setBounds(340, 350, 250, 35);
         getContentPane().add(cmbCaLam);
 
-        // --- Điều chỉnh vị trí của Mật khẩu và các nút ---
         JLabel lblMatKhau = new JLabel("Mật khẩu (để trống nếu không đổi):");
         lblMatKhau.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblMatKhau.setBounds(40, 410, 300, 25); // Đổi y
+        lblMatKhau.setBounds(40, 410, 300, 25);
         getContentPane().add(lblMatKhau);
         txtMatKhau = new JPasswordField();
-        txtMatKhau.setBounds(40, 440, 550, 35); // Đổi y
+        txtMatKhau.setBounds(40, 440, 550, 35);
         txtMatKhau.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         getContentPane().add(txtMatKhau);
 
         btnThoat = new JButton("Thoát");
-        btnThoat.setBounds(480, 520, 110, 40); // Đổi y và height
+        btnThoat.setBounds(480, 520, 110, 40);
         btnThoat.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnThoat.setBackground(new Color(0x6B7280));
         btnThoat.setForeground(Color.WHITE);
@@ -164,7 +163,7 @@ public class CapNhatNhanVien_Dialog extends JDialog {
         getContentPane().add(btnThoat);
 
         btnLuu = new JButton("Lưu thay đổi");
-        btnLuu.setBounds(320, 520, 140, 40); // Đổi y và height
+        btnLuu.setBounds(320, 520, 140, 40);
         btnLuu.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnLuu.setBackground(new Color(0x3B82F6));
         btnLuu.setForeground(Color.WHITE);
@@ -175,34 +174,43 @@ public class CapNhatNhanVien_Dialog extends JDialog {
         btnLuu.addActionListener(e -> onLuuButtonClick());
     }
     
+    /**
+     * Thay đổi 3: Nạp dữ liệu từ TaiKhoan và NhanVien
+     */
     private void populateData() {
-        txtTenNhanVien.setText(nhanVienCanCapNhat.getTenNhanVien());
-        txtEmail.setText(nhanVienCanCapNhat.getTaiKhoan().getTenDangNhap());
-        txtDiaChi.setText(nhanVienCanCapNhat.getDiaChi());
-        txtSoDienThoai.setText(nhanVienCanCapNhat.getSoDienThoai());
-        LocalDate ngaySinhLocalDate = nhanVienCanCapNhat.getNgaySinh();
+        NhanVien nv = taiKhoanCanCapNhat.getNhanVien();
+        
+        txtTenNhanVien.setText(nv.getTenNhanVien());
+        txtTenDangNhap.setText(taiKhoanCanCapNhat.getTenDangNhap());
+        txtDiaChi.setText(nv.getDiaChi());
+        txtSoDienThoai.setText(nv.getSoDienThoai());
+        
+        LocalDate ngaySinhLocalDate = nv.getNgaySinh();
         if (ngaySinhLocalDate != null) {
             Date ngaySinhDate = Date.from(ngaySinhLocalDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
             ngaySinhDateChooser.setDate(ngaySinhDate);
         }
 
-        if (nhanVienCanCapNhat.isGioiTinh()) {
+        if (nv.isGioiTinh()) {
             radNam.setSelected(true);
         } else {
             radNu.setSelected(true);
         }
 
-        chkQuanLy.setSelected(nhanVienCanCapNhat.isQuanLy());
-        cmbCaLam.setSelectedItem(nhanVienCanCapNhat.getCaLam());
-        
-        // <<< 3. NẠP DỮ LIỆU TRẠNG THÁI HIỆN TẠI >>>
-        cmbTrangThai.setSelectedItem(nhanVienCanCapNhat.isTrangThai() ? "Đang làm" : "Đã nghỉ");
+        chkQuanLy.setSelected(nv.isQuanLy());
+        cmbCaLam.setSelectedItem(nv.getCaLam()); // CSDL lưu "SANG", "CHIEU", "TOI"
+        cmbTrangThai.setSelectedItem(nv.isTrangThai() ? "Đang làm" : "Đã nghỉ");
     }
 
+    /**
+     * Thay đổi 4: Cập nhật dữ liệu vào đối tượng TaiKhoan và NhanVien
+     */
     private void onLuuButtonClick() {
         try {
+            NhanVien nv = taiKhoanCanCapNhat.getNhanVien(); // Lấy nhân viên để cập nhật
+            
             String ten = txtTenNhanVien.getText();
-            String email = txtEmail.getText();
+            String tenDangNhap = txtTenDangNhap.getText();
             String diaChi = txtDiaChi.getText();
             String sdt = txtSoDienThoai.getText();
             String matKhau = new String(txtMatKhau.getPassword());
@@ -222,22 +230,29 @@ public class CapNhatNhanVien_Dialog extends JDialog {
             boolean gioiTinh = radNam.isSelected();
             boolean isQuanLy = chkQuanLy.isSelected();
             String caLam = cmbCaLam.getSelectedItem().toString();
-            
-            // <<< 4. LẤY DỮ LIỆU TRẠNG THÁI MỚI >>>
             boolean trangThai = cmbTrangThai.getSelectedItem().toString().equals("Đang làm");
             
-            nhanVienCanCapNhat.setTenNhanVien(ten);
-            nhanVienCanCapNhat.getTaiKhoan().setTenDangNhap(email);
-            nhanVienCanCapNhat.setDiaChi(diaChi);
-            nhanVienCanCapNhat.setSoDienThoai(sdt);
-            nhanVienCanCapNhat.setNgaySinh(ngaySinh);
-            nhanVienCanCapNhat.setGioiTinh(gioiTinh);
-            nhanVienCanCapNhat.setQuanLy(isQuanLy);
-            nhanVienCanCapNhat.setCaLam(caLam);
-            nhanVienCanCapNhat.setTrangThai(trangThai); // <<< 5. LƯU TRẠNG THÁI MỚI
+            // Kiểm tra nếu tên đăng nhập thay đổi VÀ đã tồn tại
+            String tenDangNhapCu = taiKhoanCanCapNhat.getTenDangNhap();
+            if (!tenDangNhapCu.equals(tenDangNhap) && taiKhoan_DAO.isUsernameExists(tenDangNhap)) {
+                 JOptionPane.showMessageDialog(this, "Tên đăng nhập đã tồn tại.", "Lỗi trùng lặp", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-            if (!matKhau.isEmpty()) {
-                nhanVienCanCapNhat.getTaiKhoan().setMatKhau(matKhau);
+            // Cập nhật đối tượng NhanVien
+            nv.setTenNhanVien(ten);
+            nv.setDiaChi(diaChi);
+            nv.setSoDienThoai(sdt);
+            nv.setNgaySinh(ngaySinh);
+            nv.setGioiTinh(gioiTinh);
+            nv.setQuanLy(isQuanLy);
+            nv.setCaLam(caLam);
+            nv.setTrangThai(trangThai);
+
+            // Cập nhật đối tượng TaiKhoan
+            taiKhoanCanCapNhat.setTenDangNhap(tenDangNhap);
+            if (!matKhau.isEmpty()) { // Chỉ cập nhật nếu người dùng nhập mật khẩu mới
+                taiKhoanCanCapNhat.setMatKhau(matKhau);
             }
             
             isUpdateSuccess = true;
