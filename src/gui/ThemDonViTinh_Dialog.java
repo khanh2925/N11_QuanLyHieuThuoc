@@ -1,35 +1,37 @@
 package gui;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Frame;
+import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+
+import dao.DonViTinh_DAO;
 import entity.DonViTinh;
 
+@SuppressWarnings("serial")
 public class ThemDonViTinh_Dialog extends JDialog {
 
     private JTextField txtTenDonViTinh;
-    private JTextArea txtMoTa;
     private JButton btnThem;
     private JButton btnThoat;
 
     private DonViTinh donViTinhMoi = null;
+    private DonViTinh_DAO donViTinhDAO;
 
     public ThemDonViTinh_Dialog(Frame owner) {
         super(owner, "Thêm đơn vị tính", true);
+        donViTinhDAO = new DonViTinh_DAO();
         initialize();
     }
 
     private void initialize() {
-        setSize(500, 400);
+        setSize(450, 300);
         setLocationRelativeTo(getParent());
         getContentPane().setBackground(Color.WHITE);
         setLayout(null);
 
-        JLabel lblTitle = new JLabel("Thêm đơn vị tính");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        lblTitle.setBounds(145, 20, 210, 35);
+        JLabel lblTitle = new JLabel("Thêm đơn vị tính", SwingConstants.CENTER);
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblTitle.setBounds(0, 20, 450, 35);
         getContentPane().add(lblTitle);
 
         JLabel lblTen = new JLabel("Tên đơn vị tính:");
@@ -38,58 +40,61 @@ public class ThemDonViTinh_Dialog extends JDialog {
         getContentPane().add(lblTen);
 
         txtTenDonViTinh = new JTextField();
-        txtTenDonViTinh.setBounds(40, 110, 400, 35);
+        txtTenDonViTinh.setBounds(40, 110, 360, 35);
         txtTenDonViTinh.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        txtTenDonViTinh.setBorder(new LineBorder(new Color(0x00C0E2), 1, true));
         getContentPane().add(txtTenDonViTinh);
 
-        JLabel lblMoTa = new JLabel("Mô tả:");
-        lblMoTa.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblMoTa.setBounds(40, 160, 120, 25);
-        getContentPane().add(lblMoTa);
-
-        txtMoTa = new JTextArea();
-        txtMoTa.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtMoTa.setLineWrap(true);
-        txtMoTa.setWrapStyleWord(true);
-        JScrollPane scrollPane = new JScrollPane(txtMoTa);
-        scrollPane.setBounds(40, 190, 400, 80);
-        getContentPane().add(scrollPane);
-
-        btnThoat = new JButton("Thoát");
-        btnThoat.setBounds(330, 300, 110, 35);
-        btnThoat.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnThoat.setBackground(new Color(0x6B7280));
-        btnThoat.setForeground(Color.WHITE);
-        btnThoat.setBorder(null);
-        getContentPane().add(btnThoat);
-
         btnThem = new JButton("Thêm");
-        btnThem.setBounds(200, 300, 110, 35);
+        btnThem.setBounds(180, 180, 110, 35);
         btnThem.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnThem.setBackground(new Color(0x3B82F6));
         btnThem.setForeground(Color.WHITE);
         btnThem.setBorder(null);
         getContentPane().add(btnThem);
 
+        btnThoat = new JButton("Thoát");
+        btnThoat.setBounds(310, 180, 90, 35);
+        btnThoat.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnThoat.setBackground(new Color(0x6B7280));
+        btnThoat.setForeground(Color.WHITE);
+        btnThoat.setBorder(null);
+        getContentPane().add(btnThoat);
+
+        // ====== SỰ KIỆN ======
         btnThoat.addActionListener(e -> dispose());
         btnThem.addActionListener(e -> onThemButtonClick());
     }
 
     private void onThemButtonClick() {
+        String ten = txtTenDonViTinh.getText().trim();
+
+        if (ten.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập tên đơn vị tính.", "Thiếu dữ liệu", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         try {
-            String ten = txtTenDonViTinh.getText();
-            String moTa = txtMoTa.getText();
-            
-            // Tạo mã DVT-xxx ngẫu nhiên
-            String maDVT = String.format("DVT-%03d", (int) (Math.random() * 1000));
-            
-            this.donViTinhMoi = new DonViTinh(maDVT, ten, moTa);
-            dispose();
-        } catch (IllegalArgumentException ex) {
+            // Sinh mã mới qua DAO (tự động tăng DVT-xxx)
+            String maDVT = donViTinhDAO.taoMaTuDong();
+
+            // Tạo đối tượng DonViTinh mới
+            this.donViTinhMoi = new DonViTinh(maDVT, ten);
+
+            // Ghi vào DB
+            boolean ok = donViTinhDAO.themDonViTinh(donViTinhMoi);
+            if (ok) {
+                JOptionPane.showMessageDialog(this, "Thêm đơn vị tính thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                dispose();
+            } else {
+                JOptionPane.showMessageDialog(this, "Không thể thêm đơn vị tính (trùng tên hoặc lỗi DB).", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    /** Trả về đơn vị tính vừa được thêm (hoặc null nếu hủy) */
     public DonViTinh getDonViTinhMoi() {
         return donViTinhMoi;
     }

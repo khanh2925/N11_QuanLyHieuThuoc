@@ -116,7 +116,7 @@ public class NhanVien_QL_GUI extends JPanel {
         model.setRowCount(0);
         
         // === THAY ĐỔI 2: Lấy TÀI KHOẢN (đã join) làm nguồn dữ liệu chính ===
-        dsTaiKhoan = taiKhoan_DAO.getAllTaiKhoan();
+        dsTaiKhoan = taiKhoan_DAO.layTatCaTaiKhoan();
         
         if (dsTaiKhoan == null || dsTaiKhoan.isEmpty()) {
             System.out.println("Không có dữ liệu tài khoản/nhân viên từ CSDL");
@@ -168,11 +168,11 @@ public class NhanVien_QL_GUI extends JPanel {
             NhanVien nvMoi = tkMoi.getNhanVien(); // Lấy nhân viên từ tài khoản
 
             // Thêm Nhân viên trước (vì Tài khoản tham chiếu đến Nhân viên)
-            boolean themNVSuccess = nhanVien_DAO.createNhanVien(nvMoi);
+            boolean themNVSuccess = nhanVien_DAO.themNhanVien(nvMoi);
             
             if (themNVSuccess) {
                 // Thêm Tài khoản sau
-                boolean themTKSuccess = taiKhoan_DAO.createTaiKhoan(tkMoi);
+                boolean themTKSuccess = taiKhoan_DAO.themTaiKhoan(tkMoi);
                 
                 if (themTKSuccess) {
                     dsTaiKhoan.add(tkMoi); // Thêm vào danh sách TÀI KHOẢN
@@ -216,9 +216,9 @@ public class NhanVien_QL_GUI extends JPanel {
 
             if (dialog.isUpdateSuccess()) {
                 // Cập nhật thông tin nhân viên
-                boolean updateNVSuccess = nhanVien_DAO.updateNhanVien(tkToUpdate.getNhanVien());
+                boolean updateNVSuccess = nhanVien_DAO.capNhatNhanVien(tkToUpdate.getNhanVien());
                 // Cập nhật thông tin tài khoản (tên đăng nhập, mật khẩu)
-                boolean updateTKSuccess = taiKhoan_DAO.updateTaiKhoan(tkToUpdate);
+                boolean updateTKSuccess = taiKhoan_DAO.capNhatTaiKhoan(tkToUpdate);
 
                 if (updateNVSuccess && updateTKSuccess) {
                     updateDataInTable(tkToUpdate, modelRow); // Cập nhật dòng trong table

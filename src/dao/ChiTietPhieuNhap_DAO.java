@@ -2,6 +2,7 @@ package dao;
 
 import connectDB.connectDB;
 import entity.ChiTietPhieuNhap;
+import entity.DonViTinh;
 import entity.LoSanPham;
 import entity.PhieuNhap;
 
@@ -14,7 +15,12 @@ import java.util.List;
 
 public class ChiTietPhieuNhap_DAO {
 
+    private final LoSanPham_DAO loSanPhamDAO;
+    private final DonViTinh_DAO donViTinhDAO; // 💡 KHAI BÁO DAO ĐVT
+
     public ChiTietPhieuNhap_DAO() {
+        this.loSanPhamDAO = new LoSanPham_DAO();
+        this.donViTinhDAO = new DonViTinh_DAO(); // 💡 KHỞI TẠO DAO ĐVT
     }
 
     /**
@@ -29,24 +35,27 @@ public class ChiTietPhieuNhap_DAO {
         try {
             connectDB.getInstance();
             con = connectDB.getConnection();
-            LoSanPham_DAO loSanPhamDAO = new LoSanPham_DAO();
 
-            String sql = "SELECT * FROM ChiTietPhieuNhap WHERE MaPhieuNhap = ?";
+            // 💡 SỬA SQL: Thêm MaDonViTinh và tính lại thành tiền
+            String sql = "SELECT MaLo, MaDonViTinh, SoLuongNhap, DonGiaNhap FROM ChiTietPhieuNhap WHERE MaPhieuNhap = ?";
             stmt = con.prepareStatement(sql);
             stmt.setString(1, maPhieuNhap);
             rs = stmt.executeQuery();
 
             while (rs.next()) {
                 String maLo = rs.getString("MaLo");
+                String maDVT = rs.getString("MaDonViTinh"); // 💡 ĐỌC MA ĐVT
                 int soLuongNhap = rs.getInt("SoLuongNhap");
                 double donGiaNhap = rs.getDouble("DonGiaNhap");
 
-                LoSanPham lo = loSanPhamDAO.layLoTheoMa(maLo);
+                LoSanPham lo = loSanPhamDAO.timLoTheoMa(maLo);
+                DonViTinh dvt = donViTinhDAO.timDonViTinhTheoMa(maDVT); // 💡 LẤY ĐỐI TƯỢNG ĐVT
 
-                if (lo != null) {
+                if (lo != null && dvt != null) {
                     PhieuNhap pn = new PhieuNhap();
                     pn.setMaPhieuNhap(maPhieuNhap);
-                    ChiTietPhieuNhap ctpn = new ChiTietPhieuNhap(pn, lo, soLuongNhap, donGiaNhap);
+                    // 💡 TRUYỀN ĐẦY ĐỦ THAM SỐ
+                    ChiTietPhieuNhap ctpn = new ChiTietPhieuNhap(pn, lo, dvt, soLuongNhap, donGiaNhap); 
                     dsChiTiet.add(ctpn);
                 }
             }

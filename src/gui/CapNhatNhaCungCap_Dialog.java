@@ -11,196 +11,151 @@ import entity.NhaCungCap;
 @SuppressWarnings("serial")
 public class CapNhatNhaCungCap_Dialog extends JDialog implements ActionListener {
 
-	private final NhaCungCap_DAO nccDAO = new NhaCungCap_DAO();
+    private final NhaCungCap_DAO nccDAO = new NhaCungCap_DAO();
 
-	private final NhaCungCap nccBanDau; // đối tượng gốc (để hiển thị & so sánh)
-	private NhaCungCap nccCapNhat; // kết quả trả về sau khi Lưu
+    private final NhaCungCap nccBanDau;
+    private NhaCungCap nccCapNhat;
 
-	private JTextField txtMa;
-	private JTextField txtTen;
-	private JTextField txtSdt;
-	private JTextArea txtDiaChi;
-	private JButton btnCapNhat, btnThoat;
+    private JTextField txtMa, txtTen, txtSdt, txtEmail;
+    private JTextArea txtDiaChi;
+    private JCheckBox chkHoatDong;
+    private JButton btnLuu, btnThoat;
 
-	public CapNhatNhaCungCap_Dialog(Frame owner, NhaCungCap ncc) {
-		super(owner, "Cập nhật nhà cung cấp", true);
-		if (ncc == null)
-			throw new IllegalArgumentException("NhaCungCap truyền vào không được null.");
-		this.nccBanDau = ncc;
-		initUI();
-		fillData(ncc);
-	}
+    public CapNhatNhaCungCap_Dialog(Frame owner, NhaCungCap ncc) {
+        super(owner, "Cập nhật nhà cung cấp", true);
+        if (ncc == null)
+            throw new IllegalArgumentException("NhaCungCap không được null.");
+        this.nccBanDau = ncc;
+        initUI();
+        napDuLieu(ncc);
+    }
 
-	private void initUI() {
-		setSize(560, 540);
-		setLocationRelativeTo(getParent());
-		getContentPane().setLayout(new BorderLayout(12, 12));
-		getContentPane().setBackground(Color.WHITE);
+    private void initUI() {
+        setSize(600, 600);
+        setLocationRelativeTo(getParent());
+        getContentPane().setLayout(null);
+        getContentPane().setBackground(Color.WHITE);
 
-		JPanel pnTitle = new JPanel(new BorderLayout());
-		pnTitle.setBorder(BorderFactory.createEmptyBorder(12, 12, 0, 12));
-		JLabel lbl = new JLabel("Thông tin nhà cung cấp", SwingConstants.LEFT);
-		lbl.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		pnTitle.add(lbl, BorderLayout.CENTER);
-		pnTitle.setBackground(Color.WHITE);
-		getContentPane().add(pnTitle, BorderLayout.NORTH);
+        JLabel lblTieuDe = new JLabel("Cập nhật thông tin nhà cung cấp", SwingConstants.CENTER);
+        lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        lblTieuDe.setBounds(0, 20, 600, 30);
+        add(lblTieuDe);
 
-		JPanel pnForm = new JPanel(null);
-		pnForm.setBackground(Color.WHITE);
+        int y = 80;
+        addLabel("Mã nhà cung cấp:", 40, y);
+        txtMa = addTextField(false, 40, y += 25);
 
-		JLabel lbMa = new JLabel("Mã nhà cung cấp:");
-		lbMa.setBounds(12, 10, 180, 24);
-		lbMa.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		pnForm.add(lbMa);
+        addLabel("Tên nhà cung cấp:", 40, y += 60);
+        txtTen = addTextField(true, 40, y += 25);
 
-		txtMa = new JTextField();
-		txtMa.setBounds(12, 36, 510, 36);
-		txtMa.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		txtMa.setBorder(new LineBorder(new Color(0x00C0E2), 1, true));
-		txtMa.setEditable(false); // không cho sửa mã
-		pnForm.add(txtMa);
+        addLabel("Số điện thoại:", 40, y += 60);
+        txtSdt = addTextField(true, 40, y += 25);
 
-		JLabel lbTen = new JLabel("Tên nhà cung cấp:");
-		lbTen.setBounds(12, 84, 180, 24);
-		lbTen.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		pnForm.add(lbTen);
+        addLabel("Email:", 40, y += 60);
+        txtEmail = addTextField(true, 40, y += 25);
 
-		txtTen = new JTextField();
-		txtTen.setBounds(12, 110, 510, 36);
-		txtTen.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		txtTen.setBorder(new LineBorder(new Color(0x00C0E2), 1, true));
-		pnForm.add(txtTen);
+        addLabel("Địa chỉ:", 40, y += 60);
+        txtDiaChi = new JTextArea();
+        JScrollPane sp = new JScrollPane(txtDiaChi);
+        sp.setBounds(40, y += 25, 520, 80);
+        sp.setBorder(new LineBorder(new Color(0x00C0E2), 1, true));
+        add(sp);
 
-		JLabel lbSdt = new JLabel("Số điện thoại:");
-		lbSdt.setBounds(12, 158, 180, 24);
-		lbSdt.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		pnForm.add(lbSdt);
+        chkHoatDong = new JCheckBox("Đang hợp tác");
+        chkHoatDong.setBounds(40, y += 100, 200, 30);
+        chkHoatDong.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        chkHoatDong.setBackground(Color.WHITE);
+        add(chkHoatDong);
 
-		txtSdt = new JTextField();
-		txtSdt.setBounds(12, 184, 510, 36);
-		txtSdt.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		txtSdt.setBorder(new LineBorder(new Color(0x00C0E2), 1, true));
-		pnForm.add(txtSdt);
+        btnLuu = new JButton("Lưu thay đổi");
+        btnLuu.setBounds(280, y += 50, 130, 40);
+        btnLuu.setBackground(new Color(0x3B82F6));
+        btnLuu.setForeground(Color.WHITE);
+        btnLuu.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnLuu.setBorder(null);
+        add(btnLuu);
 
-		JLabel lbDiaChi = new JLabel("Địa chỉ:");
-		lbDiaChi.setBounds(12, 232, 180, 24);
-		lbDiaChi.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		pnForm.add(lbDiaChi);
+        btnThoat = new JButton("Thoát");
+        btnThoat.setBounds(430, y, 130, 40);
+        btnThoat.setBackground(new Color(0x6B7280));
+        btnThoat.setForeground(Color.WHITE);
+        btnThoat.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnThoat.setBorder(null);
+        add(btnThoat);
 
-		txtDiaChi = new JTextArea(4, 20);
-		txtDiaChi.setLineWrap(true);
-		txtDiaChi.setWrapStyleWord(true);
-		txtDiaChi.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		JScrollPane sp = new JScrollPane(txtDiaChi);
-		sp.setBounds(12, 258, 510, 110);
-		sp.setBorder(new LineBorder(new Color(0x00C0E2), 1, true));
-		pnForm.add(sp);
+        btnLuu.addActionListener(this);
+        btnThoat.addActionListener(this);
+    }
 
-		getContentPane().add(pnForm, BorderLayout.CENTER);
+    private void addLabel(String text, int x, int y) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        lbl.setBounds(x, y, 200, 25);
+        add(lbl);
+    }
 
-		JPanel pnButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 12));
-		pnButtons.setBackground(Color.WHITE);
-		btnThoat = new JButton("Thoát");
-		btnThoat.setFont(new Font("Segoe UI", Font.BOLD, 14));
-		btnThoat.setBackground(new Color(0x3B82F6));
-		btnThoat.setForeground(Color.WHITE);
-		btnThoat.setBorder(null);
-		btnThoat.setFocusPainted(false);
-		btnThoat.setPreferredSize(new Dimension(110, 35));
+    private JTextField addTextField(boolean editable, int x, int y) {
+        JTextField tf = new JTextField();
+        tf.setBounds(x, y, 520, 35);
+        tf.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tf.setBorder(new LineBorder(new Color(0x00C0E2), 1, true));
+        tf.setEditable(editable);
+        add(tf);
+        return tf;
+    }
 
-		btnCapNhat = new JButton("Cập nhật");
-		btnCapNhat.setFont(new Font("Segoe UI", Font.BOLD, 14));
-		btnCapNhat.setBackground(Color.WHITE);
-		btnCapNhat.setBorder(new LineBorder(Color.GRAY));
-		btnCapNhat.setPreferredSize(new Dimension(110, 35));
+    private void napDuLieu(NhaCungCap n) {
+        txtMa.setText(n.getMaNhaCungCap());
+        txtTen.setText(n.getTenNhaCungCap());
+        txtSdt.setText(n.getSoDienThoai());
+        txtEmail.setText(n.getEmail());
+        txtDiaChi.setText(n.getDiaChi());
+        chkHoatDong.setSelected(n.isHoatDong());
+    }
 
-		pnButtons.add(btnThoat);
-		pnButtons.add(btnCapNhat);
-		getContentPane().add(pnButtons, BorderLayout.SOUTH);
+    private void capNhat() {
+        try {
+            String ma = txtMa.getText().trim();
+            String ten = txtTen.getText().trim();
+            String sdt = txtSdt.getText().trim();
+            String email = txtEmail.getText().trim();
+            String diachi = txtDiaChi.getText().trim();
+            boolean hoatDong = chkHoatDong.isSelected();
 
-		getRootPane().setDefaultButton(btnCapNhat);
-		
-		btnCapNhat.addActionListener(this);
-		btnThoat.addActionListener(this);
-		
-		KeyAdapter enterToSave = new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER)
-					capNhatNCC();
-			}
-		};
-		txtTen.addKeyListener(enterToSave);
-		txtSdt.addKeyListener(enterToSave);
-		txtDiaChi.addKeyListener(enterToSave);
-		
-	}
+            if (ten.isEmpty()) throw new IllegalArgumentException("Tên nhà cung cấp không được để trống.");
+            if (!sdt.matches("^0\\d{9}$"))
+                throw new IllegalArgumentException("Số điện thoại không hợp lệ (10 chữ số, bắt đầu bằng 0).");
+            if (diachi.isEmpty()) throw new IllegalArgumentException("Địa chỉ không được trống.");
+            if (!email.isEmpty() && !email.matches("^[\\w._%+-]+@[\\w.-]+\\.[A-Za-z]{2,6}$"))
+                throw new IllegalArgumentException("Email không hợp lệ.");
 
-	private void fillData(NhaCungCap n) {
-		txtMa.setText(n.getMaNhaCungCap());
-		txtTen.setText(n.getTenNhaCungCap());
-		txtSdt.setText(n.getSoDienThoai());
-		txtDiaChi.setText(n.getDiaChi());
-	}
-	
+            NhaCungCap nccMoi = new NhaCungCap(ma, ten, sdt, diachi, email);
+            nccMoi.setHoatDong(hoatDong);
 
-	private void capNhatNCC() {
-		String ma = txtMa.getText().trim();
-		String ten = txtTen.getText().trim();
-		String sdt = txtSdt.getText().trim();
-		String diachi = txtDiaChi.getText().trim();
+            if (!nccDAO.capNhatNhaCungCap(nccMoi)) {
+                JOptionPane.showMessageDialog(this, "Cập nhật thất bại. Vui lòng thử lại.",
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-		// Validate
-		if (ten.isEmpty()) {
-			warn("Vui lòng nhập tên nhà cung cấp.");
-			txtTen.requestFocus();
-			return;
-		}
-		if (!sdt.matches("^0\\d{9}$")) {
-			warn("Số điện thoại không hợp lệ. Vui lòng nhập 10–11 số và bắt đầu bằng 0.");
-			txtSdt.requestFocus();
-			return;
-		}
-		if (diachi.length() < 5) {
-			warn("Địa chỉ quá ngắn. Vui lòng nhập chi tiết hơn.");
-			txtDiaChi.requestFocus();
-			return;
-		}
+            nccCapNhat = nccMoi;
+            JOptionPane.showMessageDialog(this, "Đã cập nhật thông tin nhà cung cấp thành công!",
+                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            dispose();
 
-		// Lưu DB
-		NhaCungCap nccNew = new NhaCungCap(ma, ten, sdt, diachi);
-		boolean ok = nccDAO.updateNhaCungCap(nccNew);
-		if (!ok) {
-			warn("Cập nhật thất bại. Vui lòng thử lại.");
-			return;
-		}
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Dữ liệu không hợp lệ", JOptionPane.WARNING_MESSAGE);
+        }
+    }
 
-		nccCapNhat = nccNew;
-		JOptionPane.showMessageDialog(this, "Đã cập nhật nhà cung cấp.", "Thành công", JOptionPane.INFORMATION_MESSAGE);
-		dispose();
-	}
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object src = e.getSource();
+        if (src == btnLuu) capNhat();
+        else if (src == btnThoat) dispose();
+    }
 
-	private void warn(String msg) {
-		JOptionPane.showMessageDialog(this, msg, "Thông báo", JOptionPane.WARNING_MESSAGE);
-	}
-
-	/** Trả về NCC đã cập nhật, hoặc null nếu Hủy */
-	public NhaCungCap getNhaCungCapCapNhat() {
-		return nccCapNhat;
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		Object o = e.getSource();
-		if(o.equals(btnCapNhat)) {
-			capNhatNCC();
-			return;
-		}
-		
-		if(o.equals(btnThoat)) {
-			dispose();
-			return;
-		}
-		
-	}
+    public NhaCungCap getNhaCungCapCapNhat() {
+        return nccCapNhat;
+    }
 }

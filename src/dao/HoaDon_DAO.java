@@ -1,11 +1,7 @@
 package dao;
 
 import connectDB.connectDB;
-import entity.ChiTietHoaDon;
-import entity.HoaDon;
-import entity.NhanVien;
-import entity.KhuyenMai;
-import entity.LoSanPham;
+import entity.*;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -16,14 +12,16 @@ import java.util.List;
 public class HoaDon_DAO {
 
     private final NhanVien_DAO nhanVienDAO;
+    private final KhachHang_DAO khachHangDAO;
     private final ChiTietHoaDon_DAO chiTietHoaDonDAO;
 
     public HoaDon_DAO() {
         this.nhanVienDAO = new NhanVien_DAO();
+        this.khachHangDAO = new KhachHang_DAO();
         this.chiTietHoaDonDAO = new ChiTietHoaDon_DAO();
     }
 
-    /** 🔍 Tìm hóa đơn theo mã (load đầy đủ chi tiết, nhân viên) */
+    /** 🔍 Tìm hóa đơn theo mã (load đầy đủ chi tiết, nhân viên, khách hàng) */
     public HoaDon timHoaDonTheoMa(String maHD) {
         Connection con = null;
         PreparedStatement stmt = null;
@@ -43,31 +41,29 @@ public class HoaDon_DAO {
                 String maKH = rs.getString("MaKhachHang");
                 LocalDate ngayLap = rs.getDate("NgayLap").toLocalDate();
                 double tongTien = rs.getDouble("TongTien");
-                boolean thuocTheoDon = rs.getBoolean("ThuocTheoDon");
+                boolean thuocKeDon = rs.getBoolean("ThuocKeDon"); // ✅ đổi tên cột đúng với entity
 
-                // Lấy nhân viên
-                NhanVien nv = nhanVienDAO.getNhanVienTheoMa(maNV);
+                // Lấy nhân viên & khách hàng
+                NhanVien nhanVien = nhanVienDAO.timNhanVienTheoMa(maNV);
+                KhachHang khachHang = khachHangDAO.timKhachHangTheoMa(maKH);
 
-                // Tạo hóa đơn
-                HoaDon hd = new HoaDon(maHD, maKH, ngayLap, nv, null, thuocTheoDon);
-
-                // 💡 Gán tổng tiền đọc từ DB (bằng setter package-private)
-                try {
-                    var setTongTien = HoaDon.class.getDeclaredMethod("setTongTien", double.class);
-                    setTongTien.setAccessible(true);
-                    setTongTien.invoke(hd, tongTien);
-                } catch (Exception ex) {
-                    System.err.println("⚠ Không thể gán tongTien: " + ex.getMessage());
-                }
-
-                // 🔹 Load danh sách chi tiết hóa đơn (đã có MaLo)
+                // 🔹 Load danh sách chi tiết hóa đơn
                 List<ChiTietHoaDon> dsCT = chiTietHoaDonDAO.layDanhSachChiTietTheoMaHD(maHD);
-                hd.setChiTietHoaDonList(dsCT);
+
+                // ✅ Tạo hóa đơn đầy đủ
+                HoaDon hd = new HoaDon(maHD, nhanVien, khachHang, ngayLap, dsCT, thuocKeDon);
+
+                // Gán lại tổng tiền (nếu cần đảm bảo trùng DB)
+                try {
+                    var setTongTien = HoaDon.class.getDeclaredField("tongTien");
+                    setTongTien.setAccessible(true);
+                    setTongTien.set(hd, tongTien);
+                } catch (Exception ignore) {}
 
                 return hd;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("❌ Lỗi khi tìm hóa đơn theo mã: " + e.getMessage());
         } finally {
             try {
                 if (rs != null) rs.close();
@@ -77,7 +73,7 @@ public class HoaDon_DAO {
         return null;
     }
 
-    /** 📜 Lấy toàn bộ hóa đơn (gọi lại hàm trên để nạp chi tiết đầy đủ) */
+    /** 📜 Lấy toàn bộ hóa đơn */
     public List<HoaDon> layTatCaHoaDon() {
         List<HoaDon> dsHD = new ArrayList<>();
         try (Connection con = connectDB.getConnection();
@@ -89,12 +85,12 @@ public class HoaDon_DAO {
                 if (hd != null) dsHD.add(hd);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("❌ Lỗi lấy danh sách hóa đơn: " + e.getMessage());
         }
         return dsHD;
     }
 
-    /** ➕ Thêm hóa đơn mới (đúng thứ tự cột theo script SQL) */
+    /** ➕ Thêm hóa đơn mới */
     public boolean themHoaDon(HoaDon hd) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
@@ -102,28 +98,33 @@ public class HoaDon_DAO {
         PreparedStatement stmtCTHD = null;
 
         try {
-            con.setAutoCommit(false); // Bắt đầu transaction
+            con.setAutoCommit(false); // bắt đầu transaction
 
-            // 🔹 1️⃣ Tính tổng tiền từ chi tiết (vì getTongTien() là dẫn suất)
+            // 🔹 1️⃣ Tính tổng tiền từ chi tiết
             double tongTien = hd.getTongTien();
 
-            // 🔹 2️⃣ Thêm hóa đơn — đúng thứ tự như script
-            String sqlHD = "INSERT INTO HoaDon (MaHoaDon, NgayLap, MaNhanVien, MaKhachHang, TongTien, ThuocTheoDon) " +
-                           "VALUES (?, ?, ?, ?, ?, ?)";
+            // 🔹 2️⃣ Thêm hóa đơn — cập nhật đúng tên cột
+            String sqlHD = """
+                    INSERT INTO HoaDon (MaHoaDon, NgayLap, MaNhanVien, MaKhachHang, TongTien, ThuocKeDon)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """;
             stmtHD = con.prepareStatement(sqlHD);
             stmtHD.setString(1, hd.getMaHoaDon());
             stmtHD.setDate(2, Date.valueOf(hd.getNgayLap()));
             stmtHD.setString(3, hd.getNhanVien().getMaNhanVien());
-            stmtHD.setString(4, hd.getMaKhachHang());
+            stmtHD.setString(4, hd.getKhachHang().getMaKhachHang());
             stmtHD.setDouble(5, tongTien);
-            stmtHD.setBoolean(6, hd.isThuocTheoDon());
+            stmtHD.setBoolean(6, hd.isThuocKeDon());
             stmtHD.executeUpdate();
 
             // 🔹 3️⃣ Thêm chi tiết hóa đơn
-            String sqlCT = "INSERT INTO ChiTietHoaDon (MaHoaDon, MaLo, MaKM, SoLuong, GiaBan) VALUES (?, ?, ?, ?, ?)";
+            String sqlCT = """
+                    INSERT INTO ChiTietHoaDon (MaHoaDon, MaLo, MaKM, SoLuong, GiaBan)
+                    VALUES (?, ?, ?, ?, ?)
+                    """;
             stmtCTHD = con.prepareStatement(sqlCT);
 
-            for (ChiTietHoaDon cthd : hd.getChiTietHoaDonList()) {
+            for (ChiTietHoaDon cthd : hd.getDanhSachChiTiet()) {
                 stmtCTHD.setString(1, hd.getMaHoaDon());
                 stmtCTHD.setString(2, cthd.getLoSanPham().getMaLo());
 
@@ -140,7 +141,7 @@ public class HoaDon_DAO {
             con.commit();
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("❌ Lỗi thêm hóa đơn: " + e.getMessage());
             try {
                 if (con != null) con.rollback();
             } catch (SQLException ignore) {}
@@ -174,7 +175,7 @@ public class HoaDon_DAO {
                 return String.format("%s%04d", prefix, count + 1);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("❌ Lỗi tạo mã hóa đơn: " + e.getMessage());
         } finally {
             try {
                 if (rs != null) rs.close();
@@ -182,7 +183,6 @@ public class HoaDon_DAO {
             } catch (SQLException ignore) {}
         }
 
-        // Nếu lỗi, trả mã cơ bản
         String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         return "HD-" + today + "-0001";
     }

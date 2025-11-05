@@ -5,158 +5,183 @@ import entity.ChiTietPhieuHuy;
 import entity.LoSanPham;
 import entity.PhieuHuy;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ChiTietPhieuHuy_DAO {
 
-    public ChiTietPhieuHuy_DAO() {
-    }
- 
+    public ChiTietPhieuHuy_DAO() {}
+
+    /** 🔹 Lấy danh sách chi tiết phiếu huỷ theo mã phiếu */
     public List<ChiTietPhieuHuy> timKiemChiTietPhieuHuyBangMa(String maPhieuHuy) {
         List<ChiTietPhieuHuy> danhSachChiTiet = new ArrayList<>();
-        Connection con = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
 
-        try {
-            connectDB.getInstance();
-            con = connectDB.getConnection();
-            LoSanPham_DAO loSanPhamDAO = new LoSanPham_DAO(); // Khởi tạo DAO cục bộ
+        String sql = """
+            SELECT MaLo, SoLuongHuy, DonGiaNhap, LyDoChiTiet, TrangThai
+            FROM ChiTietPhieuHuy
+            WHERE MaPhieuHuy = ?
+        """;
 
-            String sql = "SELECT * FROM ChiTietPhieuHuy WHERE MaPhieuHuy = ?";
-            stmt = con.prepareStatement(sql);
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setString(1, maPhieuHuy);
-            rs = stmt.executeQuery();
+            ResultSet rs = stmt.executeQuery();
 
+            LoSanPham_DAO loDAO = new LoSanPham_DAO();
             PhieuHuy ph = new PhieuHuy();
             ph.setMaPhieuHuy(maPhieuHuy);
 
             while (rs.next()) {
-                int soLuongHuy = rs.getInt("SoLuongHuy");
-                String lyDo = rs.getString("LyDoChiTiet");
                 String maLo = rs.getString("MaLo");
-                // === SỬA LỖI 1: Lấy thêm DonGiaNhap từ ResultSet ===
+                int soLuongHuy = rs.getInt("SoLuongHuy");
                 double donGiaNhap = rs.getDouble("DonGiaNhap");
+                String lyDo = rs.getString("LyDoChiTiet");
+                int trangThai = rs.getInt("TrangThai");
 
-                LoSanPham lo = loSanPhamDAO.layLoTheoMa(maLo);
+                LoSanPham lo = loDAO.timLoTheoMa(maLo);
                 if (lo != null) {
-                    // === SỬA LỖI 2: Truyền đúng donGiaNhap vào constructor ===
-                    ChiTietPhieuHuy ct = new ChiTietPhieuHuy(ph, lo, soLuongHuy, donGiaNhap, lyDo);
+                    ChiTietPhieuHuy ct = new ChiTietPhieuHuy(ph, lo, soLuongHuy, donGiaNhap, lyDo, trangThai);
+                    ct.setTrangThai(trangThai);
                     danhSachChiTiet.add(ct);
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (rs != null) rs.close();
-                if (stmt != null) stmt.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi tìm chi tiết phiếu huỷ: " + e.getMessage());
         }
         return danhSachChiTiet;
     }
 
-
+    /** 🔹 Thêm chi tiết phiếu huỷ (chỉ trừ tồn nếu trạng thái = ĐÃ HUỶ [2]) */
     public boolean themChiTietPhieuHuy(ChiTietPhieuHuy ct) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
-        PreparedStatement stmtInsert = null;
-        PreparedStatement stmtUpdate = null;
+
+        String sqlInsert = """
+            INSERT INTO ChiTietPhieuHuy (MaPhieuHuy, MaLo, SoLuongHuy, DonGiaNhap, LyDoChiTiet, TrangThai)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """;
+        String sqlUpdate = "UPDATE LoSanPham SET SoLuongTon = SoLuongTon - ? WHERE MaLo = ?";
 
         try {
-            con.setAutoCommit(false); // Bắt đầu transaction
+            con.setAutoCommit(false);
 
-            // === SỬA LỖI: Thêm cột DonGiaNhap vào câu lệnh INSERT ===
-            String sqlInsert = "INSERT INTO ChiTietPhieuHuy (MaPhieuHuy, MaLo, SoLuongHuy, DonGiaNhap, LyDoChiTiet) VALUES (?, ?, ?, ?, ?)";
-            stmtInsert = con.prepareStatement(sqlInsert);
-            stmtInsert.setString(1, ct.getPhieuHuy().getMaPhieuHuy());
-            stmtInsert.setString(2, ct.getLoSanPham().getMaLo());
-            stmtInsert.setInt(3, ct.getSoLuongHuy());
-            stmtInsert.setDouble(4, ct.getDonGiaNhap()); // Thêm giá trị cho DonGiaNhap
-            stmtInsert.setString(5, ct.getLyDoChiTiet());
-            stmtInsert.executeUpdate();
+            // 1️⃣ Insert chi tiết
+            try (PreparedStatement ps = con.prepareStatement(sqlInsert)) {
+                ps.setString(1, ct.getPhieuHuy().getMaPhieuHuy());
+                ps.setString(2, ct.getLoSanPham().getMaLo());
+                ps.setInt(3, ct.getSoLuongHuy());
+                ps.setDouble(4, ct.getDonGiaNhap());
+                ps.setString(5, ct.getLyDoChiTiet());
+                ps.setInt(6, ct.getTrangThai());
+                ps.executeUpdate();
+            }
 
-            String sqlUpdate = "UPDATE LoSanPham SET SoLuongTon = SoLuongTon - ? WHERE MaLo = ?";
-            stmtUpdate = con.prepareStatement(sqlUpdate);
-            stmtUpdate.setInt(1, ct.getSoLuongHuy());
-            stmtUpdate.setString(2, ct.getLoSanPham().getMaLo());
-            stmtUpdate.executeUpdate();
+            // 2️⃣ Nếu chi tiết đã duyệt (trạng thái = 2), trừ tồn
+            if (ct.getTrangThai() == 2) {
+                try (PreparedStatement psUpd = con.prepareStatement(sqlUpdate)) {
+                    psUpd.setInt(1, ct.getSoLuongHuy());
+                    psUpd.setString(2, ct.getLoSanPham().getMaLo());
+                    psUpd.executeUpdate();
+                }
+            }
 
-            con.commit(); // Hoàn tất transaction
+            con.commit();
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();
-            try {
-                if (con != null) con.rollback(); // Hoàn tác nếu có lỗi
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
+            System.err.println("❌ Lỗi thêm chi tiết phiếu huỷ: " + e.getMessage());
+            try { con.rollback(); } catch (SQLException ignored) {}
             return false;
         } finally {
-            try {
-                if (stmtInsert != null) stmtInsert.close();
-                if (stmtUpdate != null) stmtUpdate.close();
-                if (con != null) con.setAutoCommit(true); // Luôn trả lại trạng thái mặc định
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
+            try { con.setAutoCommit(true); } catch (SQLException ignored) {}
         }
     }
 
-    /**
-     * Xóa một dòng chi tiết khỏi phiếu hủy và hoàn lại tồn kho (sử dụng transaction).
-     * @param ct Đối tượng ChiTietPhieuHuy cần xóa.
-     * @return true nếu xóa thành công, false nếu thất bại.
-     */
+    /** 🔹 Cập nhật trạng thái chi tiết (khi duyệt / nhập lại kho) */
+    public boolean capNhatTrangThaiChiTiet(String maPhieuHuy, String maLo, int trangThaiMoi) {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        String sql = "UPDATE ChiTietPhieuHuy SET TrangThai = ? WHERE MaPhieuHuy = ? AND MaLo = ?";
+        String sqlUpdateTon = """
+            UPDATE LoSanPham SET SoLuongTon = 
+                CASE 
+                    WHEN ? = 2 THEN SoLuongTon - (SELECT SoLuongHuy FROM ChiTietPhieuHuy WHERE MaPhieuHuy=? AND MaLo=?)
+                    WHEN ? = 3 THEN SoLuongTon + (SELECT SoLuongHuy FROM ChiTietPhieuHuy WHERE MaPhieuHuy=? AND MaLo=?)
+                    ELSE SoLuongTon
+                END
+            WHERE MaLo = ?
+        """;
+
+        try {
+            con.setAutoCommit(false);
+
+            // 1️⃣ Update trạng thái chi tiết
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setInt(1, trangThaiMoi);
+                ps.setString(2, maPhieuHuy);
+                ps.setString(3, maLo);
+                ps.executeUpdate();
+            }
+
+            // 2️⃣ Cập nhật tồn kho tuỳ theo trạng thái mới
+            try (PreparedStatement psTon = con.prepareStatement(sqlUpdateTon)) {
+                psTon.setInt(1, trangThaiMoi);
+                psTon.setString(2, maPhieuHuy);
+                psTon.setString(3, maLo);
+                psTon.setInt(4, trangThaiMoi);
+                psTon.setString(5, maPhieuHuy);
+                psTon.setString(6, maLo);
+                psTon.setString(7, maLo);
+                psTon.executeUpdate();
+            }
+
+            con.commit();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi cập nhật trạng thái chi tiết phiếu huỷ: " + e.getMessage());
+            try { con.rollback(); } catch (SQLException ignored) {}
+            return false;
+        } finally {
+            try { con.setAutoCommit(true); } catch (SQLException ignored) {}
+        }
+    }
+
+    /** 🔹 Xoá chi tiết (và hoàn tồn nếu cần) */
     public boolean xoaChiTietPhieuHuy(ChiTietPhieuHuy ct) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
-        PreparedStatement stmtDelete = null;
-        PreparedStatement stmtUpdate = null;
+
+        String sqlDelete = "DELETE FROM ChiTietPhieuHuy WHERE MaPhieuHuy = ? AND MaLo = ?";
+        String sqlUpdate = "UPDATE LoSanPham SET SoLuongTon = SoLuongTon + ? WHERE MaLo = ?";
 
         try {
-            con.setAutoCommit(false); // Bắt đầu transaction
+            con.setAutoCommit(false);
 
-            String sqlDelete = "DELETE FROM ChiTietPhieuHuy WHERE MaPhieuHuy = ? AND MaLo = ?";
-            stmtDelete = con.prepareStatement(sqlDelete);
-            stmtDelete.setString(1, ct.getPhieuHuy().getMaPhieuHuy());
-            stmtDelete.setString(2, ct.getLoSanPham().getMaLo());
-            int rowsAffected = stmtDelete.executeUpdate();
-            if (rowsAffected == 0) {
-                throw new SQLException("Xóa chi tiết phiếu hủy thất bại, không tìm thấy dòng nào.");
+            try (PreparedStatement ps = con.prepareStatement(sqlDelete)) {
+                ps.setString(1, ct.getPhieuHuy().getMaPhieuHuy());
+                ps.setString(2, ct.getLoSanPham().getMaLo());
+                ps.executeUpdate();
             }
 
-            String sqlUpdate = "UPDATE LoSanPham SET SoLuongTon = SoLuongTon + ? WHERE MaLo = ?";
-            stmtUpdate = con.prepareStatement(sqlUpdate);
-            stmtUpdate.setInt(1, ct.getSoLuongHuy());
-            stmtUpdate.setString(2, ct.getLoSanPham().getMaLo());
-            stmtUpdate.executeUpdate();
+            // Nếu chi tiết đã trừ tồn (trạng thái = 2) thì cộng lại
+            if (ct.getTrangThai() == 2) {
+                try (PreparedStatement psTon = con.prepareStatement(sqlUpdate)) {
+                    psTon.setInt(1, ct.getSoLuongHuy());
+                    psTon.setString(2, ct.getLoSanPham().getMaLo());
+                    psTon.executeUpdate();
+                }
+            }
 
-            con.commit(); // Hoàn tất transaction
+            con.commit();
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();
-            try {
-                if (con != null) con.rollback();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
+            System.err.println("❌ Lỗi xoá chi tiết phiếu huỷ: " + e.getMessage());
+            try { con.rollback(); } catch (SQLException ignored) {}
             return false;
         } finally {
-            try {
-                if (stmtDelete != null) stmtDelete.close();
-                if (stmtUpdate != null) stmtUpdate.close();
-                if (con != null) con.setAutoCommit(true);
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
+            try { con.setAutoCommit(true); } catch (SQLException ignored) {}
         }
     }
 }

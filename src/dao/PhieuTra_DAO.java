@@ -8,7 +8,6 @@ import entity.PhieuTra;
 
 import java.sql.*;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,21 +31,16 @@ public class PhieuTra_DAO {
                     String maKH = rs.getString("MaKhachHang");
                     LocalDate ngayLap = rs.getDate("NgayLap").toLocalDate();
                     boolean daDuyet = rs.getBoolean("DaDuyet");
-                    // double tongTienHoanDB = rs.getBigDecimal("TongTienHoan") == null ? 0
-                    //         : rs.getBigDecimal("TongTienHoan").doubleValue();
 
-                    // nạp NV, KH
                     NhanVien_DAO nhanVienDAO = new NhanVien_DAO();
                     KhachHang_DAO khachHangDAO = new KhachHang_DAO();
-                    NhanVien nv = nhanVienDAO.getNhanVienTheoMa(maNV);
-                    KhachHang kh = khachHangDAO.getKhachHangTheoMa(maKH);
+                    ArrayList<NhanVien> nv = nhanVienDAO.timNhanVien(maNV);
+                    ArrayList<KhachHang> kh = khachHangDAO.timKhachHang(maKH);
 
-                    // nạp chi tiết
                     ChiTietPhieuTra_DAO ctDAO = new ChiTietPhieuTra_DAO();
                     List<ChiTietPhieuTra> chiTietList = ctDAO.timKiemChiTietBangMaPhieuTra(maPhieuTra);
 
-                    // dựng entity (constructor sẽ tự cập nhật tổng tiền hoàn)
-                    return new PhieuTra(maPhieuTra, kh, nv, ngayLap, daDuyet, chiTietList);
+                    return new PhieuTra(maPhieuTra, null, null, ngayLap, daDuyet, chiTietList);
                 }
             }
         } catch (SQLException e) {
@@ -67,7 +61,7 @@ public class PhieuTra_DAO {
              ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
                 String maPT = rs.getString("MaPhieuTra");
-                PhieuTra pt = timKiemPhieuTraBangMa(maPT); // tái dùng hàm trên để kèm chi tiết
+                PhieuTra pt = timKiemPhieuTraBangMa(maPT);
                 if (pt != null) ds.add(pt);
             }
         } catch (SQLException e) {
@@ -81,16 +75,15 @@ public class PhieuTra_DAO {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
 
-        // Lấy tổng tiền hoàn từ entity (đã tự tính theo chi tiết hợp lệ)
         double tongTienHoan = pt.getTongTienHoan();
 
         String sqlPT = "INSERT INTO PhieuTra " +
                 "(MaPhieuTra, NgayLap, MaNhanVien, MaKhachHang, TongTienHoan, DaDuyet) " +
                 "VALUES (?, ?, ?, ?, ?, ?)";
 
-        // Giữ nguyên cú pháp bảng chi tiết hiện tại của bạn
+        // ⬇️ CẬP NHẬT: dùng MaLo thay vì MaSanPham
         String sqlCT = "INSERT INTO ChiTietPhieuTra " +
-                "(MaPhieuTra, MaHoaDon, MaSanPham, LyDoTra, SoLuong, ThanhTienHoan, TrangThai) " +
+                "(MaPhieuTra, MaHoaDon, MaLo, LyDoChiTiet, SoLuong, ThanhTienHoan, TrangThai) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try {
@@ -102,8 +95,6 @@ public class PhieuTra_DAO {
                 ps.setDate(2, Date.valueOf(pt.getNgayLap()));
                 ps.setString(3, pt.getNhanVien().getMaNhanVien());
                 ps.setString(4, pt.getKhachHang().getMaKhachHang());
-                // DECIMAL(18,2) -> BigDecimal
-                if (Double.isNaN(tongTienHoan)) tongTienHoan = 0;
                 ps.setBigDecimal(5, java.math.BigDecimal.valueOf(Math.round(tongTienHoan * 100.0) / 100.0));
                 ps.setBoolean(6, pt.isDaDuyet());
                 ps.executeUpdate();
@@ -114,16 +105,13 @@ public class PhieuTra_DAO {
                 for (ChiTietPhieuTra ct : pt.getChiTietPhieuTraList()) {
                     psCT.setString(1, pt.getMaPhieuTra());
                     psCT.setString(2, ct.getChiTietHoaDon().getHoaDon().getMaHoaDon());
-                    psCT.setString(3, ct.getChiTietHoaDon().getSanPham().getMaSanPham());
+                    psCT.setString(3, ct.getChiTietHoaDon().getLoSanPham().getMaLo()); // ✅ MaLo
                     psCT.setString(4, ct.getLyDoChiTiet());
                     psCT.setInt(5, ct.getSoLuong());
                     psCT.setBigDecimal(6, java.math.BigDecimal.valueOf(
                             Math.round(ct.getThanhTienHoan() * 100.0) / 100.0));
-
-                    // Nếu cột TrangThai của bảng chi tiết là BIT -> dùng setBoolean.
-                    // Nếu cột TrangThai là NVARCHAR -> đổi thành setString tùy schema bạn đang dùng.
-                    // Ở đây ưu tiên BIT:
-                    psCT.setBoolean(7, ct.isHoanTien()); // hoặc ct.isTrangThai() nếu bạn đặt tên vậy
+                    // Nếu cột TrangThai là BIT
+                    psCT.setInt(7, ct.getTrangThai());
                     psCT.addBatch();
                 }
                 psCT.executeBatch();
@@ -140,7 +128,7 @@ public class PhieuTra_DAO {
         }
     }
 
-    // ===== Cập nhật trạng thái đã duyệt (BIT) =====
+    // ===== Cập nhật trạng thái đã duyệt =====
     public boolean capNhatTrangThai(String maPhieuTra, boolean daDuyetMoi) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
@@ -155,27 +143,7 @@ public class PhieuTra_DAO {
         }
     }
 
-    // ===== Cập nhật tổng tiền theo chi tiết (sync lại nếu chi tiết đổi) =====
-    public boolean capNhatTongTienTheoChiTiet(String maPhieuTra) {
-        PhieuTra pt = timKiemPhieuTraBangMa(maPhieuTra);
-        if (pt == null) return false;
-
-        double sum = pt.getTongTienHoan();
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
-
-        String sql = "UPDATE PhieuTra SET TongTienHoan = ? WHERE MaPhieuTra = ?";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setBigDecimal(1, java.math.BigDecimal.valueOf(Math.round(sum * 100.0) / 100.0));
-            ps.setString(2, maPhieuTra);
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    // ===== Tạo mã PTxxxxxx (đúng CK_PT_Ma) =====
+    // ===== Tạo mã PTxxxxxx =====
     public String taoMaPhieuTra() {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();

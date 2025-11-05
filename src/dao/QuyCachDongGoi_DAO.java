@@ -20,56 +20,51 @@ public class QuyCachDongGoi_DAO {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
 
-        String sql = "SELECT qc.MaQuyCach, qc.HeSoQuyDoi, qc.TiLeGiam, qc.DonViGoc, " +
-                     "sp.MaSanPham, sp.TenSanPham, sp.LoaiSanPham, sp.SoDangKy, sp.DuongDung, sp.GiaNhap, sp.HinhAnh, sp.KeBanSanPham, sp.HoatDong, " +
-                     "dvt.MaDonViTinh, dvt.TenDonViTinh, dvt.MoTa " +
-                     "FROM QuyCachDongGoi qc " +
-                     "JOIN SanPham sp ON qc.MaSanPham = sp.MaSanPham " +
-                     "JOIN DonViTinh dvt ON qc.MaDonViTinh = dvt.MaDonViTinh";
-        
+        String sql =
+            "SELECT qc.MaQuyCach, qc.HeSoQuyDoi, qc.TiLeGiam, qc.DonViGoc, " +
+            "       sp.MaSanPham, sp.TenSanPham, sp.LoaiSanPham, sp.SoDangKy, sp.DuongDung, sp.GiaNhap, sp.HinhAnh, sp.KeBanSanPham, sp.HoatDong, " +
+            "       dvt.MaDonViTinh, dvt.TenDonViTinh " +
+            "FROM QuyCachDongGoi qc " +
+            "JOIN SanPham sp ON qc.MaSanPham = sp.MaSanPham " +
+            "JOIN DonViTinh dvt ON qc.MaDonViTinh = dvt.MaDonViTinh";
+
         try (Statement st = con.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
 
             while (rs.next()) {
                 String maQC = rs.getString("MaQuyCach");
                 try {
-                    DonViTinh dvt = new DonViTinh(rs.getString("MaDonViTinh"), rs.getString("TenDonViTinh"), rs.getString("MoTa"));
+                    DonViTinh dvt = new DonViTinh(
+                        rs.getString("MaDonViTinh"),
+                        rs.getString("TenDonViTinh")
+                    );
 
-                    // ===== SỬA ĐỔI TẠI ĐÂY: Xử lý Enum trực tiếp bằng valueOf =====
-                    
-                    // 1. Chuyển đổi LoaiSanPham
+                    // Enum LoaiSanPham
                     LoaiSanPham loai = null;
                     String loaiSPStr = rs.getString("LoaiSanPham");
-                    if (loaiSPStr != null && !loaiSPStr.trim().isEmpty()) {
-                        try {
-                            // Sử dụng valueOf(), cần đảm bảo chuỗi khớp chính xác tên hằng số (viết hoa)
-                            loai = LoaiSanPham.valueOf(loaiSPStr.trim().toUpperCase());
-                        } catch (IllegalArgumentException e) {
-                            System.err.println("Giá trị LoaiSanPham không hợp lệ từ CSDL cho MaQuyCach '" + maQC + "': '" + loaiSPStr + "'");
-                            // Có thể gán giá trị mặc định hoặc bỏ qua bản ghi này tùy nghiệp vụ
+                    if (loaiSPStr != null && !loaiSPStr.isBlank()) {
+                        try { loai = LoaiSanPham.valueOf(loaiSPStr.trim().toUpperCase()); }
+                        catch (IllegalArgumentException e) {
+                            System.err.println("LoaiSanPham không hợp lệ cho MaQuyCach " + maQC + ": " + loaiSPStr);
                         }
                     }
 
-                    // 2. Chuyển đổi DuongDung
+                    // Enum DuongDung
                     DuongDung dd = null;
                     String duongDungStr = rs.getString("DuongDung");
-                    if (duongDungStr != null && !duongDungStr.trim().isEmpty()) {
-                        try {
-                             // Sử dụng valueOf(), cần đảm bảo chuỗi khớp chính xác tên hằng số (viết hoa)
-                            dd = DuongDung.valueOf(duongDungStr.trim().toUpperCase());
-                        } catch (IllegalArgumentException e) {
-                            System.err.println("Giá trị DuongDung không hợp lệ từ CSDL cho MaQuyCach '" + maQC + "': '" + duongDungStr + "'");
+                    if (duongDungStr != null && !duongDungStr.isBlank()) {
+                        try { dd = DuongDung.valueOf(duongDungStr.trim().toUpperCase()); }
+                        catch (IllegalArgumentException e) {
+                            System.err.println("DuongDung không hợp lệ cho MaQuyCach " + maQC + ": " + duongDungStr);
                         }
                     }
 
-                    // =========================================================
-
                     SanPham sp = new SanPham(
-                        rs.getString("MaSanPham"), 
+                        rs.getString("MaSanPham"),
                         rs.getString("TenSanPham"),
-                        loai, // Sử dụng biến enum đã được chuyển đổi
+                        loai,
                         rs.getString("SoDangKy"),
-                        dd,   // Sử dụng biến enum đã được chuyển đổi
+                        dd,
                         rs.getDouble("GiaNhap"),
                         rs.getString("HinhAnh"),
                         rs.getString("KeBanSanPham"),
@@ -83,36 +78,35 @@ public class QuyCachDongGoi_DAO {
                         rs.getBoolean("DonViGoc")
                     );
                     ds.add(qc);
+
                 } catch (IllegalArgumentException e) {
-                    // Bắt lỗi validation từ các hàm khởi tạo của Entity (ví dụ HeSoQuyDoi sai)
-                    System.err.println("Lỗi dữ liệu không hợp lệ từ CSDL cho MaQuyCach '" + maQC + "': " + e.getMessage());
+                    System.err.println("Lỗi dữ liệu không hợp lệ (MaQuyCach " + maQC + "): " + e.getMessage());
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Lỗi kết nối hoặc câu SQL
+            e.printStackTrace();
         }
         return ds;
     }
 
-    /** Tạo mã quy cách mới */
+    /** Sinh mã quy cách mới (dạng QC-000001) */
     public String taoMaQuyCach() {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
-        String sql = "SELECT TOP 1 MaQuyCach FROM QuyCachDongGoi ORDER BY MaQuyCach DESC";
+        String sql = "SELECT TOP 1 MaQuyCach FROM QuyCachDongGoi WHERE MaQuyCach LIKE 'QC-%' ORDER BY MaQuyCach DESC";
         try (Statement st = con.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             if (rs.next()) {
-                String lastMa = rs.getString("MaQuyCach");
-                // Đảm bảo chuỗi có dạng QCxxxxxx trước khi cắt và parse
-                if (lastMa != null && lastMa.matches("^QC\\d{6}$")) {
-                     int lastNum = Integer.parseInt(lastMa.substring(2));
-                     return String.format("QC%06d", lastNum + 1);
+                String lastMa = rs.getString("MaQuyCach"); // ví dụ QC-000123
+                if (lastMa != null && lastMa.matches("^QC-\\d{6}$")) {
+                    int lastNum = Integer.parseInt(lastMa.substring(3)); // bỏ QC-
+                    return String.format("QC-%06d", lastNum + 1);
                 }
             }
-        } catch (SQLException | NumberFormatException e) { // Bắt thêm NumberFormatException
+        } catch (SQLException | NumberFormatException e) {
             e.printStackTrace();
         }
-        return "QC000001"; // Mã mặc định nếu có lỗi hoặc chưa có bản ghi nào
+        return "QC-000001";
     }
 
     /** Thêm quy cách */
@@ -130,18 +124,15 @@ public class QuyCachDongGoi_DAO {
             ps.setBoolean(6, q.isDonViGoc());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace(); // Log lỗi SQL
-            // Có thể kiểm tra mã lỗi SQL để biết chi tiết (vd: vi phạm khóa ngoại, unique constraint)
-            // if (e.getErrorCode() == ...) { ... }
+            e.printStackTrace();
         }
         return false;
     }
 
-    /** Cập nhật quy cách (theo khóa chính MaQuyCach) */
+    /** Cập nhật quy cách */
     public boolean capNhatQuyCachDongGoi(QuyCachDongGoi q) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
-        // Cập nhật cả MaSanPham và MaDonViTinh để phòng trường hợp thay đổi
         String sql = "UPDATE QuyCachDongGoi SET MaSanPham = ?, MaDonViTinh = ?, HeSoQuyDoi = ?, TiLeGiam = ?, DonViGoc = ? WHERE MaQuyCach = ?";
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {

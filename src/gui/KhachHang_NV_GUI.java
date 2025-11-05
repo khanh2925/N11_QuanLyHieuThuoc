@@ -256,7 +256,7 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
         model.setRowCount(0);
         
         try {
-			dsKhachHang = kh_dao.getAllKhachHang();
+			dsKhachHang = kh_dao.layTatCaKhachHang();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -374,7 +374,7 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
 	private void ThemKH() {
 		MoDiaLogThemKH();
 		KhachHang khMoi = dialogThemKH.getKhachHangMoi();
-		if (kh_dao.createKhachHang(khMoi)) {
+		if (kh_dao.themKhachHang(khMoi)) {
 			addKhachHangToTable(khMoi);
 			JOptionPane.showMessageDialog(frameThemKH, "Thêm khách hàng thành công");
 		} else {
@@ -408,7 +408,7 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
 			    dialogCapNhap.setVisible(true); 
 			    
 			  if (dialogCapNhap.isUpdateKHSuccess())  {
-				  if(kh_dao.updateKhachHang(khUpdate)) {
+				  if(kh_dao.capNhatKhachHang(khUpdate)) {
 					 updateKhachHangInTable(khUpdate, selectRow);
 					  JOptionPane.showMessageDialog(frameCapNhat, "Cập nhật thông tin thành công!");
 				  }

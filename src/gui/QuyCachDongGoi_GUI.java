@@ -50,7 +50,7 @@ public class QuyCachDongGoi_GUI extends JPanel {
     private void loadAllDataFromDatabase() {
         dsQuyCach = qcdg_DAO.layTatCaQuyCachDongGoi();
         dsSanPham = sp_DAO.layTatCaSanPham();
-        dsDonViTinh = dvt_DAO.getAllDonViTinh();
+        dsDonViTinh = dvt_DAO.layTatCaDonViTinh();
         loadDataTable();
     }
 

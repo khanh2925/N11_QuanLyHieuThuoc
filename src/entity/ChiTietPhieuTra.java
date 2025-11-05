@@ -8,7 +8,7 @@ public class ChiTietPhieuTra {
     private ChiTietHoaDon chiTietHoaDon;
     private String lyDoChiTiet;
     private int soLuong;
-    private double thanhTienHoan; 
+    private double thanhTienHoan;
     private int trangThai; // 0=Chờ duyệt, 1=Nhập lại hàng, 2=Huỷ hàng
 
     // ===== CONSTRUCTORS =====
@@ -21,7 +21,7 @@ public class ChiTietPhieuTra {
         setLyDoChiTiet(lyDoChiTiet);
         setSoLuong(soLuong);
         setTrangThai(trangThai);
-        capNhatThanhTienHoan(); // ✅ tự động tính
+        capNhatThanhTienHoan(); // ✅ Tính tiền hoàn ngay khi tạo
     }
 
     public ChiTietPhieuTra(ChiTietPhieuTra other) {
@@ -34,97 +34,79 @@ public class ChiTietPhieuTra {
     }
 
     // ===== GETTERS / SETTERS =====
-    public PhieuTra getPhieuTra() {
-        return phieuTra;
-    }
-
+    public PhieuTra getPhieuTra() { return phieuTra; }
     public void setPhieuTra(PhieuTra phieuTra) {
         if (phieuTra == null)
-            throw new IllegalArgumentException("Phiếu trả không tồn tại.");
+            throw new IllegalArgumentException("Phiếu trả không được null.");
         this.phieuTra = phieuTra;
     }
 
-    public ChiTietHoaDon getChiTietHoaDon() {
-        return chiTietHoaDon;
-    }
-
+    public ChiTietHoaDon getChiTietHoaDon() { return chiTietHoaDon; }
     public void setChiTietHoaDon(ChiTietHoaDon chiTietHoaDon) {
         if (chiTietHoaDon == null)
-            throw new IllegalArgumentException("Chi tiết hóa đơn không tồn tại.");
+            throw new IllegalArgumentException("Chi tiết hóa đơn không được null.");
         this.chiTietHoaDon = chiTietHoaDon;
-        capNhatThanhTienHoan(); // ✅ cập nhật khi đổi hóa đơn
+        capNhatThanhTienHoan();
     }
 
-    public String getLyDoChiTiet() {
-        return lyDoChiTiet;
-    }
-
+    public String getLyDoChiTiet() { return lyDoChiTiet; }
     public void setLyDoChiTiet(String lyDoChiTiet) {
         if (lyDoChiTiet != null && lyDoChiTiet.length() > 200)
             throw new IllegalArgumentException("Lý do chi tiết không được vượt quá 200 ký tự.");
         this.lyDoChiTiet = lyDoChiTiet;
     }
 
-    public int getSoLuong() {
-        return soLuong;
-    }
-
+    public int getSoLuong() { return soLuong; }
     public void setSoLuong(int soLuong) {
         if (soLuong <= 0)
-            throw new IllegalArgumentException("Số lượng phải lớn hơn 0.");
-        if (this.chiTietHoaDon != null && soLuong > this.chiTietHoaDon.getSoLuong()) {
+            throw new IllegalArgumentException("Số lượng trả phải > 0.");
+        if (this.chiTietHoaDon != null && soLuong > this.chiTietHoaDon.getSoLuong())
             throw new IllegalArgumentException(String.format(
                 "Số lượng trả (%d) không được vượt quá số lượng đã mua (%d).",
                 soLuong, this.chiTietHoaDon.getSoLuong()
             ));
-        }
         this.soLuong = soLuong;
-        capNhatThanhTienHoan(); // ✅ cập nhật lại khi thay đổi số lượng
+        capNhatThanhTienHoan();
     }
 
-    public double getThanhTienHoan() {
-        return thanhTienHoan;
-    }
+    public double getThanhTienHoan() { return thanhTienHoan; }
 
-    /** ✅ Tự động tính lại thành tiền hoàn (derived but stored) */
+    /** ✅ Tự động tính lại tiền hoàn (dẫn xuất nhưng lưu DB để tra cứu nhanh) */
     public void capNhatThanhTienHoan() {
         if (chiTietHoaDon == null || chiTietHoaDon.getSoLuong() <= 0) {
             this.thanhTienHoan = 0;
             return;
         }
-        double donGiaThuc = chiTietHoaDon.getThanhTien() / chiTietHoaDon.getSoLuong();
-        this.thanhTienHoan = Math.round(donGiaThuc * this.soLuong * 100.0) / 100.0;
+
+        // ✅ Giá sau khuyến mãi (vì thanhTien của chiTietHoaDon đã trừ KM)
+        double donGiaThucTe = chiTietHoaDon.getThanhTien() / chiTietHoaDon.getSoLuong();
+        this.thanhTienHoan = Math.round(donGiaThucTe * this.soLuong * 100.0) / 100.0;
     }
 
-    public int getTrangThai() {
-        return trangThai;
-    }
-
+    public int getTrangThai() { return trangThai; }
     public void setTrangThai(int trangThai) {
         if (trangThai < 0 || trangThai > 2)
-            throw new IllegalArgumentException("Trạng thái chỉ hợp lệ trong [0=Chờ duyệt, 1=Nhập lại hàng, 2=Huỷ hàng].");
+            throw new IllegalArgumentException("Trạng thái chỉ hợp lệ: 0=Chờ duyệt, 1=Nhập lại hàng, 2=Huỷ hàng.");
         this.trangThai = trangThai;
     }
 
     public String getTrangThaiText() {
-        switch (trangThai) {
-            case 0: return "Chờ duyệt";
-            case 1: return "Nhập lại hàng";
-            case 2: return "Huỷ hàng";
-            default: return "Không xác định";
-        }
-    }
-
-    public boolean isHoanTien() {
-        return trangThai == 2;
+        return switch (trangThai) {
+            case 0 -> "Chờ duyệt";
+            case 1 -> "Nhập lại hàng";
+            case 2 -> "Huỷ hàng";
+            default -> "Không xác định";
+        };
     }
 
     // ===== OVERRIDES =====
     @Override
     public String toString() {
-        return String.format("CTPT[%s - %s - SL:%d - Hoàn:%.2fđ - %s]",
+        return String.format("CTPT[%s - %s - SL:%d - Hoàn:%.0fđ - %s]",
                 phieuTra != null ? phieuTra.getMaPhieuTra() : "N/A",
-                chiTietHoaDon != null ? chiTietHoaDon.getSanPham().getTenSanPham() : "N/A",
+                chiTietHoaDon != null && chiTietHoaDon.getSanPham() != null
+                        ? chiTietHoaDon.getSanPham().getTenSanPham()
+                        : "N/A",
                 soLuong, thanhTienHoan, getTrangThaiText());
     }
 
@@ -133,12 +115,10 @@ public class ChiTietPhieuTra {
         if (this == o) return true;
         if (!(o instanceof ChiTietPhieuTra)) return false;
         ChiTietPhieuTra that = (ChiTietPhieuTra) o;
-        return Objects.equals(phieuTra, that.phieuTra) &&
-               Objects.equals(chiTietHoaDon, that.chiTietHoaDon);
+        return Objects.equals(phieuTra, that.phieuTra)
+                && Objects.equals(chiTietHoaDon, that.chiTietHoaDon);
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(phieuTra, chiTietHoaDon);
-    }
+    public int hashCode() { return Objects.hash(phieuTra, chiTietHoaDon); }
 }
