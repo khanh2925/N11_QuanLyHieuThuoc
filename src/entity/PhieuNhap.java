@@ -1,19 +1,23 @@
 package entity;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 public class PhieuNhap {
 
-    private String maPhieuNhap;
+    private String maPhieuNhap;                 // VD: PN-20251031-0001
     private LocalDate ngayNhap;
     private NhaCungCap nhaCungCap;
     private NhanVien nhanVien;
-    private double tongTien; 
+    private double tongTien;
     private List<ChiTietPhieuNhap> chiTietPhieuNhapList;
 
-    public PhieuNhap() {}
+    // ===== CONSTRUCTORS =====
+    public PhieuNhap() {
+        this.chiTietPhieuNhapList = new ArrayList<>();
+    }
 
     public PhieuNhap(String maPhieuNhap, LocalDate ngayNhap,
                      NhaCungCap nhaCungCap, NhanVien nhanVien,
@@ -26,16 +30,19 @@ public class PhieuNhap {
         capNhatTongTienTheoChiTiet();
     }
 
-    // ===== GETTER / SETTER =====
-
+    // ===== GETTERS / SETTERS =====
     public String getMaPhieuNhap() {
         return maPhieuNhap;
     }
 
     public void setMaPhieuNhap(String maPhieuNhap) {
-        if (maPhieuNhap == null || !maPhieuNhap.matches("^PN\\d{7}$")) {
-            throw new IllegalArgumentException("Mã phiếu nhập không hợp lệ (định dạng PNxxxxxxx).");
-        }
+        if (maPhieuNhap == null)
+            throw new IllegalArgumentException("Mã phiếu nhập không được null.");
+
+        
+        if (!maPhieuNhap.matches("^PN-\\d{8}-\\d{4}$"))
+            throw new IllegalArgumentException("Mã phiếu nhập không hợp lệ (định dạng: PN-yyyymmdd-xxxx).");
+
         this.maPhieuNhap = maPhieuNhap;
     }
 
@@ -44,9 +51,10 @@ public class PhieuNhap {
     }
 
     public void setNgayNhap(LocalDate ngayNhap) {
-        if (ngayNhap == null || ngayNhap.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Ngày nhập không hợp lệ (phải nhỏ hơn hoặc bằng ngày hiện tại).");
-        }
+        if (ngayNhap == null)
+            throw new IllegalArgumentException("Ngày nhập không được null.");
+        if (ngayNhap.isAfter(LocalDate.now()))
+            throw new IllegalArgumentException("Ngày nhập không hợp lệ (không được sau ngày hiện tại).");
         this.ngayNhap = ngayNhap;
     }
 
@@ -55,38 +63,37 @@ public class PhieuNhap {
     }
 
     public void setNhaCungCap(NhaCungCap nhaCungCap) {
-        if (nhaCungCap == null) {
+        if (nhaCungCap == null)
             throw new IllegalArgumentException("Nhà cung cấp không được null.");
-        }
         this.nhaCungCap = nhaCungCap;
     }
 
     public NhanVien getNhanVien() {
         return nhanVien;
     }
-    public void setTongTien(double tongTien) {
-        this.tongTien = tongTien;
-    }
+
     public void setNhanVien(NhanVien nhanVien) {
-        if (nhanVien == null) {
+        if (nhanVien == null)
             throw new IllegalArgumentException("Nhân viên không được null.");
-        }
         this.nhanVien = nhanVien;
     }
 
     public double getTongTien() {
         return tongTien;
     }
+
     public List<ChiTietPhieuNhap> getChiTietPhieuNhapList() {
         return chiTietPhieuNhapList;
     }
 
     public void setChiTietPhieuNhapList(List<ChiTietPhieuNhap> chiTietPhieuNhapList) {
-        this.chiTietPhieuNhapList = chiTietPhieuNhapList;
+        this.chiTietPhieuNhapList = (chiTietPhieuNhapList != null)
+                ? chiTietPhieuNhapList
+                : new ArrayList<>();
         capNhatTongTienTheoChiTiet();
     }
 
-    /** ✅ Hàm tính lại tổng tiền từ danh sách chi tiết phiếu nhập */
+    // ===== DẪN SUẤT =====
     public void capNhatTongTienTheoChiTiet() {
         if (chiTietPhieuNhapList == null || chiTietPhieuNhapList.isEmpty()) {
             this.tongTien = 0;
@@ -94,14 +101,21 @@ public class PhieuNhap {
         }
         double tong = 0;
         for (ChiTietPhieuNhap ctpn : chiTietPhieuNhapList) {
-            tong += ctpn.getDonGiaNhap() * ctpn.getSoLuongNhap();
+            tong += ctpn.getThanhTien();
         }
-        this.tongTien = Math.round(tong);
+        this.tongTien = Math.round(tong * 100.0) / 100.0;
     }
 
+    // ===== OVERRIDES =====
     @Override
     public String toString() {
-        return String.format("PhieuNhap{ma='%s', ngay=%s, tongTien=%.0f}", maPhieuNhap, ngayNhap, tongTien);
+        return String.format(
+                "PhieuNhap{ma='%s', ngay=%s, nhaCungCap='%s', tongTien=%.0f}",
+                maPhieuNhap,
+                ngayNhap,
+                nhaCungCap != null ? nhaCungCap.getTenNhaCungCap() : "null",
+                tongTien
+        );
     }
 
     @Override

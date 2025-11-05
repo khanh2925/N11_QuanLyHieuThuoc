@@ -59,7 +59,7 @@ public class PhieuNhap_DAO {
                 pn.setNhaCungCap(ncc);
                 
                 // Dùng setter chuẩn đã thêm vào entity PhieuNhap
-                pn.setTongTien(rs.getDouble("TongTien"));
+                pn.capNhatTongTienTheoChiTiet();
 
                 dsPhieuNhap.add(pn);
             }
@@ -170,7 +170,7 @@ public class PhieuNhap_DAO {
                 // Batch LoSanPham
                 stmtLoSanPham.setString(1, lo.getMaLo());
                 stmtLoSanPham.setDate(2, Date.valueOf(lo.getHanSuDung()));
-                stmtLoSanPham.setInt(3, lo.getSoLuongNhap());
+                stmtLoSanPham.setInt(3, lo.getSoLuongTon()); // SoLuongNhap);
                 stmtLoSanPham.setInt(4, lo.getSoLuongTon()); // SoLuongTon = SoLuongNhap khi mới tạo
                 stmtLoSanPham.setString(5, lo.getSanPham().getMaSanPham());
                 stmtLoSanPham.addBatch();
@@ -277,7 +277,7 @@ public class PhieuNhap_DAO {
                 pn.setNgayNhap(rs.getDate("NgayNhap").toLocalDate());
                 pn.setNhanVien(nv);
                 pn.setNhaCungCap(ncc);
-                pn.setTongTien(rs.getDouble("TongTien"));
+                pn.capNhatTongTienTheoChiTiet();
                 
                 dsPhieuNhap.add(pn);
             }

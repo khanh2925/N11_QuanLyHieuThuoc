@@ -24,25 +24,28 @@ public class ChiTietPhieuTra_DAO {
 
     public List<ChiTietPhieuTra> timKiemChiTietBangMaPhieuTra(String maPhieuTra) {
         List<ChiTietPhieuTra> danhSachChiTiet = new ArrayList<>();
-        // SỬA LỖI 1: Đổi tên cột LyDoTra -> LyDoChiTiet
-        String sql = "SELECT * FROM ChiTietPhieuTra WHERE MaPhieuTra = ?";
+        // 💡 SỬA SQL: Dùng MaLo thay vì MaSanPham (để khớp với ChiTietHoaDon)
+        String sql = "SELECT MaHoaDon, MaLo, LyDoChiTiet, SoLuong, TrangThai FROM ChiTietPhieuTra WHERE MaPhieuTra = ?";
 
         try (PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setString(1, maPhieuTra);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     String maHoaDon = rs.getString("MaHoaDon");
-                    String maSanPham = rs.getString("MaSanPham");
+                    String maLo = rs.getString("MaLo"); // 💡 ĐỌC MA LÔ
                     String lyDoChiTiet = rs.getString("LyDoChiTiet");
                     int soLuong = rs.getInt("SoLuong");
                     int trangThai = rs.getInt("TrangThai");
 
-                    ChiTietHoaDon cthd = chiTietHoaDonDAO.timKiemChiTietHoaDonBangMa(maHoaDon, maSanPham);
+                    // 💡 TÌM KIẾM THEO MA LÔ
+                    ChiTietHoaDon cthd = chiTietHoaDonDAO.timKiemChiTietHoaDonBangMa(maHoaDon, maLo);
                     if (cthd != null) {
                         PhieuTra pt = new PhieuTra();
                         pt.setMaPhieuTra(maPhieuTra);
 
                         ChiTietPhieuTra ctpt = new ChiTietPhieuTra(pt, cthd, lyDoChiTiet, soLuong, trangThai);
+                        // Cập nhật lại thành tiền hoàn (vì constructor đã gọi capNhatThanhTienHoan)
+                        ctpt.capNhatThanhTienHoan();
                         danhSachChiTiet.add(ctpt);
                     }
                 }
@@ -55,13 +58,13 @@ public class ChiTietPhieuTra_DAO {
 
 
     public boolean themChiTietPhieuTra(ChiTietPhieuTra ctpt) {
-        // SỬA LỖI 1: Đổi tên cột LyDoTra -> LyDoChiTiet
-        String sql = "INSERT INTO ChiTietPhieuTra (MaPhieuTra, MaHoaDon, MaSanPham, LyDoChiTiet, SoLuong, ThanhTienHoan, TrangThai) " +
+        // 💡 SỬA SQL: Dùng MaLo thay vì MaSanPham
+        String sql = "INSERT INTO ChiTietPhieuTra (MaPhieuTra, MaHoaDon, MaLo, LyDoChiTiet, SoLuong, ThanhTienHoan, TrangThai) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setString(1, ctpt.getPhieuTra().getMaPhieuTra());
             stmt.setString(2, ctpt.getChiTietHoaDon().getHoaDon().getMaHoaDon());
-            stmt.setString(3, ctpt.getChiTietHoaDon().getSanPham().getMaSanPham());
+            stmt.setString(3, ctpt.getChiTietHoaDon().getLoSanPham().getMaLo()); // 💡 GÁN MA LÔ
             stmt.setString(4, ctpt.getLyDoChiTiet());
             stmt.setInt(5, ctpt.getSoLuong());
             stmt.setDouble(6, ctpt.getThanhTienHoan());
@@ -75,13 +78,14 @@ public class ChiTietPhieuTra_DAO {
     }
 
 
-    public boolean capNhatTrangThaiChiTiet(String maPhieuTra, String maHoaDon, String maSanPham, int trangThaiMoi) {
-        String sql = "UPDATE ChiTietPhieuTra SET TrangThai = ? WHERE MaPhieuTra = ? AND MaHoaDon = ? AND MaSanPham = ?";
+    public boolean capNhatTrangThaiChiTiet(String maPhieuTra, String maHoaDon, String maLo, int trangThaiMoi) { // 💡 SỬA THAM SỐ
+        // 💡 SỬA SQL: Dùng MaLo thay vì MaSanPham
+        String sql = "UPDATE ChiTietPhieuTra SET TrangThai = ? WHERE MaPhieuTra = ? AND MaHoaDon = ? AND MaLo = ?";
         try (PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setInt(1, trangThaiMoi);
             stmt.setString(2, maPhieuTra);
             stmt.setString(3, maHoaDon);
-            stmt.setString(4, maSanPham);
+            stmt.setString(4, maLo); // 💡 GÁN MA LÔ
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {

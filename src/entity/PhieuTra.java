@@ -11,7 +11,7 @@ public class PhieuTra {
     private KhachHang khachHang;
     private NhanVien nhanVien;
     private LocalDate ngayLap;
-    private boolean daDuyet; // ✅ true = Đã duyệt, false = Đang chờ duyệt
+    private boolean daDuyet;
     private double tongTienHoan;
     private List<ChiTietPhieuTra> chiTietPhieuTraList;
 
@@ -34,66 +34,54 @@ public class PhieuTra {
     }
 
     // ===== GETTERS / SETTERS =====
-    public String getMaPhieuTra() {
-        return maPhieuTra;
-    }
+    public String getMaPhieuTra() { return maPhieuTra; }
 
     public void setMaPhieuTra(String maPhieuTra) {
-        if (maPhieuTra == null || !maPhieuTra.matches("^PT\\d{6}$")) {
-            throw new IllegalArgumentException("Mã phiếu trả không hợp lệ. Định dạng: PTxxxxxx");
-        }
+        if (maPhieuTra == null)
+            throw new IllegalArgumentException("Mã phiếu trả không được null.");
+
+        
+        if (!maPhieuTra.matches("^PT-\\d{8}-\\d{4}$"))
+            throw new IllegalArgumentException("Mã phiếu trả không hợp lệ (định dạng: PT-yyyymmdd-xxxx).");
+
         this.maPhieuTra = maPhieuTra;
     }
 
-    public KhachHang getKhachHang() {
-        return khachHang;
-    }
-
+    public KhachHang getKhachHang() { return khachHang; }
     public void setKhachHang(KhachHang khachHang) {
-        if (khachHang == null) {
+        if (khachHang == null)
             throw new IllegalArgumentException("Khách hàng không được null.");
-        }
         this.khachHang = khachHang;
     }
 
-    public NhanVien getNhanVien() {
-        return nhanVien;
-    }
-
+    public NhanVien getNhanVien() { return nhanVien; }
     public void setNhanVien(NhanVien nhanVien) {
-        if (nhanVien == null) {
+        if (nhanVien == null)
             throw new IllegalArgumentException("Nhân viên không được null.");
-        }
         this.nhanVien = nhanVien;
     }
 
-    public LocalDate getNgayLap() {
-        return ngayLap;
-    }
-
+    public LocalDate getNgayLap() { return ngayLap; }
     public void setNgayLap(LocalDate ngayLap) {
-        if (ngayLap == null || ngayLap.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Ngày lập không hợp lệ (phải nhỏ hơn hoặc bằng ngày hiện tại).");
-        }
+        if (ngayLap == null || ngayLap.isAfter(LocalDate.now()))
+            throw new IllegalArgumentException("Ngày lập không hợp lệ (≤ ngày hiện tại).");
         this.ngayLap = ngayLap;
     }
 
-    public boolean isDaDuyet() {
-        return daDuyet;
-    }
+    public boolean isDaDuyet() { return daDuyet; }
 
+    /** ✅ Khi duyệt phiếu → tự trừ điểm KH (nếu có) */
     public void setDaDuyet(boolean daDuyet) {
         this.daDuyet = daDuyet;
+        if (daDuyet && khachHang != null) {
+            capNhatTongTienHoan();
+            khachHang.truDiemTheoPhieuTra(this);
+        }
     }
 
-    public double getTongTienHoan() {
-        return tongTienHoan;
-    }
+    public double getTongTienHoan() { return tongTienHoan; }
 
-    public List<ChiTietPhieuTra> getChiTietPhieuTraList() {
-        return chiTietPhieuTraList;
-    }
-
+    public List<ChiTietPhieuTra> getChiTietPhieuTraList() { return chiTietPhieuTraList; }
     public void setChiTietPhieuTraList(List<ChiTietPhieuTra> chiTietPhieuTraList) {
         if (chiTietPhieuTraList == null)
             throw new IllegalArgumentException("Danh sách chi tiết phiếu trả không được null.");
@@ -102,25 +90,19 @@ public class PhieuTra {
     }
 
     // ===== BUSINESS LOGIC =====
-
-    /** ✅ Tự động cập nhật tổng tiền hoàn dựa trên chi tiết hợp lệ */
+    /** ✅ Tổng tiền hoàn = tổng tất cả chi tiết */
     public void capNhatTongTienHoan() {
-        double tong = 0;
-        for (ChiTietPhieuTra ct : chiTietPhieuTraList) {
-            if (ct != null && ct.getThanhTienHoan() > 0 && ct.isHoanTien()) {
-                tong += ct.getThanhTienHoan();
-            }
-        }
-        this.tongTienHoan = tong;
+        this.tongTienHoan = chiTietPhieuTraList.stream()
+                .filter(Objects::nonNull)
+                .mapToDouble(ChiTietPhieuTra::getThanhTienHoan)
+                .sum();
     }
 
-    /** ✅ Lấy trạng thái hiển thị text */
     public String getTrangThaiText() {
         return daDuyet ? "Đã duyệt" : "Đang chờ duyệt";
     }
 
     // ===== OVERRIDES =====
-
     @Override
     public String toString() {
         return String.format("PhieuTra[%s | %s | %s | %.2fđ | %s]",
@@ -135,12 +117,10 @@ public class PhieuTra {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof PhieuTra)) return false;
-        PhieuTra phieuTra = (PhieuTra) o;
-        return Objects.equals(maPhieuTra, phieuTra.maPhieuTra);
+        PhieuTra that = (PhieuTra) o;
+        return Objects.equals(maPhieuTra, that.maPhieuTra);
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(maPhieuTra);
-    }
+    public int hashCode() { return Objects.hash(maPhieuTra); }
 }

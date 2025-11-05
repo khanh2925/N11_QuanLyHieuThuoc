@@ -1,104 +1,88 @@
 package gui;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Frame;
+import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+import dao.DonViTinh_DAO;
 import entity.DonViTinh;
 
+@SuppressWarnings("serial")
 public class CapNhatDonViTinh_Dialog extends JDialog {
 
-    private JTextField txtTenDonViTinh;
-    private JTextArea txtMoTa;
-    private JButton btnLuu;
-    private JButton btnThoat;
+    private final DonViTinh_DAO dvtDAO = new DonViTinh_DAO();
+    private final DonViTinh dvt;
+    private boolean updateSuccess = false;
 
-    private DonViTinh donViTinhCanCapNhat;
-    private boolean isUpdateSuccess = false;
+    private JTextField txtMa, txtTen;
 
-    public CapNhatDonViTinh_Dialog(Frame owner, DonViTinh dvtToUpdate) {
+    public CapNhatDonViTinh_Dialog(Frame owner, DonViTinh dvt) {
         super(owner, "Cập nhật đơn vị tính", true);
-        this.donViTinhCanCapNhat = dvtToUpdate;
-        initialize();
-        populateData();
+        this.dvt = dvt;
+        initUI();
+        napDuLieu();
     }
 
-    private void initialize() {
-        setSize(500, 400);
+    private void initUI() {
+        setSize(400, 250);
         setLocationRelativeTo(getParent());
-        getContentPane().setBackground(Color.WHITE);
         setLayout(null);
+        getContentPane().setBackground(Color.WHITE);
 
-        JLabel lblTitle = new JLabel("Cập nhật đơn vị tính");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        lblTitle.setBounds(125, 20, 250, 35);
-        getContentPane().add(lblTitle);
+        JLabel lblMa = new JLabel("Mã đơn vị tính:");
+        lblMa.setBounds(30, 30, 150, 25);
+        add(lblMa);
+
+        txtMa = new JTextField();
+        txtMa.setBounds(30, 55, 320, 35);
+        txtMa.setEditable(false);
+        txtMa.setBorder(new LineBorder(new Color(0x00C0E2), 1, true));
+        add(txtMa);
 
         JLabel lblTen = new JLabel("Tên đơn vị tính:");
-        lblTen.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblTen.setBounds(40, 80, 150, 25);
-        getContentPane().add(lblTen);
+        lblTen.setBounds(30, 100, 150, 25);
+        add(lblTen);
 
-        txtTenDonViTinh = new JTextField();
-        txtTenDonViTinh.setBounds(40, 110, 400, 35);
-        txtTenDonViTinh.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        getContentPane().add(txtTenDonViTinh);
+        txtTen = new JTextField();
+        txtTen.setBounds(30, 125, 320, 35);
+        txtTen.setBorder(new LineBorder(new Color(0x00C0E2), 1, true));
+        add(txtTen);
 
-        JLabel lblMoTa = new JLabel("Mô tả:");
-        lblMoTa.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblMoTa.setBounds(40, 160, 120, 25);
-        getContentPane().add(lblMoTa);
-
-        txtMoTa = new JTextArea();
-        txtMoTa.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtMoTa.setLineWrap(true);
-        txtMoTa.setWrapStyleWord(true);
-        JScrollPane scrollPane = new JScrollPane(txtMoTa);
-        scrollPane.setBounds(40, 190, 400, 80);
-        getContentPane().add(scrollPane);
-
-        btnThoat = new JButton("Thoát");
-        btnThoat.setBounds(330, 300, 110, 35);
-        btnThoat.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnThoat.setBackground(new Color(0x6B7280));
-        btnThoat.setForeground(Color.WHITE);
-        btnThoat.setBorder(null);
-        getContentPane().add(btnThoat);
-
-        btnLuu = new JButton("Lưu thay đổi");
-        btnLuu.setBounds(180, 300, 130, 35);
-        btnLuu.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        JButton btnLuu = new JButton("Lưu");
+        btnLuu.setBounds(190, 175, 75, 35);
         btnLuu.setBackground(new Color(0x3B82F6));
         btnLuu.setForeground(Color.WHITE);
-        btnLuu.setBorder(null);
-        getContentPane().add(btnLuu);
+        add(btnLuu);
 
+        JButton btnThoat = new JButton("Thoát");
+        btnThoat.setBounds(275, 175, 75, 35);
+        add(btnThoat);
+
+        btnLuu.addActionListener(e -> capNhat());
         btnThoat.addActionListener(e -> dispose());
-        btnLuu.addActionListener(e -> onLuuButtonClick());
     }
 
-    private void populateData() {
-        txtTenDonViTinh.setText(donViTinhCanCapNhat.getTenDonViTinh());
-        txtMoTa.setText(donViTinhCanCapNhat.getMoTa());
+    private void napDuLieu() {
+        txtMa.setText(dvt.getMaDonViTinh());
+        txtTen.setText(dvt.getTenDonViTinh());
     }
 
-    private void onLuuButtonClick() {
-        try {
-            String ten = txtTenDonViTinh.getText();
-            String moTa = txtMoTa.getText();
-            
-            donViTinhCanCapNhat.setTenDonViTinh(ten);
-            donViTinhCanCapNhat.setMoTa(moTa);
-            
-            isUpdateSuccess = true;
+    private void capNhat() {
+        String ten = txtTen.getText().trim();
+        if (ten.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Tên đơn vị tính không được để trống.", "Lỗi", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        dvt.setTenDonViTinh(ten);
+        if (dvtDAO.capNhatDonViTinh(dvt)) {
+            updateSuccess = true;
+            JOptionPane.showMessageDialog(this, "Cập nhật thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
             dispose();
-        } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "Cập nhật thất bại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     public boolean isUpdateSuccess() {
-        return isUpdateSuccess;
+        return updateSuccess;
     }
 }

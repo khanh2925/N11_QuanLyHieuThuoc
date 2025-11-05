@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+import java.time.LocalDate;
 
 import dao.NhaCungCap_DAO;
 import entity.NhaCungCap;
@@ -14,9 +15,10 @@ public class ThemNhaCungCap_Dialog extends JDialog implements ActionListener {
     private JTextField txtTen;
     private JTextField txtSdt;
     private JTextField txtDiaChi;
+    private JTextField txtEmail;
     private JButton btnThem, btnThoat;
 
-    private NhaCungCap nhaCungCapMoi; // trả về sau khi lưu
+    private NhaCungCap nhaCungCapMoi; // ✅ trả về sau khi lưu
     private final NhaCungCap_DAO nccDAO = new NhaCungCap_DAO();
 
     public ThemNhaCungCap_Dialog(Frame owner) {
@@ -25,7 +27,7 @@ public class ThemNhaCungCap_Dialog extends JDialog implements ActionListener {
     }
 
     private void initUI() {
-        setSize(520, 420);
+        setSize(560, 500);
         setLocationRelativeTo(getParent());
         getContentPane().setLayout(new BorderLayout(12, 12));
         getContentPane().setBackground(Color.WHITE);
@@ -51,7 +53,7 @@ public class ThemNhaCungCap_Dialog extends JDialog implements ActionListener {
         pnForm.add(lbTen);
 
         txtTen = new JTextField();
-        txtTen.setBounds(12, 36, 470, 36);
+        txtTen.setBounds(12, 36, 510, 36);
         txtTen.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtTen.setBorder(new LineBorder(new Color(0x00C0E2), 1, true));
         pnForm.add(txtTen);
@@ -63,19 +65,31 @@ public class ThemNhaCungCap_Dialog extends JDialog implements ActionListener {
         pnForm.add(lbSdt);
 
         txtSdt = new JTextField();
-        txtSdt.setBounds(12, 110, 470, 36);
+        txtSdt.setBounds(12, 110, 510, 36);
         txtSdt.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtSdt.setBorder(new LineBorder(new Color(0x00C0E2), 1, true));
         pnForm.add(txtSdt);
 
+        // --- Email ---
+        JLabel lbEmail = new JLabel("Email:");
+        lbEmail.setBounds(12, 158, 180, 24);
+        lbEmail.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        pnForm.add(lbEmail);
+
+        txtEmail = new JTextField();
+        txtEmail.setBounds(12, 184, 510, 36);
+        txtEmail.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        txtEmail.setBorder(new LineBorder(new Color(0x00C0E2), 1, true));
+        pnForm.add(txtEmail);
+
         // --- Địa chỉ ---
         JLabel lbDiaChi = new JLabel("Địa chỉ:");
-        lbDiaChi.setBounds(12, 158, 180, 24);
+        lbDiaChi.setBounds(12, 232, 180, 24);
         lbDiaChi.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         pnForm.add(lbDiaChi);
 
         txtDiaChi = new JTextField();
-        txtDiaChi.setBounds(12, 185, 470, 36);
+        txtDiaChi.setBounds(12, 258, 510, 36);
         txtDiaChi.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtDiaChi.setBorder(new LineBorder(new Color(0x00C0E2), 1, true));
         pnForm.add(txtDiaChi);
@@ -106,7 +120,6 @@ public class ThemNhaCungCap_Dialog extends JDialog implements ActionListener {
 
         // ==== SỰ KIỆN ====
         getRootPane().setDefaultButton(btnThem);
-
         btnThem.addActionListener(this);
         btnThoat.addActionListener(this);
 
@@ -120,12 +133,14 @@ public class ThemNhaCungCap_Dialog extends JDialog implements ActionListener {
         txtTen.addKeyListener(enterToSave);
         txtSdt.addKeyListener(enterToSave);
         txtDiaChi.addKeyListener(enterToSave);
+        txtEmail.addKeyListener(enterToSave);
     }
 
     // ==== HÀM XỬ LÝ CHÍNH ====
     private void themNCC() {
         String ten = txtTen.getText().trim();
         String sdt = txtSdt.getText().trim();
+        String email = txtEmail.getText().trim();
         String diaChi = txtDiaChi.getText().trim();
 
         // ✅ Kiểm tra tên
@@ -135,10 +150,17 @@ public class ThemNhaCungCap_Dialog extends JDialog implements ActionListener {
             return;
         }
 
-        // ✅ Kiểm tra số điện thoại (10 số, bắt đầu bằng 0)
-        if (!sdt.matches("^0[0-9]{9}$")) {
+        // ✅ Kiểm tra số điện thoại (10 chữ số bắt đầu bằng 0)
+        if (!sdt.matches("^0\\d{9}$")) {
             showWarn("Số điện thoại không hợp lệ. Phải gồm 10 chữ số và bắt đầu bằng 0.");
             txtSdt.requestFocus();
+            return;
+        }
+
+        // ✅ Kiểm tra email (nếu có)
+        if (!email.isEmpty() && !email.matches("^[\\w._%+-]+@[\\w.-]+\\.[A-Za-z]{2,6}$")) {
+            showWarn("Email không hợp lệ. Vui lòng nhập lại.");
+            txtEmail.requestFocus();
             return;
         }
 
@@ -149,27 +171,26 @@ public class ThemNhaCungCap_Dialog extends JDialog implements ActionListener {
             return;
         }
 
-        // ✅ Sinh mã NCC dạng NCC-xxx (theo DB)
-        String maMoi = nccDAO.generateId();
-        if (maMoi == null) {
-            showWarn("Không tạo được mã nhà cung cấp mới.");
-            return;
-        }
+        // ✅ Sinh mã NCC đúng định dạng NCC-yyyymmdd-xxxx
+        String today = LocalDate.now().toString().replaceAll("-", "");
+        String baseCode = "NCC-" + today + "-";
+        int count = (int) (Math.random() * 9999);
+        String maMoi = baseCode + String.format("%04d", count);
 
-        NhaCungCap ncc = new NhaCungCap(maMoi, ten, sdt, diaChi);
+        NhaCungCap ncc = new NhaCungCap(maMoi, ten, sdt, diaChi, email);
+        ncc.setHoatDong(true); // mặc định đang hoạt động
 
         // ✅ Ghi DB
-        boolean ok = nccDAO.createNhaCungCap(ncc);
+        boolean ok = nccDAO.themNhaCungCap(ncc);
         if (!ok) {
             showWarn("Lưu nhà cung cấp thất bại. Vui lòng thử lại.");
             return;
         }
 
-        // ✅ Thành công → trả về đối tượng mới
         nhaCungCapMoi = ncc;
         JOptionPane.showMessageDialog(
                 this,
-                "Đã thêm nhà cung cấp mới: " + ten,
+                "Đã thêm nhà cung cấp mới:\n" + ten,
                 "Thành công",
                 JOptionPane.INFORMATION_MESSAGE
         );
@@ -177,7 +198,7 @@ public class ThemNhaCungCap_Dialog extends JDialog implements ActionListener {
     }
 
     private void showWarn(String msg) {
-        JOptionPane.showMessageDialog(this, msg, "Thiếu dữ liệu", JOptionPane.WARNING_MESSAGE);
+        JOptionPane.showMessageDialog(this, msg, "Thông báo", JOptionPane.WARNING_MESSAGE);
     }
 
     /** Trả về NCC vừa tạo, hoặc null nếu người dùng hủy */

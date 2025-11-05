@@ -6,125 +6,171 @@ import java.util.Objects;
 
 public class KhachHang {
 
-    private String maKhachHang;
-    private String tenKhachHang;
-    private boolean gioiTinh;
-    private String soDienThoai;
-    private LocalDate ngaySinh;
+	private static final double TIEN_MOI_DIEM = 1000; // 1 điểm = 1000đ
+	private static final double NGUONG_CONG_DIEM = 10000; // 1 điểm thưởng mỗi 10.000đ thanh toán
 
-    // Nếu cần tính điểm theo hóa đơn thì sau này có thể thêm DAO xử lý
-    private List<HoaDon> danhSachHoaDon;
+	private String maKhachHang;
+	private String tenKhachHang;
+	private boolean gioiTinh;
+	private String soDienThoai;
+	private LocalDate ngaySinh;
+	private boolean hoatDong = true;
+	private double diemTichLuy;
+	private List<HoaDon> danhSachHoaDon;
 
-    public KhachHang() {
-    }
+	// ===== CONSTRUCTORS =====
+	public KhachHang() {
+	}
 
-    public KhachHang(String maKhachHang, String tenKhachHang, boolean gioiTinh,
-                     String soDienThoai, LocalDate ngaySinh) {
-        setMaKhachHang(maKhachHang);
-        setTenKhachHang(tenKhachHang);
-        setGioiTinh(gioiTinh);
-        setSoDienThoai(soDienThoai);
-        setNgaySinh(ngaySinh);
-    }
+	public KhachHang(String maKhachHang, String tenKhachHang, boolean gioiTinh, String soDienThoai,
+			LocalDate ngaySinh) {
+		setMaKhachHang(maKhachHang);
+		setTenKhachHang(tenKhachHang);
+		setGioiTinh(gioiTinh);
+		setSoDienThoai(soDienThoai);
+		setNgaySinh(ngaySinh);
+		this.diemTichLuy = 0;
+	}
 
-    public KhachHang(KhachHang other) {
-        this.maKhachHang = other.maKhachHang;
-        this.tenKhachHang = other.tenKhachHang;
-        this.gioiTinh = other.gioiTinh;
-        this.soDienThoai = other.soDienThoai;
-        this.ngaySinh = other.ngaySinh;
-    }
+	// ===== GETTERS / SETTERS =====
+	public String getMaKhachHang() {
+		return maKhachHang;
+	}
 
-    public String getMaKhachHang() {
-        return maKhachHang;
-    }
+	public void setMaKhachHang(String maKhachHang) {
+		if (maKhachHang == null)
+			throw new IllegalArgumentException("Mã khách hàng không được để trống");
 
-    public void setMaKhachHang(String maKhachHang) {
-        if (maKhachHang != null && maKhachHang.matches("^KH-\\d{4}$")) {
-            this.maKhachHang = maKhachHang;
-        } else {
-            throw new IllegalArgumentException("Mã khách hàng không hợp lệ. Định dạng yêu cầu: KH-xxxx");
-        }
-    }
+		maKhachHang = maKhachHang.trim(); // loại bỏ khoảng trắng đầu/cuối
 
-    public String getTenKhachHang() {
-        return tenKhachHang;
-    }
+		// Regex chuẩn: KH-yyyymmdd-xxxx (ví dụ KH-20251104-0001)
+		if (!maKhachHang.matches("^KH-\\d{8}-\\d{4}$")) {
+			throw new IllegalArgumentException("Mã khách hàng không hợp lệ. Định dạng: KH-yyyymmdd-xxxx");
+		}
 
-    public void setTenKhachHang(String tenKhachHang) {
-        if (tenKhachHang == null || tenKhachHang.trim().isEmpty()) {
-            throw new IllegalArgumentException("Tên khách hàng không được rỗng.");
-        }
-        if (tenKhachHang.length() > 100) {
-            throw new IllegalArgumentException("Tên khách hàng không được vượt quá 100 ký tự.");
-        }
-        this.tenKhachHang = tenKhachHang;
-    }
+		this.maKhachHang = maKhachHang;
+	}
 
-    public boolean isGioiTinh() {
-        return gioiTinh;
-    }
+	public String getTenKhachHang() {
+		return tenKhachHang;
+	}
 
-    public void setGioiTinh(boolean gioiTinh) {
-        this.gioiTinh = gioiTinh;
-    }
+	public void setTenKhachHang(String tenKhachHang) {
+		if (tenKhachHang == null || tenKhachHang.trim().isEmpty())
+			throw new IllegalArgumentException("Tên khách hàng không được rỗng.");
+		if (tenKhachHang.length() > 100)
+			throw new IllegalArgumentException("Tên khách hàng không vượt quá 100 ký tự.");
+		this.tenKhachHang = tenKhachHang.trim();
+	}
 
-    public String getSoDienThoai() {
-        return soDienThoai;
-    }
+	public boolean isGioiTinh() {
+		return gioiTinh;
+	}
 
-    public void setSoDienThoai(String soDienThoai) {
-        if (soDienThoai != null && !soDienThoai.trim().isEmpty()) {
-            if (!soDienThoai.matches("^0\\d{9}$")) {
-                throw new IllegalArgumentException("Số điện thoại không hợp lệ (phải gồm 10 chữ số và bắt đầu bằng 0).");
-            }
-        }
-        this.soDienThoai = soDienThoai;
-    }
+	public void setGioiTinh(boolean gioiTinh) {
+		this.gioiTinh = gioiTinh;
+	}
 
-    public LocalDate getNgaySinh() {
-        return ngaySinh;
-    }
+	public String getSoDienThoai() {
+		return soDienThoai;
+	}
 
-    public void setNgaySinh(LocalDate ngaySinh) {
-        if (ngaySinh == null || ngaySinh.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Ngày sinh không hợp lệ (không được là ngày trong tương lai).");
-        }
-        if (ngaySinh.isAfter(LocalDate.now().minusYears(6))) {
-            throw new IllegalArgumentException("Khách hàng phải từ 6 tuổi trở lên.");
-        }
-        this.ngaySinh = ngaySinh;
-    }
+	public void setSoDienThoai(String soDienThoai) {
+		if (soDienThoai == null || !soDienThoai.matches("^0\\d{9}$"))
+			throw new IllegalArgumentException("SĐT không hợp lệ (10 chữ số, bắt đầu bằng 0).");
+		this.soDienThoai = soDienThoai;
+	}
 
-    public List<HoaDon> getDanhSachHoaDon() {
-        return danhSachHoaDon;
-    }
+	public LocalDate getNgaySinh() {
+		return ngaySinh;
+	}
 
-    public void setDanhSachHoaDon(List<HoaDon> danhSachHoaDon) {
-        this.danhSachHoaDon = danhSachHoaDon;
-    }
+	public void setNgaySinh(LocalDate ngaySinh) {
+		if (ngaySinh == null || ngaySinh.isAfter(LocalDate.now()))
+			throw new IllegalArgumentException("Ngày sinh không hợp lệ.");
+		if (ngaySinh.isAfter(LocalDate.now().minusYears(16)))
+			throw new IllegalArgumentException("Khách hàng phải từ 16 tuổi trở lên.");
+		this.ngaySinh = ngaySinh;
+	}
 
-    @Override
-    public String toString() {
-        return "KhachHang{" +
-                "maKhachHang='" + maKhachHang + '\'' +
-                ", tenKhachHang='" + tenKhachHang + '\'' +
-                ", gioiTinh=" + (gioiTinh ? "Nam" : "Nữ") +
-                ", soDienThoai='" + soDienThoai + '\'' +
-                ", ngaySinh=" + ngaySinh +
-                '}';
-    }
+	public boolean isHoatDong() {
+		return hoatDong;
+	}
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        KhachHang that = (KhachHang) o;
-        return Objects.equals(maKhachHang, that.maKhachHang);
-    }
+	public void setHoatDong(boolean hoatDong) {
+		this.hoatDong = hoatDong;
+	}
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(maKhachHang);
-    }
+	public double getDiemTichLuy() {
+		return diemTichLuy;
+	}
+
+	public void setDiemTichLuy(double diemTichLuy) {
+		if (diemTichLuy < 0)
+			diemTichLuy = 0;
+		this.diemTichLuy = diemTichLuy;
+	}
+
+	public List<HoaDon> getDanhSachHoaDon() {
+		return danhSachHoaDon;
+	}
+
+	public void setDanhSachHoaDon(List<HoaDon> danhSachHoaDon) {
+		this.danhSachHoaDon = danhSachHoaDon;
+	}
+
+	// ===== NGHIỆP VỤ =====
+
+	/** ✅ Cộng điểm khi hóa đơn được hoàn tất */
+	public void congDiemTheoHoaDon(HoaDon hoaDon) {
+		if (hoaDon == null || hoaDon.getTongThanhToan() <= 0)
+			return;
+		double diemCong = Math.floor(hoaDon.getTongThanhToan() / NGUONG_CONG_DIEM);
+		this.diemTichLuy += diemCong;
+	}
+
+	/** ✅ Trừ điểm khi dùng để giảm hóa đơn */
+	public double dungDiemTichLuy(double diemMuonDung) {
+		if (diemMuonDung <= 0)
+			throw new IllegalArgumentException("Số điểm sử dụng phải > 0.");
+		if (diemMuonDung > diemTichLuy)
+			throw new IllegalArgumentException("Không đủ điểm tích lũy để sử dụng.");
+
+		diemTichLuy -= diemMuonDung;
+		return diemMuonDung * TIEN_MOI_DIEM;
+	}
+
+	/** ✅ Trừ điểm khi khách trả hàng (phiếu trả đã duyệt) */
+	public void truDiemTheoPhieuTra(PhieuTra phieuTra) {
+		if (phieuTra == null || !phieuTra.isDaDuyet())
+			return;
+		double soTienHoan = phieuTra.getTongTienHoan();
+		if (soTienHoan <= 0)
+			return;
+
+		double diemTru = Math.floor(soTienHoan / NGUONG_CONG_DIEM);
+		this.diemTichLuy = Math.max(0, this.diemTichLuy - diemTru);
+	}
+
+	// ===== OVERRIDES =====
+	@Override
+	public String toString() {
+		return String.format("KhachHang{ma='%s', ten='%s', sdt='%s', diem=%.0f, %s}", maKhachHang, tenKhachHang,
+				soDienThoai, diemTichLuy, hoatDong ? "Hoạt động" : "Ngừng");
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (!(o instanceof KhachHang))
+			return false;
+		KhachHang that = (KhachHang) o;
+		return Objects.equals(maKhachHang, that.maKhachHang);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(maKhachHang);
+	}
 }
