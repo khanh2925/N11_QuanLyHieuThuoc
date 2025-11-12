@@ -90,67 +90,7 @@ public class HuyHang_GUI extends JPanel implements ActionListener, MouseListener
 		
 		setLayout(new BorderLayout());
 		setPreferredSize(new Dimension(1537, 1168));
-//
-//		pnHeader = new JPanel();
-//		pnHeader.setPreferredSize(new Dimension(1073, 88));
-//		pnHeader.setLayout(null);
-//		add(pnHeader, BorderLayout.NORTH);
-//
-//		txtSearch = new JTextField();
-//		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-//		txtSearch.setBounds(10, 17, 420, 60);
-//		txtSearch.setBorder(new RoundedBorder(20));
-//		txtSearch.setBackground(Color.WHITE);
-//
-//		PlaceholderSupport.addPlaceholder(txtSearch, "Tìm theo mã phiếu/ tên");
-//
-//		btnXuatFile = new PillButton("Xuất file");
-//		btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
-//		btnXuatFile.setSize(120, 40);
-//		btnXuatFile.setLocation(766, 26);
-//
-//		pnHeader.add(txtSearch);
-//		pnHeader.add(btnXuatFile);
-//		
-//		btnHuyHang = new PillButton("Hủy hàng");
-//		btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 18));
-//		btnHuyHang.setBounds(940, 26, 162, 40);
-//		pnHeader.add(btnHuyHang);
-//		
-//		btnNhapLaiKho = new PillButton("Nhập lại kho");
-//		btnNhapLaiKho.setFont(new Font("Segoe UI", Font.BOLD, 18));
-//		btnNhapLaiKho.setBounds(1136, 26, 162, 40);
-//		pnHeader.add(btnNhapLaiKho);
-//		
-//		JPanel pnLoc = new JPanel();
-//		pnLoc.setLayout(null);
-//		pnLoc.setBorder(new RoundedBorder(20));
-//		pnLoc.setBackground(new Color(240, 255, 255));
-//		pnLoc.setBounds(472, 7, 262, 70);
-//		pnHeader.add(pnLoc);
-//		
-//		JLabel lblTrangThai = new JLabel("Trạng thái:");
-//		lblTrangThai.setFont(new Font("Tahoma", Font.PLAIN, 18));
-//		lblTrangThai.setBackground(new Color(240, 255, 255));
-//		lblTrangThai.setBounds(20, 10, 90, 25);
-//		pnLoc.add(lblTrangThai);
-//		
-//		chckbxDaDuyet = new JCheckBox("Đã duyệt");
-//		chckbxDaDuyet.setSelected(false);
-//		chckbxDaDuyet.setFont(new Font("Tahoma", Font.BOLD, 15));
-//		chckbxDaDuyet.setBackground(new Color(240, 255, 255));
-//		chckbxDaDuyet.setBounds(116, 12, 113, 23);
-//		pnLoc.add(chckbxDaDuyet);
-//		
-//		chckbxChoDuyet = new JCheckBox("Chờ duyệt");
-//		chckbxChoDuyet.setSelected(false);
-//		chckbxChoDuyet.setFont(new Font("Tahoma", Font.BOLD, 15));
-//		chckbxChoDuyet.setBackground(new Color(240, 255, 255));
-//		chckbxChoDuyet.setBounds(117, 41, 105, 23);
-//		pnLoc.add(chckbxChoDuyet);
-//		
-//		
-//
+
 
 		
 		pnHeader = new JPanel();
