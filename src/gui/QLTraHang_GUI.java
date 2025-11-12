@@ -1,218 +1,324 @@
 package gui;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
-import javax.swing.*;
-import javax.swing.border.LineBorder;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
 import com.toedter.calendar.JDateChooser;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
+import dao.ChiTietPhieuTra_DAO;
+import dao.PhieuTra_DAO;
+import entity.ChiTietPhieuTra;
+import entity.KhuyenMai;
+import entity.PhieuTra;
 
 public class QLTraHang_GUI extends JPanel {
 
-    private JPanel pnCenter; // vùng trung tâm
-    private JPanel pnHeader; // vùng đầu trang
-    private JPanel pnRight;  // vùng cột phải
-    private JButton btnXuatFile;
-    private JTextField txtSearch;
-    private DefaultTableModel modelPT;
-    private JTable tblPT;
-    private JScrollPane scrCTPT;
-    private DefaultTableModel modelCTPT;
-    private JScrollPane scrPT;
-    private JTable tblCTPT;
-    private PillButton btnHuyHang;
-    private PillButton btnNhapKho;
-    private JDateChooser dateTu;
-    private JDateChooser dateDen;
+	private JPanel pnCenter; // vùng trung tâm
+	private JPanel pnHeader; // vùng đầu trang
+//	private JPanel pnRight; // vùng cột phải
+	private JButton btnXuatFile;
+	private JTextField txtSearch;
+	private DefaultTableModel modelPT;
+	private JTable tblPT;
+	private JScrollPane scrCTPT;
+	private DefaultTableModel modelCTPT;
+	private JScrollPane scrPT;
+	private JTable tblCTPT;
+	private PillButton btnHuyHang;
+	private PillButton btnNhapKho;
+	private JDateChooser dateTu;
+	private JDateChooser dateDen;
 
-    private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-    private final DecimalFormat df = new DecimalFormat("#,##0.###'đ'");
+	private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");	
+	private final DecimalFormat df = new DecimalFormat("#,##0.#'đ'");
 
-    private final Color blueMint = new Color(180, 220, 240);
-    private final Color pinkPastel = new Color(255, 200, 220);
+	private final Color blueMint = new Color(180, 220, 240);
+	private final Color pinkPastel = new Color(255, 200, 220);
 
-    public QLTraHang_GUI() {
-        this.setPreferredSize(new Dimension(1537, 850));
-        initialize();
-    }
+	private PhieuTra_DAO phieuTraDAO = new PhieuTra_DAO();
+	private ChiTietPhieuTra_DAO chiTietPhieuTraDAO = new ChiTietPhieuTra_DAO();
+	private JSplitPane splitPane;
 
-    private void initialize() {
-        setLayout(new BorderLayout());
-        setPreferredSize(new Dimension(1537, 1168));
+	public QLTraHang_GUI() {
+		this.setPreferredSize(new Dimension(1537, 850));
+		initialize();
+	}
 
-        // ===== HEADER =====
-        pnHeader = new JPanel();
-        pnHeader.setPreferredSize(new Dimension(1073, 88));
-        pnHeader.setLayout(null);
-        add(pnHeader, BorderLayout.NORTH);
+	private void initialize() {
+		setLayout(new BorderLayout());
+		setPreferredSize(new Dimension(1537, 1168));
 
+		// ===== HEADER =====
+		pnHeader = new JPanel();
+		pnHeader.setPreferredSize(new Dimension(1073, 88));
+		pnHeader.setLayout(null);
+		add(pnHeader, BorderLayout.NORTH);
 
-        txtSearch = new JTextField();
-        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        txtSearch.setBounds(10, 17, 420, 60);
-        txtSearch.setBorder(new RoundedBorder(20));
-        txtSearch.setBackground(Color.WHITE);
-        PlaceholderSupport.addPlaceholder(txtSearch, "Tìm theo mã/tên ...");
+		txtSearch = new JTextField();
+		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		txtSearch.setBounds(10, 17, 420, 60);
+		txtSearch.setBorder(new RoundedBorder(20));
+		txtSearch.setBackground(Color.WHITE);
+		PlaceholderSupport.addPlaceholder(txtSearch, "Tìm theo mã/tên ...");
 
+		btnXuatFile = new PillButton("Xuất file");
+		btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnXuatFile.setSize(120, 40);
+		btnXuatFile.setLocation(946, 30);
 
-        btnXuatFile = new PillButton("Xuất file");
-        btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnXuatFile.setSize(120, 40);
-        btnXuatFile.setLocation(946, 30);
+		pnHeader.add(txtSearch);
+		pnHeader.add(btnXuatFile);
 
-        pnHeader.add(txtSearch);
-        pnHeader.add(btnXuatFile);
+		btnNhapKho = new PillButton("Nhập lại kho");
+		btnNhapKho.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnNhapKho.setBounds(1090, 26, 150, 40);
+		pnHeader.add(btnNhapKho);
 
-        btnNhapKho = new PillButton("Nhập lại kho");
-        btnNhapKho.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnNhapKho.setBounds(1330, 30, 150, 40);
-        pnHeader.add(btnNhapKho);
+		btnHuyHang = new PillButton("Hủy hàng");
+		btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnHuyHang.setBounds(1260, 26, 120, 40);
+		pnHeader.add(btnHuyHang);
+		
+		JLabel lblTuNgay = new JLabel("Từ ngày:");
+		lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		lblTuNgay.setBounds(478, 30, 90, 40);
+		pnHeader.add(lblTuNgay);
 
-        btnHuyHang = new PillButton("Hủy hàng");
-        btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnHuyHang.setBounds(1535, 30, 120, 40);
-        pnHeader.add(btnHuyHang);
-        
-        JLabel lblTuNgay = new JLabel("Từ ngày:");
-        lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        lblTuNgay.setBounds(478, 30, 90, 40);
-        pnHeader.add(lblTuNgay);
-        
-        dateTu = new JDateChooser();
-        dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        dateTu.setDateFormatString("dd/MM/yyyy");
-        dateTu.setBounds(560, 35, 130, 30);
-        pnHeader.add(dateTu);
-        
-        JLabel lblDenNgay = new JLabel("Đến:");
-        lblDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        lblDenNgay.setBounds(743, 26, 80, 40);
-        pnHeader.add(lblDenNgay);
-        
-        dateDen = new JDateChooser();
-        dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        dateDen.setDateFormatString("dd/MM/yyyy");
-        dateDen.setBounds(780, 35, 130, 30);
-        pnHeader.add(dateDen);
+		dateTu = new JDateChooser();
+		dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		dateTu.setDateFormatString("dd/MM/yyyy");
+		dateTu.setBounds(560, 35, 130, 30);
+		pnHeader.add(dateTu);
 
-        // ===== CENTER =====
-        pnCenter = new JPanel(new BorderLayout());
-        add(pnCenter, BorderLayout.CENTER);
+		JLabel lblDenNgay = new JLabel("Đến:");
+		lblDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		lblDenNgay.setBounds(743, 26, 80, 40);
+		pnHeader.add(lblDenNgay);
 
-        // ===== RIGHT =====
-        pnRight = new JPanel();
-        pnRight.setPreferredSize(new Dimension(600, 1080));
-        pnRight.setBackground(new Color(0, 128, 255));
-        pnRight.setLayout(new BoxLayout(pnRight, BoxLayout.Y_AXIS));
-        add(pnRight, BorderLayout.EAST);
+		dateDen = new JDateChooser();
+		dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		dateDen.setDateFormatString("dd/MM/yyyy");
+		dateDen.setBounds(780, 35, 130, 30);
+		pnHeader.add(dateDen);
 
-        initTable();
-    }
+		// ===== CENTER =====
+		pnCenter = new JPanel(new BorderLayout());
+		add(pnCenter, BorderLayout.CENTER);
 
-    private void initTable() {
-        String[] phieuTraCols = { "Mã PT", "Người bán", "Người trả", "Mã HD","Thời gian","Khách hàng", "Tổng tiền","Trạng thái" };
-        modelPT = new DefaultTableModel(phieuTraCols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
-        };
-        tblPT = new JTable(modelPT);
-        scrPT = new JScrollPane(tblPT);
-        pnCenter.add(scrPT, BorderLayout.CENTER);
+		initTable();
+		
+	    btnNhapKho.addActionListener(e -> capNhatTrangThai(1));
+	    btnHuyHang.addActionListener(e -> capNhatTrangThai(2));
+	}
 
-        String[] cTPhieuTraCols = { "Ngày lập phiếu", "Tên hàng", "Số lượng", "Thành tiền", "Lý do trả", "Trạng thái" };
-        modelCTPT = new DefaultTableModel(cTPhieuTraCols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
-        };
-        tblCTPT = new JTable(modelCTPT);
-        scrCTPT = new JScrollPane(tblCTPT);
-        pnRight.add(scrCTPT);
+	private void initTable() {
+		String[] phieuTraCols = { "Mã PT", "Khách hàng", "Người trả", "Ngày lập", "Trạng thái", "Tổng tiền hoàn" };
+		modelPT = new DefaultTableModel(phieuTraCols, 0) {
+			@Override
+			public boolean isCellEditable(int r, int c) {
+				return false;
+			}
+		};
+		tblPT = new JTable(modelPT) {
+		    @Override
+		    public String getToolTipText(MouseEvent e) {
+		        int row = rowAtPoint(e.getPoint());
+		        int col = columnAtPoint(e.getPoint());
+		        if (row < 0 || col < 0) return null;
+		        Object v = getValueAt(row, col);
+		        if (v == null) return null;
 
-        formatTable(tblPT);
-        tblPT.setSelectionBackground(blueMint);
-        tblPT.getTableHeader().setBackground(pinkPastel);
+		        TableCellRenderer r = getCellRenderer(row, col);
+		        Component comp = prepareRenderer(r, row, col);
+		        int pref = comp.getPreferredSize().width;
+		        int colW = getColumnModel().getColumn(col).getWidth();
+		        // chỉ hiển thị tooltip khi bị cắt
+		        return (pref > colW - 4) ? v.toString() : null;
+		    }
+		};
+		scrPT = new JScrollPane(tblPT);
 
-        formatTable(tblCTPT);
-        tblCTPT.setSelectionBackground(pinkPastel);
-        tblCTPT.getTableHeader().setBackground(blueMint);
+		String[] cTPhieuTraCols = { "Mã hoá đơn", "Mã lô", "Số lượng", "Giá bán", "Khuyến mãi", "Lý do trả", "Thành tiền", "Trạng thái" };
+		modelCTPT = new DefaultTableModel(cTPhieuTraCols, 0) {
+			@Override
+			public boolean isCellEditable(int r, int c) {
+				return false;
+			}
+		};
+		tblCTPT = new JTable(modelCTPT) {
+		    @Override
+		    public String getToolTipText(MouseEvent e) {
+		        int row = rowAtPoint(e.getPoint());
+		        int col = columnAtPoint(e.getPoint());
+		        if (row < 0 || col < 0) return null;
+		        Object v = getValueAt(row, col);
+		        if (v == null) return null;
 
-        modelPT.addRow(new Object[]{"PT000001", "Chu Anh Khôi","Chu Anh Khôi", "HD-20251003-0001", "2025-10-15", "Công ty Minh Tâm", "1.250.000", "Đã xử lý"});
-        modelPT.addRow(new Object[]{"PT000002", "Chu Anh Khôi","Chu Anh Khôi", "HD-20251003-0002", "2025-10-15", "Nguyễn Thị Hoa",   "820.000",   "Chờ duyệt"});
-        modelPT.addRow(new Object[]{"PT000003", "Chu Anh Khôi","Chu Anh Khôi", "HD-20251003-0003", "2025-10-16", "Phạm Anh Khoa",    "560.000",   "Đã xử lý"});
+		        TableCellRenderer r = getCellRenderer(row, col);
+		        Component comp = prepareRenderer(r, row, col);
+		        int pref = comp.getPreferredSize().width;
+		        int colW = getColumnModel().getColumn(col).getWidth();
+		        return (pref > colW - 4) ? v.toString() : null;
+		    }
+		};
+		scrCTPT = new JScrollPane(tblCTPT);
 
-        modelCTPT.addRow(new Object[]{"2025-10-16", "Thuốc ho", 2, "300.000", "Sai thuốc", "Đã xử lý"});
-        modelCTPT.addRow(new Object[]{"2025-10-16", "Băng cá nhân",  1, "10.000", "Thiếu 1 băng", "Đã xử lý"});
-    }
+		formatTable(tblPT);
+		tblPT.setSelectionBackground(blueMint);
+		tblPT.getTableHeader().setBackground(pinkPastel);
 
-    private void formatTable(JTable table) {
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        // KHÔNG dùng setBounds(null) cho header
-        table.setRowHeight(28);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        table.setSelectionBackground(new Color(180, 205, 230));
-        table.setShowGrid(false);
+		formatTable(tblCTPT);
+		tblCTPT.setSelectionBackground(pinkPastel);
+		tblCTPT.getTableHeader().setBackground(blueMint);
 
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
-        rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
-        DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
-        leftRenderer.setHorizontalAlignment(JLabel.LEFT);
+		// === TẠO SPLITPANE NGANG ===
+		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrPT, scrCTPT);
+		splitPane.setResizeWeight(0.4); // 40% - 60%
+		splitPane.setContinuousLayout(true);
+		splitPane.setOneTouchExpandable(true);
+		
+		
+		pnCenter.add(splitPane);
+		
+		loadPhieuTraData();
 
-        TableColumnModel m = table.getColumnModel();
-        for (int i = 0; i < m.getColumnCount(); i++) {
-            String col = m.getColumn(i).getHeaderValue().toString().toLowerCase();
-            if (col.contains("mã"))
-                m.getColumn(i).setCellRenderer(centerRenderer);
-            else if (col.contains("số lượng") || col.contains("sl"))
-                m.getColumn(i).setCellRenderer(rightRenderer);
-            else if (col.contains("giá") || col.contains("tiền"))
-                m.getColumn(i).setCellRenderer(rightRenderer);
-            else if (col.contains("ngày"))
-                m.getColumn(i).setCellRenderer(centerRenderer);
-            else
-                m.getColumn(i).setCellRenderer(leftRenderer);
-        }
-        table.getTableHeader().setReorderingAllowed(false);
-    }
+		tblPT.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int row = tblPT.getSelectedRow();
+				if (row >= 0) {
+					String maPT = modelPT.getValueAt(row, 0).toString();
+					loadChiTietPhieuTra(maPT);
+				}
+			}
+		});
+	}
+	
+	private void capNhatTrangThai(int trangThai) {
+	    int row = tblCTPT.getSelectedRow();
+	    if (row == -1) {
+	        JOptionPane.showMessageDialog(this, "Vui lòng chọn 1 dòng chi tiết để cập nhật!");
+	        return;
+	    }
 
-    // Placeholder tự xử lý (không cần thư viện ngoài)
-    private void addPlaceholder(JTextField field, String placeholder) {
-        field.setForeground(Color.GRAY);
-        field.setText(placeholder);
-        field.addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override public void focusGained(java.awt.event.FocusEvent e) {
-                if (field.getText().equals(placeholder)) {
-                    field.setText("");
-                    field.setForeground(Color.BLACK);
-                }
-            }
-            @Override public void focusLost(java.awt.event.FocusEvent e) {
-                if (field.getText().isEmpty()) {
-                    field.setText(placeholder);
-                    field.setForeground(Color.GRAY);
-                }
-            }
-        });
-    }
+	    String maPhieuTra = (String) tblPT.getValueAt(tblPT.getSelectedRow(), 0);
+	    String maHoaDon = (String) tblCTPT.getValueAt(row, 0);
+	    String maLo = (String) tblCTPT.getValueAt(row, 1);
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Khung trống - clone base");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1280, 800);
-            frame.setLocationRelativeTo(null);
-            frame.setContentPane(new QLTraHang_GUI());
-            frame.setVisible(true);
-        });
-    }
+	    boolean ok = chiTietPhieuTraDAO.capNhatTrangThaiChiTiet(maPhieuTra, maHoaDon, maLo, trangThai);
+	    if (ok) {
+	        JOptionPane.showMessageDialog(this, (trangThai == 1 ? "Đã nhập lại kho." : "Đã huỷ hàng."));
+	        loadChiTietPhieuTra(maPhieuTra);
+	    } else {
+	        JOptionPane.showMessageDialog(this, "Cập nhật thất bại!");
+	    }
+	}
+
+	
+	private void loadPhieuTraData() {
+		modelPT.setRowCount(0); // clear bảng
+		List<PhieuTra> dsPhieuTra = phieuTraDAO.layTatCaPhieuTra();
+
+		for (PhieuTra pt : dsPhieuTra) {
+			String maPT = pt.getMaPhieuTra();
+			String khachHang = pt.getKhachHang() != null ? pt.getKhachHang().getTenKhachHang() : "Không rõ";
+			String nguoiTra = khachHang; // vì người trả là khách hàng
+			String ngayLap = dtf.format(pt.getNgayLap());
+			String trangThai = pt.isDaDuyet() ? "Đã xử lý" : "Chờ duyệt";
+			String tongTien = df.format(pt.getTongTienHoan());
+
+			// ✅ Thêm đúng theo thứ tự 6 cột của bạn
+			modelPT.addRow(new Object[] { maPT, khachHang, nguoiTra, ngayLap, trangThai, tongTien });
+		}
+	}
+
+	private void loadChiTietPhieuTra(String maPhieuTra) {
+		modelCTPT.setRowCount(0);
+		List<ChiTietPhieuTra> dsCT = chiTietPhieuTraDAO.timKiemChiTietBangMaPhieuTra(maPhieuTra);
+
+		for (ChiTietPhieuTra ct : dsCT) {
+			String maHD = ct.getChiTietHoaDon().getHoaDon().getMaHoaDon();
+			String maLo = ct.getChiTietHoaDon().getLoSanPham().getMaLo();
+			int soLuong = ct.getSoLuong();
+			String giaBan = df.format(ct.getChiTietHoaDon().getGiaBan());
+
+			KhuyenMai km = ct.getChiTietHoaDon().getKhuyenMai();
+			String khuyenMai = "";
+			if (km != null) {
+				khuyenMai = ct.getChiTietHoaDon().getKhuyenMai().getTenKM();
+			} else khuyenMai = "Không có";
+			String lyDo = ct.getLyDoChiTiet();
+			String thanhTien = df.format(ct.getThanhTienHoan());
+			String trangThai = ct.getTrangThaiText();
+			
+			modelCTPT.addRow(new Object[] { maHD, maLo, soLuong, giaBan, khuyenMai, lyDo, thanhTien, trangThai });
+		}
+	}
+
+	private void formatTable(JTable table) {
+		table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+		table.setRowHeight(28);
+		table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		table.setSelectionBackground(new Color(180, 205, 230));
+		table.setShowGrid(false);
+
+		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+		centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+		DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+		rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
+		DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
+		leftRenderer.setHorizontalAlignment(JLabel.LEFT);
+
+		TableColumnModel m = table.getColumnModel();
+		for (int i = 0; i < m.getColumnCount(); i++) {
+			String col = m.getColumn(i).getHeaderValue().toString().toLowerCase();
+			if (col.contains("mã"))
+				m.getColumn(i).setCellRenderer(centerRenderer);
+			else if (col.contains("số lượng") || col.contains("sl"))
+				m.getColumn(i).setCellRenderer(rightRenderer);
+			else if (col.contains("giá") || col.contains("tiền"))
+				m.getColumn(i).setCellRenderer(rightRenderer);
+			else if (col.contains("ngày"))
+				m.getColumn(i).setCellRenderer(centerRenderer);
+			else
+				m.getColumn(i).setCellRenderer(leftRenderer);
+		}
+		table.getTableHeader().setReorderingAllowed(false);
+	}
+
+	public static void main(String[] args) {
+		SwingUtilities.invokeLater(() -> {
+			JFrame frame = new JFrame("Khung trống - clone base");
+			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			frame.setSize(1280, 800);
+			frame.setLocationRelativeTo(null);
+			frame.setContentPane(new QLTraHang_GUI());
+			frame.setVisible(true);
+		});
+	}
 }

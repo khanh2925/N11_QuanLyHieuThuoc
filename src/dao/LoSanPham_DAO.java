@@ -11,235 +11,252 @@ import entity.ChiTietPhieuHuy;
 
 public class LoSanPham_DAO {
 
-    public LoSanPham_DAO() {}
+    private final SanPham_DAO sanPhamDAO;
 
-    /** Lấy toàn bộ lô sản phẩm */
-    public ArrayList<LoSanPham> layTatCaLoSanPham() {
-        ArrayList<LoSanPham> danhSach = new ArrayList<>();
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+	public LoSanPham_DAO() {
+		this.sanPhamDAO = new SanPham_DAO();
+	}
 
-        String sql = "SELECT MaLo, HanSuDung, SoLuongTon, MaSanPham FROM LoSanPham";
+	/** Lấy toàn bộ lô sản phẩm */
+	public ArrayList<LoSanPham> layTatCaLoSanPham() {
+		ArrayList<LoSanPham> danhSach = new ArrayList<>();
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
 
-        try (Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+		String sql = "SELECT MaLo, HanSuDung, SoLuongTon, MaSanPham FROM LoSanPham";
 
-            while (rs.next()) {
-                String maLo = rs.getString("MaLo");
-                LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-                int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
-                String maSP = rs.getString("MaSanPham");
+		try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
 
-                SanPham sp = new SanPham();
-                try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
+			while (rs.next()) {
+				String maLo = rs.getString("MaLo");
+				LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
+				int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
+				String maSP = rs.getString("MaSanPham");
 
-                danhSach.add(new LoSanPham(maLo, hanSuDung, soLuongTon, sp));
-            }
+				SanPham sp = new SanPham();
+				try {
+					sp.setMaSanPham(maSP);
+				} catch (IllegalArgumentException ignore) {
+				}
 
-        } catch (SQLException e) {
-            System.err.println("Lỗi lấy danh sách lô sản phẩm: " + e.getMessage());
-        }
-        return danhSach;
-    }
+				danhSach.add(new LoSanPham(maLo, hanSuDung, soLuongTon, sp));
+			}
 
-    /** Thêm mới lô sản phẩm */
-    public boolean themLoSanPham(LoSanPham lo) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+		} catch (SQLException e) {
+			System.err.println("Lỗi lấy danh sách lô sản phẩm: " + e.getMessage());
+		}
+		return danhSach;
+	}
 
-        String sql = """
-            INSERT INTO LoSanPham (MaLo, HanSuDung, SoLuongTon, MaSanPham)
-            VALUES (?, ?, ?, ?)
-        """;
+	/** Thêm mới lô sản phẩm */
+	public boolean themLoSanPham(LoSanPham lo) {
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
 
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, lo.getMaLo());
-            stmt.setDate(2, Date.valueOf(lo.getHanSuDung()));
-            stmt.setInt(3, lo.getSoLuongTon());
-            stmt.setString(4, lo.getSanPham() != null ? lo.getSanPham().getMaSanPham() : null);
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            System.err.println("Lỗi thêm lô sản phẩm: " + e.getMessage());
-        }
-        return false;
-    }
+		String sql = """
+				    INSERT INTO LoSanPham (MaLo, HanSuDung, SoLuongTon, MaSanPham)
+				    VALUES (?, ?, ?, ?)
+				""";
 
-    /** Cập nhật thông tin lô sản phẩm */
-    public boolean capNhatLoSanPham(LoSanPham lo) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setString(1, lo.getMaLo());
+			stmt.setDate(2, Date.valueOf(lo.getHanSuDung()));
+			stmt.setInt(3, lo.getSoLuongTon());
+			stmt.setString(4, lo.getSanPham() != null ? lo.getSanPham().getMaSanPham() : null);
+			return stmt.executeUpdate() > 0;
+		} catch (SQLException e) {
+			System.err.println("Lỗi thêm lô sản phẩm: " + e.getMessage());
+		}
+		return false;
+	}
 
-        String sql = """
-            UPDATE LoSanPham
-            SET HanSuDung=?, SoLuongTon=?, MaSanPham=?
-            WHERE MaLo=?
-        """;
+	/** Cập nhật thông tin lô sản phẩm */
+	public boolean capNhatLoSanPham(LoSanPham lo) {
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
 
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setDate(1, Date.valueOf(lo.getHanSuDung()));
-            stmt.setInt(2, lo.getSoLuongTon());
-            stmt.setString(3, lo.getSanPham() != null ? lo.getSanPham().getMaSanPham() : null);
-            stmt.setString(4, lo.getMaLo());
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            System.err.println("Lỗi cập nhật lô sản phẩm: " + e.getMessage());
-        }
-        return false;
-    }
+		String sql = """
+				    UPDATE LoSanPham
+				    SET HanSuDung=?, SoLuongTon=?, MaSanPham=?
+				    WHERE MaLo=?
+				""";
 
-    /** Xóa lô sản phẩm theo mã */
-    public boolean xoaLoSanPham(String maLo) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setDate(1, Date.valueOf(lo.getHanSuDung()));
+			stmt.setInt(2, lo.getSoLuongTon());
+			stmt.setString(3, lo.getSanPham() != null ? lo.getSanPham().getMaSanPham() : null);
+			stmt.setString(4, lo.getMaLo());
+			return stmt.executeUpdate() > 0;
+		} catch (SQLException e) {
+			System.err.println("Lỗi cập nhật lô sản phẩm: " + e.getMessage());
+		}
+		return false;
+	}
 
-        String sql = "DELETE FROM LoSanPham WHERE MaLo=?";
+	/** Xóa lô sản phẩm theo mã */
+	public boolean xoaLoSanPham(String maLo) {
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
 
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, maLo);
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            System.err.println("Lỗi xóa lô sản phẩm: " + e.getMessage());
-        }
-        return false;
-    }
+		String sql = "DELETE FROM LoSanPham WHERE MaLo=?";
 
-    /** Tìm lô sản phẩm chính xác theo mã */
-    public LoSanPham timLoTheoMa(String maLo) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setString(1, maLo);
+			return stmt.executeUpdate() > 0;
+		} catch (SQLException e) {
+			System.err.println("Lỗi xóa lô sản phẩm: " + e.getMessage());
+		}
+		return false;
+	}
 
-        String sql = """
-            SELECT MaLo, HanSuDung, SoLuongTon, MaSanPham
-            FROM LoSanPham
-            WHERE MaLo = ?
-        """;
+	/** Tìm lô sản phẩm chính xác theo mã */
+	public LoSanPham timLoTheoMa(String maLo) {
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
 
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, maLo);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-                    int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
-                    String maSP = rs.getString("MaSanPham");
+		String sql = """
+				    SELECT MaLo, HanSuDung, SoLuongTon, MaSanPham
+				    FROM LoSanPham
+				    WHERE MaLo = ?
+				""";
 
-                    SanPham sp = new SanPham();
-                    try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setString(1, maLo);
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
+					int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
+					String maSP = rs.getString("MaSanPham");
 
-                    return new LoSanPham(maLo, hanSuDung, soLuongTon, sp);
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Lỗi tìm lô sản phẩm theo mã: " + e.getMessage());
-        }
-        return null;
-    }
+//                    SanPham sp = new SanPham();
+//					try {
+//						sp.setMaSanPham(maSP);
+//					} catch (IllegalArgumentException ignore) {
+//					}
+					SanPham sp = sanPhamDAO.laySanPhamTheoMa(maSP);
+					
+					return new LoSanPham(maLo, hanSuDung, soLuongTon, sp);
+				}
+			}
+		} catch (SQLException e) {
+			System.err.println("Lỗi tìm lô sản phẩm theo mã: " + e.getMessage());
+		}
+		return null;
+	}
 
-    /** Tìm lô có hạn sử dụng sắp hết (cũ nhất) theo mã sản phẩm */
-    public LoSanPham timLoGanHetHanTheoSanPham(String maSanPham) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+	/** Tìm lô có hạn sử dụng sắp hết (cũ nhất) theo mã sản phẩm */
+	public LoSanPham timLoGanHetHanTheoSanPham(String maSanPham) {
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
 
-        String sql = """
-            SELECT TOP 1 MaLo, HanSuDung, SoLuongTon, MaSanPham
-            FROM LoSanPham
-            WHERE MaSanPham = ?
-              AND HanSuDung >= GETDATE()
-              AND SoLuongTon > 0
-            ORDER BY HanSuDung ASC
-        """;
+		String sql = """
+				    SELECT TOP 1 MaLo, HanSuDung, SoLuongTon, MaSanPham
+				    FROM LoSanPham
+				    WHERE MaSanPham = ?
+				      AND HanSuDung >= GETDATE()
+				      AND SoLuongTon > 0
+				    ORDER BY HanSuDung ASC
+				""";
 
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, maSanPham);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    String maLo = rs.getString("MaLo");
-                    LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-                    int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
-                    String maSP = rs.getString("MaSanPham");
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setString(1, maSanPham);
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					String maLo = rs.getString("MaLo");
+					LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
+					int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
+					String maSP = rs.getString("MaSanPham");
 
-                    SanPham sp = new SanPham();
-                    try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
+					SanPham sp = new SanPham();
+					try {
+						sp.setMaSanPham(maSP);
+					} catch (IllegalArgumentException ignore) {
+					}
 
-                    return new LoSanPham(maLo, hanSuDung, soLuongTon, sp);
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Lỗi tìm lô gần hết hạn: " + e.getMessage());
-        }
-        return null;
-    }
+					return new LoSanPham(maLo, hanSuDung, soLuongTon, sp);
+				}
+			}
+		} catch (SQLException e) {
+			System.err.println("Lỗi tìm lô gần hết hạn: " + e.getMessage());
+		}
+		return null;
+	}
 
-    /** Lấy lô kế tiếp (hạn tiếp theo) nếu lô hiện tại đã hết hàng */
-    public LoSanPham timLoKeTiepTheoSanPham(String maSanPham, LocalDate hanSuDungHienTai) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+	/** Lấy lô kế tiếp (hạn tiếp theo) nếu lô hiện tại đã hết hàng */
+	public LoSanPham timLoKeTiepTheoSanPham(String maSanPham, LocalDate hanSuDungHienTai) {
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
 
-        String sql = """
-            SELECT TOP 1 MaLo, HanSuDung, SoLuongTon, MaSanPham
-            FROM LoSanPham
-            WHERE MaSanPham = ?
-              AND HanSuDung > ?
-              AND HanSuDung >= GETDATE()
-              AND SoLuongTon > 0
-            ORDER BY HanSuDung ASC
-        """;
+		String sql = """
+				    SELECT TOP 1 MaLo, HanSuDung, SoLuongTon, MaSanPham
+				    FROM LoSanPham
+				    WHERE MaSanPham = ?
+				      AND HanSuDung > ?
+				      AND HanSuDung >= GETDATE()
+				      AND SoLuongTon > 0
+				    ORDER BY HanSuDung ASC
+				""";
 
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, maSanPham);
-            stmt.setDate(2, Date.valueOf(hanSuDungHienTai));
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setString(1, maSanPham);
+			stmt.setDate(2, Date.valueOf(hanSuDungHienTai));
 
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    String maLo = rs.getString("MaLo");
-                    LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-                    int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
-                    String maSP = rs.getString("MaSanPham");
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					String maLo = rs.getString("MaLo");
+					LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
+					int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
+					String maSP = rs.getString("MaSanPham");
 
-                    SanPham sp = new SanPham();
-                    try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
+					SanPham sp = new SanPham();
+					try {
+						sp.setMaSanPham(maSP);
+					} catch (IllegalArgumentException ignore) {
+					}
 
-                    return new LoSanPham(maLo, hanSuDung, soLuongTon, sp);
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Lỗi tìm lô kế tiếp: " + e.getMessage());
-        }
-        return null;
-    }
+					return new LoSanPham(maLo, hanSuDung, soLuongTon, sp);
+				}
+			}
+		} catch (SQLException e) {
+			System.err.println("Lỗi tìm lô kế tiếp: " + e.getMessage());
+		}
+		return null;
+	}
 
-    /** Tính số lượng tồn thực tế (nhập - bán + trả - hủy + nhập lại) */
-    public int tinhSoLuongTonThucTe(String maLo) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+	/** Tính số lượng tồn thực tế (nhập - bán + trả - hủy + nhập lại) */
+	public int tinhSoLuongTonThucTe(String maLo) {
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
 
-        String sql = """
-            SELECT 
-                COALESCE(SUM(ctn.SoLuongNhap), 0)
-              - COALESCE(SUM(cth.SoLuong), 0)
-              + COALESCE(SUM(CASE WHEN ctpt.TrangThai = 1 THEN ctpt.SoLuong ELSE 0 END), 0)
-              - COALESCE(SUM(CASE WHEN ctph.TrangThai = ? THEN ctph.SoLuongHuy ELSE 0 END), 0)
-              + COALESCE(SUM(CASE WHEN ctph.TrangThai = ? THEN ctph.SoLuongHuy ELSE 0 END), 0)
-              AS SoLuongTon
-            FROM LoSanPham lo
-            LEFT JOIN ChiTietPhieuNhap ctn ON lo.MaLo = ctn.MaLo
-            LEFT JOIN ChiTietHoaDon cth ON lo.MaLo = cth.MaLo
-            LEFT JOIN ChiTietPhieuTra ctpt ON lo.MaLo = ctpt.MaLo
-            LEFT JOIN ChiTietPhieuHuy ctph ON lo.MaLo = ctph.MaLo
-            WHERE lo.MaLo = ?
-            GROUP BY lo.MaLo
-        """;
+		String sql = """
+				    SELECT
+				        COALESCE(SUM(ctn.SoLuongNhap), 0)
+				      - COALESCE(SUM(cth.SoLuong), 0)
+				      + COALESCE(SUM(CASE WHEN ctpt.TrangThai = 1 THEN ctpt.SoLuong ELSE 0 END), 0)
+				      - COALESCE(SUM(CASE WHEN ctph.TrangThai = ? THEN ctph.SoLuongHuy ELSE 0 END), 0)
+				      + COALESCE(SUM(CASE WHEN ctph.TrangThai = ? THEN ctph.SoLuongHuy ELSE 0 END), 0)
+				      AS SoLuongTon
+				    FROM LoSanPham lo
+				    LEFT JOIN ChiTietPhieuNhap ctn ON lo.MaLo = ctn.MaLo
+				    LEFT JOIN ChiTietHoaDon cth ON lo.MaLo = cth.MaLo
+				    LEFT JOIN ChiTietPhieuTra ctpt ON lo.MaLo = ctpt.MaLo
+				    LEFT JOIN ChiTietPhieuHuy ctph ON lo.MaLo = ctph.MaLo
+				    WHERE lo.MaLo = ?
+				    GROUP BY lo.MaLo
+				""";
 
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setInt(1, ChiTietPhieuHuy.DA_HUY);
-            stmt.setInt(2, ChiTietPhieuHuy.NHAP_LAI_KHO);
-            stmt.setString(3, maLo);
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setInt(1, ChiTietPhieuHuy.DA_HUY);
+			stmt.setInt(2, ChiTietPhieuHuy.NHAP_LAI_KHO);
+			stmt.setString(3, maLo);
 
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return rs.getInt("SoLuongTon");
-            }
-        } catch (SQLException e) {
-            System.err.println("Lỗi tính số lượng tồn thực tế: " + e.getMessage());
-        }
-        return 0;
-    }
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next())
+					return rs.getInt("SoLuongTon");
+			}
+		} catch (SQLException e) {
+			System.err.println("Lỗi tính số lượng tồn thực tế: " + e.getMessage());
+		}
+		return 0;
+	}
 }

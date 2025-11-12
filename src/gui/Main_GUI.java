@@ -137,7 +137,7 @@ public class Main_GUI extends JFrame {
 							add(lbl);
 						}
 					});
-			addSubmenuButton("tracuu", "tracuudonhuyhang", "Đơn nhập hàng", "/images/icon_nhap_hang.png",
+			addSubmenuButton("tracuu", "tracuudonnhaphang", "Đơn nhập hàng", "/images/icon_nhap_hang.png",
 					new NhapHang_GUI());
 			addSubmenuButton("tracuu", "tracuunhanvien", "Nhân viên", "/images/icon_nhan_vien.png",
 					new JPanel(new GridBagLayout()) {
@@ -410,7 +410,7 @@ public class Main_GUI extends JFrame {
 				JOptionPane.YES_NO_OPTION);
 		if (confirm == JOptionPane.YES_OPTION) {
 			dispose(); // hoặc chuyển về form đăng nhập
-//			new DangNhap_GUI().setVisible(true);
+			new DangNhap_GUI().setVisible(true);
 		}
 	}
 

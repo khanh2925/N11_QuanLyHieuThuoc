@@ -204,4 +204,24 @@ public class KhachHang_DAO {
         kh.setDiemTichLuy(diem);
         return kh;
     }
+    
+    public KhachHang timKhachHangTheoSoDienThoai(String sdt) {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+        String sql = "SELECT * FROM KhachHang WHERE SoDienThoai = ?";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, sdt);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return taoKhachHangTuResultSet(rs);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi tìm khách hàng theo sdt: " + e.getMessage());
+        }
+
+        return null; // Không tìm thấy
+    }
 }
