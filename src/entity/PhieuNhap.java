@@ -27,7 +27,7 @@ public class PhieuNhap {
         setNhaCungCap(nhaCungCap);
         setNhanVien(nhanVien);
         setChiTietPhieuNhapList(chiTietPhieuNhapList);
-        capNhatTongTienTheoChiTiet();
+        // Lưu ý: setChiTietPhieuNhapList đã tự động gọi capNhatTongTienTheoChiTiet()
     }
 
     // ===== GETTERS / SETTERS =====
@@ -36,20 +36,17 @@ public class PhieuNhap {
     }
 
     public void setMaPhieuNhap(String maPhieuNhap) {
-        if (maPhieuNhap == null || maPhieuNhap.trim().isEmpty())
-            throw new IllegalArgumentException("Mã phiếu nhập không được để trống.");
+        if (maPhieuNhap == null)
+            throw new IllegalArgumentException("Mã phiếu nhập không được để trống");
 
-//        if (!maPhieuNhap.matches("^PN-\\d{8}-\\d{4}$")) {
-//            // Tự động chuyển về dạng PN-<ngày hôm nay>-0001
-//            String today = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
-//            this.maPhieuNhap = "PN-" + today + "-0001";
-//            return;
-//        }
+        maPhieuNhap = maPhieuNhap.trim();
+
+        if (!maPhieuNhap.matches("^PN-\\d{8}-\\d{4}$")) {
+            throw new IllegalArgumentException("Mã phiếu nhập không hợp lệ. Định dạng: PN-yyyymmdd-xxxx");
+        }
 
         this.maPhieuNhap = maPhieuNhap;
     }
-
-
 
     public LocalDate getNgayNhap() {
         return ngayNhap;
@@ -87,12 +84,16 @@ public class PhieuNhap {
         return tongTien;
     }
 
-    // 💡 THÊM SETTER NÀY ĐỂ DAO CÓ THỂ SET TRỰC TIẾP TỪ DB (KHI LOAD DANH SÁCH, KHÔNG CẦN CHI TIẾT)
+    // ✅✅✅ PHƯƠNG THỨC BỊ THIẾU ĐÃ ĐƯỢC THÊM VÀO ✅✅✅
+    /**
+     * Setter này chủ yếu dùng khi DAO tải dữ liệu từ CSDL
+     * (nơi tổng tiền đã được tính toán và lưu trữ từ trước).
+     * @param tongTien Tổng tiền của phiếu nhập.
+     */
     public void setTongTien(double tongTien) {
-        if (tongTien < 0)
-            throw new IllegalArgumentException("Tổng tiền không được âm.");
-        this.tongTien = Math.round(tongTien * 100.0) / 100.0;  // Round để nhất quán với capNhatTongTienTheoChiTiet()
+        this.tongTien = tongTien;
     }
+    // ✅✅✅ HẾT PHẦN SỬA ✅✅✅
 
     public List<ChiTietPhieuNhap> getChiTietPhieuNhapList() {
         return chiTietPhieuNhapList;
@@ -102,6 +103,7 @@ public class PhieuNhap {
         this.chiTietPhieuNhapList = (chiTietPhieuNhapList != null)
                 ? chiTietPhieuNhapList
                 : new ArrayList<>();
+        // Khi set danh sách chi tiết, tổng tiền sẽ được tự động tính lại
         capNhatTongTienTheoChiTiet();
     }
 

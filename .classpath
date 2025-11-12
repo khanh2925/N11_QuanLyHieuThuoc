@@ -19,6 +19,7 @@
 	<classpathentry kind="lib" path="src/lib/poi-ooxml-lite-5.2.5.jar"/>
 	<classpathentry kind="lib" path="src/lib/poi-ooxml-full-5.2.5.jar"/>
 	<classpathentry kind="lib" path="src/lib/commons-codec-1.17.1.jar"/>
+	<classpathentry kind="lib" path="src/lib/ooxml-schemas-1.4.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<attributes>
 			<attribute name="module" value="true"/>

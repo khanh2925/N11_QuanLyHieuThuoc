@@ -82,6 +82,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener {
     private JFrame mainFrame;
     
     private int soLoTiepTheo = 1; 
+    
 
     /**
      * Constructor chính
@@ -90,6 +91,7 @@ public ThemPhieuNhap_GUI(JFrame frame) {
         this.mainFrame = frame;
 
         // ✅ Thay đổi: Lấy TaiKhoan và NhanVien từ Session
+
         TaiKhoan taiKhoanDangNhap = Session.getInstance().getTaiKhoanDangNhap();
         if (taiKhoanDangNhap != null) {
             this.nhanVienDangNhap = taiKhoanDangNhap.getNhanVien();
@@ -125,49 +127,50 @@ public ThemPhieuNhap_GUI(JFrame frame) {
     }
 
     /**
-     * Constructor mặc định
+     * Constructor mặc định (ĐÃ SỬA LẠI)
+     * Dùng để test UI, không gọi constructor chính và tự tạo NhanVien test.
      */
-public ThemPhieuNhap_GUI() {
-    this.mainFrame = null; // Không có frame chính khi test
-    
-    // Tạo DAO để lấy NV test
-    NhanVien_DAO nhanVienDAO_Test = new NhanVien_DAO();
-    this.nhanVienDangNhap = nhanVienDAO_Test.timNhanVienTheoMa("NV-20250210-0017");
-    
-    if(nhanVienDangNhap == null) {
-        System.err.println("⚠️ [ThemPhieuNhap_GUI] Không tìm thấy NV 'NV-20250210-0017 '. Tạo NV tạm để test UI.");
-        try {
-            nhanVienDangNhap = new NhanVien("NV-20250210-0017 ", "NV Test (Fallback)", 1, true);
-            nhanVienDangNhap.setQuanLy(true); 
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace(); 
-            nhanVienDangNhap = new NhanVien(); 
+    public ThemPhieuNhap_GUI() {
+        this.mainFrame = null; // Không có frame chính khi test
+        
+        // Tạo DAO để lấy NV test
+        NhanVien_DAO nhanVienDAO_Test = new NhanVien_DAO();
+        this.nhanVienDangNhap = nhanVienDAO_Test.timNhanVienTheoMa("NV-20250210-0017");
+        
+        if(nhanVienDangNhap == null) {
+            System.err.println("⚠️ [ThemPhieuNhap_GUI] Không tìm thấy NV 'NV-20250210-0017 '. Tạo NV tạm để test UI.");
+            try {
+                nhanVienDangNhap = new NhanVien("NV-20250210-0017 ", "NV Test (Fallback)", 1, true);
+                nhanVienDangNhap.setQuanLy(true); 
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace(); 
+                nhanVienDangNhap = new NhanVien(); 
+            }
         }
-    }
 
-    // ✅ Sao chép logic khởi tạo DAO từ constructor chính
-    sanPhamDAO = new SanPham_DAO();
-    loSanPhamDAO = new LoSanPham_DAO();
-    phieuNhapDAO = new PhieuNhap_DAO();
-    nhaCungCapDAO = new NhaCungCap_DAO();
-    donViTinhDAO = new DonViTinh_DAO(); 
+        // ✅ Sao chép logic khởi tạo DAO từ constructor chính
+        sanPhamDAO = new SanPham_DAO();
+        loSanPhamDAO = new LoSanPham_DAO();
+        phieuNhapDAO = new PhieuNhap_DAO();
+        nhaCungCapDAO = new NhaCungCap_DAO();
+        donViTinhDAO = new DonViTinh_DAO(); 
 
-    // ✅ Sao chép logic lấy mã lô từ constructor chính
-    try {
-        String maLoDauTien = loSanPhamDAO.taoMaLoTuDong(); 
-        if (maLoDauTien != null && maLoDauTien.matches("^LO-\\d{6}$")) { 
-            this.soLoTiepTheo = Integer.parseInt(maLoDauTien.substring(3)); 
-        } else {
+        // ✅ Sao chép logic lấy mã lô từ constructor chính
+        try {
+            String maLoDauTien = loSanPhamDAO.taoMaLoTuDong(); 
+            if (maLoDauTien != null && maLoDauTien.matches("^LO-\\d{6}$")) { 
+                this.soLoTiepTheo = Integer.parseInt(maLoDauTien.substring(3)); 
+            } else {
+                this.soLoTiepTheo = 1; 
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi khi lấy mã lô đầu tiên: " + e.getMessage());
             this.soLoTiepTheo = 1; 
         }
-    } catch (Exception e) {
-        System.err.println("Lỗi khi lấy mã lô đầu tiên: " + e.getMessage());
-        this.soLoTiepTheo = 1; 
-    }
 
-    this.setPreferredSize(new Dimension(1537, 850));
-    initialize();
-}
+        this.setPreferredSize(new Dimension(1537, 850));
+        initialize();
+    }
 
 
     private void initialize() {
@@ -323,7 +326,7 @@ public ThemPhieuNhap_GUI() {
         
         pnSidebar.add(pnThongTinNCC);
         
-        pnSidebar.add(Box.createVerticalStrut(100)); // Đẩy tổng tiền xuống
+        pnSidebar.add(Box.createVerticalGlue()); // Đẩy tổng tiền xuống
         
         JSeparator lineTotal = new JSeparator();
         lineTotal.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));

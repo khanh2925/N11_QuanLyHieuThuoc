@@ -211,7 +211,7 @@ public class PhieuNhap_DAO {
                 if (rs.next()) {
                     String maCuoi = rs.getString(1);
                     if (maCuoi != null) {
-                        int soCuoi = Integer.parseInt(maCuoi.substring(maCuoi.length() - 4));
+                    	int soCuoi = Integer.parseInt(maCuoi.substring(maCuoi.length() - 4).trim());
                         int soMoi = soCuoi + 1;
                         return String.format(maPrefix + "%04d", soMoi);
                     }

@@ -198,7 +198,7 @@ public class Main_GUI extends JFrame {
 					new SanPham_GUI());
 			addSubmenuButton("sanpham", "donvitinh", "Đơn vị tính", "/images/icon_don_vi_tinh.png",
 					new DonViTinh_QL_GUI());
-			addSubmenuButton("sanpham", "banggia", "Bảng giá", "/images/icon_bang_gia.png", new BangGia_GUI());
+			addSubmenuButton("sanpham", "banggia", "Bảng giá", "/images/icon_bang_gia.png", new JPanel());
 
 			addMenuButton(menuScrollContent, "Quản lý nhà cung cấp", "nhacungcap", "/images/icon_nha_cung_cap.png");
 			addMenuButton(menuScrollContent, "Quẩn lý khách hàng", "khachhang", "/images/icon_khach_hang.png");

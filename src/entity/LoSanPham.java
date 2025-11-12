@@ -40,8 +40,15 @@ public class LoSanPham {
     }
 
     public void setMaLo(String maLo) {
-        if (maLo == null || !maLo.matches("^LO-\\d{6}$"))
-            throw new IllegalArgumentException("Mã lô không hợp lệ (định dạng: LO-xxxxxx).");
+        if (maLo == null)
+            throw new IllegalArgumentException("Mã lô không được để trống");
+
+        maLo = maLo.trim();
+
+        if (!maLo.matches("^LO-\\d{6}$")) {
+            throw new IllegalArgumentException("Mã lô không hợp lệ. Định dạng: LO-xxxxxx");
+        }
+
         this.maLo = maLo;
     }
 
@@ -52,7 +59,7 @@ public class LoSanPham {
     public void setHanSuDung(LocalDate hanSuDung) {
         if (hanSuDung == null)
             throw new IllegalArgumentException("Hạn sử dụng không được rỗng.");
-        if (hanSuDung.isBefore(LocalDate.now().minusYears(50))) 
+        if (hanSuDung.isBefore(LocalDate.now().minusYears(50))) // tránh nhập nhầm kiểu 1900
             throw new IllegalArgumentException("Hạn sử dụng không hợp lệ.");
         this.hanSuDung = hanSuDung;
     }
