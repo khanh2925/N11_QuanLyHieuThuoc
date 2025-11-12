@@ -45,7 +45,7 @@ public class PhieuHuy {
     }
 
     public void setMaPhieuHuy(String maPhieuHuy) {
-        if (maPhieuHuy == null || !maPhieuHuy.matches("^PH-\\d{8}-\\d{4}$")) {
+    	if (maPhieuHuy == null || !maPhieuHuy.trim().matches("^PH-\\d{8}-\\d{4}$")) {
             throw new IllegalArgumentException("Mã phiếu hủy không hợp lệ. Định dạng yêu cầu: PH-yyyymmdd-xxxx");
         }
         this.maPhieuHuy = maPhieuHuy;

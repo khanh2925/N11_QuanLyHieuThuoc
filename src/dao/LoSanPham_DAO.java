@@ -11,7 +11,9 @@ import entity.ChiTietPhieuHuy;
 
 public class LoSanPham_DAO {
 
-    public LoSanPham_DAO() {}
+    private SanPham_DAO sanPham_DAO = new SanPham_DAO();
+
+	public LoSanPham_DAO() {}
 
     /** Lấy toàn bộ lô sản phẩm */
     public ArrayList<LoSanPham> layTatCaLoSanPham() {
@@ -122,8 +124,7 @@ public class LoSanPham_DAO {
                     int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
                     String maSP = rs.getString("MaSanPham");
 
-                    SanPham sp = new SanPham();
-                    try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
+                    SanPham sp = sanPham_DAO.laySanPhamTheoMa(maSP);
 
                     return new LoSanPham(maLo, hanSuDung, soLuongTon, sp);
                 }

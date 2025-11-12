@@ -53,6 +53,7 @@ public class ChiTietPhieuHuy_DAO {
         return danhSachChiTiet;
     }
 
+
     /** 🔹 Thêm chi tiết phiếu huỷ (chỉ trừ tồn nếu trạng thái = ĐÃ HUỶ [2]) */
     public boolean themChiTietPhieuHuy(ChiTietPhieuHuy ct) {
         connectDB.getInstance();

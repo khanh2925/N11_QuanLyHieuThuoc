@@ -9,22 +9,36 @@
 package gui;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableRowSorter;
 
 import com.toedter.calendar.JDateChooser;
 
+import connectDB.connectDB;
 import customcomponent.*;
+import dao.ChiTietPhieuHuy_DAO;
+import dao.PhieuHuy_DAO;
+import entity.ChiTietPhieuHuy;
+import entity.PhieuHuy;
 
-public class HuyHang_GUI extends JPanel {
+public class HuyHang_GUI extends JPanel implements ActionListener, MouseListener, DocumentListener {
 
 	private JPanel pnCenter;
 	private JPanel pnHeader;
@@ -37,14 +51,22 @@ public class HuyHang_GUI extends JPanel {
 	private DefaultTableModel modelCTPH;
 	private JScrollPane scrPH;
 	private JTable tblCTPH;
+	private List<PhieuHuy> dsPhieuHuy;
+	private List<ChiTietPhieuHuy> dsCTPhieuHuy;
+	private PhieuHuy_DAO ph_dao;
+	private ChiTietPhieuHuy_DAO ctph_dao;
+	private PillButton btnNhapLaiKho;
+	private PillButton btnHuyHang;
+	private JCheckBox chckbxDaDuyet;
+	private JCheckBox chckbxChoDuyet;
+    private TableRowSorter<DefaultTableModel> sorter;
 
+	
 	DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 	DecimalFormat df = new DecimalFormat("#,###đ");
 
 	private Color blueMint = new Color(180, 220, 240);
 	private Color pinkPastel = new Color(255, 200, 220);
-	private JDateChooser dateTu;
-	private JDateChooser dateDen;
 
 	public HuyHang_GUI() {
 		this.setPreferredSize(new Dimension(1537, 850));
@@ -52,52 +74,172 @@ public class HuyHang_GUI extends JPanel {
 	}
 
 	private void initialize() {
-
+		
+		
+		// kết nối database
+		try {
+			connectDB.getInstance().connect();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		ph_dao = new PhieuHuy_DAO();
+		ctph_dao = new ChiTietPhieuHuy_DAO();
+		
+		
+		
 		setLayout(new BorderLayout());
 		setPreferredSize(new Dimension(1537, 1168));
+//
+//		pnHeader = new JPanel();
+//		pnHeader.setPreferredSize(new Dimension(1073, 88));
+//		pnHeader.setLayout(null);
+//		add(pnHeader, BorderLayout.NORTH);
+//
+//		txtSearch = new JTextField();
+//		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+//		txtSearch.setBounds(10, 17, 420, 60);
+//		txtSearch.setBorder(new RoundedBorder(20));
+//		txtSearch.setBackground(Color.WHITE);
+//
+//		PlaceholderSupport.addPlaceholder(txtSearch, "Tìm theo mã phiếu/ tên");
+//
+//		btnXuatFile = new PillButton("Xuất file");
+//		btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
+//		btnXuatFile.setSize(120, 40);
+//		btnXuatFile.setLocation(766, 26);
+//
+//		pnHeader.add(txtSearch);
+//		pnHeader.add(btnXuatFile);
+//		
+//		btnHuyHang = new PillButton("Hủy hàng");
+//		btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 18));
+//		btnHuyHang.setBounds(940, 26, 162, 40);
+//		pnHeader.add(btnHuyHang);
+//		
+//		btnNhapLaiKho = new PillButton("Nhập lại kho");
+//		btnNhapLaiKho.setFont(new Font("Segoe UI", Font.BOLD, 18));
+//		btnNhapLaiKho.setBounds(1136, 26, 162, 40);
+//		pnHeader.add(btnNhapLaiKho);
+//		
+//		JPanel pnLoc = new JPanel();
+//		pnLoc.setLayout(null);
+//		pnLoc.setBorder(new RoundedBorder(20));
+//		pnLoc.setBackground(new Color(240, 255, 255));
+//		pnLoc.setBounds(472, 7, 262, 70);
+//		pnHeader.add(pnLoc);
+//		
+//		JLabel lblTrangThai = new JLabel("Trạng thái:");
+//		lblTrangThai.setFont(new Font("Tahoma", Font.PLAIN, 18));
+//		lblTrangThai.setBackground(new Color(240, 255, 255));
+//		lblTrangThai.setBounds(20, 10, 90, 25);
+//		pnLoc.add(lblTrangThai);
+//		
+//		chckbxDaDuyet = new JCheckBox("Đã duyệt");
+//		chckbxDaDuyet.setSelected(false);
+//		chckbxDaDuyet.setFont(new Font("Tahoma", Font.BOLD, 15));
+//		chckbxDaDuyet.setBackground(new Color(240, 255, 255));
+//		chckbxDaDuyet.setBounds(116, 12, 113, 23);
+//		pnLoc.add(chckbxDaDuyet);
+//		
+//		chckbxChoDuyet = new JCheckBox("Chờ duyệt");
+//		chckbxChoDuyet.setSelected(false);
+//		chckbxChoDuyet.setFont(new Font("Tahoma", Font.BOLD, 15));
+//		chckbxChoDuyet.setBackground(new Color(240, 255, 255));
+//		chckbxChoDuyet.setBounds(117, 41, 105, 23);
+//		pnLoc.add(chckbxChoDuyet);
+//		
+//		
+//
 
+		
 		pnHeader = new JPanel();
-		pnHeader.setPreferredSize(new Dimension(1073, 88));
-		pnHeader.setLayout(null);
+		pnHeader.setLayout(new BoxLayout(pnHeader, BoxLayout.X_AXIS));
+		pnHeader.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15)); // padding 2 bên
+		pnHeader.setBackground(Color.WHITE);
 		add(pnHeader, BorderLayout.NORTH);
 
+		// ====== Ô tìm kiếm ======
 		txtSearch = new JTextField();
 		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		txtSearch.setBounds(10, 17, 420, 60);
+		txtSearch.setPreferredSize(new Dimension(350, 40));
+		txtSearch.setMaximumSize(new Dimension(350, 50));
 		txtSearch.setBorder(new RoundedBorder(20));
 		txtSearch.setBackground(Color.WHITE);
+		PlaceholderSupport.addPlaceholder(txtSearch, "Tìm theo mã phiếu/ tên");
 
-		PlaceholderSupport.addPlaceholder(txtSearch, "Tìm theo mã/tên ...");
+		// ====== Panel lọc trạng thái ======
+		JPanel pnLoc = new JPanel();
+		pnLoc.setLayout(new BoxLayout(pnLoc, BoxLayout.X_AXIS));
+		pnLoc.setBorder(new RoundedBorder(20));                         // viền bo
+		pnLoc.setBackground(new Color(240, 255, 255));
+		// tăng chiều cao để không bị cắt "Chờ duyệt"
+		pnLoc.setPreferredSize(new Dimension(250, 70));
+		pnLoc.setMaximumSize(new Dimension(250, 70));
+		pnLoc.setMinimumSize(new Dimension(250, 70));
+		pnLoc.setAlignmentY(Component.CENTER_ALIGNMENT);
 
+		// --- Label bên trái ---
+		JLabel lblTrangThai = new JLabel("Trạng thái:");
+		lblTrangThai.setFont(new Font("Tahoma", Font.PLAIN, 16));
+		// căn đỉnh để thẳng hàng với checkbox đầu tiên
+		lblTrangThai.setAlignmentY(Component.TOP_ALIGNMENT);
+		lblTrangThai.setBorder(BorderFactory.createEmptyBorder(4, 10, 0, 5));
+
+		// --- Panel chứa 2 checkbox (dọc) ---
+		JPanel pnCheckBox = new JPanel();
+		pnCheckBox.setLayout(new BoxLayout(pnCheckBox, BoxLayout.Y_AXIS));
+		pnCheckBox.setBackground(new Color(240, 255, 255));
+		// căn đỉnh + nhích lên nhẹ để đẹp mắt
+		pnCheckBox.setAlignmentY(Component.TOP_ALIGNMENT);
+		pnCheckBox.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0)); // hoặc (-2,0,0,0) nếu muốn nhô thêm
+
+		chckbxDaDuyet = new JCheckBox("Đã duyệt");
+		chckbxDaDuyet.setFont(new Font("Tahoma", Font.BOLD, 14));
+		chckbxDaDuyet.setBackground(new Color(240, 255, 255));
+
+		chckbxChoDuyet = new JCheckBox("Chờ duyệt");
+		chckbxChoDuyet.setFont(new Font("Tahoma", Font.BOLD, 14));
+		chckbxChoDuyet.setBackground(new Color(240, 255, 255));
+
+		// Thêm khoảng cách dọc nhỏ giữa hai checkbox
+		pnCheckBox.add(chckbxDaDuyet);
+		pnCheckBox.add(Box.createVerticalStrut(4));
+		pnCheckBox.add(chckbxChoDuyet);
+
+		// --- Thêm vào panel lọc chính ---
+		pnLoc.add(lblTrangThai);
+		pnLoc.add(Box.createHorizontalStrut(6));
+		pnLoc.add(pnCheckBox);
+
+
+
+		// ====== Các nút ======
 		btnXuatFile = new PillButton("Xuất file");
-		btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnXuatFile.setSize(120, 40);
-		btnXuatFile.setLocation(957, 30);
+		btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 16));
 
+		btnHuyHang = new PillButton("Hủy hàng");
+		btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 16));
+
+		btnNhapLaiKho = new PillButton("Nhập lại kho");
+		btnNhapLaiKho.setFont(new Font("Segoe UI", Font.BOLD, 16));
+
+		// ====== Thêm vào header theo thứ tự ======
 		pnHeader.add(txtSearch);
+		pnHeader.add(Box.createRigidArea(new Dimension(15, 0)));
+		pnHeader.add(pnLoc);
+		pnHeader.add(Box.createRigidArea(new Dimension(15, 0)));
 		pnHeader.add(btnXuatFile);
+		pnHeader.add(Box.createRigidArea(new Dimension(10, 0)));
+		pnHeader.add(btnHuyHang);
+		pnHeader.add(Box.createRigidArea(new Dimension(10, 0)));
+		pnHeader.add(btnNhapLaiKho);
 
-		JLabel lblTuNgay = new JLabel("Từ ngày:");
-		lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		lblTuNgay.setBounds(468, 30, 78, 40);
-		pnHeader.add(lblTuNgay);
+		// co giãn khi resize cửa sổ
+		pnHeader.add(Box.createHorizontalGlue());
 
-		dateTu = new JDateChooser();
-		dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		dateTu.setDateFormatString("dd/MM/yyyy");
-		dateTu.setBounds(550, 30, 130, 35);
-		pnHeader.add(dateTu);
 
-		JLabel lblDenNgay = new JLabel("Đến:");
-		lblDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		lblDenNgay.setBounds(700, 33, 50, 25);
-		pnHeader.add(lblDenNgay);
-
-		dateDen = new JDateChooser();
-		dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		dateDen.setDateFormatString("dd/MM/yyyy");
-		dateDen.setBounds(750, 30, 130, 35);
-		pnHeader.add(dateDen);
+        
 
 		// ===== CENTER =====
 		pnCenter = new JPanel();
@@ -111,13 +253,85 @@ public class HuyHang_GUI extends JPanel {
 		pnRight.setLayout(new BoxLayout(pnRight, BoxLayout.Y_AXIS));
 		add(pnRight, BorderLayout.EAST);
 
+		
+		
+		
 		initTable();
-		loadFakeData();
+		// chọn sẵn dòng đầu và nạp chi tiết
+		if (modelPH.getRowCount() > 0) {
+		    tblPH.setRowSelectionInterval(0, 0);
+		    loadTableCTPH();
+		}
+		// bắt sự kiện chọn dòng để tự nạp chi tiết
+		tblPH.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		tblPH.getSelectionModel().addListSelectionListener(e -> {
+		    if (!e.getValueIsAdjusting()) loadTableCTPH();
+		});
+				
+		
+		sorter = new TableRowSorter<>(modelPH);
+		tblPH.setRowSorter(sorter);
+		
+
+
+		
+		// Chỉ cho phép chọn 1 trong 2
+		ActionListener filterTrangThaiListener = e -> {
+		    if (e.getSource() == chckbxDaDuyet && chckbxDaDuyet.isSelected()) {
+		        chckbxChoDuyet.setSelected(false);
+		    } else if (e.getSource() == chckbxChoDuyet && chckbxChoDuyet.isSelected()) {
+		        chckbxDaDuyet.setSelected(false);
+		    }
+		    refreshFilters();
+		};
+		
+		chckbxDaDuyet.addActionListener(filterTrangThaiListener);
+		chckbxChoDuyet.addActionListener(filterTrangThaiListener);
+		btnHuyHang.addActionListener(this);
+		btnNhapLaiKho.addActionListener(this);
+		btnXuatFile.addActionListener(this);
+		tblCTPH.addMouseListener(this);
+		tblPH.addMouseListener(this);		
+		txtSearch.getDocument().addDocumentListener(this);
+
+
+
 	}
+	
+	private void refreshFilters() {
+	    if (sorter == null) return;
+
+	    List<RowFilter<Object, Object>> filters = new ArrayList<>();
+
+	    // --- Lọc theo text: cột 0 (Mã PH) và 2 (Nhân viên)
+	    String text = txtSearch.getText().trim();
+	    if (!text.isEmpty() && !txtSearch.getForeground().equals(Color.GRAY)) {
+	        filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(text), 0, 2));
+	    }
+
+	    // --- Lọc theo trạng thái: cột 4 (chỉ 1 trong 2)
+	    if (chckbxDaDuyet.isSelected()) {
+	        filters.add(RowFilter.regexFilter("(?i)Đã duyệt", 4));
+	    } else if (chckbxChoDuyet.isSelected()) {
+	        filters.add(RowFilter.regexFilter("(?i)Chờ duyệt", 4));
+	    }
+
+	    // --- Áp filter
+	    if (filters.isEmpty()) {
+	        sorter.setRowFilter(null);
+	    } else {
+	        sorter.setRowFilter(RowFilter.andFilter(filters));
+	    }
+	}
+
+
+
+	
+	
 
 	private void initTable() {
 		// Bảng phiếu huỷ
-		String[] phieuHuyCols = { "Mã PH", "Ngày lập phiếu", "Nhân viên", "Tổng dòng huỷ", "Trạng thái" };
+		String[] phieuHuyCols = { "Mã PH", "Ngày lập phiếu", "Nhân viên", "Tổng tiền", "Trạng thái" };
 		modelPH = new DefaultTableModel(phieuHuyCols, 0) {
 			@Override
 			public boolean isCellEditable(int r, int c) {
@@ -127,9 +341,10 @@ public class HuyHang_GUI extends JPanel {
 		tblPH = new JTable(modelPH);
 		scrPH = new JScrollPane(tblPH);
 		pnCenter.add(scrPH);
-
+		loadDataTablePH();
+		
 		// Bảng chi tiết phiếu huỷ
-		String[] cTPhieuCols = { "Mã PH", "Mã lô", "Mã SP", "Tên SP", "SL huỷ", "Đơn vị tính", "Hạn sử dụng", "Lý do" };
+		String[] cTPhieuCols = { "Mã PH", "Mã lô",  "Tên SP", "SL huỷ", "Lý do","Trạng thái" };
 
 		modelCTPH = new DefaultTableModel(cTPhieuCols, 0) {
 			@Override
@@ -148,37 +363,10 @@ public class HuyHang_GUI extends JPanel {
 		formatTable(tblCTPH);
 		tblCTPH.setSelectionBackground(pinkPastel);
 		tblCTPH.getTableHeader().setBackground(blueMint);
+
 	}
 
-	// Fake data không liên quan entity
-	private void loadFakeData() {
-		// ====== PHIẾU HỦY ======
-		Object[][] phieuHuyData = {
-				{ "PH-0001", LocalDate.of(2025, 10, 20), "Nguyễn Văn A", 2, "Đã duyệt" },
-				{ "PH-0002", LocalDate.of(2025, 10, 22), "Trần Thị B", 1, "Chờ duyệt" },
-				{ "PH-0003", LocalDate.of(2025, 10, 23), "Lê Quốc C", 3, "Đã duyệt" } };
 
-		modelPH.setRowCount(0);
-		for (Object[] row : phieuHuyData) {
-			modelPH.addRow(new Object[] { row[0], ((LocalDate) row[1]).format(fmt), row[2], row[3], row[4] });
-		}
-
-		// ====== CHI TIẾT PHIẾU HỦY ======
-		Object[][] ctPhieuHuyData = {
-				{ "PH-0001", "LO-001", "SP-001", "Paracetamol 500mg", 10, "Viên", "06/2026",
-						"Viên bị ẩm, mốc" },
-				{ "PH-0001", "LO-002", "SP-002", "Vitamin C 1000mg", 5, "Viên", "12/2026",
-						"Vỏ bị rách" },
-				{ "PH-0002", "LO-003", "SP-003", "Efferalgan 500mg", 20, "Viên", "03/2026",
-						"Cận hạn sử dụng" },
-				{ "PH-0003", "LO-004", "SP-004", "Bông y tế", 50, "Gói", "09/2025", "Bị ướt" },
-				{ "PH-0003", "LO-005", "SP-005", "Cồn 70 độ", 30, "Chai", "10/2026", "Vỡ nắp chai" } };
-
-		modelCTPH.setRowCount(0);
-		for (Object[] row : ctPhieuHuyData) {
-			modelCTPH.addRow(row);
-		}
-	}
 
 	private void formatTable(JTable table) {
 		table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -216,6 +404,69 @@ public class HuyHang_GUI extends JPanel {
 
 		table.getTableHeader().setReorderingAllowed(false);
 	}
+	// đưa dữ liệu Phiếu Hủy lên bảng
+	private void loadDataTablePH() {
+		dsPhieuHuy = new ArrayList<PhieuHuy>();
+		modelPH.setRowCount(0);
+		
+		try {
+			dsPhieuHuy = ph_dao.layTatCaPhieuHuy();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		for (PhieuHuy ph : dsPhieuHuy) {
+			modelPH.addRow( new Object [] {
+			ph.getMaPhieuHuy(),
+			ph.getNgayLapPhieu(),
+			ph.getNhanVien().getTenNhanVien(),
+			ph.getTongTien(),
+			ph.getTrangThaiText() 
+			});
+		}
+		
+
+
+		
+	}
+	// đưa dữ liệu CTPH lên bảng
+	private void loadTableCTPH() {
+		int selectRow = tblPH.getSelectedRow();
+		
+		if (selectRow == -1) {
+			return;
+		}
+		
+		String maPH = modelPH.getValueAt(selectRow, 0).toString();
+		
+		dsCTPhieuHuy = new ArrayList<ChiTietPhieuHuy>();
+		modelCTPH.setRowCount(0);
+		
+
+		try {
+			dsCTPhieuHuy = ph_dao.layChiTietTheoMaPhieu(maPH);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		for (ChiTietPhieuHuy ctph : dsCTPhieuHuy) {			
+			modelCTPH.addRow(new Object[] {
+				ctph.getPhieuHuy().getMaPhieuHuy(),
+				ctph.getLoSanPham().getMaLo(),
+				ctph.getLoSanPham().getSanPham().getTenSanPham(),
+				ctph.getSoLuongHuy(),
+				ctph.getLyDoChiTiet(),
+				ctph.getTrangThaiText() 
+			});
+		}
+		
+		
+		
+	}
+	
+
+
+
 
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
@@ -227,4 +478,126 @@ public class HuyHang_GUI extends JPanel {
 			frame.setVisible(true);
 		});
 	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		Object src = e.getSource();
+		
+		if (src == btnHuyHang) {
+			HuyHang();
+			return;
+		}
+		if (src == btnNhapLaiKho) {
+			NhapLaiKho();
+			return;
+		}
+		
+	}
+
+	private void NhapLaiKho() {
+		
+		int selectRow = tblCTPH.getSelectedRow();
+		
+		if(selectRow == -1 ) {
+			JOptionPane.showMessageDialog(null, "Vui lòng chọn chi tiết phiếu hủy để nhập lại kho!!");
+			return;
+		}
+		String trangThai = modelCTPH.getValueAt(selectRow, 5).toString();
+		if(trangThai.trim().equals("Nhập lại kho")) {
+			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy này đã nhập lại kho, vui lòng chọn chi tiết phiếu hủy khác");
+			return;
+		}
+		String maPH = modelCTPH.getValueAt(selectRow, 0).toString();
+		String maLo = modelCTPH.getValueAt(selectRow, 1).toString();
+		
+		
+		
+		if(ctph_dao.capNhatTrangThaiChiTiet(maPH, maLo, 3)) {
+			modelCTPH.setValueAt("Nhập lại kho", selectRow, 5);
+			JOptionPane.showMessageDialog(null, "Nhập lại kho thành công!");
+		} else {
+			JOptionPane.showMessageDialog(null, "Nhập lại khkir thất bại");
+		}
+		
+		
+		
+		
+	}
+
+	private void HuyHang() {
+		
+		int selectRow = tblCTPH.getSelectedRow();
+		
+		if(selectRow == -1 ) {
+			JOptionPane.showMessageDialog(null, "Vui lòng chọn chi tiết phiếu hủy để hủy hàng!!");
+			return;
+		}
+		String trangThai = modelCTPH.getValueAt(selectRow, 5).toString();
+		if(trangThai.trim().equals("Đã hủy")) {
+			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy này đã hủy, vui lòng chọn chi tiết phiếu hủy khác");
+			return;
+		}
+		String maPH = modelCTPH.getValueAt(selectRow, 0).toString();
+		String maLo = modelCTPH.getValueAt(selectRow, 1).toString();
+		
+		
+		
+		if(ctph_dao.capNhatTrangThaiChiTiet(maPH, maLo, 2)) {
+			modelCTPH.setValueAt("Đã hủy", selectRow, 5);
+			JOptionPane.showMessageDialog(null, "Hủy hàng thành công!");
+		} else {
+			JOptionPane.showMessageDialog(null, "Hủy hàng thất bại");
+		}
+		
+		
+		
+		
+	}
+
+	@Override
+	public void insertUpdate(DocumentEvent e) {
+	    refreshFilters();
+	}
+
+	@Override
+	public void removeUpdate(DocumentEvent e) {
+	    refreshFilters();
+	}
+
+	@Override
+	public void changedUpdate(DocumentEvent e) {
+	    refreshFilters();
+	}
+	
+	
 }
