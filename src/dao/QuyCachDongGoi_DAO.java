@@ -148,4 +148,81 @@ public class QuyCachDongGoi_DAO {
         }
         return false;
     }
+    
+    /** 🔹 Tìm Quy Cách Đóng Gói Gốc (donViGoc = 1) theo mã sản phẩm */
+    public QuyCachDongGoi timQuyCachGocTheoSanPham(String maSanPham) {
+        connectDB.getInstance();
+        String sql = "SELECT qc.*, dvt.TenDonViTinh " +
+                     "FROM QuyCachDongGoi qc " +
+                     "JOIN DonViTinh dvt ON qc.MaDonViTinh = dvt.MaDonViTinh " +
+                     "WHERE qc.MaSanPham = ? AND qc.DonViGoc = 1";
+        
+        try (Connection con = connectDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setString(1, maSanPham);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    DonViTinh dvt = new DonViTinh(
+                        rs.getString("MaDonViTinh"),
+                        rs.getString("TenDonViTinh")
+                    );
+                    
+                    // SanPham (chỉ cần mã để tham chiếu)
+                    SanPham sp = new SanPham();
+                    sp.setMaSanPham(maSanPham); 
+                    
+                    return new QuyCachDongGoi(
+                        rs.getString("MaQuyCach"), dvt, sp,
+                        rs.getInt("HeSoQuyDoi"),
+                        rs.getDouble("TiLeGiam"),
+                        rs.getBoolean("DonViGoc")
+                    );
+                }
+            }
+        } catch (Exception e) { 
+            System.err.println("❌ Lỗi tìm quy cách gốc cho SP " + maSanPham + ": " + e.getMessage());
+        }
+        return null;
+    }
+    
+    // ✅✅✅ HÀM MỚI ĐƯỢC THÊM VÀO ✅✅✅
+    /** 🔹 Lấy danh sách quy cách đóng gói (kèm ĐVT) theo mã sản phẩm */
+    public ArrayList<QuyCachDongGoi> layDanhSachQuyCachTheoSanPham(String maSanPham) {
+        ArrayList<QuyCachDongGoi> ds = new ArrayList<>();
+        connectDB.getInstance();
+        String sql = "SELECT qc.*, dvt.TenDonViTinh " +
+                     "FROM QuyCachDongGoi qc " +
+                     "JOIN DonViTinh dvt ON qc.MaDonViTinh = dvt.MaDonViTinh " +
+                     "WHERE qc.MaSanPham = ? " +
+                     "ORDER BY qc.HeSoQuyDoi ASC"; // Sắp xếp Đơn vị gốc lên đầu
+
+        try (Connection con = connectDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, maSanPham);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    DonViTinh dvt = new DonViTinh(
+                        rs.getString("MaDonViTinh"),
+                        rs.getString("TenDonViTinh")
+                    );
+                    
+                    SanPham sp = new SanPham();
+                    sp.setMaSanPham(maSanPham);
+
+                    QuyCachDongGoi qc = new QuyCachDongGoi(
+                        rs.getString("MaQuyCach"), dvt, sp,
+                        rs.getInt("HeSoQuyDoi"),
+                        rs.getDouble("TiLeGiam"),
+                        rs.getBoolean("DonViGoc")
+                    );
+                    ds.add(qc);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi lấy danh sách quy cách cho SP " + maSanPham + ": " + e.getMessage());
+        }
+        return ds;
+    }
 }

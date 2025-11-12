@@ -3,17 +3,18 @@ package gui;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.DecimalFormat; // 💡 THÊM IMPORT
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
-import java.util.List;
+import java.util.List; // ✅ SỬA 1: Dùng lại List
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import com.toedter.calendar.JDateChooser;
 import entity.DonViTinh;
 import entity.LoSanPham;
+import entity.QuyCachDongGoi; // ✅ SỬA 2: Thêm import QuyCachDongGoi
 import entity.SanPham;
 
 public class ThemLo_Dialog extends JDialog {
@@ -22,77 +23,56 @@ public class ThemLo_Dialog extends JDialog {
     private JSpinner spinnerSoLuong;
     private JDateChooser dateHanSuDung;
     private JButton btnLuu, btnThoat;
-    private JTextField txtDonGia; // ✅ SỬA 1: Đổi JSpinner thành JTextField
-    private JComboBox<DonViTinh> cmbDonViTinh;
+    private JTextField txtDonGia;
     
-    // Nơi lưu trữ kết quả
+    // ✅ SỬA 3: Đổi txtDonViTinh thành cmbQuyCach
+    private JComboBox<QuyCachDongGoi> cmbQuyCach; 
+
+    // Nơi lưu trữ kết quả (luôn là ĐƠN VỊ GỐC)
     private boolean confirmed = false;
     private LoSanPham loSanPham = null;
-    private double donGiaNhap = 0;
-    private int soLuongNhap = 0;
-    private DonViTinh donViTinh = null;
-    
+    private double donGiaNhapGoc = 0;   // Giá của đơn vị gốc
+    private int soLuongNhapGoc = 0;   // Số lượng đã quy đổi về đơn vị gốc
+    private DonViTinh donViTinhGoc = null; // Đơn vị tính gốc
+
     // Thông tin truyền vào
     private SanPham sanPham;
     private String maLoDeNghi;
+    private List<QuyCachDongGoi> dsQuyCach; // ✅ SỬA 4: Nhận vào danh sách
+    private QuyCachDongGoi quyCachGoc;
     
-    // ✅ SỬA 2: Thêm định dạng tiền tệ
-    private final DecimalFormat df = new DecimalFormat("#,##0.00 đ");
+    private final DecimalFormat df = new DecimalFormat("#,### đ");
 
     /**
-     * Constructor mới để nhận dữ liệu
-     * @param owner Frame cha (Main_GUI)
-     * @param sp Sản phẩm cần thêm lô
-     * @param maLoDeNghi Mã lô được tạo tự động
-     * @param dsDVT Danh sách đơn vị tính để chọn
+     * Constructor mới
+     * ✅ SỬA 5: Nhận vào List<QuyCachDongGoi>
      */
-    public ThemLo_Dialog(Frame owner, SanPham sp, String maLoDeNghi, List<DonViTinh> dsDVT) {
+    public ThemLo_Dialog(Frame owner, SanPham sp, String maLoDeNghi, List<QuyCachDongGoi> dsQuyCach, QuyCachDongGoi quyCachGoc) {
         super(owner, "Nhập lô cho: " + sp.getTenSanPham(), true);
         this.sanPham = sp;
         this.maLoDeNghi = maLoDeNghi;
+        this.dsQuyCach = dsQuyCach;
+        this.quyCachGoc = quyCachGoc;
+        
+        // Lưu trữ thông tin gốc (dùng khi lưu)
+        this.donViTinhGoc = quyCachGoc.getDonViTinh();
+        this.donGiaNhapGoc = sp.getGiaNhap();
         
         initialize();
         
-        // Cập nhật các trường với dữ liệu được truyền vào
+        // Cập nhật các trường
         txtMaLo.setText(maLoDeNghi);
         
-        // ✅ SỬA 3: Đặt giá trị cho JTextField (đã định dạng)
-        txtDonGia.setText(df.format(sp.getGiaNhap()));
-        
-        // Nạp JComboBox
-        for (DonViTinh dvt : dsDVT) {
-            cmbDonViTinh.addItem(dvt);
+        // Load JComboBox
+        for (QuyCachDongGoi qc : dsQuyCach) {
+            cmbQuyCach.addItem(qc);
         }
-        cmbDonViTinh.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof DonViTinh) {
-                    setText(((DonViTinh) value).getTenDonViTinh());
-                }
-                return this;
-            }
-        });
-    }
-    
-    /**
-     * Constructor cũ (chỉ dùng để test)
-     */
-    public ThemLo_Dialog(Frame owner) {
-        super(owner, "Tạo lô sản phẩm", true);
-        this.sanPham = new SanPham("SP-000001");
-        this.sanPham.setTenSanPham("Paracetamol (Test)");
-        this.sanPham.setGiaNhap(10000.0);
-        this.maLoDeNghi = "LO-000001";
         
-        initialize();
+        // Mặc định chọn đơn vị gốc (đã được sắp xếp ở DAO)
+        cmbQuyCach.setSelectedIndex(0);
         
-        // Dữ liệu giả để test
-        txtMaLo.setText(maLoDeNghi);
-        // ✅ SỬA 4: Cập nhật constructor test
-        txtDonGia.setText(df.format(this.sanPham.getGiaNhap())); 
-        cmbDonViTinh.addItem(new DonViTinh("DVT-001", "Viên"));
-        cmbDonViTinh.addItem(new DonViTinh("DVT-002", "Vỉ"));
+        // Cập nhật giá ban đầu (cho đơn vị gốc)
+        capNhatGiaTheoQuyCach();
     }
 
     private void initialize() {
@@ -100,12 +80,11 @@ public class ThemLo_Dialog extends JDialog {
         setLocationRelativeTo(getParent());
         getContentPane().setBackground(Color.WHITE);
         
-        // Panel chính với GridBagLayout
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setBackground(Color.WHITE);
         mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 5, 8, 5); // Khoảng cách giữa các component
+        gbc.insets = new Insets(8, 5, 8, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         Font fontLabel = new Font("Segoe UI", Font.PLAIN, 16);
@@ -121,7 +100,7 @@ public class ThemLo_Dialog extends JDialog {
         txtMaLo = new JTextField();
         txtMaLo.setFont(fontField);
         txtMaLo.setEditable(false);
-        txtMaLo.setBackground(new Color(0xF3F4F6)); // Màu xám nhạt
+        txtMaLo.setBackground(new Color(0xF3F4F6));
         mainPanel.add(txtMaLo, gbc);
 
         // Hàng 1: Hạn Sử Dụng
@@ -137,43 +116,57 @@ public class ThemLo_Dialog extends JDialog {
         dateHanSuDung.setDate(Date.from(LocalDate.now().plusYears(1).atStartOfDay(ZoneId.systemDefault()).toInstant()));
         mainPanel.add(dateHanSuDung, gbc);
 
-        // Hàng 2: Số Lượng
-        gbc.gridx = 0; gbc.gridy = 2;
-        JLabel lblSoLuong = new JLabel("Số lượng nhập:");
-        lblSoLuong.setFont(fontLabel);
-        mainPanel.add(lblSoLuong, gbc);
-
-        gbc.gridx = 1; gbc.gridy = 2;
-        spinnerSoLuong = new JSpinner(new SpinnerNumberModel(1, 1, 10000, 1));
-        spinnerSoLuong.setFont(fontField);
-        mainPanel.add(spinnerSoLuong, gbc);
-
-        // ✅ SỬA 5: Thay thế JSpinner bằng JTextField
-        // Hàng 3: Đơn Giá
-        gbc.gridx = 0; gbc.gridy = 3;
-        JLabel lblDonGia = new JLabel("Đơn giá nhập:");
-        lblDonGia.setFont(fontLabel);
-        mainPanel.add(lblDonGia, gbc);
-
-        gbc.gridx = 1; gbc.gridy = 3;
-        txtDonGia = new JTextField();
-        txtDonGia.setFont(fontField);
-        txtDonGia.setEditable(false); // Không cho chỉnh sửa
-        txtDonGia.setBackground(new Color(0xF3F4F6)); // Đặt màu nền xám
-        txtDonGia.setHorizontalAlignment(JTextField.RIGHT); // Căn phải cho đẹp
+        // ✅ SỬA 6: Đổi Hàng 2 và Hàng 3
         
-        mainPanel.add(txtDonGia, gbc);
-
-        // Hàng 4: Đơn Vị Tính
-        gbc.gridx = 0; gbc.gridy = 4;
+        // Hàng 2: Đơn Vị Tính (Quy Cách)
+        gbc.gridx = 0; gbc.gridy = 2;
         JLabel lblDonViTinh = new JLabel("Đơn vị tính:");
         lblDonViTinh.setFont(fontLabel);
         mainPanel.add(lblDonViTinh, gbc);
 
+        gbc.gridx = 1; gbc.gridy = 2;
+        cmbQuyCach = new JComboBox<>();
+        cmbQuyCach.setFont(fontField);
+        cmbQuyCach.setBackground(Color.WHITE);
+        // Thêm renderer để JComboBox hiển thị tên ĐVT
+        cmbQuyCach.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof QuyCachDongGoi qc) {
+                    setText(qc.getDonViTinh().getTenDonViTinh());
+                }
+                return this;
+            }
+        });
+        // Thêm listener để cập nhật giá
+        cmbQuyCach.addActionListener(e -> capNhatGiaTheoQuyCach());
+        mainPanel.add(cmbQuyCach, gbc);
+        
+        // Hàng 3: Số Lượng
+        gbc.gridx = 0; gbc.gridy = 3;
+        JLabel lblSoLuong = new JLabel("Số lượng nhập:");
+        lblSoLuong.setFont(fontLabel);
+        mainPanel.add(lblSoLuong, gbc);
+
+        gbc.gridx = 1; gbc.gridy = 3;
+        spinnerSoLuong = new JSpinner(new SpinnerNumberModel(1, 1, 10000, 1));
+        spinnerSoLuong.setFont(fontField);
+        mainPanel.add(spinnerSoLuong, gbc);
+
+        // Hàng 4: Đơn Giá
+        gbc.gridx = 0; gbc.gridy = 4;
+        JLabel lblDonGia = new JLabel("Đơn giá (theo ĐVT):");
+        lblDonGia.setFont(fontLabel);
+        mainPanel.add(lblDonGia, gbc);
+
         gbc.gridx = 1; gbc.gridy = 4;
-        cmbDonViTinh = new JComboBox<>();
-        cmbDonViTinh.setFont(fontField);
-        mainPanel.add(cmbDonViTinh, gbc);
+        txtDonGia = new JTextField();
+        txtDonGia.setFont(fontField);
+        txtDonGia.setEditable(false); 
+        txtDonGia.setBackground(new Color(0xF3F4F6)); 
+        txtDonGia.setHorizontalAlignment(JTextField.RIGHT);
+        mainPanel.add(txtDonGia, gbc);
 
         // Panel Nút Bấm
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
@@ -195,30 +188,40 @@ public class ThemLo_Dialog extends JDialog {
         buttonPanel.add(btnLuu);
         buttonPanel.add(btnThoat);
         
-        // Thêm panel chính và panel nút vào JDialog
         getContentPane().setLayout(new BorderLayout());
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         
-        // Thêm Action Listeners
-        btnLuu.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                xuLyLuu();
-            }
-        });
-        
-        btnThoat.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                confirmed = false;
-                dispose();
-            }
+        btnLuu.addActionListener(e -> xuLyLuu());
+        btnThoat.addActionListener(e -> {
+            confirmed = false;
+            dispose();
         });
     }
     
+    /**
+     * ✅ SỬA 7: Hàm mới để cập nhật giá khi chọn JComboBox
+     */
+    private void capNhatGiaTheoQuyCach() {
+        QuyCachDongGoi qcDaChon = (QuyCachDongGoi) cmbQuyCach.getSelectedItem();
+        if (qcDaChon == null) return;
+        
+        // Giá gốc = Giá nhập chuẩn của sản phẩm (từ đơn vị gốc)
+        double giaGoc = sanPham.getGiaNhap();
+        int heSo = qcDaChon.getHeSoQuyDoi();
+        double tiLeGiam = qcDaChon.getTiLeGiam();
+        
+        // Giá hiển thị = (Giá gốc * Hệ số) * (1 - Tỉ lệ giảm)
+        double giaHienThi = (giaGoc * heSo) * (1 - tiLeGiam);
+        
+        txtDonGia.setText(df.format(giaHienThi));
+    }
+    
+    /**
+     * ✅ SỬA 8: Cập nhật logic lưu, quy đổi về đơn vị gốc
+     */
     private void xuLyLuu() {
-        // 1. Validate dữ liệu
+        // 1. Validate HSD
         Date selectedDate = dateHanSuDung.getDate();
         if (selectedDate == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn Hạn Sử Dụng.", "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
@@ -230,24 +233,31 @@ public class ThemLo_Dialog extends JDialog {
              return;
         }
         
-        DonViTinh dvtChon = (DonViTinh) cmbDonViTinh.getSelectedItem();
-        if (dvtChon == null) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn Đơn Vị Tính.", "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+        // 2. Lấy quy cách đã chọn
+        QuyCachDongGoi qcDaChon = (QuyCachDongGoi) cmbQuyCach.getSelectedItem();
+        if (qcDaChon == null) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một Quy Cách Đóng Gói.", "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
             return;
         }
         
         try {
-            this.soLuongNhap = (Integer) spinnerSoLuong.getValue();
+            // 3. Lấy số lượng theo quy cách (ví dụ: 5 Hộp)
+            int soLuongQuyCach = (Integer) spinnerSoLuong.getValue();
             
-            this.donGiaNhap = this.sanPham.getGiaNhap(); 
+            // 4. QUY ĐỔI VỀ GỐC
+            // Số lượng gốc = 5 (Hộp) * 10 (Hệ số quy đổi của Hộp) = 50 (Viên)
+            this.soLuongNhapGoc = soLuongQuyCach * qcDaChon.getHeSoQuyDoi();
             
-            this.donViTinh = dvtChon;
+            // Đơn giá gốc VÀ ĐVT Gốc đã được lưu trong constructor
+            // this.donGiaNhapGoc = sanPham.getGiaNhap();
+            // this.donViTinhGoc = this.quyCachGoc.getDonViTinh();
+            
             String maLo = txtMaLo.getText();
             
-            // 3. Tạo đối tượng LoSanPham (với soLuongTon = 0)
+            // 5. Tạo đối tượng Lô (với soLuongTon = 0)
             this.loSanPham = new LoSanPham(maLo, hsd, 0, this.sanPham);
             
-            // 4. Xác nhận và đóng
+            // 6. Xác nhận và đóng
             this.confirmed = true;
             this.dispose();
             
@@ -266,35 +276,18 @@ public class ThemLo_Dialog extends JDialog {
         return loSanPham;
     }
 
+    /** Trả về Đơn Giá đã quy đổi về GỐC */
     public double getDonGiaNhap() {
-        return donGiaNhap;
+        return donGiaNhapGoc;
     }
 
+    /** Trả về Số Lượng đã quy đổi về GỐC */
     public int getSoLuongNhap() {
-        return soLuongNhap;
+        return soLuongNhapGoc;
     }
 
+    /** Trả về Đơn Vị Tính GỐC */
     public DonViTinh getDonViTinh() {
-        return donViTinh;
-    }
-
-    // =================== TEST MAIN ===================
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            // Test với dữ liệu giả
-            ThemLo_Dialog dialog = new ThemLo_Dialog(null);
-            dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-            dialog.setVisible(true);
-            
-            if (dialog.isConfirmed()) {
-                System.out.println("Đã xác nhận:");
-                System.out.println("Lô: " + dialog.getLoSanPham());
-                System.out.println("Số lượng: " + dialog.getSoLuongNhap());
-                System.out.println("Đơn giá: " + dialog.getDonGiaNhap());
-                System.out.println("ĐVT: " + dialog.getDonViTinh());
-            } else {
-                System.out.println("Đã hủy.");
-            }
-        });
+        return donViTinhGoc;
     }
 }
