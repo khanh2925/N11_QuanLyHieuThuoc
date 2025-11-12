@@ -208,36 +208,7 @@ public class DangNhap_GUI extends JFrame {
 		});
 
 		pnFormDangNhap.add(btnQuenMK);
-		
-		// === Nút test nhanh: Đăng nhập nhanh (Quản lý / Nhân viên) ===
-		JButton btnQuickQL = new JButton("QL test");
-		btnQuickQL.setToolTipText("Đăng nhập nhanh: NV-20250210-0017 / 123456aA@");
-		btnQuickQL.setFont(new Font("Arial", Font.PLAIN, 12));
-		btnQuickQL.setBounds(50, 724, 120, 30);
-		btnQuickQL.setCursor(new Cursor(Cursor.HAND_CURSOR));
-		btnQuickQL.addActionListener(e -> {
-		    txtTaiKhoan.setText("NV-20250210-0017");
-		    txtMatKhau.setText("123456aA@");
-		    // đảm bảo echo char
-		    txtMatKhau.setEchoChar('●');
-		    xuLyDangNhap();
-		});
-		pnFormDangNhap.add(btnQuickQL);
 
-		JButton btnQuickNV = new JButton("NV test");
-		btnQuickNV.setToolTipText("Đăng nhập nhanh: NV-20250415-0018 / 123456aA@");
-		btnQuickNV.setFont(new Font("Arial", Font.PLAIN, 12));
-		btnQuickNV.setBounds(190, 724, 120, 30);
-		btnQuickNV.setCursor(new Cursor(Cursor.HAND_CURSOR));
-		btnQuickNV.addActionListener(e -> {
-		    txtTaiKhoan.setText("NV-20250415-0018");
-		    txtMatKhau.setText("123456aA@");
-		    txtMatKhau.setEchoChar('●');
-		    xuLyDangNhap();
-		});
-		pnFormDangNhap.add(btnQuickNV);
-
-		
 		return pnFormDangNhap;
 	}
 
