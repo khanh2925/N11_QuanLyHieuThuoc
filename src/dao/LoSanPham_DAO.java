@@ -2,6 +2,7 @@ package dao;
 
 import java.sql.*;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 import connectDB.connectDB;
@@ -11,7 +12,13 @@ import entity.ChiTietPhieuHuy;
 
 public class LoSanPham_DAO {
 
-    public LoSanPham_DAO() {}
+    // 💡 SỬA: Thêm SanPham_DAO để lấy thông tin sản phẩm đầy đủ
+    private final SanPham_DAO sanPhamDAO;
+
+    public LoSanPham_DAO() {
+        // 💡 SỬA: Khởi tạo SanPham_DAO
+        this.sanPhamDAO = new SanPham_DAO();
+    }
 
     /** Lấy toàn bộ lô sản phẩm */
     public ArrayList<LoSanPham> layTatCaLoSanPham() {
@@ -27,11 +34,15 @@ public class LoSanPham_DAO {
             while (rs.next()) {
                 String maLo = rs.getString("MaLo");
                 LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-                int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
+                int soLuongTon = rs.getInt("SoLuongTon");
                 String maSP = rs.getString("MaSanPham");
 
-                SanPham sp = new SanPham();
-                try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
+                // 💡 SỬA: Lấy đầy đủ thông tin sản phẩm
+                SanPham sp = sanPhamDAO.laySanPhamTheoMa(maSP);
+                if (sp == null) { // Xử lý nếu sản phẩm không tìm thấy
+                    sp = new SanPham();
+                    try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
+                }
 
                 danhSach.add(new LoSanPham(maLo, hanSuDung, soLuongTon, sp));
             }
@@ -119,12 +130,16 @@ public class LoSanPham_DAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-                    int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
+                    int soLuongTon = rs.getInt("SoLuongTon"); 
                     String maSP = rs.getString("MaSanPham");
 
-                    SanPham sp = new SanPham();
-                    try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
-
+                    // 💡 SỬA: Lấy đầy đủ thông tin sản phẩm
+                    SanPham sp = sanPhamDAO.laySanPhamTheoMa(maSP);
+                    if (sp == null) {
+                        sp = new SanPham();
+                        try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
+                    }
+                    
                     return new LoSanPham(maLo, hanSuDung, soLuongTon, sp);
                 }
             }
@@ -154,11 +169,15 @@ public class LoSanPham_DAO {
                 if (rs.next()) {
                     String maLo = rs.getString("MaLo");
                     LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-                    int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
+                    int soLuongTon = rs.getInt("SoLuongTon");
                     String maSP = rs.getString("MaSanPham");
 
-                    SanPham sp = new SanPham();
-                    try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
+                    // 💡 SỬA: Lấy đầy đủ thông tin sản phẩm
+                    SanPham sp = sanPhamDAO.laySanPhamTheoMa(maSP);
+                     if (sp == null) {
+                        sp = new SanPham();
+                        try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
+                    }
 
                     return new LoSanPham(maLo, hanSuDung, soLuongTon, sp);
                 }
@@ -192,11 +211,15 @@ public class LoSanPham_DAO {
                 if (rs.next()) {
                     String maLo = rs.getString("MaLo");
                     LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-                    int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
+                    int soLuongTon = rs.getInt("SoLuongTon");
                     String maSP = rs.getString("MaSanPham");
 
-                    SanPham sp = new SanPham();
-                    try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
+                    // 💡 SỬA: Lấy đầy đủ thông tin sản phẩm
+                    SanPham sp = sanPhamDAO.laySanPhamTheoMa(maSP);
+                     if (sp == null) {
+                        sp = new SanPham();
+                        try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
+                    }
 
                     return new LoSanPham(maLo, hanSuDung, soLuongTon, sp);
                 }
@@ -241,5 +264,25 @@ public class LoSanPham_DAO {
             System.err.println("Lỗi tính số lượng tồn thực tế: " + e.getMessage());
         }
         return 0;
+    }
+    public String taoMaLoTuDong() {
+        String sql = "SELECT TOP 1 MaLo FROM LoSanPham WHERE MaLo LIKE 'LO-%' ORDER BY MaLo DESC";
+
+        try (Connection con = connectDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                String lastMaLo = rs.getString("MaLo"); // Ví dụ: LO-098907
+                int lastNumber = Integer.parseInt(lastMaLo.substring(3)); // 98707
+                int nextNumber = lastNumber + 1;
+                return String.format("LO-%06d", nextNumber); // LO-098908
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Nếu chưa có lô nào → bắt đầu từ LO-000001
+        return "LO-000001";
     }
 }

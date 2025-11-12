@@ -52,7 +52,7 @@ public class LoSanPham {
     public void setHanSuDung(LocalDate hanSuDung) {
         if (hanSuDung == null)
             throw new IllegalArgumentException("Hạn sử dụng không được rỗng.");
-        if (hanSuDung.isBefore(LocalDate.now().minusYears(50))) // tránh nhập nhầm kiểu 1900
+        if (hanSuDung.isBefore(LocalDate.now().minusYears(50))) 
             throw new IllegalArgumentException("Hạn sử dụng không hợp lệ.");
         this.hanSuDung = hanSuDung;
     }

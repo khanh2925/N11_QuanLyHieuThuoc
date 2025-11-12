@@ -40,6 +40,7 @@ public class Main_GUI extends JFrame {
 		setLocationRelativeTo(null);
 		buildUI();
 		hienThongTinNhanVien();
+		setUndecorated(true);
 	}
 
 	public Main_GUI() {

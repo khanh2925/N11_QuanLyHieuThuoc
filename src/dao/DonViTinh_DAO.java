@@ -116,4 +116,23 @@ public class DonViTinh_DAO {
             return "DVT-001";
         }
     }
+    public DonViTinh timDonViTinhTheoTen(String tenDonViTinh) {
+        connectDB.getInstance();
+        String sql = "SELECT MaDonViTinh, TenDonViTinh FROM DonViTinh WHERE TenDonViTinh = ?";
+        try (Connection con = connectDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, tenDonViTinh);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new DonViTinh(
+                        rs.getString("MaDonViTinh"),
+                        rs.getString("TenDonViTinh")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi tìm đơn vị tính theo tên: " + e.getMessage());
+        }
+        return null;
+    }
 }

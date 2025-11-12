@@ -36,15 +36,20 @@ public class PhieuNhap {
     }
 
     public void setMaPhieuNhap(String maPhieuNhap) {
-        if (maPhieuNhap == null)
-            throw new IllegalArgumentException("Mã phiếu nhập không được null.");
+        if (maPhieuNhap == null || maPhieuNhap.trim().isEmpty())
+            throw new IllegalArgumentException("Mã phiếu nhập không được để trống.");
 
-        
-        if (!maPhieuNhap.matches("^PN-\\d{8}-\\d{4}$"))
-            throw new IllegalArgumentException("Mã phiếu nhập không hợp lệ (định dạng: PN-yyyymmdd-xxxx).");
+//        if (!maPhieuNhap.matches("^PN-\\d{8}-\\d{4}$")) {
+//            // Tự động chuyển về dạng PN-<ngày hôm nay>-0001
+//            String today = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
+//            this.maPhieuNhap = "PN-" + today + "-0001";
+//            return;
+//        }
 
         this.maPhieuNhap = maPhieuNhap;
     }
+
+
 
     public LocalDate getNgayNhap() {
         return ngayNhap;
@@ -80,6 +85,13 @@ public class PhieuNhap {
 
     public double getTongTien() {
         return tongTien;
+    }
+
+    // 💡 THÊM SETTER NÀY ĐỂ DAO CÓ THỂ SET TRỰC TIẾP TỪ DB (KHI LOAD DANH SÁCH, KHÔNG CẦN CHI TIẾT)
+    public void setTongTien(double tongTien) {
+        if (tongTien < 0)
+            throw new IllegalArgumentException("Tổng tiền không được âm.");
+        this.tongTien = Math.round(tongTien * 100.0) / 100.0;  // Round để nhất quán với capNhatTongTienTheoChiTiet()
     }
 
     public List<ChiTietPhieuNhap> getChiTietPhieuNhapList() {
