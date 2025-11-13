@@ -62,9 +62,14 @@ public class SanPham {
 
     public void setMaSanPham(String maSanPham) {
         if (maSanPham == null)
-            throw new IllegalArgumentException("Mã sản phẩm không được để trống.");
-        if (!maSanPham.matches("^SP-\\d{6}$"))
-            throw new IllegalArgumentException("Mã sản phẩm không hợp lệ (định dạng: SP-xxxxxx).");
+            throw new IllegalArgumentException("Mã sản phẩm không được để trống");
+
+        maSanPham = maSanPham.trim();
+
+        if (!maSanPham.matches("^SP-\\d{6}$")) {
+            throw new IllegalArgumentException("Mã sản phẩm không hợp lệ. Định dạng: SP-xxxxxx");
+        }
+
         this.maSanPham = maSanPham;
     }
 

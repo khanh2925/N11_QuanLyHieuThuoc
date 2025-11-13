@@ -14,6 +14,41 @@ public class QuyCachDongGoi_DAO {
 
     public QuyCachDongGoi_DAO() {}
 
+    // Hàm tiện ích: tạo SanPham từ ResultSet (tránh vòng lặp DAO)
+    private SanPham taoSanPhamTuResultSet(ResultSet rs) throws SQLException {
+        LoaiSanPham loai = null;
+        String loaiSPStr = rs.getString("LoaiSanPham");
+        if (loaiSPStr != null && !loaiSPStr.isBlank()) {
+            try { loai = LoaiSanPham.valueOf(loaiSPStr.trim().toUpperCase()); }
+            catch (IllegalArgumentException e) {
+                 // Ghi log lỗi nếu cần
+            }
+        }
+
+        DuongDung dd = null;
+        String duongDungStr = rs.getString("DuongDung");
+        if (duongDungStr != null && !duongDungStr.isBlank()) {
+            try { dd = DuongDung.valueOf(duongDungStr.trim().toUpperCase()); }
+            catch (IllegalArgumentException e) {
+                // Ghi log lỗi nếu cần
+            }
+        }
+
+        // Dùng constructor 10 tham số của SanPham
+        return new SanPham(
+            rs.getString("MaSanPham"),
+            rs.getString("TenSanPham"),
+            loai,
+            rs.getString("SoDangKy"),
+            dd,
+            rs.getDouble("GiaNhap"),
+            rs.getDouble("GiaBan"), // <-- ĐÃ THÊM GiaBan
+            rs.getString("HinhAnh"),
+            rs.getString("KeBanSanPham"),
+            rs.getBoolean("HoatDong")
+        );
+    }
+
     /** Lấy tất cả quy cách đóng gói với thông tin chi tiết (JOIN 3 bảng) */
     public ArrayList<QuyCachDongGoi> layTatCaQuyCachDongGoi() {
         ArrayList<QuyCachDongGoi> ds = new ArrayList<>();
@@ -22,7 +57,7 @@ public class QuyCachDongGoi_DAO {
 
         String sql =
             "SELECT qc.MaQuyCach, qc.HeSoQuyDoi, qc.TiLeGiam, qc.DonViGoc, " +
-            "       sp.MaSanPham, sp.TenSanPham, sp.LoaiSanPham, sp.SoDangKy, sp.DuongDung, sp.GiaNhap, sp.HinhAnh, sp.KeBanSanPham, sp.HoatDong, " +
+            "       sp.MaSanPham, sp.TenSanPham, sp.LoaiSanPham, sp.SoDangKy, sp.DuongDung, sp.GiaNhap, sp.GiaBan, sp.HinhAnh, sp.KeBanSanPham, sp.HoatDong, " + // ĐÃ THÊM sp.GiaBan
             "       dvt.MaDonViTinh, dvt.TenDonViTinh " +
             "FROM QuyCachDongGoi qc " +
             "JOIN SanPham sp ON qc.MaSanPham = sp.MaSanPham " +
@@ -39,37 +74,7 @@ public class QuyCachDongGoi_DAO {
                         rs.getString("TenDonViTinh")
                     );
 
-                    // Enum LoaiSanPham
-                    LoaiSanPham loai = null;
-                    String loaiSPStr = rs.getString("LoaiSanPham");
-                    if (loaiSPStr != null && !loaiSPStr.isBlank()) {
-                        try { loai = LoaiSanPham.valueOf(loaiSPStr.trim().toUpperCase()); }
-                        catch (IllegalArgumentException e) {
-                            System.err.println("LoaiSanPham không hợp lệ cho MaQuyCach " + maQC + ": " + loaiSPStr);
-                        }
-                    }
-
-                    // Enum DuongDung
-                    DuongDung dd = null;
-                    String duongDungStr = rs.getString("DuongDung");
-                    if (duongDungStr != null && !duongDungStr.isBlank()) {
-                        try { dd = DuongDung.valueOf(duongDungStr.trim().toUpperCase()); }
-                        catch (IllegalArgumentException e) {
-                            System.err.println("DuongDung không hợp lệ cho MaQuyCach " + maQC + ": " + duongDungStr);
-                        }
-                    }
-
-                    SanPham sp = new SanPham(
-                        rs.getString("MaSanPham"),
-                        rs.getString("TenSanPham"),
-                        loai,
-                        rs.getString("SoDangKy"),
-                        dd,
-                        rs.getDouble("GiaNhap"),
-                        rs.getString("HinhAnh"),
-                        rs.getString("KeBanSanPham"),
-                        rs.getBoolean("HoatDong")
-                    );
+                    SanPham sp = taoSanPhamTuResultSet(rs); // Dùng hàm tiện ích
 
                     QuyCachDongGoi qc = new QuyCachDongGoi(
                         maQC, dvt, sp,
@@ -147,5 +152,54 @@ public class QuyCachDongGoi_DAO {
             e.printStackTrace();
         }
         return false;
+    }
+    
+    /** Lấy quy cách đóng gói theo Mã Sản Phẩm */
+    public ArrayList<QuyCachDongGoi> layQuyCachTheoSanPham(String maSanPham) {
+        ArrayList<QuyCachDongGoi> ds = new ArrayList<>();
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        String sql =
+            "SELECT qc.MaQuyCach, qc.HeSoQuyDoi, qc.TiLeGiam, qc.DonViGoc, " +
+            "       sp.MaSanPham, sp.TenSanPham, sp.LoaiSanPham, sp.SoDangKy, sp.DuongDung, sp.GiaNhap, sp.GiaBan, sp.HinhAnh, sp.KeBanSanPham, sp.HoatDong, " + // ĐÃ THÊM sp.GiaBan
+            "       dvt.MaDonViTinh, dvt.TenDonViTinh " +
+            "FROM QuyCachDongGoi qc " +
+            "JOIN SanPham sp ON qc.MaSanPham = sp.MaSanPham " +
+            "JOIN DonViTinh dvt ON qc.MaDonViTinh = dvt.MaDonViTinh " +
+            "WHERE qc.MaSanPham = ?"; 
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maSanPham);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    
+                    String maQC = rs.getString("MaQuyCach");
+                    try {
+                        DonViTinh dvt = new DonViTinh(
+                            rs.getString("MaDonViTinh"),
+                            rs.getString("TenDonViTinh")
+                        );
+                        
+                        // SỬA: Thay vì gọi spDAO.laySanPhamTheoMa, dùng hàm tiện ích để tránh N+1
+                        SanPham sp = taoSanPhamTuResultSet(rs); 
+
+                        QuyCachDongGoi qc = new QuyCachDongGoi(
+                            maQC, dvt, sp,
+                            rs.getInt("HeSoQuyDoi"),
+                            rs.getDouble("TiLeGiam"),
+                            rs.getBoolean("DonViGoc")
+                        );
+                        ds.add(qc);
+
+                    } catch (Exception e) {
+                        System.err.println("Lỗi dữ liệu không hợp lệ (MaQuyCach " + maQC + "): " + e.getMessage());
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ds;
     }
 }

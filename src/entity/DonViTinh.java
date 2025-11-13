@@ -40,12 +40,16 @@ public class DonViTinh {
 
     public void setMaDonViTinh(String maDonViTinh) {
         if (maDonViTinh == null)
-            throw new IllegalArgumentException("Mã đơn vị tính không được null.");
-        if (!maDonViTinh.matches("^DVT-\\d{3}$"))
-            throw new IllegalArgumentException("Mã đơn vị tính không hợp lệ. Định dạng yêu cầu: DVT-xxx");
+            throw new IllegalArgumentException("Mã đơn vị tính không được để trống");
+
+        maDonViTinh = maDonViTinh.trim(); // loại bỏ khoảng trắng đầu/cuối
+
+        if (!maDonViTinh.matches("^DVT-\\d{3}$")) {
+            throw new IllegalArgumentException("Mã đơn vị tính không hợp lệ. Định dạng: DVT-xxx");
+        }
+
         this.maDonViTinh = maDonViTinh;
     }
-
     public String getTenDonViTinh() {
         return tenDonViTinh;
     }

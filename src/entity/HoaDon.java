@@ -45,12 +45,21 @@ public class HoaDon {
 
     // ===== GETTERS / SETTERS =====
     public String getMaHoaDon() { return maHoaDon; }
+    
     public void setMaHoaDon(String maHoaDon) {
-        if (maHoaDon == null || !maHoaDon.matches("^HD-\\d{8}-\\d{4}$"))
-            throw new IllegalArgumentException("Mã hoá đơn không hợp lệ (định dạng: HD-yyyymmdd-xxxx).");
+        if (maHoaDon == null)
+            throw new IllegalArgumentException("Mã hoá đơn không được để trống");
+
+        maHoaDon = maHoaDon.trim(); // loại bỏ khoảng trắng đầu/cuối
+
+        // Regex chuẩn: HD-yyyymmdd-xxxx (ví dụ HD-20251104-0001)
+        if (!maHoaDon.matches("^HD-\\d{8}-\\d{4}$")) {
+            throw new IllegalArgumentException("Mã hoá đơn không hợp lệ. Định dạng: HD-yyyymmdd-xxxx");
+        }
+
         this.maHoaDon = maHoaDon;
     }
-
+    
     public boolean isThuocKeDon() { return thuocKeDon; }
     public void setThuocKeDon(boolean thuocKeDon) { this.thuocKeDon = thuocKeDon; }
 
