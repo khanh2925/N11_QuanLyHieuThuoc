@@ -11,7 +11,7 @@ import entity.ChiTietPhieuHuy;
 
 public class LoSanPham_DAO {
 
-    private final SanPham_DAO sanPhamDAO;
+	private final SanPham_DAO sanPhamDAO;
 
 	public LoSanPham_DAO() {
 		this.sanPhamDAO = new SanPham_DAO();
@@ -134,7 +134,7 @@ public class LoSanPham_DAO {
 //					} catch (IllegalArgumentException ignore) {
 //					}
 					SanPham sp = sanPhamDAO.laySanPhamTheoMa(maSP);
-					
+
 					return new LoSanPham(maLo, hanSuDung, soLuongTon, sp);
 				}
 			}
@@ -259,4 +259,18 @@ public class LoSanPham_DAO {
 		}
 		return 0;
 	}
+
+	/** 🔹 Cập nhật số lượng tồn (cộng hoặc trừ) theo mã lô */
+	public boolean capNhatSoLuongTon(String maLo, int delta) {
+		String sql = "UPDATE LoSanPham SET SoLuongTon = SoLuongTon + ? WHERE MaLo = ?";
+		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+			ps.setInt(1, delta);
+			ps.setString(2, maLo);
+			return ps.executeUpdate() > 0;
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi cập nhật số lượng tồn lô sản phẩm: " + e.getMessage());
+			return false;
+		}
+	}
+
 }
