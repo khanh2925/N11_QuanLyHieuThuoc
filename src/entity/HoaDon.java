@@ -158,38 +158,36 @@ public class HoaDon {
 //	}
 
 	public void setKhuyenMai(KhuyenMai khuyenMai) {
-	    // 1️⃣ Nếu null → bỏ khuyến mãi hóa đơn, reset tiền giảm và tính lại
-	    if (khuyenMai == null) {
-	        this.khuyenMai = null;
-	        this.soTienGiamKhuyenMai = 0;
-	        capNhatTongThanhToan();
-	        return;
-	    }
+		// 1️⃣ Nếu null → bỏ khuyến mãi hóa đơn, reset tiền giảm và tính lại
+		if (khuyenMai == null) {
+			this.khuyenMai = null;
+			this.soTienGiamKhuyenMai = 0;
+			capNhatTongThanhToan();
+			return;
+		}
 
-	    // 2️⃣ Nếu khuyến mãi là loại "sản phẩm" → không áp dụng ở hóa đơn
-	    if (!khuyenMai.isKhuyenMaiHoaDon()) {
-	        // chỉ bỏ qua, KHÔNG ném lỗi
-	        this.khuyenMai = null;
-	        this.soTienGiamKhuyenMai = 0;
-	        capNhatTongThanhToan();
-	        return;
-	    }
+		// 2️⃣ Nếu khuyến mãi là loại "sản phẩm" → không áp dụng ở hóa đơn
+		if (!khuyenMai.isKhuyenMaiHoaDon()) {
+			// chỉ bỏ qua, KHÔNG ném lỗi
+			this.khuyenMai = null;
+			this.soTienGiamKhuyenMai = 0;
+			capNhatTongThanhToan();
+			return;
+		}
 
-	    // 3️⃣ Nếu khuyến mãi là loại "hóa đơn" → phải kiểm tra xung đột với chi tiết
-	    for (ChiTietHoaDon ct : getDanhSachChiTiet()) { // dùng getter để tránh null
-	        if (ct.getKhuyenMai() != null) {
-	            throw new IllegalStateException(
-	                "Không thể áp dụng khuyến mãi hóa đơn khi chi tiết có khuyến mãi sản phẩm."
-	            );
-	        }
-	    }
+		// 3️⃣ Nếu khuyến mãi là loại "hóa đơn" → phải kiểm tra xung đột với chi tiết
+		for (ChiTietHoaDon ct : getDanhSachChiTiet()) { // dùng getter để tránh null
+			if (ct.getKhuyenMai() != null) {
+				throw new IllegalStateException(
+						"Không thể áp dụng khuyến mãi hóa đơn khi chi tiết có khuyến mãi sản phẩm.");
+			}
+		}
 
-	    // 4️⃣ Gán và áp dụng
-	    this.khuyenMai = khuyenMai;
-	    apDungKhuyenMaiHoaDon();
+		// 4️⃣ Gán và áp dụng
+		this.khuyenMai = khuyenMai;
+		apDungKhuyenMaiHoaDon();
 	}
 
-	
 	// ===== BUSINESS LOGIC =====
 	public void capNhatTongTien() {
 		tongTien = 0;

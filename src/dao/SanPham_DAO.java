@@ -201,10 +201,12 @@ public class SanPham_DAO {
             rs.getString("SoDangKy"),
             duongDung,
             rs.getDouble("GiaNhap"),
+            rs.getDouble("GiaBan"), 
             rs.getString("HinhAnh"),
             rs.getString("KeBanSanPham"),
             rs.getBoolean("HoatDong")
         );
+
     }
 
     /** 🔹 Hàm tiện ích: gán giá trị cho PreparedStatement (thêm) */
