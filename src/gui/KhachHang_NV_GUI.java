@@ -372,17 +372,33 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
 	
 	// Sk thêm khách hàng
 	private void ThemKH() {
-		MoDiaLogThemKH();
-		KhachHang khMoi = dialogThemKH.getKhachHangMoi();
-		if (kh_dao.themKhachHang(khMoi)) {
-			addKhachHangToTable(khMoi);
-			JOptionPane.showMessageDialog(frameThemKH, "Thêm khách hàng thành công");
-		} else {
-			JOptionPane.showMessageDialog(frameThemKH, "Thêm khách hàng thất bại!!!");
-		}
-		
-		
+	    Frame frame = (Frame) SwingUtilities.getWindowAncestor(this);
+	    ThemKhachHang_Dialog dialog = new ThemKhachHang_Dialog(frame);
+
+	    // Quan trọng: hiển thị dialog trước
+	    dialog.setVisible(true); // chờ user nhập xong & đóng dialog
+
+	    
+	    KhachHang kh = dialog.getKhachHangMoi();
+
+	    // Nếu user bấm Thoát hoặc đóng dấu X thì kh sẽ = null → KHÔNG gọi DAO
+	    if (kh == null) {
+	        return;
+	    }
+
+	    // Chỉ gọi DAO khi có dữ liệu hợp lệ
+	    boolean ok = kh_dao.themKhachHang(kh);
+	    if (ok) {
+	        addKhachHangToTable(kh);
+	        JOptionPane.showMessageDialog(this, "Thêm khách hàng thành công");
+	    } else {
+	        JOptionPane.showMessageDialog(this,
+	            "Thêm khách hàng không thành công",
+	            "Lỗi",
+	            JOptionPane.ERROR_MESSAGE);
+	    }
 	}
+
 	
 	// Sk cập nhật khách hàng
 	private void CapNhatKH() {

@@ -50,6 +50,8 @@ public class KhachHang {
 
 		this.maKhachHang = maKhachHang;
 	}
+	
+
 
 	public String getTenKhachHang() {
 		return tenKhachHang;

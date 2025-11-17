@@ -15,6 +15,7 @@ import javax.swing.border.LineBorder;
 
 import com.toedter.calendar.JDateChooser; // THAY ĐỔI 1: Import class mới từ thư viện JCalendar
 
+import dao.KhachHang_DAO;
 import entity.KhachHang;
 
 
@@ -26,6 +27,7 @@ public class ThemKhachHang_Dialog extends JDialog implements ActionListener {
     private JDateChooser ngaySinhDateChooser;
     private JButton btnThem;
     private JButton btnThoat;
+    private KhachHang_DAO kh_dao;
 
     private KhachHang khachHangMoi = null;
 
@@ -41,7 +43,7 @@ public class ThemKhachHang_Dialog extends JDialog implements ActionListener {
         getContentPane().setLayout(null);
 
 
-        
+        this.kh_dao = new KhachHang_DAO();
         // --- Tiêu đề Dialog ---
         JLabel lblTitle = new JLabel("Thêm khách hàng");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
@@ -116,8 +118,8 @@ public class ThemKhachHang_Dialog extends JDialog implements ActionListener {
         btnThoat = new JButton("Thoát");
         btnThoat.setBounds(467, 275, 110, 35);
         btnThoat.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnThoat.setBackground(new Color(0x3B82F6));
-        btnThoat.setForeground(Color.WHITE);
+        btnThoat.setBackground(Color.LIGHT_GRAY);
+        btnThoat.setForeground(Color.BLACK);
         btnThoat.setBorder(null);
         btnThoat.setFocusPainted(false);
         getContentPane().add(btnThoat);
@@ -125,8 +127,9 @@ public class ThemKhachHang_Dialog extends JDialog implements ActionListener {
         btnThem = new JButton("Thêm");
         btnThem.setBounds(340, 275, 110, 35);
         btnThem.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnThem.setBackground(Color.LIGHT_GRAY);
+        btnThem.setBackground(new Color(0x3B82F6));
         btnThem.setBorder(new LineBorder(Color.GRAY));
+        btnThem.setForeground(Color.WHITE);
         getContentPane().add(btnThem);
         
         // --- Thêm sự kiện cho các nút ---
@@ -134,42 +137,53 @@ public class ThemKhachHang_Dialog extends JDialog implements ActionListener {
         btnThoat.addActionListener(this);
         btnThem.addActionListener(this);
     }
-    //String maKH = String.format("KH-%04d", (int)(System.currentTimeMillis() % 10000));
 
+
+ // === THÊM KHÁCH HÀNG ===
     private void themKH() {
         try {
-        	if(!isvalidForm()) return;
-        	
-        	String maKH = String.format("KH-%04d", (int)(System.currentTimeMillis() % 10000));
-            String ten = txtTenKhachHang.getText();
+            // 1. Kiểm tra dữ liệu form
+            if (!isvalidForm())
+                return;
+
+            // 2. Lấy mã KH tự sinh từ DAO (dạng KH-yyyymmdd-xxxx)
+            String maKH = kh_dao.phatSinhMaKhachHangTiepTheo();
+
+            // 3. Lấy dữ liệu từ form
+            String ten = txtTenKhachHang.getText().trim();
             boolean gioiTinh = radNam.isSelected();
-            String sdt = txtSoDienThoai.getText();
+            String sdt = txtSoDienThoai.getText().trim();
             Date selectedDate = ngaySinhDateChooser.getDate();
             LocalDate ngaySinh = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                      
-            this.khachHangMoi = new KhachHang(maKH, ten, gioiTinh, sdt, ngaySinh);           
+
+            // 4. Tạo entity KhachHang (để entity tự check regex mã, ngày sinh, ...)
+            this.khachHangMoi = new KhachHang(maKH, ten, gioiTinh, sdt, ngaySinh);
+
+            // 5. Đóng dialog (KhachHang_NV_GUI sẽ lấy getKhachHangMoi() và gọi kh_dao.themKhachHang)
             dispose();
-            
+
         } catch (IllegalArgumentException | DateTimeParseException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Đã xảy ra lỗi không xác định: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Đã xảy ra lỗi không xác định: " + ex.getMessage(),
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
-    
- // --- Helper: hiển thị lỗi & focus vào control ---
+
+    // --- Helper: hiển thị lỗi & focus vào control ---
     private void showError(String message, JComponent c) {
         JOptionPane.showMessageDialog(this, message, "Lỗi dữ liệu", JOptionPane.WARNING_MESSAGE);
-        if (c != null) c.requestFocus();
+        if (c != null)
+            c.requestFocus();
     }
 
-
-
-
-
- // === HÀM VALIDATE CHÍNH ===
+    // === HÀM VALIDATE CHÍNH ===
     private boolean isvalidForm() {
-    	String maKH = String.format("KH-%04d", (int)(System.currentTimeMillis() % 10000));
+       
+
+        // --- Tên khách hàng ---
         String ten = txtTenKhachHang.getText() != null ? txtTenKhachHang.getText().trim() : "";
         if (ten.isEmpty()) {
             showError("Tên khách hàng không được rỗng.", txtTenKhachHang);
@@ -180,17 +194,18 @@ public class ThemKhachHang_Dialog extends JDialog implements ActionListener {
             return false;
         }
         if (!ten.matches("^([A-ZÀ-Ỵ][a-zà-ỹ]*)(\\s[A-ZÀ-Ỵ][a-zà-ỹ]*)*$")) {
-       	 	showError("Tên khách hàng phải viết hoa chữ cái đầu", txtTenKhachHang);
+            showError("Tên khách hàng phải viết hoa chữ cái đầu.", txtTenKhachHang);
             return false;
-		}
+        }
 
+        // --- Số điện thoại ---
         String sdt = txtSoDienThoai.getText() != null ? txtSoDienThoai.getText().trim() : "";
         if (!sdt.matches("^0\\d{9}$")) {
             showError("Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0.", txtSoDienThoai);
             return false;
-        }     
-        
+        }
 
+        // --- Ngày sinh ---
         Date selectedDate = ngaySinhDateChooser.getDate();
         if (selectedDate == null) {
             showError("Vui lòng chọn ngày sinh.", ngaySinhDateChooser);
@@ -205,6 +220,7 @@ public class ThemKhachHang_Dialog extends JDialog implements ActionListener {
 
         return true;
     }
+
 
 
 

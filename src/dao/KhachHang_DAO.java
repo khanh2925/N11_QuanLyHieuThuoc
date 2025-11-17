@@ -2,6 +2,7 @@ package dao;
 
 import java.sql.*;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import connectDB.connectDB;
 import entity.KhachHang;
@@ -145,27 +146,47 @@ public class KhachHang_DAO {
         return danhSach;
     }
 
-    /** 🔹 Tìm khách hàng có điểm tích lũy ≥ mức chỉ định */
-    public ArrayList<KhachHang> timKhachHangTheoDiemTichLuy(double diemToiThieu) {
-        ArrayList<KhachHang> danhSach = new ArrayList<>();
+    public String phatSinhMaKhachHangTiepTheo() {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
 
-        String sql = "SELECT * FROM KhachHang WHERE DiemTichLuy >= ?";
+        // Lấy ngày hiện tại yyyyMMdd
+        LocalDate today = LocalDate.now();
+        String ngay = today.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setDouble(1, diemToiThieu);
+        // Query lấy mã lớn nhất của ngày hôm nay
+        String sql = "SELECT MAX(MaKhachHang) AS MaxMa "
+                   + "FROM KhachHang "
+                   + "WHERE MaKhachHang LIKE 'KH-" + ngay + "-%'";
 
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    danhSach.add(taoKhachHangTuResultSet(rs));
+        try (Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            if (rs.next()) {
+                String maxMa = rs.getString("MaxMa");
+
+                // Nếu chưa có khách nào trong ngày → bắt đầu từ 0001
+                if (maxMa == null) {
+                    return "KH-" + ngay + "-0001";
                 }
+
+                // Cắt phần số xxxx
+                String soStr = maxMa.substring(maxMa.lastIndexOf("-") + 1).trim();
+
+                int so = Integer.parseInt(soStr);
+                int soMoi = so + 1;
+
+                return String.format("KH-%s-%04d", ngay, soMoi);
             }
-        } catch (SQLException e) {
-            System.err.println("❌ Lỗi tìm khách hàng theo điểm tích lũy: " + e.getMessage());
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        return danhSach;
+
+        // fallback an toàn
+        return "KH-" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + "-0001";
     }
+
     /** 🔹 Tìm khách hàng chính xác theo mã (dùng cho các DAO khác) */
     public KhachHang timKhachHangTheoMa(String maKhachHang) {
         connectDB.getInstance();
