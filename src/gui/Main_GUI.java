@@ -66,7 +66,7 @@ public class Main_GUI extends JFrame {
 			}, "tongquan");
 			cardPanel.add(new ThongKeDoanhThu_GUI(), "thongke");
 			cardPanel.add(new ThemPhieuNhap_GUI(), "nhaphang");
-			cardPanel.add(new HuyHang_GUI(), "xuathuy");
+			cardPanel.add(new QL_HuyHang_GUI(), "xuathuy");
 			cardPanel.add(new QLTraHang_GUI(), "trahang");
 			cardPanel.add(new NhaCungCap_GUI(), "nhacungcap");
 			cardPanel.add(new KhachHang_NV_GUI(), "khachhang");
@@ -77,7 +77,7 @@ public class Main_GUI extends JFrame {
 			cardPanel.add(new TongQuanNV_GUI(), "tongquan");
 			cardPanel.add(new BanHang_GUI(), "banhang");
 			cardPanel.add(new TraHangNhanVien_GUI(), "trahang");
-			cardPanel.add(new HuyHang_GUI(), "xuathuy");
+			cardPanel.add(new HuyHangNhanVien_GUI(), "xuathuy");
 			cardPanel.add(new KhachHang_NV_GUI(), "khachhang");
 			showCard("banhang");
 		}

@@ -231,8 +231,8 @@ public class LoSanPham_DAO {
         """;
 
         try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setInt(1, ChiTietPhieuHuy.DA_HUY);
-            stmt.setInt(2, ChiTietPhieuHuy.NHAP_LAI_KHO);
+            stmt.setInt(1, ChiTietPhieuHuy.HUY_HANG);
+            stmt.setInt(2, ChiTietPhieuHuy.TU_CHOI);
             stmt.setString(3, maLo);
 
             try (ResultSet rs = stmt.executeQuery()) {

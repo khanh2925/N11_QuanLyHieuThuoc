@@ -40,8 +40,15 @@ public class LoSanPham {
     }
 
     public void setMaLo(String maLo) {
-        if (maLo == null || !maLo.matches("^LO-\\d{6}$"))
-            throw new IllegalArgumentException("Mã lô không hợp lệ (định dạng: LO-xxxxxx).");
+        if (maLo == null)
+            throw new IllegalArgumentException("Mã lô không được để trống");
+
+        maLo = maLo.trim();
+
+        if (!maLo.matches("^LO-\\d{6}$")) {
+            throw new IllegalArgumentException("Mã lô không hợp lệ. Định dạng: LO-xxxxxx");
+        }
+
         this.maLo = maLo;
     }
 

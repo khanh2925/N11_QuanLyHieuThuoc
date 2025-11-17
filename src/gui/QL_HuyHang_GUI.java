@@ -3,7 +3,6 @@
  * @version 1.1
  * @since Oct 27, 2025
  *
- * Mô tả: Giao diện quản lý phiếu huỷ hàng (data tự sinh, không dùng entity)
  */
 
 package gui;
@@ -38,7 +37,7 @@ import dao.PhieuHuy_DAO;
 import entity.ChiTietPhieuHuy;
 import entity.PhieuHuy;
 
-public class HuyHang_GUI extends JPanel implements ActionListener, MouseListener, DocumentListener {
+public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListener, DocumentListener {
 
 	private JPanel pnCenter;
 	private JPanel pnHeader;
@@ -55,7 +54,7 @@ public class HuyHang_GUI extends JPanel implements ActionListener, MouseListener
 	private List<ChiTietPhieuHuy> dsCTPhieuHuy;
 	private PhieuHuy_DAO ph_dao;
 	private ChiTietPhieuHuy_DAO ctph_dao;
-	private PillButton btnNhapLaiKho;
+	private PillButton btnTuChoi;
 	private PillButton btnHuyHang;
 	private JCheckBox chckbxDaDuyet;
 	private JCheckBox chckbxChoDuyet;
@@ -68,7 +67,7 @@ public class HuyHang_GUI extends JPanel implements ActionListener, MouseListener
 	private Color blueMint = new Color(180, 220, 240);
 	private Color pinkPastel = new Color(255, 200, 220);
 
-	public HuyHang_GUI() {
+	public QL_HuyHang_GUI() {
 		this.setPreferredSize(new Dimension(1537, 850));
 		initialize();
 	}
@@ -161,8 +160,8 @@ public class HuyHang_GUI extends JPanel implements ActionListener, MouseListener
 		btnHuyHang = new PillButton("Hủy hàng");
 		btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 16));
 
-		btnNhapLaiKho = new PillButton("Nhập lại kho");
-		btnNhapLaiKho.setFont(new Font("Segoe UI", Font.BOLD, 16));
+		btnTuChoi = new PillButton("Từ chối");
+		btnTuChoi.setFont(new Font("Segoe UI", Font.BOLD, 16));
 
 		// ====== Thêm vào header theo thứ tự ======
 		pnHeader.add(txtSearch);
@@ -173,7 +172,7 @@ public class HuyHang_GUI extends JPanel implements ActionListener, MouseListener
 		pnHeader.add(Box.createRigidArea(new Dimension(10, 0)));
 		pnHeader.add(btnHuyHang);
 		pnHeader.add(Box.createRigidArea(new Dimension(10, 0)));
-		pnHeader.add(btnNhapLaiKho);
+		pnHeader.add(btnTuChoi);
 
 		// co giãn khi resize cửa sổ
 		pnHeader.add(Box.createHorizontalGlue());
@@ -228,7 +227,7 @@ public class HuyHang_GUI extends JPanel implements ActionListener, MouseListener
 		chckbxDaDuyet.addActionListener(filterTrangThaiListener);
 		chckbxChoDuyet.addActionListener(filterTrangThaiListener);
 		btnHuyHang.addActionListener(this);
-		btnNhapLaiKho.addActionListener(this);
+		btnTuChoi.addActionListener(this);
 		btnXuatFile.addActionListener(this);
 		tblCTPH.addMouseListener(this);
 		tblPH.addMouseListener(this);		
@@ -410,11 +409,11 @@ public class HuyHang_GUI extends JPanel implements ActionListener, MouseListener
 
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
-			JFrame frame = new JFrame("Quản lý phiếu hủy hàng - Data Fake");
+			JFrame frame = new JFrame("Quản lý phiếu hủy hàng");
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			frame.setSize(1280, 800);
 			frame.setLocationRelativeTo(null);
-			frame.setContentPane(new HuyHang_GUI());
+			frame.setContentPane(new QL_HuyHang_GUI());
 			frame.setVisible(true);
 		});
 	}
@@ -457,24 +456,30 @@ public class HuyHang_GUI extends JPanel implements ActionListener, MouseListener
 			HuyHang();
 			return;
 		}
-		if (src == btnNhapLaiKho) {
-			NhapLaiKho();
+		if (src == btnTuChoi) {
+			TuChoiHuy();
 			return;
 		}
 		
 	}
-
-	private void NhapLaiKho() {
+	// sự kiện từ chối hủy hàng
+	private void TuChoiHuy() {
 		
 		int selectRow = tblCTPH.getSelectedRow();
 		
 		if(selectRow == -1 ) {
-			JOptionPane.showMessageDialog(null, "Vui lòng chọn chi tiết phiếu hủy để nhập lại kho!!");
+			JOptionPane.showMessageDialog(null, "Vui lòng chọn chi tiết phiếu hủy để cập nhật trạng thái!!");
 			return;
 		}
 		String trangThai = modelCTPH.getValueAt(selectRow, 5).toString();
-		if(trangThai.trim().equals("Nhập lại kho")) {
-			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy này đã nhập lại kho, vui lòng chọn chi tiết phiếu hủy khác");
+		if(trangThai.trim().equals("Đã từ chối")) {
+			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy này đã ở trạng thái từ chối hủy");
+			return;
+		}
+		
+		// đã hủy hàng thì không được cập nhật trạng thái
+		if(trangThai.trim().equals("Đã hủy hàng")) {
+			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy này đã hủy hàng, không được cập nhật trạng thái");
 			return;
 		}
 		String maPH = modelCTPH.getValueAt(selectRow, 0).toString();
@@ -483,28 +488,31 @@ public class HuyHang_GUI extends JPanel implements ActionListener, MouseListener
 		
 		
 		if(ctph_dao.capNhatTrangThaiChiTiet(maPH, maLo, 3)) {
-			modelCTPH.setValueAt("Nhập lại kho", selectRow, 5);
-			JOptionPane.showMessageDialog(null, "Nhập lại kho thành công!");
+			modelCTPH.setValueAt("Đã từ chối hủy", selectRow, 5);
+			JOptionPane.showMessageDialog(null, "Đã từ chối hủy hàng!");
+			
+			 capNhatTrangThaiPhieuSauKhiCapNhatCTPH(maPH);
 		} else {
-			JOptionPane.showMessageDialog(null, "Nhập lại khkir thất bại");
+			JOptionPane.showMessageDialog(null, "Không thể từ chối hủy hàng");
 		}
 		
 		
 		
 		
 	}
-
+	// sự kiện hủy hàng
 	private void HuyHang() {
 		
 		int selectRow = tblCTPH.getSelectedRow();
 		
 		if(selectRow == -1 ) {
-			JOptionPane.showMessageDialog(null, "Vui lòng chọn chi tiết phiếu hủy để hủy hàng!!");
+			JOptionPane.showMessageDialog(null, "Vui lòng chọn chi tiết phiếu hủy để cập nhật trạng thái!!");
 			return;
 		}
 		String trangThai = modelCTPH.getValueAt(selectRow, 5).toString();
-		if(trangThai.trim().equals("Đã hủy")) {
-			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy này đã hủy, vui lòng chọn chi tiết phiếu hủy khác");
+		
+		if (trangThai.trim().equals("Đã hủy hàng")) {
+			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy đã ở trạng thái đã hủy!!");
 			return;
 		}
 		String maPH = modelCTPH.getValueAt(selectRow, 0).toString();
@@ -513,8 +521,10 @@ public class HuyHang_GUI extends JPanel implements ActionListener, MouseListener
 		
 		
 		if(ctph_dao.capNhatTrangThaiChiTiet(maPH, maLo, 2)) {
-			modelCTPH.setValueAt("Đã hủy", selectRow, 5);
+			modelCTPH.setValueAt("Đã hủy hàng", selectRow, 5);
 			JOptionPane.showMessageDialog(null, "Hủy hàng thành công!");
+			
+			 capNhatTrangThaiPhieuSauKhiCapNhatCTPH(maPH);
 		} else {
 			JOptionPane.showMessageDialog(null, "Hủy hàng thất bại");
 		}
@@ -523,6 +533,20 @@ public class HuyHang_GUI extends JPanel implements ActionListener, MouseListener
 		
 		
 	}
+	
+	/** 🔹 Sau khi cập nhật 1 chi tiết, gọi hàm này để auto cập nhật phiếu hủy */
+	private void capNhatTrangThaiPhieuSauKhiCapNhatCTPH(String maPhieuHuy) {
+	    if (ph_dao.capNhatTrangThaiTuDong(maPhieuHuy)) {
+	        // Cập nhật lại bảng phiếu huỷ trên GUI
+	        int selectRow = tblPH.getSelectedRow();
+	        if (selectRow != -1) {
+	            // Vì tblPH đang dùng TableRowSorter nên phải convert về chỉ số model
+	            int rowModel = tblPH.convertRowIndexToModel(selectRow);
+	            modelPH.setValueAt("Đã duyệt", rowModel, 4); // cột 4 = Trạng thái
+	        }
+	    }
+	}
+
 
 	@Override
 	public void insertUpdate(DocumentEvent e) {

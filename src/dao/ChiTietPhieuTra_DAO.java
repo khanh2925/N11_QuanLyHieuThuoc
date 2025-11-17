@@ -14,37 +14,42 @@ import java.util.List;
 
 public class ChiTietPhieuTra_DAO {
 
-    private final Connection con;
     private final ChiTietHoaDon_DAO chiTietHoaDonDAO;
 
     public ChiTietPhieuTra_DAO() {
-        this.con = connectDB.getConnection();
         this.chiTietHoaDonDAO = new ChiTietHoaDon_DAO();
     }
 
+    // ============================================================
+    // 🔍 Lấy danh sách chi tiết phiếu trả theo mã phiếu trả
+    // ============================================================
     public List<ChiTietPhieuTra> timKiemChiTietBangMaPhieuTra(String maPhieuTra) {
         List<ChiTietPhieuTra> danhSachChiTiet = new ArrayList<>();
-        // 💡 SỬA SQL: Dùng MaLo thay vì MaSanPham (để khớp với ChiTietHoaDon)
-        String sql = "SELECT MaHoaDon, MaLo, LyDoChiTiet, SoLuong, TrangThai FROM ChiTietPhieuTra WHERE MaPhieuTra = ?";
+        String sql = """
+            SELECT MaHoaDon, MaLo, LyDoChiTiet, SoLuong, TrangThai
+            FROM ChiTietPhieuTra
+            WHERE MaPhieuTra = ?
+        """;
 
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+        try (Connection con = connectDB.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+
             stmt.setString(1, maPhieuTra);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     String maHoaDon = rs.getString("MaHoaDon");
-                    String maLo = rs.getString("MaLo"); // 💡 ĐỌC MA LÔ
+                    String maLo = rs.getString("MaLo");
                     String lyDoChiTiet = rs.getString("LyDoChiTiet");
                     int soLuong = rs.getInt("SoLuong");
                     int trangThai = rs.getInt("TrangThai");
 
-                    // 💡 TÌM KIẾM THEO MA LÔ
+                    // Tìm chi tiết hóa đơn tương ứng (theo mã HĐ + mã lô)
                     ChiTietHoaDon cthd = chiTietHoaDonDAO.timKiemChiTietHoaDonBangMa(maHoaDon, maLo);
                     if (cthd != null) {
                         PhieuTra pt = new PhieuTra();
                         pt.setMaPhieuTra(maPhieuTra);
 
                         ChiTietPhieuTra ctpt = new ChiTietPhieuTra(pt, cthd, lyDoChiTiet, soLuong, trangThai);
-                        // Cập nhật lại thành tiền hoàn (vì constructor đã gọi capNhatThanhTienHoan)
                         ctpt.capNhatThanhTienHoan();
                         danhSachChiTiet.add(ctpt);
                     }
@@ -56,15 +61,22 @@ public class ChiTietPhieuTra_DAO {
         return danhSachChiTiet;
     }
 
-
+    // ============================================================
+    // ➕ Thêm mới 1 chi tiết phiếu trả
+    // ============================================================
     public boolean themChiTietPhieuTra(ChiTietPhieuTra ctpt) {
-        // 💡 SỬA SQL: Dùng MaLo thay vì MaSanPham
-        String sql = "INSERT INTO ChiTietPhieuTra (MaPhieuTra, MaHoaDon, MaLo, LyDoChiTiet, SoLuong, ThanhTienHoan, TrangThai) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+        String sql = """
+            INSERT INTO ChiTietPhieuTra
+            (MaPhieuTra, MaHoaDon, MaLo, LyDoChiTiet, SoLuong, ThanhTienHoan, TrangThai)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """;
+
+        try (Connection con = connectDB.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+
             stmt.setString(1, ctpt.getPhieuTra().getMaPhieuTra());
             stmt.setString(2, ctpt.getChiTietHoaDon().getHoaDon().getMaHoaDon());
-            stmt.setString(3, ctpt.getChiTietHoaDon().getLoSanPham().getMaLo()); // 💡 GÁN MA LÔ
+            stmt.setString(3, ctpt.getChiTietHoaDon().getLoSanPham().getMaLo());
             stmt.setString(4, ctpt.getLyDoChiTiet());
             stmt.setInt(5, ctpt.getSoLuong());
             stmt.setDouble(6, ctpt.getThanhTienHoan());
@@ -77,20 +89,55 @@ public class ChiTietPhieuTra_DAO {
         }
     }
 
+    // ============================================================
+    // 🔄 Cập nhật trạng thái của 1 chi tiết phiếu trả
+    // ============================================================
+    public boolean capNhatTrangThaiChiTiet(String maPhieuTra, String maHoaDon, String maLo, int trangThaiMoi) {
+        String sql = """
+            UPDATE ChiTietPhieuTra
+            SET TrangThai = ?
+            WHERE MaPhieuTra = ? AND MaHoaDon = ? AND MaLo = ?
+        """;
 
-    public boolean capNhatTrangThaiChiTiet(String maPhieuTra, String maHoaDon, String maLo, int trangThaiMoi) { // 💡 SỬA THAM SỐ
-        // 💡 SỬA SQL: Dùng MaLo thay vì MaSanPham
-        String sql = "UPDATE ChiTietPhieuTra SET TrangThai = ? WHERE MaPhieuTra = ? AND MaHoaDon = ? AND MaLo = ?";
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+        try (Connection con = connectDB.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+
             stmt.setInt(1, trangThaiMoi);
             stmt.setString(2, maPhieuTra);
             stmt.setString(3, maHoaDon);
-            stmt.setString(4, maLo); // 💡 GÁN MA LÔ
+            stmt.setString(4, maLo);
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
+    }
+
+    // ============================================================
+    // 🔢 Tính tổng số lượng đã trả của 1 sản phẩm theo mã HĐ + mã lô
+    // ============================================================
+    public static double tongSoLuongDaTra(String maHD, String maLo) {
+        double tong = 0;
+        String sql = """
+            SELECT SUM(SoLuong)
+            FROM ChiTietPhieuTra
+            WHERE MaHoaDon = ? AND MaLo = ? AND TrangThai IN (0,1,2)
+        """;
+
+        try (Connection con = connectDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, maHD);
+            ps.setString(2, maLo);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next())
+                    tong = rs.getDouble(1);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return tong;
     }
 }

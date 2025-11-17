@@ -37,11 +37,13 @@ public class PhieuNhap {
 
     public void setMaPhieuNhap(String maPhieuNhap) {
         if (maPhieuNhap == null)
-            throw new IllegalArgumentException("Mã phiếu nhập không được null.");
+            throw new IllegalArgumentException("Mã phiếu nhập không được để trống");
 
-        
-        if (!maPhieuNhap.matches("^PN-\\d{8}-\\d{4}$"))
-            throw new IllegalArgumentException("Mã phiếu nhập không hợp lệ (định dạng: PN-yyyymmdd-xxxx).");
+        maPhieuNhap = maPhieuNhap.trim();
+
+        if (!maPhieuNhap.matches("^PN-\\d{8}-\\d{4}$")) {
+            throw new IllegalArgumentException("Mã phiếu nhập không hợp lệ. Định dạng: PN-yyyymmdd-xxxx");
+        }
 
         this.maPhieuNhap = maPhieuNhap;
     }

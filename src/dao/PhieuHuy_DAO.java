@@ -107,7 +107,7 @@ public class PhieuHuy_DAO {
         }
 
         // Chỉ có 4 cột theo schema
-        String sqlPH = "INSERT INTO PhieuHuy (MaPhieuHuy, NgayLapPhieu, MaNhanVien, TrangThai) VALUES (?, ?, ?, ?)";
+        String sqlPH = "INSERT INTO PhieuHuy (MaPhieuHuy, NgayLapPhieu, MaNhanVien, TrangThai, TongTien) VALUES (?, ?, ?, ?,?)";
 
         // Giữ nguyên cấu trúc bảng chi tiết như bạn đang dùng
         String sqlCT = "INSERT INTO ChiTietPhieuHuy (MaPhieuHuy, MaLo, SoLuongHuy, LyDoChiTiet, DonGiaNhap, ThanhTien, TrangThai) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -121,6 +121,7 @@ public class PhieuHuy_DAO {
                 ps.setDate(2, java.sql.Date.valueOf(ph.getNgayLapPhieu()));
                 ps.setString(3, ph.getNhanVien() != null ? ph.getNhanVien().getMaNhanVien() : null);
                 ps.setBoolean(4, ph.isTrangThai());
+                ps.setDouble(5, ph.getTongTien());
                 ps.executeUpdate();
             }
 
@@ -227,4 +228,26 @@ public class PhieuHuy_DAO {
             try { con.setAutoCommit(true); } catch (SQLException ignored) {}
         }
     }
+    
+    /** Trả về true nếu mọi ChiTietPhieuHuy của phiếu đều KHÁC 'Chờ duyệt' */
+    public boolean checkTrangThai(String maPhieuHuy) {
+        ChiTietPhieuHuy_DAO ctDao = new ChiTietPhieuHuy_DAO();
+        List<ChiTietPhieuHuy> ds = ctDao.timKiemChiTietPhieuHuyBangMa(maPhieuHuy); // :contentReference[oaicite:4]{index=4}
+
+        for (ChiTietPhieuHuy ct : ds) {
+            if (ct.getTrangThai() == ChiTietPhieuHuy.CHO_DUYET) { // 1 = Chờ duyệt :contentReference[oaicite:5]{index=5}
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**  update DB nếu đủ điều kiện  */
+    public boolean capNhatTrangThaiTuDong(String maPhieuHuy) {
+        if (checkTrangThai(maPhieuHuy)) {
+            return capNhatTrangThai(maPhieuHuy, true);
+        }
+        return false;
+    }
+
 }

@@ -45,11 +45,18 @@ public class PhieuHuy {
     }
 
     public void setMaPhieuHuy(String maPhieuHuy) {
-    	if (maPhieuHuy == null || !maPhieuHuy.trim().matches("^PH-\\d{8}-\\d{4}$")) {
-            throw new IllegalArgumentException("Mã phiếu hủy không hợp lệ. Định dạng yêu cầu: PH-yyyymmdd-xxxx");
+        if (maPhieuHuy == null)
+            throw new IllegalArgumentException("Mã phiếu huỷ không được để trống");
+
+        maPhieuHuy = maPhieuHuy.trim();
+
+        if (!maPhieuHuy.matches("^PH-\\d{8}-\\d{4}$")) {
+            throw new IllegalArgumentException("Mã phiếu huỷ không hợp lệ. Định dạng: PH-yyyymmdd-xxxx");
         }
+
         this.maPhieuHuy = maPhieuHuy;
     }
+
 
     public LocalDate getNgayLapPhieu() {
         return ngayLapPhieu;
