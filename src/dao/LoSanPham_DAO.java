@@ -111,36 +111,58 @@ public class LoSanPham_DAO {
 
 	/** Tìm lô sản phẩm chính xác theo mã */
 	public LoSanPham timLoTheoMa(String maLo) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
 
-		String sql = """
-				    SELECT MaLo, HanSuDung, SoLuongTon, MaSanPham
-				    FROM LoSanPham
-				    WHERE MaLo = ?
-				""";
+		try {
+			String sql = """
+					    SELECT MaLo, MaSanPham, HanSuDung, SoLuongTon
+					    FROM LoSanPham
+					    WHERE MaLo = ?
+					""";
 
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt = con.prepareStatement(sql);
 			stmt.setString(1, maLo);
-			try (ResultSet rs = stmt.executeQuery()) {
-				if (rs.next()) {
-					LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-					int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
-					String maSP = rs.getString("MaSanPham");
+			rs = stmt.executeQuery();
 
-//                    SanPham sp = new SanPham();
-//					try {
-//						sp.setMaSanPham(maSP);
-//					} catch (IllegalArgumentException ignore) {
-//					}
-					SanPham sp = sanPhamDAO.laySanPhamTheoMa(maSP);
+			if (rs.next()) {
 
-					return new LoSanPham(maLo, hanSuDung, soLuongTon, sp);
+				// Lấy sản phẩm
+				String maSP = rs.getString("MaSanPham");
+				SanPham sp = sanPhamDAO.laySanPhamTheoMa(maSP);
+
+				// Tạo object lô
+				LoSanPham lo = new LoSanPham();
+				lo.setMaLo(maLo);
+
+				Date hsd = rs.getDate("HanSuDung");
+				if (hsd != null) {
+					lo.setHanSuDung(hsd.toLocalDate());
 				}
+
+				lo.setSoLuongTon(rs.getInt("SoLuongTon"));
+				lo.setSanPham(sp);
+
+				return lo;
 			}
-		} catch (SQLException e) {
-			System.err.println("Lỗi tìm lô sản phẩm theo mã: " + e.getMessage());
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (stmt != null)
+					stmt.close();
+			} catch (Exception ignored) {
+			}
 		}
+
 		return null;
 	}
 

@@ -360,47 +360,47 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 		// TODO Auto-generated method stub
 		
 	}
-	 private void timSanPhamTheoSoDangKy() {
-	        String tuKhoa = txtTimThuoc.getText().trim();
-	        if (tuKhoa.isEmpty()) {
-	            JOptionPane.showMessageDialog(this, "Vui lòng nhập số đăng ký hoặc mã sản phẩm!");
-	            return;
-	        }
-
-	        SanPham sp = sanPhamDAO.timSanPhamTheoSoDangKy(tuKhoa);
-	        if (sp == null) sp = sanPhamDAO.laySanPhamTheoMa(tuKhoa);
-	        if (sp == null) {
-	            JOptionPane.showMessageDialog(this, "Không tìm thấy sản phẩm với SĐK/Mã: " + tuKhoa);
-	            return;
-	        }
-	        System.out.println(sp); // Kiểm tra log
-
-	        LoSanPham lo = loDAO.timLoGanHetHanTheoSanPham(sp.getMaSanPham());
-	        if (lo == null || loDAO.tinhSoLuongTonThucTe(lo.getMaLo()) <= 0) {
-	            JOptionPane.showMessageDialog(this, "Sản phẩm này hiện đã hết hàng!");
-	            return;
-	        }
-	        
-	        // ===== LẤY TẤT CẢ QUY CÁCH ĐÓNG GÓI CỦA SẢN PHẨM NÀY =====
-	        ArrayList<QuyCachDongGoi> dsQC = quyCachDAO.layQuyCachTheoSanPham(sp.getMaSanPham()); 
-	        QuyCachDongGoi qcMacDinh = null;
-	        
-	        // Tìm đơn vị gốc (DonViGoc = true) để đặt mặc định
-	        for (QuyCachDongGoi qc : dsQC) {
-	            if (qc.isDonViGoc()) {
-	                qcMacDinh = qc;
-	                break;
-	            }
-	        }
-	        // Nếu không có đơn vị gốc, chọn đơn vị đầu tiên
-	        if (qcMacDinh == null && !dsQC.isEmpty()) {
-	            qcMacDinh = dsQC.get(0);
-	        }
-	        
-	        if (qcMacDinh == null) {
-	              JOptionPane.showMessageDialog(this, "Sản phẩm này chưa có quy cách đóng gói nào được định nghĩa!", 
-	                                           "Lỗi cấu hình", JOptionPane.ERROR_MESSAGE);
-	              return;
-	        }
-	        // =========================================================
+//	 private void timSanPhamTheoSoDangKy() {
+//	        String tuKhoa = txtTimThuoc.getText().trim();
+//	        if (tuKhoa.isEmpty()) {
+//	            JOptionPane.showMessageDialog(this, "Vui lòng nhập số đăng ký hoặc mã sản phẩm!");
+//	            return;
+//	        }
+//
+//	        SanPham sp = sanPhamDAO.timSanPhamTheoSoDangKy(tuKhoa);
+//	        if (sp == null) sp = sanPhamDAO.laySanPhamTheoMa(tuKhoa);
+//	        if (sp == null) {
+//	            JOptionPane.showMessageDialog(this, "Không tìm thấy sản phẩm với SĐK/Mã: " + tuKhoa);
+//	            return;
+//	        }
+//	        System.out.println(sp); // Kiểm tra log
+//
+//	        LoSanPham lo = loDAO.timLoGanHetHanTheoSanPham(sp.getMaSanPham());
+//	        if (lo == null || loDAO.tinhSoLuongTonThucTe(lo.getMaLo()) <= 0) {
+//	            JOptionPane.showMessageDialog(this, "Sản phẩm này hiện đã hết hàng!");
+//	            return;
+//	        }
+//	        
+//	        // ===== LẤY TẤT CẢ QUY CÁCH ĐÓNG GÓI CỦA SẢN PHẨM NÀY =====
+//	        ArrayList<QuyCachDongGoi> dsQC = quyCachDAO.layQuyCachTheoSanPham(sp.getMaSanPham()); 
+//	        QuyCachDongGoi qcMacDinh = null;
+//	        
+//	        // Tìm đơn vị gốc (DonViGoc = true) để đặt mặc định
+//	        for (QuyCachDongGoi qc : dsQC) {
+//	            if (qc.isDonViGoc()) {
+//	                qcMacDinh = qc;
+//	                break;
+//	            }
+//	        }
+//	        // Nếu không có đơn vị gốc, chọn đơn vị đầu tiên
+//	        if (qcMacDinh == null && !dsQC.isEmpty()) {
+//	            qcMacDinh = dsQC.get(0);
+//	        }
+//	        
+//	        if (qcMacDinh == null) {
+//	              JOptionPane.showMessageDialog(this, "Sản phẩm này chưa có quy cách đóng gói nào được định nghĩa!", 
+//	                                           "Lỗi cấu hình", JOptionPane.ERROR_MESSAGE);
+//	              return;
+//	        }
+//	        // =========================================================
 }

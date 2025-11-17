@@ -201,7 +201,7 @@ public class SanPham_DAO {
             rs.getString("SoDangKy"),
             duongDung,
             rs.getDouble("GiaNhap"),
-            rs.getDouble("GiaBan"), 
+//            rs.getDouble("GiaBan"), 
             rs.getString("HinhAnh"),
             rs.getString("KeBanSanPham"),
             rs.getBoolean("HoatDong")

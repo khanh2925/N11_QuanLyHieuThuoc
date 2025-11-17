@@ -42,7 +42,7 @@ public class QuyCachDongGoi_DAO {
             rs.getString("SoDangKy"),
             dd,
             rs.getDouble("GiaNhap"),
-            rs.getDouble("GiaBan"), // <-- ĐÃ THÊM GiaBan
+//            rs.getDouble("GiaBan"), // <-- ĐÃ THÊM GiaBan
             rs.getString("HinhAnh"),
             rs.getString("KeBanSanPham"),
             rs.getBoolean("HoatDong")

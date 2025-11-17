@@ -308,22 +308,23 @@ public class TraHangNhanVien_GUI extends JPanel {
 				// === Hiển thị khuyến mãi hoá đơn nếu có ===
 				System.out.println(hoaDon);
 				if (hoaDon.getKhuyenMai() != null && hoaDon.getKhuyenMai().isKhuyenMaiHoaDon()) {
-				    String tenKM = hoaDon.getKhuyenMai().getTenKM();
-				    double giaTri = hoaDon.getKhuyenMai().getGiaTri();
-				    String hinhThuc = hoaDon.getKhuyenMai().getHinhThuc().toString();
-				    String moTaKM = "";
+					String tenKM = hoaDon.getKhuyenMai().getTenKM();
+					double giaTri = hoaDon.getKhuyenMai().getGiaTri();
+					String hinhThuc = hoaDon.getKhuyenMai().getHinhThuc().toString();
+					String moTaKM = "";
 
-				    if ("GIAM_GIA_PHAN_TRAM".equalsIgnoreCase(hinhThuc)) {
-				        moTaKM = String.format("Áp dụng khuyến mãi hóa đơn: %s - Giảm %.0f%% tổng hóa đơn", tenKM, giaTri);
-				    } else if ("GIAM_GIA_TIEN_MAT".equalsIgnoreCase(hinhThuc)) {
-				        moTaKM = String.format("Áp dụng khuyến mãi hóa đơn: %s - Giảm %, .0fđ", tenKM, giaTri);
-				    } else {
-				        moTaKM = String.format("Khuyến mãi hóa đơn: %s", tenKM);
-				    }
+					if ("GIAM_GIA_PHAN_TRAM".equalsIgnoreCase(hinhThuc)) {
+						moTaKM = String.format("Áp dụng khuyến mãi hóa đơn: %s - Giảm %.0f%% tổng hóa đơn", tenKM,
+								giaTri);
+					} else if ("GIAM_GIA_TIEN_MAT".equalsIgnoreCase(hinhThuc)) {
+						moTaKM = String.format("Áp dụng khuyến mãi hóa đơn: %s - Giảm %, .0fđ", tenKM, giaTri);
+					} else {
+						moTaKM = String.format("Khuyến mãi hóa đơn: %s", tenKM);
+					}
 
-				    txtGhiChuGiamGia.setText(moTaKM);
+					txtGhiChuGiamGia.setText(moTaKM);
 				} else {
-				    txtGhiChuGiamGia.setText("");
+					txtGhiChuGiamGia.setText("");
 				}
 
 			}
@@ -552,11 +553,14 @@ public class TraHangNhanVien_GUI extends JPanel {
 			return;
 		}
 
-		JOptionPane
-				.showMessageDialog(this,
-						String.format("Tạo phiếu trả hàng thành công!\nMã phiếu: %s\nTiền hoàn: %,.0f đ",
-								pt.getMaPhieuTra(), pt.getTongTienHoan()),
-						"Thành công", JOptionPane.INFORMATION_MESSAGE);
+		// ⭐ Hiển thị phiếu trả cho nhân viên xem
+		new PhieuTraPreviewDialog(SwingUtilities.getWindowAncestor(this), pt, dsCT).setVisible(true);
+
+//		JOptionPane
+//				.showMessageDialog(this,
+//						String.format("Tạo phiếu trả hàng thành công!\nMã phiếu: %s\nTiền hoàn: %,.0f đ",
+//								pt.getMaPhieuTra(), pt.getTongTienHoan()),
+//						"Thành công", JOptionPane.INFORMATION_MESSAGE);
 
 		resetForm();
 
@@ -670,9 +674,9 @@ public class TraHangNhanVien_GUI extends JPanel {
 		lblGiamGiaSanPham.setForeground(new Color(220, 0, 0));
 		lblGiamGiaSanPham.setBounds(168, centerY + 46, 260, 22);
 		if (strGiamGia != null && !strGiamGia.isEmpty()) {
-		    lblGiamGiaSanPham.setToolTipText(strGiamGia);
+			lblGiamGiaSanPham.setToolTipText(strGiamGia);
 		}
-		
+
 		pnDongCTPT.add(lblGiamGiaSanPham);
 
 		// ==== TỔNG TIỀN ====
@@ -775,7 +779,7 @@ public class TraHangNhanVien_GUI extends JPanel {
 						break;
 					}
 				}
-				
+
 				// Cho phép tăng trở lại
 				btnTang.setEnabled(true);
 				btnTang.setBackground(new Color(0xE0F2F1));
@@ -807,7 +811,7 @@ public class TraHangNhanVien_GUI extends JPanel {
 						break;
 					}
 				}
-				
+
 				// Khi tăng lại > 1 thì bật lại nút giảm
 				btnGiam.setEnabled(true);
 				btnGiam.setBackground(new Color(0xE0F2F1));

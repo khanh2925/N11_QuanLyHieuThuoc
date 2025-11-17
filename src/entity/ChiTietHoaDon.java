@@ -6,21 +6,22 @@ public class ChiTietHoaDon {
 
 	private HoaDon hoaDon;
 	private LoSanPham loSanPham;
-	private double soLuong;
+	private double soLuong; // Số lượng đơn vị gốc
 	private double giaBan;
 	private KhuyenMai khuyenMai;
 	private double thanhTien;
-
+	 private DonViTinh donViTinh; // Đơn vị tính lúc bán
 	// ===== CONSTRUCTORS =====
 	public ChiTietHoaDon() {
 	}
 
-	public ChiTietHoaDon(HoaDon hoaDon, LoSanPham loSanPham, double soLuong, double giaBan, KhuyenMai khuyenMai) {
+	public ChiTietHoaDon(HoaDon hoaDon, LoSanPham loSanPham, double soLuong, double giaBan, KhuyenMai khuyenMai, DonViTinh donViTinh) {
 		setHoaDon(hoaDon);
 		setLoSanPham(loSanPham);
 		setSoLuong(soLuong);
 		setGiaBan(giaBan);
 		setKhuyenMai(khuyenMai);
+		setDonViTinh(donViTinh);
 		capNhatThanhTien();
 	}
 
@@ -144,5 +145,16 @@ public class ChiTietHoaDon {
 	@Override
 	public int hashCode() {
 		return Objects.hash(hoaDon, loSanPham);
+	}
+
+	public DonViTinh getDonViTinh() {
+		return donViTinh;
+	}
+
+	public void setDonViTinh(DonViTinh donViTinh) {
+	    if (donViTinh == null)
+	        throw new IllegalArgumentException("Đơn vị tính không được null.");
+
+		this.donViTinh = donViTinh;
 	}
 }
