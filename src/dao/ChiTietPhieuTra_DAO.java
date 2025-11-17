@@ -116,7 +116,7 @@ public class ChiTietPhieuTra_DAO {
                     ChiTietHoaDon cthd = new ChiTietHoaDon(
                             hd,
                             lo,
-                            rs.getDouble("SoLuongHD"),   // null → 0
+                            rs.getInt("SoLuongHD"),   // null → 0
                             rs.getDouble("GiaBan"),       // null → 0
                             km,
                             dvt

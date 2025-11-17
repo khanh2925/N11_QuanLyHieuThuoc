@@ -110,7 +110,7 @@ public class LoSanPham {
                 maLo,
                 hanSuDung,
                 soLuongTon,
-                sanPham != null ? sanPham.getTenSanPham() : "Không rõ sản phẩm",
+                sanPham != null ? sanPham.getMaSanPham() : "Không rõ sản phẩm",
                 isHetHan() ? " ⚠️ (Hết hạn)" : "");
     }
 

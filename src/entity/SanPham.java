@@ -3,21 +3,23 @@ package entity;
 import java.util.Objects;
 import enums.DuongDung;
 import enums.LoaiSanPham;
+import entity.ChiTietKhuyenMaiSanPham; // 💡 Bổ sung import
 
 public class SanPham {
 
-    private String maSanPham;                   // SP-xxxxxx
+    private String maSanPham; // SP-xxxxxx
     private String tenSanPham;
     private LoaiSanPham loaiSanPham;
     private String soDangKy;
     private DuongDung duongDung;
     private double giaNhap;
-    private double giaBan;                      // ✅ dẫn xuất theo bảng giá
+    private double giaBan; // ✅ dẫn xuất theo bảng giá
     private String hinhAnh;
     private String keBanSanPham;
     private boolean hoatDong;
 
     private ChiTietBangGia chiTietBangGiaHienTai; // 🔗 bảng giá đang áp dụng
+    private ChiTietKhuyenMaiSanPham khuyenMaiHienTai; // 💡 BỔ SUNG: Khuyến mãi đang áp dụng
 
     // ===== CONSTRUCTORS =====
     public SanPham() {}
@@ -53,6 +55,7 @@ public class SanPham {
         this.keBanSanPham = sp.keBanSanPham;
         this.hoatDong = sp.hoatDong;
         this.chiTietBangGiaHienTai = sp.chiTietBangGiaHienTai;
+        this.khuyenMaiHienTai = sp.khuyenMaiHienTai; // 💡 Sao chép KM
     }
 
     // ===== GETTERS / SETTERS =====
@@ -126,7 +129,6 @@ public class SanPham {
 
     public double getGiaBan() {
         if (chiTietBangGiaHienTai == null)
-//            throw new IllegalStateException("Sản phẩm " + this.maSanPham + " chưa có bảng giá, không thể xác định giá bán.");
         	giaBan = 0;
         return giaBan;
     }
@@ -181,18 +183,29 @@ public class SanPham {
     public void setHoatDong(boolean hoatDong) {
         this.hoatDong = hoatDong;
     }
+    
+    // 💡 GETTER / SETTER BỔ SUNG CHO KHUYẾN MÃI
+    public ChiTietKhuyenMaiSanPham getKhuyenMaiHienTai() {
+        return khuyenMaiHienTai;
+    }
+
+    public void setKhuyenMaiHienTai(ChiTietKhuyenMaiSanPham khuyenMaiHienTai) {
+        this.khuyenMaiHienTai = khuyenMaiHienTai;
+    }
 
     // ===== OVERRIDES =====
     @Override
     public String toString() {
+        // Có thể bổ sung hiển thị KM vào đây nếu cần
         return String.format(
-            "SanPham[%s - %s, loại=%s, giá nhập=%.0f, tỉ lệ=%s, giá bán=%s]",
+            "SanPham[%s - %s, loại=%s, giá nhập=%.0f, tỉ lệ=%s, giá bán=%.0f, KM=%s]",
             maSanPham,
             tenSanPham,
             loaiSanPham != null ? loaiSanPham : "N/A",
             giaNhap,
             chiTietBangGiaHienTai != null ? chiTietBangGiaHienTai.getTiLe() : "Chưa có bảng giá",
-            chiTietBangGiaHienTai != null ? giaBan : "Chưa xác định"
+            giaBan,
+            khuyenMaiHienTai != null ? khuyenMaiHienTai.getKhuyenMai().getMaKM() : "Không"
         );
     }
 

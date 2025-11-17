@@ -11,12 +11,13 @@ public class ChiTietHoaDon {
 	private KhuyenMai khuyenMai;
 	private double thanhTien;
 	private DonViTinh donViTinh; // Đơn vị tính lúc bán
+
 	// ===== CONSTRUCTORS =====
 
 	public ChiTietHoaDon() {
 	}
 
-	public ChiTietHoaDon(HoaDon hoaDon, LoSanPham loSanPham, double soLuong, double giaBan, KhuyenMai khuyenMai,
+	public ChiTietHoaDon(HoaDon hoaDon, LoSanPham loSanPham, int soLuong, double giaBan, KhuyenMai khuyenMai,
 			DonViTinh donViTinh) {
 		setHoaDon(hoaDon);
 		setLoSanPham(loSanPham);
@@ -96,7 +97,7 @@ public class ChiTietHoaDon {
 		return soLuong;
 	}
 
-	public void setSoLuong(double soLuong) {
+	public void setSoLuong(int soLuong) {
 		if (soLuong <= 0)
 			throw new IllegalArgumentException("Số lượng phải > 0.");
 		this.soLuong = soLuong;
@@ -141,7 +142,8 @@ public class ChiTietHoaDon {
 		if (!(o instanceof ChiTietHoaDon))
 			return false;
 		ChiTietHoaDon that = (ChiTietHoaDon) o;
-		return Objects.equals(hoaDon, that.hoaDon) && Objects.equals(loSanPham, that.loSanPham);
+		return Objects.equals(hoaDon, that.hoaDon) && Objects.equals(loSanPham, that.loSanPham)
+				&& Objects.equals(donViTinh, that.donViTinh);
 	}
 
 	@Override

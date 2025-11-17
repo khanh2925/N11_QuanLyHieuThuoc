@@ -143,20 +143,6 @@ public class HoaDon {
 		capNhatTongThanhToan();
 	}
 
-//	public void setKhuyenMai(KhuyenMai khuyenMai) {
-//		if (khuyenMai != null && !khuyenMai.isKhuyenMaiHoaDon())
-//			throw new IllegalArgumentException("Chỉ có thể gán khuyến mãi loại Hóa đơn.");
-//		
-//		for (ChiTietHoaDon ct : danhSachChiTiet) {
-//			if (ct.getKhuyenMai() != null)
-//				throw new IllegalStateException(
-//						"Không thể áp dụng khuyến mãi hóa đơn khi chi tiết có khuyến mãi sản phẩm.");
-//		}
-//
-//		this.khuyenMai = khuyenMai;
-//		apDungKhuyenMaiHoaDon();
-//	}
-
 	public void setKhuyenMai(KhuyenMai khuyenMai) {
 		// 1️⃣ Nếu null → bỏ khuyến mãi hóa đơn, reset tiền giảm và tính lại
 		if (khuyenMai == null) {

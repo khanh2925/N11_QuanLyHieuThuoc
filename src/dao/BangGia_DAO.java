@@ -4,7 +4,7 @@ import connectDB.connectDB;
 import entity.BangGia;
 import entity.NhanVien;
 import entity.ChiTietBangGia;
-import entity.SanPham;
+import entity.SanPham; // Giữ lại nếu các lớp entity khác cần
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -15,7 +15,7 @@ public class BangGia_DAO {
 
     public BangGia_DAO() {}
 
-    /** 🔹 Lấy tất cả bảng giá */
+    /** 🔹 Lấy tất cả bảng giá (Giữ nguyên) */
     public List<BangGia> layTatCaBangGia() {
         List<BangGia> ds = new ArrayList<>();
         connectDB.getInstance();
@@ -33,7 +33,7 @@ public class BangGia_DAO {
         return ds;
     }
 
-    /** 🔹 Lấy bảng giá đang hoạt động (chỉ một bảng giá duy nhất có HoatDong = 1) */
+    /** 🔹 Lấy bảng giá đang hoạt động (Giữ nguyên) */
     public BangGia layBangGiaDangHoatDong() {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
@@ -50,7 +50,7 @@ public class BangGia_DAO {
         return null;
     }
 
-    /** 🔹 Tìm bảng giá theo mã */
+    /** 🔹 Tìm bảng giá theo mã (Giữ nguyên) */
     public BangGia timBangGiaTheoMa(String maBangGia) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
@@ -67,7 +67,7 @@ public class BangGia_DAO {
         return null;
     }
 
-    /** 🔹 Thêm bảng giá mới */
+    /** 🔹 Thêm bảng giá mới (Giữ nguyên) */
     public boolean themBangGia(BangGia bg) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
@@ -89,7 +89,7 @@ public class BangGia_DAO {
         return false;
     }
 
-    /** 🔹 Cập nhật bảng giá */
+    /** 🔹 Cập nhật bảng giá (Giữ nguyên) */
     public boolean capNhatBangGia(BangGia bg) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
@@ -112,7 +112,7 @@ public class BangGia_DAO {
         return false;
     }
 
-    /** 🔹 Hủy kích hoạt tất cả bảng giá khác khi bật bảng giá mới */
+    /** 🔹 Hủy kích hoạt tất cả bảng giá khác khi bật bảng giá mới (Giữ nguyên) */
     public boolean huyHoatDongTatCaTruBangGia(String maBangGia) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
@@ -127,7 +127,7 @@ public class BangGia_DAO {
         return false;
     }
 
-    /** 🔹 Xóa bảng giá */
+    /** 🔹 Xóa bảng giá (Giữ nguyên) */
     public boolean xoaBangGia(String maBangGia) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
@@ -142,17 +142,16 @@ public class BangGia_DAO {
         return false;
     }
 
-    /** 🔹 Lấy danh sách chi tiết bảng giá theo mã bảng giá */
+    /** 🔹 Lấy danh sách chi tiết bảng giá theo mã bảng giá (ĐÃ SỬA) */
     public List<ChiTietBangGia> layChiTietTheoMaBangGia(String maBangGia) {
         List<ChiTietBangGia> ds = new ArrayList<>();
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
 
+        // 💡 ĐÃ SỬA SQL: Loại bỏ join SanPham và chỉ lấy các trường định giá (GiaTu, GiaDen, TiLe)
         String sql = """
-            SELECT ct.MaBangGia, ct.MaSanPham, ct.GiaTu, ct.GiaDen, ct.TiLe,
-                   sp.TenSanPham, sp.LoaiSanPham, sp.DuongDung, sp.GiaNhap, sp.HoatDong
-            FROM ChiTietBangGia ct
-            JOIN SanPham sp ON ct.MaSanPham = sp.MaSanPham
+            SELECT MaBangGia, GiaTu, GiaDen, TiLe
+            FROM ChiTietBangGia
             WHERE MaBangGia = ?
         """;
 
@@ -160,18 +159,10 @@ public class BangGia_DAO {
             ps.setString(1, maBangGia);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    SanPham sp = new SanPham(
-                        rs.getString("MaSanPham"),
-                        rs.getString("TenSanPham"),
-                        null, // LoaiSanPham có thể thêm nếu cần Enum.valueOf
-                        null, null,
-                        rs.getDouble("GiaNhap"),
-                        null, null,
-                        rs.getBoolean("HoatDong")
-                    );
                     BangGia bg = new BangGia(maBangGia);
+                    // 💡 ĐÃ SỬA: Dùng constructor ChiTietBangGia không có SanPham
                     ChiTietBangGia ct = new ChiTietBangGia(
-                        bg, sp,
+                        bg, 
                         rs.getDouble("GiaTu"),
                         rs.getDouble("GiaDen"),
                         rs.getDouble("TiLe")
@@ -185,18 +176,19 @@ public class BangGia_DAO {
         return ds;
     }
 
-    /** 🔹 Thêm chi tiết bảng giá */
+    /** 🔹 Thêm chi tiết bảng giá (ĐÃ SỬA) */
     public boolean themChiTietBangGia(ChiTietBangGia ct) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
-        String sql = "INSERT INTO ChiTietBangGia (MaBangGia, MaSanPham, GiaTu, GiaDen, TiLe) VALUES (?, ?, ?, ?, ?)";
+        // 💡 ĐÃ SỬA SQL: Loại bỏ MaSanPham
+        String sql = "INSERT INTO ChiTietBangGia (MaBangGia, GiaTu, GiaDen, TiLe) VALUES (?, ?, ?, ?)";
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, ct.getBangGia().getMaBangGia());
-            ps.setString(2, ct.getSanPham().getMaSanPham());
-            ps.setDouble(3, ct.getGiaTu());
-            ps.setDouble(4, ct.getGiaDen());
-            ps.setDouble(5, ct.getTiLe());
+            // ps.setString(2, ct.getSanPham().getMaSanPham()); // ĐÃ XÓA
+            ps.setDouble(2, ct.getGiaTu());
+            ps.setDouble(3, ct.getGiaDen());
+            ps.setDouble(4, ct.getTiLe());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("❌ Lỗi thêm chi tiết bảng giá: " + e.getMessage());
@@ -204,7 +196,7 @@ public class BangGia_DAO {
         return false;
     }
 
-    /** 🔹 Xóa toàn bộ chi tiết của một bảng giá */
+    /** 🔹 Xóa toàn bộ chi tiết của một bảng giá (Giữ nguyên) */
     public boolean xoaTatCaChiTiet(String maBangGia) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
@@ -230,7 +222,7 @@ public class BangGia_DAO {
         return new BangGia(ma, nv, ten, ngay, hoatDong);
     }
 
-    /** 🔹 Sinh mã bảng giá tự động (theo format BG-yyyyMMdd-xxxx) */
+    /** 🔹 Sinh mã bảng giá tự động (theo format BG-yyyyMMdd-xxxx) (Giữ nguyên) */
     public String taoMaBangGia() {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();

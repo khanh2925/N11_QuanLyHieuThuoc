@@ -117,4 +117,10 @@ public class QuyCachDongGoi {
     public int hashCode() {
         return Objects.hash(maQuyCach);
     }
+
+	public double getGiaBan() {
+		return sanPham.getGiaBan() - sanPham.getGiaBan()*tiLeGiam;
+	}
+
+
 }
