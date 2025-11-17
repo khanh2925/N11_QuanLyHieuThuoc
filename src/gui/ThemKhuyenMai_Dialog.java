@@ -4,21 +4,12 @@ import java.awt.*;
 import java.awt.event.*;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.swing.*;
-import javax.swing.border.LineBorder;
-import javax.swing.table.DefaultTableModel;
 
 import com.toedter.calendar.JDateChooser;
 
-import dao.ChiTietKhuyenMaiSanPham_DAO;
 import dao.KhuyenMai_DAO;
-import dao.SanPham_DAO;
-import entity.ChiTietKhuyenMaiSanPham;
 import entity.KhuyenMai;
-import entity.SanPham;
 import enums.HinhThucKM;
 
 @SuppressWarnings("serial")
@@ -30,17 +21,11 @@ public class ThemKhuyenMai_Dialog extends JDialog {
     private JCheckBox chkTrangThai;
     private JComboBox<String> cmbHinhThuc;
     private JDateChooser dateBatDau, dateKetThuc;
-    private JButton btnThem, btnThoat, btnThemDong, btnXoaDong;
-    private JTable tblChiTiet;
-    private DefaultTableModel modelCT;
-
-    private JPanel pnChiTietTangThem;
+    private JButton btnThem, btnThoat;
 
     private KhuyenMai khuyenMaiMoi = null;
 
     private final KhuyenMai_DAO kmDAO = new KhuyenMai_DAO();
-    private final ChiTietKhuyenMaiSanPham_DAO ctkmDAO = new ChiTietKhuyenMaiSanPham_DAO();
-    private final SanPham_DAO spDAO = new SanPham_DAO();
 
     public ThemKhuyenMai_Dialog(Frame owner) {
         super(owner, "Thêm chương trình khuyến mãi", true);
@@ -148,34 +133,6 @@ public class ThemKhuyenMai_Dialog extends JDialog {
         chkTrangThai.setBounds(40, 400, 180, 30);
         add(chkTrangThai);
 
-        // ===== PANEL CHI TIẾT TẶNG THÊM =====
-        pnChiTietTangThem = new JPanel(new BorderLayout());
-        pnChiTietTangThem.setBorder(new LineBorder(Color.LIGHT_GRAY));
-        pnChiTietTangThem.setBackground(Color.WHITE);
-        pnChiTietTangThem.setBounds(40, 450, 790, 150);
-        add(pnChiTietTangThem);
-        pnChiTietTangThem.setVisible(false);
-
-        String[] cols = {"Mã / SĐK / Tên sản phẩm", "SL mua tối thiểu", "SL tặng thêm"};
-        modelCT = new DefaultTableModel(cols, 0);
-        tblChiTiet = new JTable(modelCT);
-        tblChiTiet.setRowHeight(28);
-        JScrollPane sp = new JScrollPane(tblChiTiet);
-        pnChiTietTangThem.add(sp, BorderLayout.CENTER);
-
-        JPanel pnBtnCT = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
-        btnThemDong = new JButton("+ Thêm dòng");
-        btnXoaDong = new JButton("Xóa dòng");
-        pnBtnCT.add(btnThemDong);
-        pnBtnCT.add(btnXoaDong);
-        pnChiTietTangThem.add(pnBtnCT, BorderLayout.SOUTH);
-
-        btnThemDong.addActionListener(e -> modelCT.addRow(new Object[]{"", "", ""}));
-        btnXoaDong.addActionListener(e -> {
-            int r = tblChiTiet.getSelectedRow();
-            if (r >= 0) modelCT.removeRow(r);
-        });
-
         // Nút thêm / thoát
         btnThem = new JButton("Thêm");
         btnThoat = new JButton("Thoát");
@@ -192,7 +149,9 @@ public class ThemKhuyenMai_Dialog extends JDialog {
         radKMHoaDon.addActionListener(e -> updateHinhThuc());
         radKMSanPham.addActionListener(e -> updateHinhThuc());
         cmbHinhThuc.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED) updateTangThemVisibility();
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                updateLabelGiaTri();
+            }
         });
         btnThoat.addActionListener(e -> dispose());
         btnThem.addActionListener(e -> onThem());
@@ -202,32 +161,26 @@ public class ThemKhuyenMai_Dialog extends JDialog {
 
     private void updateHinhThuc() {
         cmbHinhThuc.removeAllItems();
+        // Cả KM hóa đơn và KM sản phẩm đều chỉ còn 2 loại này
+        cmbHinhThuc.addItem("Giảm giá phần trăm");
+        cmbHinhThuc.addItem("Giảm giá tiền");
+
         if (radKMHoaDon.isSelected()) {
-            cmbHinhThuc.addItem("Giảm giá phần trăm");
-            cmbHinhThuc.addItem("Giảm giá tiền");
             lblDieuKien.setVisible(true);
             txtDieuKienGiaTri.setVisible(true);
         } else {
-            cmbHinhThuc.addItem("Giảm giá phần trăm");
-            cmbHinhThuc.addItem("Giảm giá tiền");
-            cmbHinhThuc.addItem("Tặng thêm");
             lblDieuKien.setVisible(false);
             txtDieuKienGiaTri.setVisible(false);
         }
-        updateTangThemVisibility();
+        updateLabelGiaTri();
     }
 
-    private void updateTangThemVisibility() {
+    private void updateLabelGiaTri() {
         String selected = (String) cmbHinhThuc.getSelectedItem();
-        if ("Tặng thêm".equals(selected)) {
-            lblGiaTri.setVisible(false);
-            txtGiaTri.setVisible(false);
-            pnChiTietTangThem.setVisible(true);
+        if ("Giảm giá phần trăm".equals(selected)) {
+            lblGiaTri.setText("Giá trị (%):");
         } else {
-            lblGiaTri.setVisible(true);
-            txtGiaTri.setVisible(true);
-            pnChiTietTangThem.setVisible(false);
-            lblGiaTri.setText(selected.contains("phần trăm") ? "Giá trị (%):" : "Giá trị (VND):");
+            lblGiaTri.setText("Giá trị (VND):");
         }
     }
 
@@ -244,80 +197,36 @@ public class ThemKhuyenMai_Dialog extends JDialog {
 
             String selected = (String) cmbHinhThuc.getSelectedItem();
             HinhThucKM hinhThuc;
-            double giaTri = 0;
-            double dieuKien = 0;
+            double giaTri;
 
             if ("Giảm giá phần trăm".equals(selected)) {
                 hinhThuc = HinhThucKM.GIAM_GIA_PHAN_TRAM;
                 giaTri = Double.parseDouble(txtGiaTri.getText());
-            } else if ("Giảm giá tiền".equals(selected)) {
+            } else {
                 hinhThuc = HinhThucKM.GIAM_GIA_TIEN;
                 giaTri = Double.parseDouble(txtGiaTri.getText());
-            } else {
-                hinhThuc = HinhThucKM.TANG_THEM;
             }
 
-            if (laHD) dieuKien = Double.parseDouble(txtDieuKienGiaTri.getText());
-
-            KhuyenMai km = new KhuyenMai(maKM, ten, ngayBD, ngayKT, tt, laHD, hinhThuc, giaTri, dieuKien, 0);
-            if (!kmDAO.themKhuyenMai(km)) {
-                JOptionPane.showMessageDialog(this, "Thêm khuyến mãi thất bại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return;
+            double dieuKien = 0;
+            if (laHD) {
+                dieuKien = Double.parseDouble(txtDieuKienGiaTri.getText());
             }
 
-            // Nếu là tặng thêm → thêm chi tiết
-            if (hinhThuc == HinhThucKM.TANG_THEM) {
-                for (int i = 0; i < modelCT.getRowCount(); i++) {
-                    String keyword = modelCT.getValueAt(i, 0).toString().trim();
-                    String slMuaStr = modelCT.getValueAt(i, 1).toString().trim();
-                    String slTangStr = modelCT.getValueAt(i, 2).toString().trim();
+            KhuyenMai km = new KhuyenMai(
+                    maKM,
+                    ten,
+                    ngayBD,
+                    ngayKT,
+                    tt,
+                    laHD,
+                    hinhThuc,
+                    giaTri,
+                    dieuKien,
+                    0
+            );
 
-                    if (keyword.isEmpty() || slMuaStr.isEmpty() || slTangStr.isEmpty()) continue;
-
-                    List<SanPham> dsSanPham = spDAO.timKiemSanPham(keyword);
-                    if (dsSanPham == null || dsSanPham.isEmpty()) {
-                        JOptionPane.showMessageDialog(this,
-                            "Không tìm thấy sản phẩm: " + keyword,
-                            "Lỗi", JOptionPane.WARNING_MESSAGE);
-                        continue;
-                    }
-
-                    // Nếu có nhiều kết quả → cho chọn 1 cái
-                    SanPham sp = null;
-                    if (dsSanPham.size() == 1) {
-                        sp = dsSanPham.get(0);
-                    } else {
-                        String[] tenSPs = dsSanPham.stream()
-                                .map(SanPham::getTenSanPham)
-                                .toArray(String[]::new);
-                        String chon = (String) JOptionPane.showInputDialog(
-                                this,
-                                "Có nhiều sản phẩm trùng khớp: " + keyword + "\nChọn 1 sản phẩm:",
-                                "Chọn sản phẩm",
-                                JOptionPane.QUESTION_MESSAGE,
-                                null,
-                                tenSPs,
-                                tenSPs[0]
-                        );
-                        if (chon != null) {
-                            for (SanPham s : dsSanPham)
-                                if (s.getTenSanPham().equals(chon)) { sp = s; break; }
-                        }
-                    }
-
-                    // Nếu vẫn chưa chọn thì bỏ qua dòng này
-                    if (sp == null) continue;
-
-                    int slMua = Integer.parseInt(slMuaStr);
-                    int slTang = Integer.parseInt(slTangStr);
-                    ChiTietKhuyenMaiSanPham ct = new ChiTietKhuyenMaiSanPham(sp, km, slMua, slTang);
-                    ctkmDAO.themChiTietKhuyenMaiSanPham(ct);
-
-                }
-            }
-
-            khuyenMaiMoi = km;
-            JOptionPane.showMessageDialog(this, "Đã thêm khuyến mãi thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            // KHÔNG insert DB ở đây, chỉ trả object về cho GUI
+            this.khuyenMaiMoi = km;
             dispose();
 
         } catch (Exception e) {
@@ -338,6 +247,10 @@ public class ThemKhuyenMai_Dialog extends JDialog {
         LocalDate kt = dateKetThuc.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         if (bd.isAfter(kt)) {
             JOptionPane.showMessageDialog(this, "Ngày bắt đầu không được sau ngày kết thúc!");
+            return false;
+        }
+        if (txtGiaTri.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập giá trị khuyến mãi!");
             return false;
         }
         return true;

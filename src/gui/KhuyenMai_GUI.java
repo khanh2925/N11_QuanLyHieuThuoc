@@ -18,9 +18,7 @@ import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
 import dao.KhuyenMai_DAO;
-import dao.ChiTietKhuyenMaiSanPham_DAO;
 import entity.KhuyenMai;
-import entity.ChiTietKhuyenMaiSanPham;
 
 public class KhuyenMai_GUI extends JPanel implements ActionListener {
 
@@ -39,13 +37,11 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 
     private List<KhuyenMai> dsKhuyenMai;
     private KhuyenMai_DAO khuyenMaiDAO;
-    private ChiTietKhuyenMaiSanPham_DAO ctkmDAO;
     private TableRowSorter<DefaultTableModel> sorter;
 
     // ===== CONSTRUCTOR =====
     public KhuyenMai_GUI() {
         khuyenMaiDAO = new KhuyenMai_DAO();
-        ctkmDAO = new ChiTietKhuyenMaiSanPham_DAO();
         dsKhuyenMai = new ArrayList<>();
 
         try {
@@ -170,8 +166,17 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 
     // ===== CÁC PHƯƠNG THỨC LIÊN QUAN ĐẾN BẢNG =====
     private void initTable() {
-        String[] khuyenMaiCols = { "Mã khuyến mãi", "Tên khuyến mãi", "Hình thức", "Giá trị / Chi tiết", "Ngày bắt đầu",
-                "Ngày kết thúc", "Loại khuyến mãi", "Điều kiện áp dụng", "Trạng thái" };
+        String[] khuyenMaiCols = {
+                "Mã khuyến mãi",
+                "Tên khuyến mãi",
+                "Hình thức",
+                "Giá trị / Chi tiết",
+                "Ngày bắt đầu",
+                "Ngày kết thúc",
+                "Loại khuyến mãi",
+                "Điều kiện áp dụng",
+                "Trạng thái"
+        };
         modelKM = new DefaultTableModel(khuyenMaiCols, 0) {
             @Override
             public boolean isCellEditable(int r, int c) {
@@ -237,22 +242,6 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
                 hinhThucHienThi = "Giảm giá tiền";
                 giaTriHienThi = df.format(km.getGiaTri());
                 break;
-            case TANG_THEM:
-                hinhThucHienThi = "Tặng thêm";
-                List<ChiTietKhuyenMaiSanPham> dsCT = ctkmDAO.timKiemChiTietKhuyenMaiSanPhamBangMa(km.getMaKM());
-                if (dsCT.isEmpty()) {
-                    giaTriHienThi = "(Chưa có chi tiết)";
-                } else {
-                    StringBuilder sb = new StringBuilder();
-                    for (ChiTietKhuyenMaiSanPham ct : dsCT) {
-                        sb.append(ct.getSanPham().getTenSanPham())
-                          .append(": Mua ").append(ct.getSoLuongToiThieu())
-                          .append(" tặng ").append(ct.getSoLuongTangThem())
-                          .append("; ");
-                    }
-                    giaTriHienThi = sb.toString().replaceAll("; $", "");
-                }
-                break;
             default:
                 hinhThucHienThi = "Không xác định";
                 giaTriHienThi = "";
@@ -267,13 +256,20 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
             dieuKienHienThi = "HĐ >= " + df.format(km.getDieuKienApDungHoaDon());
         }
 
-        modelKM.addRow(new Object[]{ km.getMaKM(), km.getTenKM(), hinhThucHienThi, giaTriHienThi,
-                km.getNgayBatDau().format(fmt), km.getNgayKetThuc().format(fmt),
-                loaiKm, dieuKienHienThi, trangThai });
+        modelKM.addRow(new Object[]{
+                km.getMaKM(),
+                km.getTenKM(),
+                hinhThucHienThi,
+                giaTriHienThi,
+                km.getNgayBatDau().format(fmt),
+                km.getNgayKetThuc().format(fmt),
+                loaiKm,
+                dieuKienHienThi,
+                trangThai
+        });
     }
 
     private void updateRowInTable(int row, KhuyenMai km) {
-        // Giống hệt addRowToTable()
         modelKM.removeRow(row);
         addRowToTable(km);
     }
