@@ -2,15 +2,29 @@ package dao;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.List;
 
 import connectDB.connectDB;
+import entity.BangGia;
+import entity.ChiTietBangGia;
+import entity.ChiTietKhuyenMaiSanPham;
 import entity.SanPham;
 import enums.LoaiSanPham;
 import enums.DuongDung;
 
 public class SanPham_DAO {
 
-    public SanPham_DAO() {}
+    // Thêm các DAO dependency
+    private BangGia_DAO bangGiaDAO;
+    private ChiTietBangGia_DAO chiTietBangGiaDAO;
+    private ChiTietKhuyenMaiSanPham_DAO chiTietKM_DAO; // 💡 Dependency mới
+
+    public SanPham_DAO() {
+        // Khởi tạo các DAO cần thiết để lấy thông tin giá bán và khuyến mãi
+        bangGiaDAO = new BangGia_DAO();
+        chiTietBangGiaDAO = new ChiTietBangGia_DAO();
+        chiTietKM_DAO = new ChiTietKhuyenMaiSanPham_DAO(); // 💡 Khởi tạo
+    }
 
     /** 🔹 Lấy toàn bộ sản phẩm */
     public ArrayList<SanPham> layTatCaSanPham() {
@@ -139,8 +153,8 @@ public class SanPham_DAO {
         String sql = """
             SELECT * FROM SanPham
             WHERE MaSanPham LIKE ?
-               OR TenSanPham LIKE ?
-               OR SoDangKy LIKE ?
+                OR TenSanPham LIKE ?
+                OR SoDangKy LIKE ?
         """;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
@@ -179,8 +193,14 @@ public class SanPham_DAO {
         }
         return ds;
     }
+    
+    // 💡 PHƯƠNG THỨC TIỆN ÍCH DÙNG CHO CÁC LỚP KHÁC
+    /** 🔹 Lấy danh sách chi tiết khuyến mãi đang áp dụng cho một sản phẩm */
+    public List<ChiTietKhuyenMaiSanPham> layKhuyenMaiDangApDungChoSanPham(String maSanPham) {
+        return chiTietKM_DAO.layChiTietKhuyenMaiDangHoatDongTheoMaSP(maSanPham);
+    }
 
-    /** 🔹 Hàm tiện ích: tạo SanPham từ ResultSet */
+    /** 🔹 Hàm tiện ích: tạo SanPham từ ResultSet (ĐÃ CẬP NHẬT để lấy KM) */
     private SanPham taoSanPhamTuResultSet(ResultSet rs) throws SQLException {
         LoaiSanPham loai = null;
         String loaiStr = rs.getString("LoaiSanPham");
@@ -194,19 +214,58 @@ public class SanPham_DAO {
             try { duongDung = DuongDung.valueOf(ddStr.trim().toUpperCase()); } catch (Exception ignore) {}
         }
 
-        return new SanPham(
+        SanPham sp = new SanPham(
             rs.getString("MaSanPham"),
             rs.getString("TenSanPham"),
             loai,
             rs.getString("SoDangKy"),
             duongDung,
             rs.getDouble("GiaNhap"),
-            rs.getDouble("GiaBan"), 
             rs.getString("HinhAnh"),
             rs.getString("KeBanSanPham"),
             rs.getBoolean("HoatDong")
         );
+        
+        // 💡 LẤY THÔNG TIN GIÁ BÁN THEO KHOẢNG GIÁ
+        try {
+            // 1. Lấy bảng giá đang hoạt động
+            BangGia bgActive = bangGiaDAO.layBangGiaDangHoatDong();
 
+            if (bgActive != null) {
+                double giaNhap = sp.getGiaNhap();
+                
+                // 2. Tìm chi tiết bảng giá bằng cách so khớp khoảng giá nhập
+                ChiTietBangGia ctbg = chiTietBangGiaDAO.timChiTietTheoKhoangGia(bgActive.getMaBangGia(), giaNhap);
+                
+                if (ctbg != null) {
+                    // 3. Gán chi tiết bảng giá, kích hoạt tính toán giaBan trong entity
+                    sp.setChiTietBangGiaHienTai(ctbg);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi thiết lập giá bán cho sản phẩm " + sp.getMaSanPham() + ": " + e.getMessage());
+        }
+
+
+        // ====================================================================
+        // 💡 BỔ SUNG LOGIC: LẤY KHUYẾN MÃI ĐANG ÁP DỤNG VÀ GÁN VÀO SẢN PHẨM
+        try {
+            List<ChiTietKhuyenMaiSanPham> dsKM = chiTietKM_DAO.layChiTietKhuyenMaiDangHoatDongTheoMaSP(sp.getMaSanPham());
+            
+            // Giả định: Nếu tìm thấy, lấy khuyến mãi đầu tiên và gán vào SanPham
+            if (dsKM != null && !dsKM.isEmpty()) {
+                ChiTietKhuyenMaiSanPham kmHienTai = dsKM.get(0);
+                
+                // ⚠️ Dòng code này yêu cầu SanPham.java có phương thức setKhuyenMaiHienTai()
+                // sp.setKhuyenMaiHienTai(kmHienTai); 
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi thiết lập khuyến mãi cho sản phẩm " + sp.getMaSanPham() + ": " + e.getMessage());
+        }
+        // ====================================================================
+
+
+        return sp;
     }
 
     /** 🔹 Hàm tiện ích: gán giá trị cho PreparedStatement (thêm) */

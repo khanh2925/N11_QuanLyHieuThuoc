@@ -37,6 +37,10 @@ public class KhuyenMai {
 		apDungRangBuocLoaiKM();
 	}
 
+	public KhuyenMai(String makm) {
+		this.maKM = makm;
+	}
+
 	// ===== GETTERS / SETTERS =====
 	public String getMaKM() {
 		return maKM;

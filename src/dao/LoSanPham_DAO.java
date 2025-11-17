@@ -3,11 +3,13 @@ package dao;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List; // 💡 Bổ sung import List
 
 import connectDB.connectDB;
 import entity.LoSanPham;
 import entity.SanPham;
 import entity.ChiTietPhieuHuy;
+import entity.ChiTietPhieuTra;
 
 public class LoSanPham_DAO {
 
@@ -27,7 +29,7 @@ public class LoSanPham_DAO {
             while (rs.next()) {
                 String maLo = rs.getString("MaLo");
                 LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-                int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
+                int soLuongTon = rs.getInt("SoLuongTon");
                 String maSP = rs.getString("MaSanPham");
 
                 SanPham sp = new SanPham();
@@ -119,7 +121,7 @@ public class LoSanPham_DAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-                    int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
+                    int soLuongTon = rs.getInt("SoLuongTon");
                     String maSP = rs.getString("MaSanPham");
 
                     SanPham sp = new SanPham();
@@ -132,6 +134,42 @@ public class LoSanPham_DAO {
             System.err.println("Lỗi tìm lô sản phẩm theo mã: " + e.getMessage());
         }
         return null;
+    }
+    
+    // 💡 HÀM BỔ SUNG: LẤY DANH SÁCH LÔ THEO MÃ SẢN PHẨM
+    /** 🔹 Lấy danh sách lô đang có tồn kho và chưa hết hạn, sắp xếp theo HSD tăng dần (cũ nhất lên đầu) */
+    public List<LoSanPham> layDanhSachLoTheoMaSanPham(String maSanPham) {
+        List<LoSanPham> danhSach = new ArrayList<>();
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        // Chỉ lấy lô còn tồn (> 0) và chưa hết hạn (>= GETDATE())
+        String sql = """
+            SELECT MaLo, HanSuDung, SoLuongTon, MaSanPham
+            FROM LoSanPham
+            WHERE MaSanPham = ?
+              AND SoLuongTon > 0
+              AND HanSuDung >= GETDATE() 
+            ORDER BY HanSuDung ASC
+        """;
+
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, maSanPham);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String maLo = rs.getString("MaLo");
+                    LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
+                    int soLuongTon = rs.getInt("SoLuongTon");
+                    String maSP = rs.getString("MaSanPham");
+
+                    SanPham sp = new SanPham(maSP);
+                    danhSach.add(new LoSanPham(maLo, hanSuDung, soLuongTon, sp));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi lấy danh sách lô theo mã sản phẩm: " + e.getMessage());
+        }
+        return danhSach;
     }
 
     /** Tìm lô có hạn sử dụng sắp hết (cũ nhất) theo mã sản phẩm */
@@ -154,13 +192,14 @@ public class LoSanPham_DAO {
                 if (rs.next()) {
                     String maLo = rs.getString("MaLo");
                     LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-                    int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
+                    int soLuongTon = rs.getInt("SoLuongTon");
                     String maSP = rs.getString("MaSanPham");
 
                     SanPham sp = new SanPham();
                     try { sp.setMaSanPham(maSP); } catch (IllegalArgumentException ignore) {}
 
                     return new LoSanPham(maLo, hanSuDung, soLuongTon, sp);
+                    
                 }
             }
         } catch (SQLException e) {
@@ -192,7 +231,7 @@ public class LoSanPham_DAO {
                 if (rs.next()) {
                     String maLo = rs.getString("MaLo");
                     LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-                    int soLuongTon = rs.getInt("SoLuongTon"); // ĐÃ SỬA
+                    int soLuongTon = rs.getInt("SoLuongTon");
                     String maSP = rs.getString("MaSanPham");
 
                     SanPham sp = new SanPham();
@@ -207,38 +246,46 @@ public class LoSanPham_DAO {
         return null;
     }
 
-    /** Tính số lượng tồn thực tế (nhập - bán + trả - hủy + nhập lại) */
+    /** 🔹 Tính số lượng tồn thực tế (ĐÃ SỬA CHỈ TRỪ CÁC GIAO DỊCH CHỜ DUYỆT) */
     public int tinhSoLuongTonThucTe(String maLo) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
 
+        // Hằng số trạng thái
+        final int CTPH_CHO_DUYET = ChiTietPhieuHuy.CHO_DUYET;
+        final int CTPT_CHO_DUYET = 0;
+
+        // Công thức: Tồn Kho (tại cột) - SUM(SL Chờ Duyệt PhieuHuy) - SUM(SL Chờ Duyệt PhieuTra)
         String sql = """
-            SELECT 
-                COALESCE(SUM(ctn.SoLuongNhap), 0)
-              - COALESCE(SUM(cth.SoLuong), 0)
-              + COALESCE(SUM(CASE WHEN ctpt.TrangThai = 1 THEN ctpt.SoLuong ELSE 0 END), 0)
-              - COALESCE(SUM(CASE WHEN ctph.TrangThai = ? THEN ctph.SoLuongHuy ELSE 0 END), 0)
-              + COALESCE(SUM(CASE WHEN ctph.TrangThai = ? THEN ctph.SoLuongHuy ELSE 0 END), 0)
-              AS SoLuongTon
+            SELECT
+                lo.SoLuongTon
+                - COALESCE(
+                    (SELECT SUM(ctph.SoLuongHuy) FROM ChiTietPhieuHuy ctph
+                     WHERE ctph.MaLo = lo.MaLo AND ctph.TrangThai = ?), 0)
+                - COALESCE(
+                    (SELECT SUM(ctpt.SoLuong) FROM ChiTietPhieuTra ctpt
+                     WHERE ctpt.MaLo = lo.MaLo AND ctpt.TrangThai = ?), 0)
+            AS SoLuongTonKhảDụng
             FROM LoSanPham lo
-            LEFT JOIN ChiTietPhieuNhap ctn ON lo.MaLo = ctn.MaLo
-            LEFT JOIN ChiTietHoaDon cth ON lo.MaLo = cth.MaLo
-            LEFT JOIN ChiTietPhieuTra ctpt ON lo.MaLo = ctpt.MaLo
-            LEFT JOIN ChiTietPhieuHuy ctph ON lo.MaLo = ctph.MaLo
             WHERE lo.MaLo = ?
-            GROUP BY lo.MaLo
         """;
 
         try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setInt(1, ChiTietPhieuHuy.DA_HUY);
-            stmt.setInt(2, ChiTietPhieuHuy.NHAP_LAI_KHO);
+            // Tham số 1: Trạng thái Chờ duyệt của Phiếu Hủy (1)
+            stmt.setInt(1, CTPH_CHO_DUYET);
+            // Tham số 2: Trạng thái Chờ duyệt của Phiếu Trả (0)
+            stmt.setInt(2, CTPT_CHO_DUYET);
+            // Tham số 3: Mã Lô
             stmt.setString(3, maLo);
 
             try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return rs.getInt("SoLuongTon");
+                if (rs.next()) {
+                    int tonKhảDụng = rs.getInt("SoLuongTonKhảDụng");
+                    return Math.max(0, tonKhảDụng);
+                }
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi tính số lượng tồn thực tế: " + e.getMessage());
+            System.err.println("❌ Lỗi tính số lượng tồn thực tế: " + e.getMessage());
         }
         return 0;
     }

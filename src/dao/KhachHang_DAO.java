@@ -177,7 +177,9 @@ public class KhachHang_DAO {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return taoKhachHangTuResultSet(rs);
+                    KhachHang cc=  taoKhachHangTuResultSet(rs);
+                    System.out.println(cc);
+                    return cc;
                 }
             }
         } catch (SQLException e) {
@@ -187,6 +189,31 @@ public class KhachHang_DAO {
         return null; // Không tìm thấy
     }
 
+    /** 🔹 Tìm 1 khách hàng chính xác theo SĐT */
+    public KhachHang timKhachHangTheoSoDienThoai(String soDienThoai) {
+        if (soDienThoai == null || soDienThoai.trim().isEmpty()) {
+            return null;
+        }
+
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        String sql = "SELECT * FROM KhachHang WHERE SoDienThoai = ? AND HoatDong = 1";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, soDienThoai.trim());
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return taoKhachHangTuResultSet(rs);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi tìm khách hàng theo SĐT: " + e.getMessage());
+        }
+
+        return null; // Không tìm thấy
+    }
 
     /** 🔹 Hàm tiện ích: Tạo đối tượng KhachHang từ ResultSet */
     private KhachHang taoKhachHangTuResultSet(ResultSet rs) throws SQLException {

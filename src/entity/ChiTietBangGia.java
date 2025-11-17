@@ -5,7 +5,7 @@ import java.util.Objects;
 public class ChiTietBangGia {
 
     private BangGia bangGia;
-    private SanPham sanPham;
+    // ĐÃ LOẠI BỎ: private SanPham sanPham; 
     private double giaTu;
     private double giaDen;
     private double tiLe; // Ví dụ: 1.2 = giá bán = giá nhập * 1.2
@@ -13,10 +13,9 @@ public class ChiTietBangGia {
     // ===== CONSTRUCTORS =====
     public ChiTietBangGia() {}
 
-    public ChiTietBangGia(BangGia bangGia, SanPham sanPham,
+    public ChiTietBangGia(BangGia bangGia,
                           double giaTu, double giaDen, double tiLe) {
         setBangGia(bangGia);
-        setSanPham(sanPham);
         setGiaTu(giaTu);
         setGiaDen(giaDen);
         setTiLe(tiLe);
@@ -33,15 +32,7 @@ public class ChiTietBangGia {
         this.bangGia = bangGia;
     }
 
-    public SanPham getSanPham() {
-        return sanPham;
-    }
-
-    public void setSanPham(SanPham sanPham) {
-        if (sanPham == null)
-            throw new IllegalArgumentException("Sản phẩm không được null.");
-        this.sanPham = sanPham;
-    }
+    // ĐÃ LOẠI BỎ: getSanPham() và setSanPham()
 
     public double getGiaTu() {
         return giaTu;
@@ -77,9 +68,8 @@ public class ChiTietBangGia {
     @Override
     public String toString() {
         return String.format(
-            "CTBG[%s → %s, tỉ lệ=%.2f, khoảng=%.0f–%.0f]",
+            "CTBG[%s, tỉ lệ=%.2f, khoảng=%.0f–%.0f]",
             bangGia != null ? bangGia.getMaBangGia() : "N/A",
-            sanPham != null ? sanPham.getTenSanPham() : "N/A",
             tiLe, giaTu, giaDen
         );
     }
@@ -89,12 +79,14 @@ public class ChiTietBangGia {
         if (this == o) return true;
         if (!(o instanceof ChiTietBangGia)) return false;
         ChiTietBangGia that = (ChiTietBangGia) o;
+        // So sánh dựa trên MaBangGia, GiaTu và GiaDen
         return Objects.equals(bangGia, that.bangGia)
-            && Objects.equals(sanPham, that.sanPham);
+               && giaTu == that.giaTu && giaDen == that.giaDen;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(bangGia, sanPham);
+        // Hash dựa trên MaBangGia, GiaTu và GiaDen
+        return Objects.hash(bangGia, giaTu, giaDen);
     }
 }

@@ -2,6 +2,7 @@ package dao;
 
 import connectDB.connectDB;
 import entity.ChiTietHoaDon;
+import entity.DonViTinh;
 import entity.HoaDon;
 import entity.KhuyenMai;
 import entity.LoSanPham; 
@@ -17,10 +18,13 @@ public class ChiTietHoaDon_DAO {
     
     private final LoSanPham_DAO loSanPhamDAO;
     private final KhuyenMai_DAO khuyenMaiDAO;
+    private final DonViTinh_DAO donViTinhDAO; // ✅ Bổ sung DonViTinh_DAO
     
     public ChiTietHoaDon_DAO() {
         this.loSanPhamDAO = new LoSanPham_DAO();
         this.khuyenMaiDAO = new KhuyenMai_DAO();
+        // ✅ Khởi tạo DonViTinh_DAO (giả định tồn tại)
+        this.donViTinhDAO = new DonViTinh_DAO(); 
     }
 
     /** * Tìm chi tiết hóa đơn theo mã HD và Mã Lô.
@@ -34,17 +38,18 @@ public class ChiTietHoaDon_DAO {
             connectDB.getInstance();
             con = connectDB.getConnection();
             
-            // SỬA SQL: Lấy thêm MaKM
-            String sql = "SELECT MaLo, MaKM, SoLuong, GiaBan FROM ChiTietHoaDon WHERE MaHoaDon = ? AND MaLo = ?";
+            // ✅ SỬA SQL: Lấy thêm MaDonViTinh
+            String sql = "SELECT MaLo, MaKM, SoLuong, GiaBan, MaDonViTinh FROM ChiTietHoaDon WHERE MaHoaDon = ? AND MaLo = ?";
             stmt = con.prepareStatement(sql);
             stmt.setString(1, maHD);
             stmt.setString(2, maLo); 
             rs = stmt.executeQuery();
 
             if (rs.next()) {
-                double soLuong = rs.getDouble("SoLuong"); // Sửa kiểu dữ liệu
+                int soLuong = rs.getInt("SoLuong"); 
                 double giaBan = rs.getDouble("GiaBan");
                 String maKM = rs.getString("MaKM");
+                String maDVT = rs.getString("MaDonViTinh"); // ✅ Lấy MaDonViTinh
                 
                 HoaDon hd = new HoaDon();
                 hd.setMaHoaDon(maHD);
@@ -53,8 +58,13 @@ public class ChiTietHoaDon_DAO {
                 KhuyenMai km = null;
                 if (maKM != null) km = khuyenMaiDAO.timKhuyenMaiTheoMa(maKM);
                 
+                // ✅ Load DonViTinh
+                DonViTinh donViTinh = null;
+                if (maDVT != null) donViTinh = donViTinhDAO.timDonViTinhTheoMa(maDVT);
+                
                 if (lo != null) {
-                    return new ChiTietHoaDon(hd, lo, soLuong, giaBan, km); 
+                    // ✅ Cập nhật constructor với DonViTinh
+                    return new ChiTietHoaDon(hd, lo, soLuong, giaBan, km, donViTinh); 
                 }
             }
         } catch (Exception e) {
@@ -82,8 +92,8 @@ public class ChiTietHoaDon_DAO {
             connectDB.getInstance();
             con = connectDB.getConnection();
 
-            // SỬA SQL: Lấy thêm MaKM
-            String sql = "SELECT MaLo, MaKM, SoLuong, GiaBan FROM ChiTietHoaDon WHERE MaHoaDon = ?";
+            // ✅ SỬA SQL: Lấy thêm MaDonViTinh
+            String sql = "SELECT MaLo, MaKM, SoLuong, GiaBan, MaDonViTinh FROM ChiTietHoaDon WHERE MaHoaDon = ?";
             stmt = con.prepareStatement(sql);
             stmt.setString(1, maHD);
             rs = stmt.executeQuery();
@@ -94,15 +104,21 @@ public class ChiTietHoaDon_DAO {
             while (rs.next()) {
                 String maLo = rs.getString("MaLo");
                 String maKM = rs.getString("MaKM");
-                double soLuong = rs.getDouble("SoLuong");
+                int soLuong = rs.getInt("SoLuong");
                 double giaBan = rs.getDouble("GiaBan");
+                String maDVT = rs.getString("MaDonViTinh"); // ✅ Lấy MaDonViTinh
 
                 LoSanPham lo = loSanPhamDAO.timLoTheoMa(maLo);
                 KhuyenMai km = null;
                 if (maKM != null) km = khuyenMaiDAO.timKhuyenMaiTheoMa(maKM);
                 
+                // ✅ Load DonViTinh
+                DonViTinh donViTinh = null;
+                if (maDVT != null) donViTinh = donViTinhDAO.timDonViTinhTheoMa(maDVT);
+                
                 if (lo != null) {
-                    ChiTietHoaDon cthd = new ChiTietHoaDon(hd, lo, soLuong, giaBan, km);
+                    // ✅ Cập nhật constructor với DonViTinh
+                    ChiTietHoaDon cthd = new ChiTietHoaDon(hd, lo, soLuong, giaBan, km, donViTinh);
                     danhSachChiTiet.add(cthd);
                 }
             }
@@ -118,5 +134,4 @@ public class ChiTietHoaDon_DAO {
         }
         return danhSachChiTiet;
     }
-    // [Placeholder: Implement the rest of the original methods here]
 }
