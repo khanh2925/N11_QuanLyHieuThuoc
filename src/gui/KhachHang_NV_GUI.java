@@ -74,7 +74,7 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, MouseLis
         add(pnHeader, BorderLayout.NORTH);
 
         txtTimKiem = new JTextField("");
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã/ tên  khách hàng");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên  khách hàng");
         txtTimKiem.setForeground(Color.GRAY);
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         txtTimKiem.setBounds(10, 17, 420, 60);

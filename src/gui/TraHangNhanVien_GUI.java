@@ -676,7 +676,6 @@ public class TraHangNhanVien_GUI extends JPanel {
 		if (strGiamGia != null && !strGiamGia.isEmpty()) {
 			lblGiamGiaSanPham.setToolTipText(strGiamGia);
 		}
-
 		pnDongCTPT.add(lblGiamGiaSanPham);
 
 		// ==== TỔNG TIỀN ====
@@ -779,7 +778,6 @@ public class TraHangNhanVien_GUI extends JPanel {
 						break;
 					}
 				}
-
 				// Cho phép tăng trở lại
 				btnTang.setEnabled(true);
 				btnTang.setBackground(new Color(0xE0F2F1));
@@ -811,7 +809,6 @@ public class TraHangNhanVien_GUI extends JPanel {
 						break;
 					}
 				}
-
 				// Khi tăng lại > 1 thì bật lại nút giảm
 				btnGiam.setEnabled(true);
 				btnGiam.setBackground(new Color(0xE0F2F1));

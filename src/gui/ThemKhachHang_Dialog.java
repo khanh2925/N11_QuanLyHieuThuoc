@@ -179,7 +179,7 @@ public class ThemKhachHang_Dialog extends JDialog implements ActionListener {
             showError("Tên khách hàng không được vượt quá 100 ký tự.", txtTenKhachHang);
             return false;
         }
-        if (!ten.matches("^([A-ZÀ-Ỵ][a-zà-ỹ]+)(\\s[A-ZÀ-Ỵ][a-zà-ỹ]+)*$")) {
+        if (!ten.matches("^([A-ZÀ-Ỵ][a-zà-ỹ]*)(\\s[A-ZÀ-Ỵ][a-zà-ỹ]*)*$")) {
        	 	showError("Tên khách hàng phải viết hoa chữ cái đầu", txtTenKhachHang);
             return false;
 		}

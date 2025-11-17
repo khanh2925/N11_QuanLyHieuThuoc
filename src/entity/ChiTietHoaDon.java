@@ -10,12 +10,14 @@ public class ChiTietHoaDon {
 	private double giaBan;
 	private KhuyenMai khuyenMai;
 	private double thanhTien;
-	 private DonViTinh donViTinh; // Đơn vị tính lúc bán
+	private DonViTinh donViTinh; // Đơn vị tính lúc bán
 	// ===== CONSTRUCTORS =====
+
 	public ChiTietHoaDon() {
 	}
 
-	public ChiTietHoaDon(HoaDon hoaDon, LoSanPham loSanPham, double soLuong, double giaBan, KhuyenMai khuyenMai, DonViTinh donViTinh) {
+	public ChiTietHoaDon(HoaDon hoaDon, LoSanPham loSanPham, double soLuong, double giaBan, KhuyenMai khuyenMai,
+			DonViTinh donViTinh) {
 		setHoaDon(hoaDon);
 		setLoSanPham(loSanPham);
 		setSoLuong(soLuong);
@@ -152,8 +154,8 @@ public class ChiTietHoaDon {
 	}
 
 	public void setDonViTinh(DonViTinh donViTinh) {
-	    if (donViTinh == null)
-	        throw new IllegalArgumentException("Đơn vị tính không được null.");
+		if (donViTinh == null)
+			throw new IllegalArgumentException("Đơn vị tính không được null.");
 
 		this.donViTinh = donViTinh;
 	}
