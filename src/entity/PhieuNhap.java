@@ -27,7 +27,7 @@ public class PhieuNhap {
         setNhaCungCap(nhaCungCap);
         setNhanVien(nhanVien);
         setChiTietPhieuNhapList(chiTietPhieuNhapList);
-        capNhatTongTienTheoChiTiet();
+        // Lưu ý: setChiTietPhieuNhapList đã tự động gọi capNhatTongTienTheoChiTiet()
     }
 
     // ===== GETTERS / SETTERS =====
@@ -84,6 +84,17 @@ public class PhieuNhap {
         return tongTien;
     }
 
+    // ✅✅✅ PHƯƠNG THỨC BỊ THIẾU ĐÃ ĐƯỢC THÊM VÀO ✅✅✅
+    /**
+     * Setter này chủ yếu dùng khi DAO tải dữ liệu từ CSDL
+     * (nơi tổng tiền đã được tính toán và lưu trữ từ trước).
+     * @param tongTien Tổng tiền của phiếu nhập.
+     */
+    public void setTongTien(double tongTien) {
+        this.tongTien = tongTien;
+    }
+    // ✅✅✅ HẾT PHẦN SỬA ✅✅✅
+
     public List<ChiTietPhieuNhap> getChiTietPhieuNhapList() {
         return chiTietPhieuNhapList;
     }
@@ -92,6 +103,7 @@ public class PhieuNhap {
         this.chiTietPhieuNhapList = (chiTietPhieuNhapList != null)
                 ? chiTietPhieuNhapList
                 : new ArrayList<>();
+        // Khi set danh sách chi tiết, tổng tiền sẽ được tự động tính lại
         capNhatTongTienTheoChiTiet();
     }
 

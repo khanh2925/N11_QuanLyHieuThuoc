@@ -304,4 +304,25 @@ public class LoSanPham_DAO {
 		}
 		return 0;
 	}
+
+	public String taoMaLoTuDong() {
+        String sql = "SELECT TOP 1 MaLo FROM LoSanPham WHERE MaLo LIKE 'LO-%' ORDER BY MaLo DESC";
+
+        try (Connection con = connectDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                String lastMaLo = rs.getString("MaLo"); // Ví dụ: LO-098907
+                int lastNumber = Integer.parseInt(lastMaLo.substring(3)); // 98707
+                int nextNumber = lastNumber + 1;
+                return String.format("LO-%06d", nextNumber); // LO-098908
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Nếu chưa có lô nào → bắt đầu từ LO-000001
+        return "LO-000001";
+    }
 }

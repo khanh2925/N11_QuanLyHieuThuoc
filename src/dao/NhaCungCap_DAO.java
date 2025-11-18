@@ -115,4 +115,35 @@ public class NhaCungCap_DAO {
             return "NCC-" + System.currentTimeMillis();
         }
     }
+
+    public NhaCungCap timNhaCungCapTheoMaHoacSDT(String keyword) {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+        
+        // Tìm kiếm chính xác theo Mã hoặc SĐT
+        String sql = "SELECT * FROM NhaCungCap WHERE MaNhaCungCap = ? OR SoDienThoai = ?";
+        
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, keyword);
+            stmt.setString(2, keyword);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    NhaCungCap ncc = new NhaCungCap(
+                            rs.getString("MaNhaCungCap"),
+                            rs.getString("TenNhaCungCap"),
+                            rs.getString("SoDienThoai"),
+                            rs.getString("DiaChi"),
+                            rs.getString("Email")
+                    );
+                    ncc.setHoatDong(rs.getBoolean("HoatDong"));
+                    return ncc;
+                }
+            }
+        } catch (Exception e) {
+            // Bắt Exception chung (bao gồm cả SQLException và IllegalArgumentException)
+            System.err.println("❌ Lỗi timNhaCungCapTheoMaHoacSDT: " + e.getMessage());
+        }
+        return null; // không tìm thấy
+    }
 }
