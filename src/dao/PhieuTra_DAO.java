@@ -14,11 +14,13 @@ public class PhieuTra_DAO {
 	private final NhanVien_DAO nhanVienDAO;
 	private final KhachHang_DAO khachHangDAO;
 	private final ChiTietPhieuTra_DAO chiTietPhieuTraDAO;
+	private final PhieuHuy_DAO phieuHuyDAO;
 
 	public PhieuTra_DAO() {
 		this.nhanVienDAO = new NhanVien_DAO();
 		this.khachHangDAO = new KhachHang_DAO();
 		this.chiTietPhieuTraDAO = new ChiTietPhieuTra_DAO();
+		this.phieuHuyDAO = new PhieuHuy_DAO();
 	}
 
 	// ============================================================
@@ -207,7 +209,7 @@ public class PhieuTra_DAO {
 	// ============================================================
 	// 🔄 Cập nhật trạng thái (transaction)
 	// ============================================================
-	public String capNhatTrangThai_GiaoDich(String maPhieuTra, String maHoaDon, String maLo, int trangThaiMoi) {
+	public String capNhatTrangThai_GiaoDich(String maPhieuTra, String maHoaDon, String maLo, NhanVien nv, int trangThaiMoi) {
 
 		Connection con = connectDB.getConnection();
 		String maPhieuHuyDuocTao = null;
@@ -307,11 +309,45 @@ public class PhieuTra_DAO {
 			}
 
 			// =====================================================
-			// 6. Hủy → thông báo tạo phiếu hủy (future feature)
+			// 6. Nếu chuyển sang HỦY → tạo phiếu hủy tự động
 			// =====================================================
 			if (trangThaiMoi == 2 && trangThaiCu != 2) {
-				JOptionPane.showMessageDialog(null, "Thêm phiếu huỷ tự động sẽ được cập nhật sau...", "Thông báo",
-						JOptionPane.INFORMATION_MESSAGE);
+
+				// ⭐ 6.1. Lấy thông tin lô để tính đơn giá nhập
+				LoSanPham_DAO loDAO = new LoSanPham_DAO();
+				LoSanPham lo = loDAO.timLoTheoMa(maLo);
+
+				double donGiaNhap = (lo != null ? lo.getSanPham().getGiaNhap() : 0);
+
+				// ⭐ 6.2. Tạo chi tiết phiếu hủy
+				ChiTietPhieuHuy ctHuy = new ChiTietPhieuHuy();
+				ctHuy.setLoSanPham(lo);
+				ctHuy.setSoLuongHuy(soLuongTra);
+				ctHuy.setLyDoChiTiet(lyDo);
+				ctHuy.setDonGiaNhap(donGiaNhap);
+				ctHuy.capNhatThanhTien();
+				ctHuy.setTrangThai(2); // 2 = Hủy
+
+				List<ChiTietPhieuHuy> ds = new ArrayList<>();
+				ds.add(ctHuy);
+
+				// ⭐ 6.3. Tạo phiếu hủy
+				String maPH = phieuHuyDAO.taoMaPhieuHuy();
+				maPhieuHuyDuocTao = maPH; // gắn vào để GUI báo
+
+				PhieuHuy ph = new PhieuHuy(maPH, LocalDate.now(), nv, // ⭐ nhân viên đang thao tác
+						false // trạng thái mặc định = Chưa duyệt
+				);
+				ph.setChiTietPhieuHuyList(ds);
+				ph.capNhatTongTienTheoChiTiet();
+
+				// ⭐ 6.4. Lưu xuống DB (vẫn đang trong transaction của PhieuTra)
+				boolean okPH = phieuHuyDAO.themPhieuHuy(ph);
+
+				if (!okPH) {
+					con.rollback();
+					return "ERR";
+				}
 			}
 
 			// =====================================================
@@ -384,7 +420,21 @@ public class PhieuTra_DAO {
 
 				String lastID = rs.getString("MaxMa");
 				if (lastID != null) {
-					int lastNum = Integer.parseInt(lastID.substring(lastID.lastIndexOf('-') + 1));
+
+					// Lấy phần số phía sau dấu "-"
+					String numberPart = lastID.substring(lastID.lastIndexOf('-') + 1);
+
+					// ⭐ BUGFIX: Trim bỏ khoảng trắng
+					numberPart = numberPart.trim();
+
+					// ⭐ BUGFIX: Nếu chuỗi chứa rác hoặc không phải số → reset về 0
+					int lastNum = 0;
+					try {
+						lastNum = Integer.parseInt(numberPart);
+					} catch (NumberFormatException e) {
+						System.err.println("⚠️ Mã phiếu trả trong DB bị lỗi format: " + numberPart + " → reset = 0");
+					}
+
 					return String.format("%s%s-%04d", prefix, today, lastNum + 1);
 				}
 			}
@@ -406,4 +456,5 @@ public class PhieuTra_DAO {
 
 		return String.format("%s%s-%04d", prefix, today, 1);
 	}
+
 }
