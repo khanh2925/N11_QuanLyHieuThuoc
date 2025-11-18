@@ -14,13 +14,15 @@ public class HoaDon_DAO {
 	private final NhanVien_DAO nhanVienDAO;
 	private final KhachHang_DAO khachHangDAO;
 	private final ChiTietHoaDon_DAO chiTietHoaDonDAO;
-	private QuyCachDongGoi_DAO quyCachDongGoiDAO;
+	private final QuyCachDongGoi_DAO quyCachDongGoiDAO;
+	private final KhuyenMai_DAO khuyenMaiDAO;
 
 	public HoaDon_DAO() {
 		this.nhanVienDAO = new NhanVien_DAO();
 		this.khachHangDAO = new KhachHang_DAO();
 		this.chiTietHoaDonDAO = new ChiTietHoaDon_DAO();
 		this.quyCachDongGoiDAO = new QuyCachDongGoi_DAO();
+		this.khuyenMaiDAO = new KhuyenMai_DAO();
 	}
 
 	/** 🔍 Tìm hóa đơn theo mã (load đầy đủ chi tiết, nhân viên, khách hàng) */
@@ -37,24 +39,24 @@ public class HoaDon_DAO {
 			stmt = con.prepareStatement(sql);
 			stmt.setString(1, maHD);
 			rs = stmt.executeQuery();
-
+			
+			HoaDon hd = new HoaDon();
+			
+			String maNV = "";
+			String maKH = "";
+			LocalDate ngayLap = null;
+			String maKM = "";
+			double tongTien = 0.0;
+			boolean thuocKeDon = false;
+			
 			if (rs.next()) {
-				String maNV = rs.getString("MaNhanVien");
-				String maKH = rs.getString("MaKhachHang");
-				LocalDate ngayLap = rs.getDate("NgayLap").toLocalDate();
-				double tongTien = rs.getDouble("TongTien");
-				boolean thuocKeDon = rs.getBoolean("ThuocKeDon");
-
-				// Lấy nhân viên & khách hàng
-				NhanVien nhanVien = nhanVienDAO.timNhanVienTheoMa(maNV);
-				KhachHang khachHang = khachHangDAO.timKhachHangTheoMa(maKH);
-
-				// 🔹 Load danh sách chi tiết hóa đơn
-				List<ChiTietHoaDon> dsCT = chiTietHoaDonDAO.layDanhSachChiTietTheoMaHD(maHD);
-
-				// ✅ Tạo hóa đơn đầy đủ (constructor cũ)
-				HoaDon hd = new HoaDon(maHD, nhanVien, khachHang, ngayLap, null, dsCT, thuocKeDon);
-
+				maNV = rs.getString("MaNhanVien");
+				maKH = rs.getString("MaKhachHang");
+				ngayLap = rs.getDate("NgayLap").toLocalDate();
+				maKM = rs.getString("MaKM");
+				tongTien = rs.getDouble("TongTien");
+				thuocKeDon = rs.getBoolean("ThuocKeDon");
+				
 				// Gán lại tổng tiền (nếu cần đảm bảo trùng DB)
 				try {
 					var setTongTien = HoaDon.class.getDeclaredField("tongTien");
@@ -62,9 +64,25 @@ public class HoaDon_DAO {
 					setTongTien.set(hd, tongTien);
 				} catch (Exception ignore) {
 				}
-
-				return hd;
+				
 			}
+			
+			NhanVien nhanVien = nhanVienDAO.timNhanVienTheoMa(maNV);
+			KhachHang khachHang = khachHangDAO.timKhachHangTheoMa(maKH);
+			KhuyenMai khuyenMai = khuyenMaiDAO.timKhuyenMaiTheoMa(maKM);
+			List<ChiTietHoaDon> dsCT = chiTietHoaDonDAO.layDanhSachChiTietTheoMaHD(maHD);
+			
+			// ✅ Tạo hóa đơn đầy đủ (constructor cũ)
+
+			hd.setMaHoaDon(maHD);
+			hd.setNhanVien(nhanVien);
+			hd.setKhachHang(khachHang);
+			hd.setNgayLap(ngayLap);
+			hd.setKhuyenMai(khuyenMai);
+			hd.setDanhSachChiTiet(dsCT);
+			hd.setThuocKeDon(thuocKeDon);			
+			
+			return hd;
 		} catch (Exception e) {
 			System.err.println("❌ Lỗi khi tìm hóa đơn theo mã: " + e.getMessage());
 		} finally {
