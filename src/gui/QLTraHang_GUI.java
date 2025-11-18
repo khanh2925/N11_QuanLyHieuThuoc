@@ -45,7 +45,9 @@ import dao.PhieuTra_DAO;
 import entity.ChiTietPhieuTra;
 import entity.KhuyenMai;
 import entity.LoSanPham;
+import entity.NhanVien;
 import entity.PhieuTra;
+import entity.Session;
 
 public class QLTraHang_GUI extends JPanel {
 
@@ -77,6 +79,7 @@ public class QLTraHang_GUI extends JPanel {
 	private JSplitPane splitPane;
 	private TableRowSorter<DefaultTableModel> sorterPT;
 	private TableRowSorter<DefaultTableModel> sorterCTPT;
+	private PillButton btnLamMoi;
 
 	public QLTraHang_GUI() {
 		this.setPreferredSize(new Dimension(1537, 850));
@@ -112,6 +115,11 @@ public class QLTraHang_GUI extends JPanel {
 		btnHuyHang = new PillButton("Hủy hàng");
 		btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnHuyHang.setBounds(1260, 26, 120, 40);
+
+		btnLamMoi = new PillButton("Làm mới");
+		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnLamMoi.setBounds(1420, 26, 120, 40);
+		pnHeader.add(btnLamMoi);
 
 		JLabel lblTuNgay = new JLabel("Từ ngày:");
 		lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
@@ -204,8 +212,9 @@ public class QLTraHang_GUI extends JPanel {
 
 		btnNhapKho.addActionListener(e -> capNhatTrangThai(1));
 		btnHuyHang.addActionListener(e -> capNhatTrangThai(2));
+		btnLamMoi.addActionListener(e -> lamMoiDuLieu());
 	}
-	
+
 	// Loại bỏ dấu của từ
 	private String normalize(String s) {
 		return java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD)
@@ -542,7 +551,8 @@ public class QLTraHang_GUI extends JPanel {
 		}
 
 		// 6. GỌI DAO CẬP NHẬT TRẠNG THÁI
-		String result = phieuTraDAO.capNhatTrangThai_GiaoDich(maPhieuTra, maHoaDon, maLo, trangThaiMoi);
+		NhanVien nv = Session.getInstance().getTaiKhoanDangNhap().getNhanVien();
+		String result = phieuTraDAO.capNhatTrangThai_GiaoDich(maPhieuTra, maHoaDon, maLo, nv, trangThaiMoi);
 
 		if (result.equals("ERR")) {
 			JOptionPane.showMessageDialog(this, "Cập nhật thất bại!\nKhông có thay đổi nào được lưu.", "Lỗi",
@@ -645,6 +655,31 @@ public class QLTraHang_GUI extends JPanel {
 				}
 			}
 		});
+	}
+
+	private void lamMoiDuLieu() {
+
+		// 1. Xóa text tìm kiếm
+		txtSearch.setText("");
+		PlaceholderSupport.addPlaceholder(txtSearch, txtSearchPlaceholderText);
+
+		// 2. Reset lọc sorter
+		if (sorterPT != null)
+			sorterPT.setRowFilter(null);
+
+		// 3. Reset ngày lọc
+		dateTu.setDate(null);
+		dateDen.setDate(null);
+
+		// 4. Load lại bảng phiếu trả
+		loadPhieuTraData();
+
+		// 5. Clear bảng chi tiết
+		modelCTPT.setRowCount(0);
+
+		// 6. Disable nút hành động
+		btnNhapKho.setEnabled(false);
+		btnHuyHang.setEnabled(false);
 	}
 
 	public static void main(String[] args) {

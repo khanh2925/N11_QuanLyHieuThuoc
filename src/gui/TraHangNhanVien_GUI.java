@@ -31,16 +31,18 @@ import dao.ChiTietHoaDon_DAO;
 import dao.ChiTietPhieuTra_DAO;
 import dao.HoaDon_DAO;
 import dao.KhachHang_DAO;
+import dao.LoSanPham_DAO;
 import dao.PhieuTra_DAO;
-
+import dao.SanPham_DAO;
 import entity.Session;
 import entity.ChiTietHoaDon;
 import entity.ChiTietPhieuTra;
 import entity.HoaDon;
 import entity.KhachHang;
+import entity.LoSanPham;
 import entity.PhieuTra;
 import entity.TaiKhoan;
-
+import entity.DonViTinh;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -85,7 +87,8 @@ public class TraHangNhanVien_GUI extends JPanel {
 	private final HoaDon_DAO hoaDonDAO = new HoaDon_DAO();
 	private final ChiTietHoaDon_DAO cthdDAO = new ChiTietHoaDon_DAO();
 	private final PhieuTra_DAO ptDAO = new PhieuTra_DAO();
-
+//	private final SanPham_DAO spDAO = new SanPham_DAO();
+	private final LoSanPham_DAO loDAO = new LoSanPham_DAO();
 	private DefaultTableModel modelTraHang;
 	private JTable tblTraHang;
 
@@ -306,7 +309,6 @@ public class TraHangNhanVien_GUI extends JPanel {
 				capNhatTongTienTra();
 
 				// === Hiển thị khuyến mãi hoá đơn nếu có ===
-				System.out.println(hoaDon);
 				if (hoaDon.getKhuyenMai() != null && hoaDon.getKhuyenMai().isKhuyenMaiHoaDon()) {
 					String tenKM = hoaDon.getKhuyenMai().getTenKM();
 					double giaTri = hoaDon.getKhuyenMai().getGiaTri();
@@ -445,9 +447,11 @@ public class TraHangNhanVien_GUI extends JPanel {
 			Object maLoObj = modelTraHang.getValueAt(i, 0);
 			String maLo = maLoObj != null ? maLoObj.toString().trim() : "";
 			if (maLo.isEmpty()) {
-				JOptionPane.showMessageDialog(this, "Không xác định được mã lô ở dòng " + (i + 1) + ".");
+				JOptionPane.showMessageDialog(this, "Không xác định được lô ở dòng " + (i + 1) + ".");
 				return;
 			}
+
+			LoSanPham lo = loDAO.timLoTheoMa(maLo);
 
 			int soLuong;
 			try {
@@ -464,7 +468,7 @@ public class TraHangNhanVien_GUI extends JPanel {
 
 			ChiTietHoaDon cthd = cthdDAO.timKiemChiTietHoaDonBangMa(maHD, maLo);
 			if (cthd == null) {
-				JOptionPane.showMessageDialog(this, "Không tìm thấy chi tiết hoá đơn cho mã lô " + maLo + ".");
+				JOptionPane.showMessageDialog(this, "Không tìm thấy chi tiết hoá đơn cho lô " + lo.getHanSuDung());
 				return;
 			}
 
@@ -482,8 +486,9 @@ public class TraHangNhanVien_GUI extends JPanel {
 				double conLai = soLuongDaMua - daTra;
 				if (conLai <= 0.0001) {
 					JOptionPane.showMessageDialog(this,
-							String.format("⚠️  Lô %s của hóa đơn này đã được trả đủ (%.2f/%s). Không thể trả thêm.",
-									maLo, daTra, formatSo(soLuongDaMua)),
+							String.format("⚠️  Lô %s của hóa đơn này đã được trả đủ (%.0f/%s). Không thể trả thêm.",
+									lo.getHanSuDung().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), daTra,
+									formatSo(soLuongDaMua)),
 							"Đã trả đủ", JOptionPane.WARNING_MESSAGE);
 					return;
 				}
@@ -608,15 +613,15 @@ public class TraHangNhanVien_GUI extends JPanel {
 		pnDongCTPT.add(lblTenThuoc);
 
 		// ==== ĐƠN VỊ TÍNH ====
-		JLabel lblDonViTinh = new JLabel("DVT");
+		String dvt = cthd.getDonViTinh().getTenDonViTinh();
+		JLabel lblDonViTinh = new JLabel(dvt);
 		lblDonViTinh.setFont(new Font("Segoe UI", Font.PLAIN, 16));
 		lblDonViTinh.setBounds(400, centerY - 28, 120, 30);
 		pnDongCTPT.add(lblDonViTinh);
 
 		// ==== LÔ THUỐC ====
 		LocalDate hsdLoThuoc = cthd.getLoSanPham().getHanSuDung();
-		int slLoThuoc = cthd.getLoSanPham().getSoLuongTon();
-		JLabel lblLoThuoc = new JLabel("Lô: " + hsdLoThuoc);
+		JLabel lblLoThuoc = new JLabel("Lô: " + hsdLoThuoc.format(fmt));
 		lblLoThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 		lblLoThuoc.setForeground(new Color(80, 80, 80));
 		lblLoThuoc.setBounds(168, centerY + 12, 320, 25);
@@ -712,13 +717,6 @@ public class TraHangNhanVien_GUI extends JPanel {
 		txtLyDo.setForeground(Color.DARK_GRAY);
 		txtLyDo.setBounds(700, 100, 220, 30);
 		pnDongCTPT.add(txtLyDo);
-
-//		// 🔸 Nút mở dialog nhập chi tiết dài
-//		JButton btnMoDialog = new JButton("📝");
-//		btnMoDialog.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-//		btnMoDialog.setBounds(910, 100, 45, 30);
-//		btnMoDialog.setToolTipText("Mở hộp thoại nhập lý do chi tiết");
-//		pnDongCTPT.add(btnMoDialog);
 
 		// 🔹 Khi người dùng nhập trực tiếp (ô nhỏ)
 		txtLyDo.addFocusListener(new FocusAdapter() {
