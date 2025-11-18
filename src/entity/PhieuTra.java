@@ -91,7 +91,7 @@ public class PhieuTra {
 		this.daDuyet = daDuyet;
 		if (daDuyet && khachHang != null) {
 			capNhatTongTienHoan();
-			khachHang.truDiemTheoPhieuTra(this);
+//			khachHang.truDiemTheoPhieuTra(this);
 		}
 	}
 

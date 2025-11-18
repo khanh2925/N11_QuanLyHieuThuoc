@@ -410,43 +410,47 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 		List<ChiTietHoaDon> dsChiTiet = new ArrayList<>();
 
 		for (ItemDonHang it : dsItem) {
-			LoSanPham lo = it.getLoSanPham();
-			int soLuong = it.getSoLuongMua();
-			double giaBan = it.getDonGiaSauKM(); // đã trừ KM SP nếu có
+		    LoSanPham lo = it.getLoSanPham();
+		    int soLuong = it.getSoLuongMua();
 
-			// KM SP nếu có -> lưu ở chi tiết
-			KhuyenMai khuyenMaiSP = null;
-			try {
-				ChiTietKhuyenMaiSanPham ctkm = it.getKhuyenMai();
-				if (ctkm != null) {
-					khuyenMaiSP = ctkm.getKhuyenMai();
-				}
-			} catch (Exception ignore) {
-			}
+		    // ⛔ ĐANG SAI: dùng giá sau KM
+		    // double giaBan = it.getDonGiaSauKM();
 
-			// Đơn vị tính
-			DonViTinh donViTinh = null;
-			try {
-				QuyCachDongGoi qc = it.getQuyCachHienTai();
-				if (qc != null) {
-					donViTinh = qc.getDonViTinh();
-				}
-			} catch (Exception ex) {
-			}
+		    // ✅ DÙNG GIÁ GỐC THEO ĐƠN VỊ HIỆN TẠI
+		    double giaBan = it.getDonGiaSauKM(); // <-- giá gốc / 1 đơn vị hiện tại
 
-			if (donViTinh == null) {
-				JOptionPane.showMessageDialog(this,
-						"Không xác định được đơn vị tính cho sản phẩm: " + it.getTenSanPham(), "Thiếu đơn vị tính",
-						JOptionPane.ERROR_MESSAGE);
-				return;
-			}
+		    KhuyenMai khuyenMaiSP = null;
+		    try {
+		        ChiTietKhuyenMaiSanPham ctkm = it.getKhuyenMai();
+		        if (ctkm != null) {
+		            khuyenMaiSP = ctkm.getKhuyenMai(); // KM SẢN PHẨM
+		        }
+		    } catch (Exception ignore) {}
 
-			HoaDon hdTmp = new HoaDon();
-			hdTmp.setMaHoaDon(maHD);
+		    DonViTinh donViTinh = null;
+		    try {
+		        QuyCachDongGoi qc = it.getQuyCachHienTai();
+		        if (qc != null) {
+		            donViTinh = qc.getDonViTinh();
+		        }
+		    } catch (Exception ex) {}
 
-			ChiTietHoaDon cthd = new ChiTietHoaDon(hdTmp, lo, soLuong, giaBan, khuyenMaiSP, donViTinh);
-			dsChiTiet.add(cthd);
+		    if (donViTinh == null) {
+		        JOptionPane.showMessageDialog(this,
+		                "Không xác định được đơn vị tính cho sản phẩm: " + it.getTenSanPham(),
+		                "Thiếu đơn vị tính",
+		                JOptionPane.ERROR_MESSAGE);
+		        return;
+		    }
+
+		    HoaDon hdTmp = new HoaDon();
+		    hdTmp.setMaHoaDon(maHD);
+
+		    // ✅ bây giờ ChiTietHoaDon sẽ tự tính giảm dựa trên giaBan GỐC + khuyến mãi
+		    ChiTietHoaDon cthd = new ChiTietHoaDon(hdTmp, lo, soLuong, giaBan, khuyenMaiSP, donViTinh);
+		    dsChiTiet.add(cthd);
 		}
+
 
 		// 6. Tạo hóa đơn
 		HoaDon hd = new HoaDon(maHD, nhanVienHienTai, khForHD, ngayLap, kmHoaDonDangApDung, // 👈 nếu có KM hóa đơn thì
@@ -495,7 +499,7 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 
 		// Trả lại khách vãng lai
 		khachHangHienTai = null;
-		txtTimKH.setText("");
+		txtTimKH.setText("Nhập số điện thoại khách hàng");
 		txtTenKhachHang.setText("Vãng lai");
 
 		// Xóa gợi ý tiền

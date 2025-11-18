@@ -12,6 +12,8 @@ import entity.ChiTietPhieuHuy;
 
 public class LoSanPham_DAO {
 
+	private final SanPham_DAO spDao = new SanPham_DAO();
+
 	public LoSanPham_DAO() {
 	}
 
@@ -120,20 +122,22 @@ public class LoSanPham_DAO {
 
 		try (PreparedStatement stmt = con.prepareStatement(sql)) {
 			stmt.setString(1, maLo);
+			
+			LocalDate hanSuDung = null;
+			int soLuongTon = 0;
+			String maSP = "";
+			SanPham sp = new SanPham();
+			
 			try (ResultSet rs = stmt.executeQuery()) {
+
 				if (rs.next()) {
-					LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-					int soLuongTon = rs.getInt("SoLuongTon");
-					String maSP = rs.getString("MaSanPham");
-
-					SanPham sp = new SanPham();
-					try {
-						sp.setMaSanPham(maSP);
-					} catch (IllegalArgumentException ignore) {
-					}
-
-					return new LoSanPham(maLo, hanSuDung, soLuongTon, sp);
+					hanSuDung = rs.getDate("HanSuDung").toLocalDate();
+					soLuongTon = rs.getInt("SoLuongTon");
+					maSP = rs.getString("MaSanPham");
 				}
+				
+				sp = spDao.laySanPhamTheoMa(maSP);
+				return new LoSanPham(maLo, hanSuDung, soLuongTon, sp);
 			}
 		} catch (SQLException e) {
 			System.err.println("Lỗi tìm lô sản phẩm theo mã: " + e.getMessage());
@@ -306,23 +310,23 @@ public class LoSanPham_DAO {
 	}
 
 	public String taoMaLoTuDong() {
-        String sql = "SELECT TOP 1 MaLo FROM LoSanPham WHERE MaLo LIKE 'LO-%' ORDER BY MaLo DESC";
+		String sql = "SELECT TOP 1 MaLo FROM LoSanPham WHERE MaLo LIKE 'LO-%' ORDER BY MaLo DESC";
 
-        try (Connection con = connectDB.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+		try (Connection con = connectDB.getConnection();
+				PreparedStatement ps = con.prepareStatement(sql);
+				ResultSet rs = ps.executeQuery()) {
 
-            if (rs.next()) {
-                String lastMaLo = rs.getString("MaLo"); // Ví dụ: LO-098907
-                int lastNumber = Integer.parseInt(lastMaLo.substring(3)); // 98707
-                int nextNumber = lastNumber + 1;
-                return String.format("LO-%06d", nextNumber); // LO-098908
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+			if (rs.next()) {
+				String lastMaLo = rs.getString("MaLo"); // Ví dụ: LO-098907
+				int lastNumber = Integer.parseInt(lastMaLo.substring(3)); // 98707
+				int nextNumber = lastNumber + 1;
+				return String.format("LO-%06d", nextNumber); // LO-098908
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
-        // Nếu chưa có lô nào → bắt đầu từ LO-000001
-        return "LO-000001";
-    }
+		// Nếu chưa có lô nào → bắt đầu từ LO-000001
+		return "LO-000001";
+	}
 }
