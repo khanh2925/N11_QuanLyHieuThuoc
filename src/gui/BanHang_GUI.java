@@ -413,11 +413,8 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 		    LoSanPham lo = it.getLoSanPham();
 		    int soLuong = it.getSoLuongMua();
 
-		    // ⛔ ĐANG SAI: dùng giá sau KM
-		    // double giaBan = it.getDonGiaSauKM();
-
 		    // ✅ DÙNG GIÁ GỐC THEO ĐƠN VỊ HIỆN TẠI
-		    double giaBan = it.getDonGiaSauKM(); // <-- giá gốc / 1 đơn vị hiện tại
+		    double giaBan = it.getDonGiaGoc(); // <-- giá gốc / 1 đơn vị hiện tại
 
 		    KhuyenMai khuyenMaiSP = null;
 		    try {

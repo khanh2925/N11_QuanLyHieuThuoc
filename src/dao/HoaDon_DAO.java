@@ -66,8 +66,7 @@ public class HoaDon_DAO {
                 // Nếu muốn dùng đúng số tiền đã lưu DB (phòng khi rule KM thay đổi):
                 double tongThanhToan = rs.getDouble("TongThanhToan");
                 double soTienGiamKM = rs.getDouble("SoTienGiamKhuyenMai");
-                hd.setTongThanhToan(tongThanhToan);
-                hd.setSoTienGiamKhuyenMai(soTienGiamKM);
+                hd.capNhatDuLieuHoaDon();
 
                 return hd;
             }
@@ -132,7 +131,7 @@ public class HoaDon_DAO {
             con.setAutoCommit(false); // bắt đầu transaction
 
             // 1. Tính lại tổng tiền + KM hóa đơn
-            hd.capNhatTongTien(); // sẽ gọi luôn capNhatTongThanhToan bên trong
+            hd.capNhatDuLieuHoaDon(); // sẽ gọi luôn capNhatTongThanhToan bên trong
 
             double tongThanhToan = hd.getTongThanhToan();
             double soTienGiamKM = hd.getSoTienGiamKhuyenMai();

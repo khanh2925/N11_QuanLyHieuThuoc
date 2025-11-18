@@ -2,6 +2,8 @@ package entity;
 
 import java.util.Objects;
 
+import enums.HinhThucKM;
+
 public class ChiTietHoaDon {
 
     private HoaDon hoaDon;
@@ -37,7 +39,7 @@ public class ChiTietHoaDon {
         setLoSanPham(loSanPham);
         setSoLuong(soLuong);
         setGiaBan(giaBan);
-        setKhuyenMai(khuyenMai);   // chỉ validate, không giảm nữa
+        setKhuyenMai(khuyenMai);   
         setDonViTinh(donViTinh);
         capNhatThanhTien();
     }
@@ -53,9 +55,34 @@ public class ChiTietHoaDon {
     }
 
     // ===== DẪN SUẤT =====
-    /** Thành tiền = soLuong * giaBan (đã là giá cuối cùng). */
+    /** * Cập nhật thành tiền:
+     * Thành tiền = (Số lượng * Giá bán) - Tiền khuyến mãi (nếu có)
+     */
     public void capNhatThanhTien() {
-        this.thanhTien = this.soLuong * this.giaBan;
+        // 1. Tính tổng tiền gốc
+        double tongTien = this.soLuong * this.giaBan;
+
+        // 2. Tính giảm giá nếu có khuyến mãi
+        // Lưu ý: Không check isDangHoatDong() ở đây vì hóa đơn cũ xem lại thì KM đã hết hạn nhưng giá phải giữ nguyên.
+        if (this.khuyenMai != null) {
+            double giaTriKM = this.khuyenMai.getGiaTri();
+            HinhThucKM hinhThuc = this.khuyenMai.getHinhThuc();
+
+            if (hinhThuc == HinhThucKM.GIAM_GIA_PHAN_TRAM) {
+                // Giảm theo % trên tổng tiền (hoặc trên đơn giá đều ra kết quả như nhau)
+                double tienGiam = tongTien * (giaTriKM / 100);
+                tongTien -= tienGiam;
+                
+            } else if (hinhThuc == HinhThucKM.GIAM_GIA_TIEN) {
+                // Giảm tiền mặt trực tiếp trên TỪNG ĐƠN VỊ sản phẩm
+                // Ví dụ: Giảm 5k/hộp, mua 10 hộp thì giảm 50k
+                double tienGiam = giaTriKM * this.soLuong;
+                tongTien -= tienGiam;
+            }
+        }
+
+        // 3. Đảm bảo thành tiền không âm
+        this.thanhTien = Math.max(0, tongTien);
     }
 
     public double getThanhTien() {
