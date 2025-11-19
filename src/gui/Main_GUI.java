@@ -124,39 +124,15 @@ public class Main_GUI extends JFrame {
 			addSubmenuButton("tracuu", "tracuudontrahang", "Đơn trả hàng", "/images/icon_tra_hang.png",
 					new TraCuuDonTraHang_GUI());
 			addSubmenuButton("tracuu", "tracuudonhuyhang", "Đơn huỷ hàng", "/images/icon_xuat_huy.png",
-					new JPanel(new GridBagLayout()) {
-						{
-							JLabel lbl = new JLabel("Màn hình tra cứu đơn huỷ hàng");
-							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-							add(lbl);
-						}
-					});
+					new TraCuuPhieuHuy_GUI());
 			addSubmenuButton("tracuu", "tracuudonnhaphang", "Đơn nhập hàng", "/images/icon_nhap_hang.png",
-					new NhapHang_GUI());
+					new TraCuuPhieuNhap_GUI());
 			addSubmenuButton("tracuu", "tracuunhanvien", "Nhân viên", "/images/icon_nhan_vien.png",
-					new JPanel(new GridBagLayout()) {
-						{
-							JLabel lbl = new JLabel("Màn hình tra cứu đơn huỷ hàng");
-							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-							add(lbl);
-						}
-					});
+					new TraCuuNhanVien_GUI());
 			addSubmenuButton("tracuu", "tracuukhachhang", "Khách hàng", "/images/icon_khach_hang.png",
-					new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình tra cứu khách hàng");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			});
+					new TraCuuKhachHang_GUI());
 			addSubmenuButton("tracuu", "tracuunhacungcap", "Nhà cung cấp", "/images/icon_nha_cung_cap.png",
-					new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình tra cứu nhà cung cấp");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			});
+					new TraCuuNhaCungCap_GUI());
 			addSubmenuButton("tracuu", "tracuukhuyenmai", "Khuyến mãi", "/images/icon_khuyen_mai.png",
 					new JPanel(new GridBagLayout()) {
 						{
@@ -211,13 +187,7 @@ public class Main_GUI extends JFrame {
 			addSubmenuButton("tracuu", "tracuudontrahang", "Đơn trả hàng", "/images/icon_tra_hang.png",
 					new TraCuuDonTraHang_GUI());
 			addSubmenuButton("tracuu", "tracuudonhuyhang", "Đơn huỷ hàng", "/images/icon_xuat_huy.png",
-					new JPanel(new GridBagLayout()) {
-						{
-							JLabel lbl = new JLabel("Màn hình tra cứu đơn huỷ hàng");
-							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-							add(lbl);
-						}
-					});
+					new TraCuuPhieuHuy_GUI());
 			addSubmenuButton("tracuu", "tracuusanpham", "Sản phẩm", "/images/icon_san_pham.png",
 					new JPanel(new GridBagLayout()) {
 						{

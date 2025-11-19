@@ -11,8 +11,7 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
-import java.util.*;
-import com.toedter.calendar.JDateChooser;
+
 
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
@@ -28,39 +27,51 @@ public class TraCuuSanPham_GUI extends JPanel {
     private DefaultTableModel modelSanPham;
     private DefaultTableModel modelLoSanPham;
 
-    // Các thành phần lọc
-    private JTextField txtTimKiem;
-    private JTextField txtSoDangKy;
-    private JComboBox<String> cbLoaiSanPham;
-    private JComboBox<String> cbKeBan;
-    private JComboBox<String> cbHoatDong;
-
     public TraCuuSanPham_GUI() {
         setPreferredSize(new Dimension(1537, 850));
         initialize();
     }
 
     private void initialize() {
+        // 1. CẤU HÌNH LAYOUT CHÍNH (BorderLayout)
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
-     // ===== HEADER - ABSOLUTE LAYOUT - 1 Ô TÌM KIẾM TO =====
-        pnHeader = new JPanel();
-        pnHeader.setLayout(null);
-        pnHeader.setPreferredSize(new Dimension(1073, 94)); // tăng nhẹ lên 94 để vừa 60px + margin
-        pnHeader.setBackground(new Color(0xE3F2F5));
+        // 2. KHỞI TẠO PHẦN HEADER (Vùng Bắc - NORTH)
+        taoPhanHeader();
         add(pnHeader, BorderLayout.NORTH);
 
-        // === Ô TÌM KIẾM SIÊU TO ===
+        // 3. KHỞI TẠO PHẦN CENTER (Vùng Giữa - CENTER - Chứa bảng)
+        taoPhanCenter();
+        add(pnCenter, BorderLayout.CENTER);
+        
+        // 4. LOAD DỮ LIỆU & SỰ KIỆN
+        loadDuLieuSanPham();
+        loadDuLieuLoSanPham();
+        addEvents();
+    }
+
+    // ==============================================================================
+    //                              PHẦN HEADER
+    // ==============================================================================
+    private void taoPhanHeader() {
+        pnHeader = new JPanel();
+        pnHeader.setLayout(null); 
+        pnHeader.setPreferredSize(new Dimension(1073, 94)); 
+        pnHeader.setBackground(new Color(0xE3F2F5));
+
+        // --- Ô TÌM KIẾM SIÊU TO ---
         JTextField txtTimThuoc = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimThuoc, "Nhập tên thuốc, mã sản phẩm hoặc số đăng ký");
         txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 22));
-        txtTimThuoc.setBounds(25, 17, 480, 60);        // đúng như mẫu bạn đưa
+        txtTimThuoc.setBounds(25, 17, 480, 60);
         txtTimThuoc.setBorder(new RoundedBorder(20));
         txtTimThuoc.setBackground(Color.WHITE);
         txtTimThuoc.setForeground(Color.GRAY);
+        pnHeader.add(txtTimThuoc);
 
-        // === Các bộ lọc nhỏ bên phải ===
+        // --- CÁC BỘ LỌC NHỎ BÊN PHẢI ---
+        // 1. Loại
         JLabel lblLoai = new JLabel("Loại:");
         lblLoai.setBounds(530, 28, 50, 35);
         lblLoai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
@@ -71,6 +82,7 @@ public class TraCuuSanPham_GUI extends JPanel {
         cbLoai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(cbLoai);
 
+        // 2. Kệ
         JLabel lblKe = new JLabel("Kệ:");
         lblKe.setBounds(735, 28, 40, 35);
         lblKe.setFont(new Font("Segoe UI", Font.PLAIN, 16));
@@ -81,6 +93,7 @@ public class TraCuuSanPham_GUI extends JPanel {
         cbKe.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(cbKe);
 
+        // 3. Trạng thái
         JLabel lblTrangThai = new JLabel("Trạng thái:");
         lblTrangThai.setBounds(885, 28, 80, 35);
         lblTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
@@ -91,7 +104,7 @@ public class TraCuuSanPham_GUI extends JPanel {
         cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(cbTrangThai);
 
-        // === NÚT TÌM KIẾM & LÀM MỚI ===
+        // --- CÁC NÚT CHỨC NĂNG ---
         PillButton btnTimKiem = new PillButton("Tìm kiếm");
         btnTimKiem.setBounds(1120, 22, 130, 50);
         btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
@@ -101,21 +114,22 @@ public class TraCuuSanPham_GUI extends JPanel {
         btnLamMoi.setBounds(1265, 22, 130, 50);
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnLamMoi);
+    }
 
-        // === THÊM Ô TÌM KIẾM VÀO CUỐI CÙNG ===
-        pnHeader.add(txtTimThuoc);
-        // ===== CENTER - SPLIT PANE (giữ nguyên) =====
+    // ==============================================================================
+    //                              PHẦN CENTER (BẢNG)
+    // ==============================================================================
+    private void taoPhanCenter() {
         pnCenter = new JPanel(new BorderLayout());
         pnCenter.setBackground(Color.WHITE);
         pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
-        add(pnCenter, BorderLayout.CENTER);
 
+        // Tạo SplitPane chia đôi trên dưới
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        splitPane.setDividerLocation(400);
-        splitPane.setResizeWeight(0.5);
-        pnCenter.add(splitPane, BorderLayout.CENTER);
+        splitPane.setDividerLocation(400); // Vị trí thanh chia
+        splitPane.setResizeWeight(0.5);    // Chia đều tỉ lệ khi resize
 
-        // ===== BẢNG SẢN PHẨM (TRÊN) =====
+        // --- BẢNG 1: DANH SÁCH SẢN PHẨM (TOP) ---
         String[] colSanPham = {
             "Mã SP", "Tên sản phẩm", "Loại", "Số ĐK", "Đường dùng", "Đơn vị",
             "Giá nhập", "Giá bán", "Kệ", "Hoạt động"
@@ -123,16 +137,10 @@ public class TraCuuSanPham_GUI extends JPanel {
         modelSanPham = new DefaultTableModel(colSanPham, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-
-        tblSanPham = new JTable(modelSanPham);
-        tblSanPham.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        tblSanPham.setRowHeight(28);
-        tblSanPham.setSelectionBackground(new Color(0xC8E6C9));
-        JTableHeader headerSP = tblSanPham.getTableHeader();
-        headerSP.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        headerSP.setBackground(new Color(33, 150, 243));
-        headerSP.setForeground(Color.WHITE);
-
+        
+        tblSanPham = setupTable(modelSanPham);
+        
+        // Canh lề đặc biệt cho bảng Sản Phẩm (Giá bên phải)
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
         for (int i = 0; i < tblSanPham.getColumnCount(); i++) {
@@ -144,43 +152,57 @@ public class TraCuuSanPham_GUI extends JPanel {
         tblSanPham.getColumnModel().getColumn(7).setCellRenderer(right);
 
         JScrollPane scrollSP = new JScrollPane(tblSanPham);
-        scrollSP.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.LIGHT_GRAY), "Danh sách sản phẩm",
-            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 16), Color.DARK_GRAY
-        ));
+        scrollSP.setBorder(createTitledBorder("Danh sách sản phẩm"));
         splitPane.setTopComponent(scrollSP);
 
-        // ===== BẢNG LÔ (DƯỚI) =====
+        // --- BẢNG 2: DANH SÁCH LÔ (BOTTOM) ---
         String[] colLo = {"Mã lô", "Hạn sử dụng", "Số lượng tồn", "Mã SP"};
         modelLoSanPham = new DefaultTableModel(colLo, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-
-        tblLoSanPham = new JTable(modelLoSanPham);
-        tblLoSanPham.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        tblLoSanPham.setRowHeight(28);
-        tblLoSanPham.setSelectionBackground(new Color(0xC8E6C9));
-        JTableHeader headerLo = tblLoSanPham.getTableHeader();
-        headerLo.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        headerLo.setBackground(new Color(33, 150, 243));
-        headerLo.setForeground(Color.WHITE);
-
+        
+        tblLoSanPham = setupTable(modelLoSanPham);
+        
+        // Canh giữa cho bảng Lô
         for (int i = 0; i < tblLoSanPham.getColumnCount(); i++) {
             tblLoSanPham.getColumnModel().getColumn(i).setCellRenderer(center);
         }
 
         JScrollPane scrollLo = new JScrollPane(tblLoSanPham);
-        scrollLo.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.LIGHT_GRAY), "Danh sách lô",
-            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 16), Color.DARK_GRAY
-        ));
+        scrollLo.setBorder(createTitledBorder("Danh sách lô"));
         splitPane.setBottomComponent(scrollLo);
 
-        // ===== LOAD DỮ LIỆU =====
-        loadDuLieuSanPham();
-        loadDuLieuLoSanPham();
+        // Thêm SplitPane vào giữa pnCenter
+        pnCenter.add(splitPane, BorderLayout.CENTER);
+    }
 
-        // ===== CHỌN SẢN PHẨM → HIỆN LÔ =====
+    // Hàm hỗ trợ setup Table chung cho gọn code
+    private JTable setupTable(DefaultTableModel model) {
+        JTable table = new JTable(model);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        table.setRowHeight(28);
+        table.setSelectionBackground(new Color(0xC8E6C9));
+        
+        JTableHeader header = table.getTableHeader();
+        header.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        header.setBackground(new Color(33, 150, 243));
+        header.setForeground(Color.WHITE);
+        return table;
+    }
+
+    // Hàm hỗ trợ tạo Border tiêu đề cho gọn code
+    private TitledBorder createTitledBorder(String title) {
+        return BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
+            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 16), Color.DARK_GRAY
+        );
+    }
+
+    // ==============================================================================
+    //                              DỮ LIỆU & SỰ KIỆN
+    // ==============================================================================
+    private void addEvents() {
+        // Chọn sản phẩm -> hiện lô
         tblSanPham.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 int row = tblSanPham.getSelectedRow();

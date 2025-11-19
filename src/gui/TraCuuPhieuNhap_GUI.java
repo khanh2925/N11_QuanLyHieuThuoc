@@ -3,31 +3,34 @@
  * @version 1.0
  * @since Oct 19, 2025
  *
- * Mô tả: Giao diện tra cứu đơn hàng (Layout đồng bộ với TraCuuSanPham).
+ * Mô tả: Giao diện tra cứu phiếu nhập hàng (Layout đồng bộ, Data Fake chuẩn).
  */
 package gui;
 
 import java.awt.*;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
-import java.util.Date;
 import com.toedter.calendar.JDateChooser;
 
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
 
-public class TraCuuDonHang_GUI extends JPanel {
+public class TraCuuPhieuNhap_GUI extends JPanel {
 
     private JPanel pnHeader;
     private JPanel pnCenter;
     
-    // Bảng Hóa Đơn (Trên)
-    private JTable tblHoaDon;
-    private DefaultTableModel modelHoaDon;
+    // Bảng Phiếu Nhập (Trên)
+    private JTable tblPhieuNhap;
+    private DefaultTableModel modelPhieuNhap;
 
-    // Bảng Chi Tiết Hóa Đơn (Dưới)
+    // Bảng Chi Tiết Phiếu Nhập (Dưới)
     private JTable tblChiTiet;
     private DefaultTableModel modelChiTiet;
 
@@ -36,7 +39,11 @@ public class TraCuuDonHang_GUI extends JPanel {
     private JDateChooser dateTuNgay;
     private JDateChooser dateDenNgay;
 
-    public TraCuuDonHang_GUI() {
+    // Format
+    private final DecimalFormat df = new DecimalFormat("#,###đ");
+    private final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    public TraCuuPhieuNhap_GUI() {
         setPreferredSize(new Dimension(1537, 850));
         initialize();
     }
@@ -46,16 +53,16 @@ public class TraCuuDonHang_GUI extends JPanel {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
-        // 2. HEADER (Vùng Bắc)
+        // 2. HEADER
         taoPhanHeader();
         add(pnHeader, BorderLayout.NORTH);
 
-        // 3. CENTER (Vùng Giữa - Chứa 2 bảng)
+        // 3. CENTER (2 Bảng)
         taoPhanCenter();
         add(pnCenter, BorderLayout.CENTER);
 
         // 4. DATA & EVENTS
-        loadDuLieuHoaDon();
+        loadDuLieuPhieuNhap();
         addEvents();
     }
 
@@ -70,8 +77,8 @@ public class TraCuuDonHang_GUI extends JPanel {
 
         // --- 1. Ô TÌM KIẾM TO (Bên trái) ---
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã hóa đơn, SĐT khách hàng");
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22)); // Font to đồng bộ
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã phiếu, tên nhân viên, nhà cung cấp...");
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
         txtTimKiem.setBounds(25, 17, 450, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
@@ -89,7 +96,7 @@ public class TraCuuDonHang_GUI extends JPanel {
         dateTuNgay.setDateFormatString("dd/MM/yyyy");
         dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         dateTuNgay.setBounds(570, 28, 140, 38);
-        dateTuNgay.setDate(new Date()); // Mặc định hôm nay
+        dateTuNgay.setDate(new Date()); 
         pnHeader.add(dateTuNgay);
 
         // Đến ngày
@@ -103,7 +110,6 @@ public class TraCuuDonHang_GUI extends JPanel {
         dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         dateDenNgay.setBounds(770, 28, 140, 38);
         
-        // Mặc định ngày mai
         java.util.Calendar cal = java.util.Calendar.getInstance();
         cal.add(java.util.Calendar.DATE, 1);
         dateDenNgay.setDate(cal.getTime());
@@ -114,16 +120,11 @@ public class TraCuuDonHang_GUI extends JPanel {
         btnTimKiem.setBounds(1120, 22, 130, 50);
         btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnTimKiem);
-
+        
         PillButton btnLamMoi = new PillButton("Làm mới");
         btnLamMoi.setBounds(1265, 22, 130, 50);
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnLamMoi);
-
-        // Sự kiện nút Lọc/Tìm kiếm
-        btnTimKiem.addActionListener(e -> {
-            System.out.println("Tìm kiếm đơn hàng...");
-        });
     }
 
     // ==============================================================================
@@ -134,72 +135,64 @@ public class TraCuuDonHang_GUI extends JPanel {
         pnCenter.setBackground(Color.WHITE);
         pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // Tạo SplitPane chia đôi trên dưới
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         splitPane.setDividerLocation(400);
         splitPane.setResizeWeight(0.5);
         pnCenter.add(splitPane, BorderLayout.CENTER);
 
-        // --- BẢNG 1: DANH SÁCH HÓA ĐƠN (TOP) ---
-        String[] colHoaDon = {"STT", "Mã hóa đơn", "Khách hàng", "Nhân viên", "Ngày lập", "Tổng tiền"};
-        modelHoaDon = new DefaultTableModel(colHoaDon, 0) {
+        // --- BẢNG 1: DANH SÁCH PHIẾU NHẬP (TOP) ---
+        String[] colPhieuNhap = {"STT", "Mã phiếu nhập", "Ngày lập", "Nhân viên", "Nhà cung cấp", "Tổng tiền"};
+        modelPhieuNhap = new DefaultTableModel(colPhieuNhap, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         
-        tblHoaDon = setupTable(modelHoaDon);
+        tblPhieuNhap = setupTable(modelPhieuNhap);
         
-        // Căn lề bảng Hóa Đơn
+        // Căn lề
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
         DefaultTableCellRenderer right = new DefaultTableCellRenderer();
         right.setHorizontalAlignment(SwingConstants.RIGHT);
 
-        tblHoaDon.getColumnModel().getColumn(0).setCellRenderer(center); // STT
-        tblHoaDon.getColumnModel().getColumn(1).setCellRenderer(center); // Mã
-        tblHoaDon.getColumnModel().getColumn(4).setCellRenderer(center); // Ngày
-        tblHoaDon.getColumnModel().getColumn(5).setCellRenderer(right);  // Tiền
+        tblPhieuNhap.getColumnModel().getColumn(0).setCellRenderer(center); // STT
+        tblPhieuNhap.getColumnModel().getColumn(1).setCellRenderer(center); // Mã
+        tblPhieuNhap.getColumnModel().getColumn(2).setCellRenderer(center); // Ngày
+        tblPhieuNhap.getColumnModel().getColumn(5).setCellRenderer(right);  // Tiền
 
-        // Độ rộng cột
-        tblHoaDon.getColumnModel().getColumn(0).setPreferredWidth(50);
-        tblHoaDon.getColumnModel().getColumn(1).setPreferredWidth(150);
-        tblHoaDon.getColumnModel().getColumn(2).setPreferredWidth(250);
+        tblPhieuNhap.getColumnModel().getColumn(0).setPreferredWidth(50);
+        tblPhieuNhap.getColumnModel().getColumn(4).setPreferredWidth(250); // NCC dài
         
-        JScrollPane scrollHD = new JScrollPane(tblHoaDon);
-        scrollHD.setBorder(createTitledBorder("Danh sách hóa đơn"));
-        splitPane.setTopComponent(scrollHD);
+        JScrollPane scrollPN = new JScrollPane(tblPhieuNhap);
+        scrollPN.setBorder(createTitledBorder("Danh sách phiếu nhập hàng"));
+        splitPane.setTopComponent(scrollPN);
 
-        // --- BẢNG 2: CHI TIẾT HÓA ĐƠN (BOTTOM) ---
-        String[] colChiTiet = {"STT", "Mã SP", "Tên sản phẩm", "Đơn vị", "Số lượng", "Đơn giá", "Thành tiền"};
+        // --- BẢNG 2: CHI TIẾT PHIẾU NHẬP (BOTTOM) ---
+        String[] colChiTiet = {"STT", "Mã Lô", "Mã SP", "Tên sản phẩm", "Số lượng", "Đơn giá nhập", "Thành tiền"};
         modelChiTiet = new DefaultTableModel(colChiTiet, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         
         tblChiTiet = setupTable(modelChiTiet);
         
-        // Căn lề bảng Chi Tiết
-        tblChiTiet.getColumnModel().getColumn(0).setCellRenderer(center); // STT
-        tblChiTiet.getColumnModel().getColumn(1).setCellRenderer(center); // Mã SP
-        tblChiTiet.getColumnModel().getColumn(3).setCellRenderer(center); // Đơn vị
+        tblChiTiet.getColumnModel().getColumn(0).setCellRenderer(center);
+        tblChiTiet.getColumnModel().getColumn(1).setCellRenderer(center);
+        tblChiTiet.getColumnModel().getColumn(2).setCellRenderer(center);
         tblChiTiet.getColumnModel().getColumn(4).setCellRenderer(center); // SL
         tblChiTiet.getColumnModel().getColumn(5).setCellRenderer(right);  // Đơn giá
         tblChiTiet.getColumnModel().getColumn(6).setCellRenderer(right);  // Thành tiền
 
-        // Độ rộng cột
-        tblChiTiet.getColumnModel().getColumn(0).setPreferredWidth(50);
-        tblChiTiet.getColumnModel().getColumn(1).setPreferredWidth(100);
-        tblChiTiet.getColumnModel().getColumn(2).setPreferredWidth(300);
+        tblChiTiet.getColumnModel().getColumn(3).setPreferredWidth(250); // Tên SP
 
         JScrollPane scrollChiTiet = new JScrollPane(tblChiTiet);
-        scrollChiTiet.setBorder(createTitledBorder("Chi tiết đơn hàng"));
+        scrollChiTiet.setBorder(createTitledBorder("Chi tiết phiếu nhập"));
         splitPane.setBottomComponent(scrollChiTiet);
     }
 
-    // Hàm setup Table chung (Style giống TraCuuSanPham)
     private JTable setupTable(DefaultTableModel model) {
         JTable table = new JTable(model);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        table.setRowHeight(28);
-        table.setSelectionBackground(new Color(0xC8E6C9)); // Màu xanh nhạt khi chọn
+        table.setRowHeight(30);
+        table.setSelectionBackground(new Color(0xC8E6C9));
         
         JTableHeader header = table.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 16));
@@ -208,7 +201,6 @@ public class TraCuuDonHang_GUI extends JPanel {
         return table;
     }
 
-    // Hàm tạo border tiêu đề chung
     private TitledBorder createTitledBorder(String title) {
         return BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
@@ -221,45 +213,89 @@ public class TraCuuDonHang_GUI extends JPanel {
     // ==============================================================================
     
     private void addEvents() {
-        // Sự kiện click vào hóa đơn -> Load chi tiết
-        tblHoaDon.getSelectionModel().addListSelectionListener(e -> {
+        // Click phiếu nhập -> Load chi tiết
+        tblPhieuNhap.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                int row = tblHoaDon.getSelectedRow();
+                int row = tblPhieuNhap.getSelectedRow();
                 if (row >= 0) {
-                    String maHD = tblHoaDon.getValueAt(row, 1).toString();
-                    loadChiTietCuaHoaDon(maHD);
+                    String maPN = tblPhieuNhap.getValueAt(row, 1).toString();
+                    loadChiTietPhieuNhap(maPN);
                 }
             }
         });
     }
 
-    private void loadDuLieuHoaDon() {
-        // Dữ liệu giả lập
-        Object[][] data = {
-            {"1", "HD-20251019-0001", "Nguyễn Văn A", "Trần Thu Hà", "19/10/2025", "150,000 đ"},
-            {"2", "HD-20251018-0005", "Trần Thị B", "Lê Văn C", "18/10/2025", "320,000 đ"},
-            {"3", "HD-20251017-0012", "Phạm Quốc Khánh", "Nguyễn Thị D", "17/10/2025", "5,500,000 đ"},
-            {"4", "HD-20251017-0003", "Chu Anh Khôi", "Trần Thu Hà", "17/10/2025", "120,000 đ"},
-            {"5", "HD-20251016-0008", "Lê Thanh Kha", "Lê Văn C", "16/10/2025", "210,000 đ"},
+    private void loadDuLieuPhieuNhap() {
+        // Dữ liệu Chi Tiết (Nguồn để tính tổng tiền)
+        Object[][] ctData = {
+            { "PN001", "LO000001", "SP000001", "Paracetamol 500mg", 50, 800.0 },
+            { "PN001", "LO000002", "SP000002", "Vitamin C 1000mg",  30, 1200.0 },
+            { "PN002", "LO000003", "SP000003", "Efferalgan 500mg",  40, 950.0 },
+            { "PN002", "LO000004", "SP000004", "Bông y tế",         80, 120.0 },
+            { "PN003", "LO000005", "SP000005", "Khẩu trang y tế",   100, 500.0 }
         };
-        for (Object[] row : data) {
-            modelHoaDon.addRow(row);
+
+        // Dữ liệu Phiếu Nhập (Master)
+        Object[][] pnData = {
+            { "1", "PN001", LocalDate.of(2025, 10, 18), "Lê Thanh Kha", "Công ty Dược Hậu Giang", 0.0 },
+            { "2", "PN002", LocalDate.of(2025, 10, 20), "Trần Thị B",   "Mekophar",                0.0 },
+            { "3", "PN003", LocalDate.of(2025, 10, 21), "Nguyễn Văn A", "Dược Phẩm TW1",           0.0 }
+        };
+
+        modelPhieuNhap.setRowCount(0);
+
+        // Tính tổng tiền và đổ dữ liệu
+        for (Object[] pn : pnData) {
+            String maPN = pn[1].toString();
+            double tongTien = 0;
+
+            for (Object[] ct : ctData) {
+                if (maPN.equals(ct[0])) {
+                    int sl = (int) ct[4];
+                    double gia = (double) ct[5];
+                    tongTien += sl * gia;
+                }
+            }
+
+            modelPhieuNhap.addRow(new Object[]{
+                pn[0], // STT
+                pn[1], // Mã
+                ((LocalDate) pn[2]).format(fmt), // Ngày
+                pn[3], // NV
+                pn[4], // NCC
+                df.format(tongTien) // Tổng tiền
+            });
         }
     }
 
-    private void loadChiTietCuaHoaDon(String maHD) {
+    private void loadChiTietPhieuNhap(String maPN) {
         modelChiTiet.setRowCount(0);
         
-        // Giả lập dữ liệu chi tiết dựa trên mã hóa đơn
-        if (maHD.equals("HD-20251019-0001")) {
-            modelChiTiet.addRow(new Object[]{"1", "SP001", "Paracetamol 500mg", "Vỉ", "2", "5,000 đ", "10,000 đ"});
-            modelChiTiet.addRow(new Object[]{"2", "SP005", "Vitamin C", "Hộp", "1", "140,000 đ", "140,000 đ"});
-        } else if (maHD.equals("HD-20251017-0012")) {
-            modelChiTiet.addRow(new Object[]{"1", "SP003", "Thực phẩm chức năng A", "Hộp", "5", "1,000,000 đ", "5,000,000 đ"});
-            modelChiTiet.addRow(new Object[]{"2", "SP004", "Khẩu trang y tế", "Hộp", "10", "50,000 đ", "500,000 đ"});
-        } else {
-            // Mặc định
-            modelChiTiet.addRow(new Object[]{"1", "SP999", "Sản phẩm mẫu", "Cái", "1", "100,000 đ", "100,000 đ"});
+        Object[][] ctData = {
+            { "PN001", "LO000001", "SP000001", "Paracetamol 500mg", 50, 800.0 },
+            { "PN001", "LO000002", "SP000002", "Vitamin C 1000mg",  30, 1200.0 },
+            { "PN002", "LO000003", "SP000003", "Efferalgan 500mg",  40, 950.0 },
+            { "PN002", "LO000004", "SP000004", "Bông y tế",         80, 120.0 },
+            { "PN003", "LO000005", "SP000005", "Khẩu trang y tế",   100, 500.0 }
+        };
+
+        int stt = 1;
+        for (Object[] ct : ctData) {
+            if (ct[0].equals(maPN)) {
+                int sl = (int) ct[4];
+                double gia = (double) ct[5];
+                double thanhTien = sl * gia;
+
+                modelChiTiet.addRow(new Object[]{
+                    stt++,
+                    ct[1], // Mã Lô
+                    ct[2], // Mã SP
+                    ct[3], // Tên SP
+                    sl,
+                    df.format(gia),
+                    df.format(thanhTien)
+                });
+            }
         }
     }
 
@@ -268,11 +304,11 @@ public class TraCuuDonHang_GUI extends JPanel {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception e) {}
-            JFrame frame = new JFrame("Tra cứu đơn hàng");
+            JFrame frame = new JFrame("Tra cứu phiếu nhập");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1400, 800);
             frame.setLocationRelativeTo(null);
-            frame.setContentPane(new TraCuuDonHang_GUI());
+            frame.setContentPane(new TraCuuPhieuNhap_GUI());
             frame.setVisible(true);
         });
     }

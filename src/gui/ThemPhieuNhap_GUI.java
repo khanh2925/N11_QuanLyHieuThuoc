@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.Serializable;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -54,7 +55,7 @@ import entity.Session;
 import entity.TaiKhoan;
 
 
-public class ThemPhieuNhap_GUI extends JPanel implements ActionListener {
+public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Serializable {
     private JPanel pnDanhSachDon;
     private JTextField txtSearch;
     private JTextField txtTimNCC;
@@ -126,7 +127,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener {
         }
 
         this.setPreferredSize(new Dimension(1537, 850));
-        khoiTaoGiaoDien(); // <-- ĐÃ VIỆT HÓA (từ initialize)
+        initialize(); // <-- ĐÃ VIỆT HÓA (từ initialize)
     }
 
     /**
@@ -169,14 +170,14 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener {
         }
 
         this.setPreferredSize(new Dimension(1537, 850));
-        khoiTaoGiaoDien(); // <-- ĐÃ VIỆT HÓA (từ initialize)
+        initialize(); // <-- ĐÃ VIỆT HÓA (từ initialize)
     }
 
 
     /**
      * Phương thức khởi tạo giao diện chính
      */
-    private void khoiTaoGiaoDien() {
+    private void initialize() {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
@@ -413,7 +414,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener {
 
     /**
      * Xử lý nghiệp vụ nhập hàng từ file Excel
-     * ✅ LOGIC NÀY ĐƯỢC GIỮ NGUYÊN: File Excel bắt buộc phải nhập theo Đơn Vị Gốc.
+     * ✅ ĐÃ CẬP NHẬT: Tự động đọc SĐT Nhà Cung Cấp từ cột thứ 6 (Cell 5) của dòng dữ liệu đầu tiên
      */
     private void xuLyNhapFile() {
         JFileChooser fileChooser = new JFileChooser();
@@ -433,6 +434,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener {
             StringBuilder errorMessages = new StringBuilder();
             int successCount = 0;
             int failCount = 0;
+            boolean daTimNCC = false; // 🚩 Cờ kiểm tra xem đã tìm NCC chưa
 
             try (FileInputStream fis = new FileInputStream(fileToRead);
                  Workbook workbook = new XSSFWorkbook(fis)) {
@@ -440,6 +442,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener {
                 Sheet sheet = workbook.getSheetAt(0);
                 Iterator<Row> rowIterator = sheet.iterator();
 
+                // Bỏ qua dòng tiêu đề (Header)
                 if (rowIterator.hasNext()) {
                     rowIterator.next();
                 }
@@ -447,11 +450,32 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener {
                 while (rowIterator.hasNext()) {
                     Row row = rowIterator.next();
                     try {
+                        // 1. Đọc các ô dữ liệu cơ bản
                         String maSP = layGiaTriChuoiTuO(row.getCell(0)); 
                         LocalDate hsd = layGiaTriNgayTuO(row.getCell(1)); 
                         int soLuong = (int) layGiaTriSoTuO(row.getCell(2)); 
                         double donGia_Excel = layGiaTriSoTuO(row.getCell(3)); 
                         String tenDVT_Excel = layGiaTriChuoiTuO(row.getCell(4)); 
+
+                        // ============================================================
+                        // 🚩 LOGIC MỚI: Đọc SĐT Nhà Cung Cấp từ cột 5 (Cột F)
+                        // Chỉ thực hiện 1 lần duy nhất cho dòng dữ liệu hợp lệ đầu tiên
+                        // ============================================================
+                        if (!daTimNCC) {
+                            String sdtNCC = layGiaTriChuoiTuO(row.getCell(5)); // Lấy cột F
+                            if (!sdtNCC.isEmpty()) {
+                                txtTimNCC.setText(sdtNCC); // Điền SĐT vào ô tìm kiếm
+                                xuLyTimNhaCungCap();       // Gọi hàm xử lý tìm kiếm (tự động Enter)
+                                
+                                // Kiểm tra nếu tìm thấy thì khóa cờ lại, nếu không thấy thì báo lỗi nhẹ
+                                if (nhaCungCapDaChon != null) {
+                                    daTimNCC = true; 
+                                } else {
+                                    errorMessages.append("⚠️ Cảnh báo: Không tìm thấy NCC với SĐT: ").append(sdtNCC).append("\n");
+                                }
+                            }
+                        }
+                        // ============================================================
 
                         if (maSP.isEmpty() && tenDVT_Excel.isEmpty() && (hsd == null || hsd.toString().isEmpty())) {
                             continue; // Bỏ qua dòng trống
@@ -501,8 +525,6 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener {
                             ChiTietSanPhamPanel newPanel = new ChiTietSanPhamPanel(sp, dvtGoc, sp.getGiaNhap());
                             newPanel.themLot(chiTietMoi);
                             pnDanhSachDon.add(newPanel);
-                            // ✅ SỬA 2: Xóa khoảng cách 5px
-                            // pnDanhSachDon.add(Box.createVerticalStrut(5)); 
                         }
                         successCount++;
 
@@ -523,6 +545,14 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener {
             SwingUtilities.invokeLater(() -> scrollPane.getVerticalScrollBar().setValue(scrollPane.getVerticalScrollBar().getMaximum()));
 
             String summaryMessage = String.format("Hoàn thành nhập file!\n\nThành công: %d dòng.\nThất bại: %d dòng.", successCount, failCount);
+            
+            // Thêm thông báo về NCC trong kết quả
+            if (nhaCungCapDaChon != null) {
+                summaryMessage += "\n\n✅ Đã chọn NCC: " + nhaCungCapDaChon.getTenNhaCungCap();
+            } else {
+                summaryMessage += "\n\n⚠️ Chưa chọn được NCC (Kiểm tra cột F trong file Excel).";
+            }
+
             if (failCount > 0) {
                 JTextArea textArea = new JTextArea(errorMessages.toString());
                 textArea.setEditable(false);
@@ -623,7 +653,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener {
         txtTimNCC.setText(ncc.getMaNhaCungCap());
         txtTimNCC.setForeground(Color.BLACK);
 
-        lblTenNCCValue.setText("Tên nhà cung cấp: "+ncc.getTenNhaCungCap());
+        lblTenNCCValue.setText("Tên NCC: "+ncc.getTenNhaCungCap());
         lblTenNCCValue.setForeground(new Color(0x007BFF));
 
         lblDiaChiNCCValue.setText("Địa chỉ: " + ncc.getDiaChi());
@@ -1063,7 +1093,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener {
             lblHinhAnh.setHorizontalAlignment(SwingConstants.CENTER);
             
             try {
-                String imagePath = "/" + sp.getHinhAnh(); 
+                String imagePath = "/images/" + sp.getHinhAnh(); 
                 if (sp.getHinhAnh() == null || sp.getHinhAnh().isBlank()) {
                     throw new Exception("Sản phẩm không có hình ảnh");
                 }

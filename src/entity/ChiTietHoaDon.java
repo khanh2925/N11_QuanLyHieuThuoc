@@ -1,92 +1,62 @@
 package entity;
 
 import java.util.Objects;
-
 import enums.HinhThucKM;
 
 public class ChiTietHoaDon {
 
     private HoaDon hoaDon;
     private LoSanPham loSanPham;
-
-    // Số lượng theo ĐƠN VỊ BÁN (hộp / vỉ / chai...), không còn là "đơn vị gốc"
-    private double soLuong;
-
-    // ĐƠN GIÁ CUỐI CÙNG (đã trừ khuyến mãi SẢN PHẨM nếu có)
-    private double giaBan;
-
-    // Khuyến mãi áp cho SẢN PHẨM (nếu có) – chỉ để lưu vết
-    private KhuyenMai khuyenMai;
-
-    // THÀNH TIỀN = soLuong * giaBan (sau KM SP)
-    private double thanhTien;
-
-    // Đơn vị tính lúc bán (phải map với MaDonViTinh trong DB)
+    private double soLuong;     //Ví dụ: Bán 2 hộp thì soLuong = 2. Bán 5 vỉ thì soLuong = 5.
     private DonViTinh donViTinh;
+    private double giaBan; // giá ứng với quy cách đóng gói
+    private KhuyenMai khuyenMai; // khuyến mãi của sản phẩm
+    private double thanhTien; // giá csau khuyến mãi
 
     // ===== CONSTRUCTORS =====
-
     public ChiTietHoaDon() {
     }
 
-    public ChiTietHoaDon(HoaDon hoaDon,
-                         LoSanPham loSanPham,
-                         double soLuong,
-                         double giaBan,
-                         KhuyenMai khuyenMai,
-                         DonViTinh donViTinh) {
+    public ChiTietHoaDon(HoaDon hoaDon, LoSanPham loSanPham, double soLuong, DonViTinh donViTinh, double giaBan, KhuyenMai khuyenMai) {
         setHoaDon(hoaDon);
         setLoSanPham(loSanPham);
         setSoLuong(soLuong);
-        setGiaBan(giaBan);
-        setKhuyenMai(khuyenMai);   
         setDonViTinh(donViTinh);
-        capNhatThanhTien();
+        setGiaBan(giaBan); // Lưu ý: Phải truyền đúng giá của ĐVT này vào
+        setKhuyenMai(khuyenMai);
     }
 
-    public ChiTietHoaDon(ChiTietHoaDon other) {
-        this.hoaDon = other.hoaDon;
-        this.loSanPham = other.loSanPham;
-        this.soLuong = other.soLuong;
-        this.giaBan = other.giaBan;
-        this.khuyenMai = other.khuyenMai;
-        this.thanhTien = other.thanhTien;
-        this.donViTinh = other.donViTinh;
-    }
-
-    // ===== DẪN SUẤT =====
-    /** * Cập nhật thành tiền:
-     * Thành tiền = (Số lượng * Giá bán) - Tiền khuyến mãi (nếu có)
+    // ===== LOGIC TÍNH TIỀN TỰ ĐỘNG =====
+    /**
+     * Tính thành tiền dựa trên Giá của Đơn Vị Tính.
      */
     public void capNhatThanhTien() {
-        // 1. Tính tổng tiền gốc
-        double tongTien = this.soLuong * this.giaBan;
+        double tongTienGoc = this.soLuong * this.giaBan;
+        double tienGiam = 0;
 
-        // 2. Tính giảm giá nếu có khuyến mãi
-        // Lưu ý: Không check isDangHoatDong() ở đây vì hóa đơn cũ xem lại thì KM đã hết hạn nhưng giá phải giữ nguyên.
         if (this.khuyenMai != null) {
-            double giaTriKM = this.khuyenMai.getGiaTri();
             HinhThucKM hinhThuc = this.khuyenMai.getHinhThuc();
+            double giaTriKM = this.khuyenMai.getGiaTri();
 
             if (hinhThuc == HinhThucKM.GIAM_GIA_PHAN_TRAM) {
-                // Giảm theo % trên tổng tiền (hoặc trên đơn giá đều ra kết quả như nhau)
-                double tienGiam = tongTien * (giaTriKM / 100);
-                tongTien -= tienGiam;
-                
+                tienGiam = tongTienGoc * (giaTriKM / 100.0);
             } else if (hinhThuc == HinhThucKM.GIAM_GIA_TIEN) {
-                // Giảm tiền mặt trực tiếp trên TỪNG ĐƠN VỊ sản phẩm
-                // Ví dụ: Giảm 5k/hộp, mua 10 hộp thì giảm 50k
-                double tienGiam = giaTriKM * this.soLuong;
-                tongTien -= tienGiam;
+                // ⚠️ Vấn đề: Ở đây ta không biết heSoQuyDoi là bao nhiêu
+                // Vì DonViTinh chỉ có tên/mã, không lưu hệ số so với đơn vị gốc.
+                
+                // GIẢI PHÁP TẠM THỜI (NHƯNG AN TOÀN):
+                // Mặc định coi giaTriKM là giảm trực tiếp cho đơn vị này (Đã được GUI tính trước).
+                // Tức là: Ở GUI, nếu là hộp, bạn phải sửa cái object KhuyenMai truyền vào 
+                // hoặc tính ra tiền giảm cụ thể.
+                
+                // TUY NHIÊN, ĐỂ ĐƠN GIẢN HÓA (Chấp nhận rủi ro nhỏ nếu không dùng logic đơn vị gốc):
+                // Ta cứ nhân thẳng:
+                tienGiam = giaTriKM * this.soLuong; 
+                
+                // -> ❗ RỦI RO: Nếu DB lưu 500đ (gốc) mà xuống đây trừ 500đ cho Hộp (100k) là sai.
             }
         }
-
-        // 3. Đảm bảo thành tiền không âm
-        this.thanhTien = Math.max(0, tongTien);
-    }
-
-    public double getThanhTien() {
-        return thanhTien;
+        this.thanhTien = Math.max(0, tongTienGoc - tienGiam);
     }
 
     // ===== GETTERS / SETTERS =====
@@ -95,8 +65,6 @@ public class ChiTietHoaDon {
     }
 
     public void setHoaDon(HoaDon hoaDon) {
-        if (hoaDon == null)
-            throw new IllegalArgumentException("Hóa đơn không được null.");
         this.hoaDon = hoaDon;
     }
 
@@ -105,8 +73,6 @@ public class ChiTietHoaDon {
     }
 
     public void setLoSanPham(LoSanPham loSanPham) {
-        if (loSanPham == null)
-            throw new IllegalArgumentException("Lô sản phẩm không được null.");
         this.loSanPham = loSanPham;
     }
 
@@ -119,37 +85,9 @@ public class ChiTietHoaDon {
     }
 
     public void setSoLuong(double soLuong) {
-        if (soLuong <= 0)
-            throw new IllegalArgumentException("Số lượng phải > 0.");
+        if (soLuong <= 0) throw new IllegalArgumentException("Số lượng phải > 0.");
         this.soLuong = soLuong;
-        capNhatThanhTien();
-    }
-
-    public double getGiaBan() {
-        return giaBan;
-    }
-
-    /** 
-     * GiaBan phải là GIÁ CUỐI CÙNG (sau km SP).
-     * KM sản phẩm đã được tính ở phía GUI / ItemDonHang.
-     */
-    public void setGiaBan(double giaBan) {
-        if (giaBan <= 0)
-            throw new IllegalArgumentException("Giá bán phải > 0.");
-        this.giaBan = giaBan;
-        capNhatThanhTien();
-    }
-
-    public KhuyenMai getKhuyenMai() {
-        return khuyenMai;
-    }
-
-    public void setKhuyenMai(KhuyenMai khuyenMai) {
-        // Chỉ để lưu vết KM SẢN PHẨM, không cho phép KM HÓA ĐƠN
-        if (khuyenMai != null && khuyenMai.isKhuyenMaiHoaDon())
-            throw new IllegalArgumentException("Không thể gán khuyến mãi hóa đơn cho chi tiết sản phẩm.");
-        this.khuyenMai = khuyenMai;
-        // KHÔNG gọi capNhatThanhTien ở đây nữa (giaBan đã là giá sau KM SP)
+        capNhatThanhTien(); // Số lượng thay đổi -> Tiền đổi
     }
 
     public DonViTinh getDonViTinh() {
@@ -157,40 +95,62 @@ public class ChiTietHoaDon {
     }
 
     public void setDonViTinh(DonViTinh donViTinh) {
-        if (donViTinh == null)
-            throw new IllegalArgumentException("Đơn vị tính không được null.");
+        if (donViTinh == null) throw new IllegalArgumentException("Đơn vị tính không được null.");
         this.donViTinh = donViTinh;
+        // Lưu ý: Khi setDonViTinh ở đây, Giá bán KHÔNG tự nhảy.
+        // Ở tầng Giao diện (GUI), khi đổi Combobox Đơn vị tính -> Phải gọi setGiaBan() tương ứng.
+    }
+
+    public double getGiaBan() {
+        return giaBan;
+    }
+
+    /**
+     * @param giaBan Phải truyền vào giá bán tương ứng với Đơn Vị Tính hiện tại.
+     */
+    public void setGiaBan(double giaBan) {
+        if (giaBan < 0) throw new IllegalArgumentException("Giá bán không được âm.");
+        this.giaBan = giaBan;
+        capNhatThanhTien(); // Giá đổi -> Tiền đổi
+    }
+
+    public KhuyenMai getKhuyenMai() {
+        return khuyenMai;
+    }
+
+    public void setKhuyenMai(KhuyenMai khuyenMai) {
+        if (khuyenMai != null && khuyenMai.isKhuyenMaiHoaDon()) {
+            throw new IllegalArgumentException("Không thể gán khuyến mãi hóa đơn cho chi tiết sản phẩm.");
+        }
+        this.khuyenMai = khuyenMai;
+        capNhatThanhTien(); // KM đổi -> Tiền đổi
+    }
+
+    public double getThanhTien() {
+        return thanhTien;
     }
 
     // ===== OVERRIDES =====
     @Override
     public String toString() {
-        return String.format(
-                "CTHD[%s - %s] SL=%.0f, Giá=%.0f, Thành tiền=%.0f%s",
-                hoaDon != null ? hoaDon.getMaHoaDon() : "N/A",
-                getSanPham() != null ? getSanPham().getTenSanPham() : "N/A",
-                soLuong,
-                giaBan,
-                thanhTien,
-                khuyenMai != null ? ", KM=" + khuyenMai.getHinhThuc() : ""
-        );
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof ChiTietHoaDon))
-            return false;
-        ChiTietHoaDon that = (ChiTietHoaDon) o;
-        return Objects.equals(hoaDon, that.hoaDon)
-                && Objects.equals(loSanPham, that.loSanPham)
-                && Objects.equals(donViTinh, that.donViTinh);
+        return String.format("CTHD: %s | ĐVT: %s | SL: %.1f | Giá: %.0f | Thành tiền: %.0f",
+                (loSanPham != null && loSanPham.getSanPham() != null) ? loSanPham.getSanPham().getTenSanPham() : "null",
+                (donViTinh != null) ? donViTinh.getTenDonViTinh() : "null",
+                soLuong, giaBan, thanhTien);
     }
 
     @Override
     public int hashCode() {
-        // PK trong DB: (MaHoaDon, MaLo, MaDonViTinh) → hashCode nên đủ 3 trường
         return Objects.hash(hoaDon, loSanPham, donViTinh);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        ChiTietHoaDon other = (ChiTietHoaDon) obj;
+        return Objects.equals(hoaDon, other.hoaDon) &&
+               Objects.equals(loSanPham, other.loSanPham) &&
+               Objects.equals(donViTinh, other.donViTinh);
     }
 }

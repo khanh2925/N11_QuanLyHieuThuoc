@@ -117,9 +117,10 @@ public class ChiTietPhieuTra_DAO {
                             hd,
                             lo,
                             rs.getInt("SoLuongHD"),   // null → 0
+                            dvt,
                             rs.getDouble("GiaBan"),       // null → 0
-                            km,
-                            dvt
+                            km
+
                     );
 
                     // ========== Phiếu trả ==========

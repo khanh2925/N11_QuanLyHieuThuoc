@@ -64,7 +64,7 @@ public class ChiTietHoaDon_DAO {
                 
                 if (lo != null) {
                     // ✅ Cập nhật constructor với DonViTinh
-                    return new ChiTietHoaDon(hd, lo, soLuong, giaBan, km, donViTinh); 
+                    return new ChiTietHoaDon(hd, lo, soLuong, donViTinh, giaBan, km); 
                 }
             }
         } catch (Exception e) {
@@ -118,7 +118,7 @@ public class ChiTietHoaDon_DAO {
                 
                 if (lo != null) {
                     // ✅ Cập nhật constructor với DonViTinh
-                    ChiTietHoaDon cthd = new ChiTietHoaDon(hd, lo, soLuong, giaBan, km, donViTinh);
+                    ChiTietHoaDon cthd = new ChiTietHoaDon(hd, lo, soLuong, donViTinh, giaBan, km);
                     danhSachChiTiet.add(cthd);
                 }
             }

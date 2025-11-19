@@ -57,7 +57,6 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 	private JTextField txtTongHDValue;
 	private JTextField txtTienThua;
 	private JTextField txtTenKhachHang;
-	private JButton btnThemDon;
 	private JButton btnBanHang;
 	private JTextField txtGiamSPValue;
 	private JTextField txtGiamHDValue;
@@ -87,8 +86,11 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 	// Lấy nhân viên
 	private TaiKhoan tk = Session.getInstance().getTaiKhoanDangNhap();
 	private NhanVien nhanVienHienTai = tk.getNhanVien();
-
 	private KhuyenMai kmHoaDonDangApDung;
+	
+	private final String PLACEHOLDER_TIM_KH = "Nhập số điện thoại khách hàng";
+	private final String PLACEHOLDER_TIM_THUOC = "Nhập mã sản phẩm hoặc số đăng ký";
+	private final String PLACEHOLDER_TIEN_KHACH = "Nhập tiền khách đưa";
 
 	public BanHang_GUI() {
 		setPreferredSize(new Dimension(1537, 850));
@@ -119,13 +121,32 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 		pnHeader.setBackground(new Color(0xE3F2F5));
 
 		txtTimThuoc = TaoJtextNhanh.timKiem();
+		txtTimThuoc.setBorder(new LineBorder(new Color(0x00C0E2), 3, true));
 		txtTimThuoc.setBounds(25, 17, 480, 60);
 		txtTimThuoc.addActionListener(this);
+		txtTimThuoc.setText(PLACEHOLDER_TIM_THUOC);
+		txtTimThuoc.setForeground(Color.GRAY); // Màu xám cho placeholder
+
+		txtTimThuoc.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				// Khi click vào: Nếu đang là placeholder thì xóa đi, đổi màu chữ đen
+				if (txtTimThuoc.getText().equals(PLACEHOLDER_TIM_THUOC)) {
+					txtTimThuoc.setText("");
+					txtTimThuoc.setForeground(Color.BLACK);
+				}
+			}
+			@Override
+			public void focusLost(FocusEvent e) {
+				// Khi click ra ngoài: Nếu rỗng thì trả lại placeholder màu xám
+				if (txtTimThuoc.getText().trim().isEmpty()) {
+					txtTimThuoc.setText(PLACEHOLDER_TIM_THUOC);
+					txtTimThuoc.setForeground(Color.GRAY);
+				}
+			}
+		});
 		pnHeader.add(txtTimThuoc);
 
-		btnThemDon = new JButton("Thêm đơn");
-		btnThemDon.setBounds(530, 30, 130, 45);
-		pnHeader.add(btnThemDon);
 
 		return pnHeader;
 	}
@@ -201,20 +222,38 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 
 		// ==== TÌM KHÁCH HÀNG ====
 		Box boxTimKhachHang = Box.createHorizontalBox();
-		txtTimKH = TaoJtextNhanh.nhapLieu("Nhập SĐT khách hàng");
+		txtTimKH = TaoJtextNhanh.nhapLieu(PLACEHOLDER_TIM_KH);
 		ckThuocTheoDon = new JCheckBox("Thuốc theo đơn:");
+		ckThuocTheoDon.setBackground(null);
 		boxTimKhachHang.add(txtTimKH);
+		boxTimKhachHang.add(ckThuocTheoDon);
 		pnRight.add(boxTimKhachHang);
 		pnRight.add(Box.createVerticalStrut(10));
 
-		txtTimKH.addActionListener(e -> xuLyTimKhach());
+		txtTimKH.addActionListener(e -> xuLyTimKhach(true));
 		txtTimKH.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				if (txtTimKH.getText().equals(PLACEHOLDER_TIM_KH)) {
+					txtTimKH.setText("");
+					txtTimKH.setForeground(Color.BLACK); // Đổi màu chữ khi nhập
+				}
+			}
+
 			@Override
 			public void focusLost(FocusEvent e) {
 				String s = txtTimKH.getText().trim();
-				if (!s.isEmpty()) {
-					xuLyTimKhach();
+				
+				// Nếu trống hoặc vẫn là placeholder -> Về vãng lai
+				if (s.isEmpty() || s.equals(PLACEHOLDER_TIM_KH)) {
+					txtTimKH.setText(PLACEHOLDER_TIM_KH);
+					txtTimKH.setForeground(Color.GRAY); // Màu placeholder (tùy thư viện bạn dùng)
+					troVeKhachVangLai();
+					return;
 				}
+				
+				// Nếu có nhập gì đó, thử tìm (nhưng false = không hiện popup lỗi nếu sai)
+				xuLyTimKhach(false);
 			}
 		});
 
@@ -260,18 +299,40 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 
 		// ==== TIỀN KHÁCH ĐƯA ====
 		Box boxTienKhach = Box.createHorizontalBox();
-		txtTienKhach = TaoJtextNhanh.nhapLieu("Nhập tiền khách đưa");
-		boxTienKhach.add(txtTienKhach);
-		pnRight.add(boxTienKhach);
-		pnRight.add(Box.createVerticalStrut(10));
+        txtTienKhach = TaoJtextNhanh.nhapLieu(PLACEHOLDER_TIEN_KHACH);
+        txtTienKhach.setForeground(Color.GRAY); // Mặc định màu xám
+        boxTienKhach.add(txtTienKhach);
+        pnRight.add(boxTienKhach);
+        pnRight.add(Box.createVerticalStrut(10));
 
-		txtTienKhach.addActionListener(e -> capNhatTienThua());
-		txtTienKhach.addFocusListener(new FocusAdapter() {
-			@Override
-			public void focusLost(FocusEvent e) {
-				capNhatTienThua();
-			}
-		});
+        txtTienKhach.addActionListener(e -> {
+            capNhatTienThua();
+            // Sau khi enter, nếu rỗng thì trả về placeholder (tuỳ chọn)
+            pnRight.requestFocus(); // Bỏ focus để kích hoạt sự kiện focusLost bên dưới
+        });
+
+        txtTienKhach.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                // Click vào: Xóa placeholder, chữ đen
+                if (txtTienKhach.getText().equals(PLACEHOLDER_TIEN_KHACH)) {
+                    txtTienKhach.setText("");
+                    txtTienKhach.setForeground(Color.BLACK);
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                // Tính toán tiền thừa ngay khi click ra ngoài
+                capNhatTienThua();
+
+                // Click ra ngoài: Nếu rỗng -> Hiện placeholder màu xám
+                if (txtTienKhach.getText().trim().isEmpty()) {
+                    txtTienKhach.setText(PLACEHOLDER_TIEN_KHACH);
+                    txtTienKhach.setForeground(Color.GRAY);
+                }
+            }
+        });
 
 		// ==== GỢI Ý TIỀN ====
 		Box goiYTien = Box.createVerticalBox();
@@ -358,14 +419,14 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 	}
 
 	private void xuLyBanHang() {
-		// 1. Kiểm tra giỏ
+		// 1. Kiểm tra giỏ hàng
 		if (dsItem == null || dsItem.isEmpty()) {
 			JOptionPane.showMessageDialog(this, "Chưa có sản phẩm nào trong đơn !", "Thông báo",
 					JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 
-		// 2. Ràng buộc: nếu kê đơn -> bắt buộc có khách (không Vãng lai)
+		// 2. Ràng buộc: Thuốc kê đơn bắt buộc có khách hàng
 		boolean thuocKeDon = ckThuocTheoDon.isSelected();
 		if (thuocKeDon && khachHangHienTai == null) {
 			JOptionPane.showMessageDialog(this, "Đơn thuốc kê đơn bắt buộc phải chọn khách hàng.", "Thiếu khách hàng",
@@ -373,16 +434,15 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 			return;
 		}
 
-		// 3. Lấy khách cho hóa đơn
+		// 3. Lấy khách cho hóa đơn (Nếu không chọn thì lấy khách Vãng Lai)
 		KhachHang khForHD = khachHangHienTai;
 		if (khForHD == null) {
-			// chỉ cho Vãng lai khi không kê đơn
 			khForHD = khachHangDao.timKhachHangTheoMa("KH-00000000-0000");
 		}
 
-		// 4. Kiểm tra tiền khách đưa (dựa trên tongHoaDon đã tính sẵn + KM HĐ nếu có)
+		// 4. Kiểm tra tiền khách đưa
 		double tienKhach = parseTienTuTextField(txtTienKhach);
-
+		
 		// Nếu chưa nhập hoặc nhập 0
 		if (tienKhach <= 0) {
 			JOptionPane.showMessageDialog(this, "Vui lòng nhập số tiền khách đưa!", "Thiếu tiền khách đưa",
@@ -392,7 +452,7 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 			return;
 		}
 
-		// Nếu ít hơn tổng hóa đơn -> KHÔNG CHO TẠO HÓA ĐƠN
+		// Nếu tiền đưa ít hơn tổng hóa đơn (đã trừ KM) -> Chặn
 		if (tienKhach < tongHoaDon) {
 			JOptionPane.showMessageDialog(this,
 					"Tiền khách đưa (" + formatTien(tienKhach) + ") ít hơn tổng hóa đơn (" + formatTien(tongHoaDon)
@@ -403,73 +463,92 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 			return;
 		}
 
-		// 5. Chuẩn bị chi tiết hóa đơn
+		// 5. Chuẩn bị dữ liệu Hóa Đơn
 		String maHD = hoaDonDao.taoMaHoaDon();
 		LocalDate ngayLap = LocalDate.now();
-
 		List<ChiTietHoaDon> dsChiTiet = new ArrayList<>();
 
+		// --- VÒNG LẶP TẠO CHI TIẾT ---
 		for (ItemDonHang it : dsItem) {
-		    LoSanPham lo = it.getLoSanPham();
-		    int soLuong = it.getSoLuongMua();
+			LoSanPham lo = it.getLoSanPham();
+			int soLuong = it.getSoLuongMua();
+			
+			// Lấy giá bán niêm yết của Đơn Vị Hiện Tại (đã tính tỉ lệ giảm của quy cách nếu có)
+			double giaBan = it.getDonGiaGoc(); 
 
-		    // ✅ DÙNG GIÁ GỐC THEO ĐƠN VỊ HIỆN TẠI
-		    double giaBan = it.getDonGiaGoc(); // <-- giá gốc / 1 đơn vị hiện tại
+			// Xử lý Đơn Vị Tính
+			DonViTinh donViTinh = null;
+			try {
+				if (it.getQuyCachHienTai() != null) {
+					donViTinh = it.getQuyCachHienTai().getDonViTinh();
+				}
+			} catch (Exception ex) {}
 
-		    KhuyenMai khuyenMaiSP = null;
-		    try {
-		        ChiTietKhuyenMaiSanPham ctkm = it.getKhuyenMai();
-		        if (ctkm != null) {
-		            khuyenMaiSP = ctkm.getKhuyenMai(); // KM SẢN PHẨM
-		        }
-		    } catch (Exception ignore) {}
+			if (donViTinh == null) {
+				JOptionPane.showMessageDialog(this, "Lỗi: Không xác định được ĐVT cho sản phẩm " + it.getTenSanPham());
+				return;
+			}
 
-		    DonViTinh donViTinh = null;
-		    try {
-		        QuyCachDongGoi qc = it.getQuyCachHienTai();
-		        if (qc != null) {
-		            donViTinh = qc.getDonViTinh();
-		        }
-		    } catch (Exception ex) {}
+			// === XỬ LÝ LOGIC KHUYẾN MÃI (QUAN TRỌNG) ===
+			KhuyenMai kmForDetail = null;
+			try {
+				if (it.getKhuyenMai() != null) {
+					KhuyenMai kmGoc = it.getKhuyenMai().getKhuyenMai();
 
-		    if (donViTinh == null) {
-		        JOptionPane.showMessageDialog(this,
-		                "Không xác định được đơn vị tính cho sản phẩm: " + it.getTenSanPham(),
-		                "Thiếu đơn vị tính",
-		                JOptionPane.ERROR_MESSAGE);
-		        return;
-		    }
+					// ⚠️ Tạo bản sao của Khuyến Mãi để chỉnh sửa giá trị (tránh sửa vào cache chung)
+					kmForDetail = new KhuyenMai(
+							kmGoc.getMaKM(), 
+							kmGoc.getTenKM(), 
+							kmGoc.getNgayBatDau(), 
+							kmGoc.getNgayKetThuc(),
+							kmGoc.isTrangThai(), 
+							kmGoc.isKhuyenMaiHoaDon(), 
+							kmGoc.getHinhThuc(),
+							kmGoc.getGiaTri(), // Giá trị ban đầu
+							kmGoc.getDieuKienApDungHoaDon(), 
+							kmGoc.getSoLuongKhuyenMai()
+					);
 
-		    HoaDon hdTmp = new HoaDon();
-		    hdTmp.setMaHoaDon(maHD);
+					// ⚠️ LOGIC QUY ĐỔI TIỀN MẶT:
+					// Nếu là GIAM_GIA_TIEN -> Phải nhân với Hệ Số Quy Đổi của đơn vị đang bán
+					// Ví dụ: DB lưu giảm 500đ/viên. Bán Hộp (100 viên) -> Giá trị KM gửi đi phải là 50.000
+					if (kmGoc.getHinhThuc() == HinhThucKM.GIAM_GIA_TIEN) {
+						int heSo = it.getHeSoQuyCach(); // Lấy từ ItemDonHang (đã map với DAO)
+						kmForDetail.setGiaTri(kmGoc.getGiaTri() * heSo);
+					}
+					// Nếu là GIAM_GIA_PHAN_TRAM -> Giữ nguyên giá trị (vì 10% của hộp tự động to hơn 10% của viên)
+				}
+			} catch (Exception ignore) {}
 
-		    // ✅ bây giờ ChiTietHoaDon sẽ tự tính giảm dựa trên giaBan GỐC + khuyến mãi
-		    ChiTietHoaDon cthd = new ChiTietHoaDon(hdTmp, lo, soLuong, giaBan, khuyenMaiSP, donViTinh);
-		    dsChiTiet.add(cthd);
+			// Tạo chi tiết hóa đơn tạm
+			HoaDon hdTmp = new HoaDon();
+			hdTmp.setMaHoaDon(maHD);
+
+			// ✅ Tạo ChiTietHoaDon (Đúng thứ tự Constructor mới)
+			// (HoaDon, LoSanPham, SoLuong, DonViTinh, GiaBan, KhuyenMai)
+			ChiTietHoaDon cthd = new ChiTietHoaDon(hdTmp, lo, soLuong, donViTinh, giaBan, kmForDetail);
+			dsChiTiet.add(cthd);
 		}
 
+		// 6. Tạo Hóa Đơn Chính
+		// Entity HoaDon sẽ tự động tính toán lại tiền nong dựa trên dsChiTiet và kmHoaDonDangApDung
+		HoaDon hd = new HoaDon(maHD, nhanVienHienTai, khForHD, ngayLap, kmHoaDonDangApDung, dsChiTiet, thuocKeDon);
 
-		// 6. Tạo hóa đơn
-		HoaDon hd = new HoaDon(maHD, nhanVienHienTai, khForHD, ngayLap, kmHoaDonDangApDung, // 👈 nếu có KM hóa đơn thì
-																							// gắn vào đây, ngược lại là
-																							// null
-				dsChiTiet, thuocKeDon);
-
-		// Lưu ý: HoaDon.getTongTien() nên trả về đúng số sau KM HĐ.
-		// Nếu constructor chỉ lưu raw, bạn có thể set thêm field tongTien = tongHoaDon.
-
+		// 7. Lưu xuống CSDL
 		boolean ok = hoaDonDao.themHoaDon(hd);
 		if (!ok) {
-			JOptionPane.showMessageDialog(this, "Lưu hóa đơn thất bại!\nVui lòng thử lại.", "Lỗi",
+			JOptionPane.showMessageDialog(this, "Lưu hóa đơn thất bại!\nVui lòng thử lại.", "Lỗi Hệ Thống",
 					JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 
-		// 7. Sau khi lưu thành công: giảm số lượng KM hóa đơn nếu đang dùng
-		if (kmHoaDonDangApDung != null) {
-			khuyenMaiDao.giamSoLuong(kmHoaDonDangApDung.getMaKM());
+		// 8. Cập nhật số lượng KM Hóa Đơn (nếu có dùng)
+		// Kiểm tra lại từ entity xem KM Hóa Đơn có bị hủy (do ưu tiên KM SP) hay không
+		if (hd.getKhuyenMai() != null) {
+			khuyenMaiDao.giamSoLuong(hd.getKhuyenMai().getMaKM());
 		}
 
+		// 9. Hoàn tất
 		JOptionPane.showMessageDialog(this, "Lập hóa đơn thành công!\nMã hóa đơn: " + maHD, "Thành công",
 				JOptionPane.INFORMATION_MESSAGE);
 
@@ -477,49 +556,67 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 	}
 
 	private void lamMoiSauKhiBanThanhCong() {
-		dsItem.clear();
-		pnDanhSachDon.removeAll();
-		pnDanhSachDon.revalidate();
-		pnDanhSachDon.repaint();
+        dsItem.clear();
+        pnDanhSachDon.removeAll();
+        pnDanhSachDon.revalidate();
+        pnDanhSachDon.repaint();
 
-		tongTienHang = 0;
-		tongGiamSP = 0;
-		tongGiamHD = 0;
-		tongHoaDon = 0;
+        tongTienHang = 0;
+        tongGiamSP = 0;
+        tongGiamHD = 0;
+        tongHoaDon = 0;
 
-		txtTongTienHang.setText("0 đ");
-		txtGiamSPValue.setText("0 đ");
-		txtGiamHDValue.setText("0 đ");
-		txtTongHDValue.setText("0 đ");
-		txtTienKhach.setText("");
-		txtTienThua.setText("0 đ");
+        txtTongTienHang.setText("0 đ");
+        txtGiamSPValue.setText("0 đ");
+        txtGiamHDValue.setText("0 đ");
+        txtTongHDValue.setText("0 đ");
+        
+        // ✅ SỬA 1: Reset ô Tiền Khách về Placeholder màu xám
+        txtTienKhach.setText(PLACEHOLDER_TIEN_KHACH);
+        txtTienKhach.setForeground(Color.GRAY);
+        
+        txtTienThua.setText("0 đ");
 
-		// Trả lại khách vãng lai
-		khachHangHienTai = null;
-		txtTimKH.setText("Nhập số điện thoại khách hàng");
-		txtTenKhachHang.setText("Vãng lai");
+        // Trả lại khách vãng lai
+        khachHangHienTai = null;
+        
+        // ✅ SỬA 2: Reset ô Tìm Khách về Placeholder màu xám
+        txtTimKH.setText(PLACEHOLDER_TIM_KH);
+        txtTimKH.setForeground(Color.GRAY); // 
+        
+        txtTenKhachHang.setText("Vãng lai");
+        
+        // ✅ SỬA 3: Reset ô Tìm Thuốc (nếu chưa có)
+        txtTimThuoc.setText(PLACEHOLDER_TIM_THUOC);
+        txtTimThuoc.setForeground(Color.GRAY);
 
-		// Xóa gợi ý tiền
-		for (int i = 0; i < btnGoiY.length; i++) {
-			if (btnGoiY[i] != null) {
-				btnGoiY[i].setText("");
-			}
-			goiYValues[i] = 0;
-		}
-	}
+        // Xóa gợi ý tiền
+        for (int i = 0; i < btnGoiY.length; i++) {
+            if (btnGoiY[i] != null) {
+                btnGoiY[i].setText("");
+            }
+            goiYValues[i] = 0;
+        }
+    }
 
 	private double parseTienTuTextField(JTextField txt) {
-		String raw = txt.getText().trim();
-		raw = raw.replace(".", "").replace(",", "").replace("đ", "").replace("Đ", "").replace("k", "").replace("K", "")
-				.trim();
-		if (raw.isEmpty())
-			return 0;
-		try {
-			return Double.parseDouble(raw);
-		} catch (NumberFormatException ex) {
-			return 0;
-		}
-	}
+        String raw = txt.getText().trim();
+        
+        // Nếu là placeholder -> coi như chưa nhập (0 đồng)
+        if (raw.equals(PLACEHOLDER_TIEN_KHACH)) {
+            return 0;
+        }
+
+        raw = raw.replace(".", "").replace(",", "").replace("đ", "").replace("Đ", "").replace("k", "").replace("K", "")
+                .trim();
+        if (raw.isEmpty())
+            return 0;
+        try {
+            return Double.parseDouble(raw);
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
+    }
 
 	// ================= XỬ LÝ TÌM THUỐC ==================
 	private void xuLyTimThuoc() {
@@ -830,40 +927,65 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 	}
 
 	// ================= TÌM KHÁCH ==================
-	private void xuLyTimKhach() {
+	private void xuLyTimKhach(boolean baoLoi) {
 		String sdt = txtTimKH.getText().trim();
 
-		if (sdt.isEmpty()) {
-			khachHangHienTai = null;
-			txtTenKhachHang.setText("Vãng lai");
+		// 1. Nếu ô trống hoặc là placeholder -> Về Vãng lai
+		if (sdt.isEmpty() || sdt.equals(PLACEHOLDER_TIM_KH)) {
+			troVeKhachVangLai();
 			return;
 		}
 
-		if (!sdt.matches("\\d{9,11}")) {
-			JOptionPane.showMessageDialog(this, "Số điện thoại không hợp lệ (chỉ nhận 9–11 chữ số).", "Lỗi",
-					JOptionPane.WARNING_MESSAGE);
-			txtTimKH.requestFocus();
+		// 2. Kiểm tra định dạng
+		if (!sdt.matches("^0\\d{9}$")) {
+			if (baoLoi) {
+				JOptionPane.showMessageDialog(this, "SĐT không hợp lệ (10 chữ số, bắt đầu bằng 0).", "Lỗi",
+						JOptionPane.WARNING_MESSAGE);
+				txtTimKH.requestFocus();
+			}
+			// Nếu không báo lỗi (click ra ngoài), thì cứ để nguyên text đó cho họ sửa, không làm gì cả
 			return;
 		}
 
+		// 3. Tìm trong DB
 		KhachHang kh = khachHangDao.timKhachHangTheoSoDienThoai(sdt);
 
 		if (kh == null) {
-			int choice = JOptionPane.showConfirmDialog(this,
-					"Không tìm thấy khách có SĐT: " + sdt + ".\n" + "Bạn muốn giữ khách 'Vãng lai' không?",
-					"Không tìm thấy khách", JOptionPane.YES_NO_OPTION);
+			// Không tìm thấy
+			if (baoLoi) {
+				int choice = JOptionPane.showConfirmDialog(this,
+						"Không tìm thấy khách có SĐT: " + sdt + ".\n" + "Bạn muốn giữ khách 'Vãng lai' không?",
+						"Không tìm thấy khách", JOptionPane.YES_NO_OPTION);
 
-			if (choice == JOptionPane.YES_OPTION) {
+				if (choice == JOptionPane.YES_OPTION) {
+					troVeKhachVangLai();
+					// Reset lại ô nhập liệu về placeholder cho đẹp
+					txtTimKH.setText(PLACEHOLDER_TIM_KH);
+					txtTimKH.setForeground(Color.GRAY); 
+				} else {
+					// Chọn No -> Giữ nguyên số điện thoại để họ nhập lại hoặc đăng ký mới
+					txtTimKH.requestFocus();
+				}
+			} else {
+				// Nếu click ra ngoài mà không thấy khách -> Tự động về Vãng lai (hoặc giữ nguyên tùy logic bạn thích)
+				// Ở đây tôi chọn giải pháp an toàn: Giữ nguyên SĐT đó nhưng Tên Khách vẫn là Vãng lai
+				// Để họ biết là SĐT này chưa có trong hệ thống.
 				khachHangHienTai = null;
-				txtTenKhachHang.setText("Vãng lai");
+				txtTenKhachHang.setText("Vãng lai (SĐT chưa lưu)");
 			}
 			return;
 		}
 
+		// 4. Tìm thấy -> Set khách hàng
 		khachHangHienTai = kh;
 		txtTenKhachHang.setText(kh.getTenKhachHang());
 	}
-
+	
+	/** Helper để reset về vãng lai nhanh */
+	private void troVeKhachVangLai() {
+		khachHangHienTai = null;
+		txtTenKhachHang.setText("Vãng lai");
+	}
 	private double tinhTienGiamHoaDon(double tongSauGiamSP, KhuyenMai km) {
 		if (km == null || km.getHinhThuc() == null)
 			return 0;
