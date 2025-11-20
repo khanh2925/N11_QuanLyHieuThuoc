@@ -7,14 +7,14 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
-import java.util.List; // ✅ SỬA 1: Dùng lại List
+import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import com.toedter.calendar.JDateChooser;
 import entity.DonViTinh;
 import entity.LoSanPham;
-import entity.QuyCachDongGoi; // ✅ SỬA 2: Thêm import QuyCachDongGoi
+import entity.QuyCachDongGoi;
 import entity.SanPham;
 
 public class ThemLo_Dialog extends JDialog {
@@ -25,7 +25,6 @@ public class ThemLo_Dialog extends JDialog {
     private JButton btnLuu, btnThoat;
     private JTextField txtDonGia;
     
-    // ✅ SỬA 3: Đổi txtDonViTinh thành cmbQuyCach
     private JComboBox<QuyCachDongGoi> cmbQuyCach; 
 
     // Nơi lưu trữ kết quả (luôn là ĐƠN VỊ GỐC)
@@ -38,15 +37,11 @@ public class ThemLo_Dialog extends JDialog {
     // Thông tin truyền vào
     private SanPham sanPham;
     private String maLoDeNghi;
-    private List<QuyCachDongGoi> dsQuyCach; // ✅ SỬA 4: Nhận vào danh sách
+    private List<QuyCachDongGoi> dsQuyCach;
     private QuyCachDongGoi quyCachGoc;
     
     private final DecimalFormat df = new DecimalFormat("#,### đ");
 
-    /**
-     * Constructor mới
-     * ✅ SỬA 5: Nhận vào List<QuyCachDongGoi>
-     */
     public ThemLo_Dialog(Frame owner, SanPham sp, String maLoDeNghi, List<QuyCachDongGoi> dsQuyCach, QuyCachDongGoi quyCachGoc) {
         super(owner, "Nhập lô cho: " + sp.getTenSanPham(), true);
         this.sanPham = sp;
@@ -54,24 +49,18 @@ public class ThemLo_Dialog extends JDialog {
         this.dsQuyCach = dsQuyCach;
         this.quyCachGoc = quyCachGoc;
         
-        // Lưu trữ thông tin gốc (dùng khi lưu)
         this.donViTinhGoc = quyCachGoc.getDonViTinh();
         this.donGiaNhapGoc = sp.getGiaNhap();
         
         initialize();
         
-        // Cập nhật các trường
         txtMaLo.setText(maLoDeNghi);
         
-        // Load JComboBox
         for (QuyCachDongGoi qc : dsQuyCach) {
             cmbQuyCach.addItem(qc);
         }
         
-        // Mặc định chọn đơn vị gốc (đã được sắp xếp ở DAO)
         cmbQuyCach.setSelectedIndex(0);
-        
-        // Cập nhật giá ban đầu (cho đơn vị gốc)
         capNhatGiaTheoQuyCach();
     }
 
@@ -116,8 +105,6 @@ public class ThemLo_Dialog extends JDialog {
         dateHanSuDung.setDate(Date.from(LocalDate.now().plusYears(1).atStartOfDay(ZoneId.systemDefault()).toInstant()));
         mainPanel.add(dateHanSuDung, gbc);
 
-        // ✅ SỬA 6: Đổi Hàng 2 và Hàng 3
-        
         // Hàng 2: Đơn Vị Tính (Quy Cách)
         gbc.gridx = 0; gbc.gridy = 2;
         JLabel lblDonViTinh = new JLabel("Đơn vị tính:");
@@ -128,7 +115,6 @@ public class ThemLo_Dialog extends JDialog {
         cmbQuyCach = new JComboBox<>();
         cmbQuyCach.setFont(fontField);
         cmbQuyCach.setBackground(Color.WHITE);
-        // Thêm renderer để JComboBox hiển thị tên ĐVT
         cmbQuyCach.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -139,7 +125,6 @@ public class ThemLo_Dialog extends JDialog {
                 return this;
             }
         });
-        // Thêm listener để cập nhật giá
         cmbQuyCach.addActionListener(e -> capNhatGiaTheoQuyCach());
         mainPanel.add(cmbQuyCach, gbc);
         
@@ -206,22 +191,17 @@ public class ThemLo_Dialog extends JDialog {
         QuyCachDongGoi qcDaChon = (QuyCachDongGoi) cmbQuyCach.getSelectedItem();
         if (qcDaChon == null) return;
         
-        // Giá gốc = Giá nhập chuẩn của sản phẩm (từ đơn vị gốc)
         double giaGoc = sanPham.getGiaNhap();
         int heSo = qcDaChon.getHeSoQuyDoi();
-        double tiLeGiam = qcDaChon.getTiLeGiam();
+        // double tiLeGiam = qcDaChon.getTiLeGiam(); // <-- BỎ TỶ LỆ GIẢM
         
-        // Giá hiển thị = (Giá gốc * Hệ số) * (1 - Tỉ lệ giảm)
-        double giaHienThi = (giaGoc * heSo) * (1 - tiLeGiam);
+        // Giá hiển thị = Giá gốc * Hệ số
+        double giaHienThi = giaGoc * heSo; // <-- SỬA LẠI CÔNG THỨC
         
         txtDonGia.setText(df.format(giaHienThi));
     }
     
-    /**
-     * ✅ SỬA 8: Cập nhật logic lưu, quy đổi về đơn vị gốc
-     */
     private void xuLyLuu() {
-        // 1. Validate HSD
         Date selectedDate = dateHanSuDung.getDate();
         if (selectedDate == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn Hạn Sử Dụng.", "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
@@ -233,7 +213,6 @@ public class ThemLo_Dialog extends JDialog {
              return;
         }
         
-        // 2. Lấy quy cách đã chọn
         QuyCachDongGoi qcDaChon = (QuyCachDongGoi) cmbQuyCach.getSelectedItem();
         if (qcDaChon == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một Quy Cách Đóng Gói.", "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
@@ -241,23 +220,15 @@ public class ThemLo_Dialog extends JDialog {
         }
         
         try {
-            // 3. Lấy số lượng theo quy cách (ví dụ: 5 Hộp)
             int soLuongQuyCach = (Integer) spinnerSoLuong.getValue();
             
-            // 4. QUY ĐỔI VỀ GỐC
-            // Số lượng gốc = 5 (Hộp) * 10 (Hệ số quy đổi của Hộp) = 50 (Viên)
+            // QUY ĐỔI VỀ GỐC
             this.soLuongNhapGoc = soLuongQuyCach * qcDaChon.getHeSoQuyDoi();
-            
-            // Đơn giá gốc VÀ ĐVT Gốc đã được lưu trong constructor
-            // this.donGiaNhapGoc = sanPham.getGiaNhap();
-            // this.donViTinhGoc = this.quyCachGoc.getDonViTinh();
             
             String maLo = txtMaLo.getText();
             
-            // 5. Tạo đối tượng Lô (với soLuongTon = 0)
             this.loSanPham = new LoSanPham(maLo, hsd, 0, this.sanPham);
             
-            // 6. Xác nhận và đóng
             this.confirmed = true;
             this.dispose();
             
@@ -276,17 +247,14 @@ public class ThemLo_Dialog extends JDialog {
         return loSanPham;
     }
 
-    /** Trả về Đơn Giá đã quy đổi về GỐC */
     public double getDonGiaNhap() {
         return donGiaNhapGoc;
     }
 
-    /** Trả về Số Lượng đã quy đổi về GỐC */
     public int getSoLuongNhap() {
         return soLuongNhapGoc;
     }
 
-    /** Trả về Đơn Vị Tính GỐC */
     public DonViTinh getDonViTinh() {
         return donViTinhGoc;
     }

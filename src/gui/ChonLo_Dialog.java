@@ -19,7 +19,7 @@ import entity.LoSanPham;
 import entity.QuyCachDongGoi;
 import entity.SanPham;
 
-public class ChonLo_Dialog extends JDialog {
+public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListener {
 
     // ===== I. CÁC TRƯỜNG DỮ LIỆU (FIELDS) =====
     private final DateTimeFormatter fmtDate = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -60,20 +60,14 @@ public class ChonLo_Dialog extends JDialog {
     private Font fontLabel;
     private Font fontField;
     
-    // ✅ Thêm hằng số để căn chỉnh label
     private final int LABEL_WIDTH = 150;
     private final int COMPONENT_HEIGHT = 35;
 
     // ===== II. CONSTRUCTORS =====
 
-    /**
-     * Constructor 1 (Chỉ Thêm Mới): Dùng khi thêm SP mới vào phiếu
-     * @wbp.parser.constructor
-     */
     public ChonLo_Dialog(Frame owner, SanPham sp, String maLoDeNghi, List<QuyCachDongGoi> dsQuyCach, QuyCachDongGoi quyCachGoc) {
         super(owner, "Nhập lô cho: " + sp.getTenSanPham(), true);
         
-        // 1. Set data
         this.sanPham = sp;
         this.maLoDeNghi = maLoDeNghi;
         this.dsQuyCach = dsQuyCach;
@@ -82,15 +76,13 @@ public class ChonLo_Dialog extends JDialog {
         this.donViTinhGoc = quyCachGoc.getDonViTinh();
         this.donGiaNhapGoc = sp.getGiaNhap();
 
-        // 2. Khởi tạo UI
         setSize(450, 450);
         setLocationRelativeTo(owner);
         getContentPane().setBackground(Color.WHITE);
         
-        initialize(); // Xây dựng Giao diện
-        registerEvents(); // Gắn Sự kiện
+        initialize(); 
+        registerEvents();
 
-        // 3. Cấu hình logic ban đầu
         capNhatGiaTheoQuyCach(cmbQuyCachMoi, txtDonGiaMoi);
         capNhatGiaTheoQuyCach(cmbQuyCachCu, txtDonGiaCu);
 
@@ -98,20 +90,14 @@ public class ChonLo_Dialog extends JDialog {
         tabbedPane.setSelectedIndex(1); 
     }
 
-    /**
-     * Constructor 2 (Thêm Mới hoặc Sửa): Dùng khi nhấn nút "Chọn Lô"
-     */
     public ChonLo_Dialog(Frame owner, SanPham sp, String maLoDeNghi, List<QuyCachDongGoi> dsQuyCach, QuyCachDongGoi quyCachGoc, List<ChiTietPhieuNhap> dsLoHienTai) {
-        // 1. Gọi constructor 1 để khởi tạo mọi thứ
         this(owner, sp, maLoDeNghi, dsQuyCach, quyCachGoc);
 
-        // 2. Cập nhật lại các giá trị cho chế độ "Sửa"
         setTitle("Sửa lô hoặc Thêm lô mới cho: " + sp.getTenSanPham());
-        setSize(550, 520); // Cần to hơn để chứa JList
+        setSize(550, 520);
 
         this.dsLoHienTai = dsLoHienTai;
 
-        // 3. Cấu hình logic
         tabbedPane.setTitleAt(0, "Lô cũ");
         tabbedPane.setEnabledAt(0, true); 
         tabbedPane.setSelectedIndex(0); 
@@ -121,9 +107,6 @@ public class ChonLo_Dialog extends JDialog {
 
     // ===== III. KHỞI TẠO GIAO DIỆN (UI) =====
 
-    /**
-     * Khởi tạo các thành phần giao diện chính
-     */
     private void initialize() {
         getContentPane().setLayout(new BorderLayout());
 
@@ -140,7 +123,6 @@ public class ChonLo_Dialog extends JDialog {
 
         getContentPane().add(tabbedPane, BorderLayout.CENTER);
 
-        // Panel chứa nút bấm
         JPanel pnButton = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         pnButton.setBackground(Color.WHITE);
         pnButton.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -162,16 +144,12 @@ public class ChonLo_Dialog extends JDialog {
         getContentPane().add(pnButton, BorderLayout.SOUTH);
     }
     
-    /**
-     * ✅ [BoxLayout] Tạo Panel cho Tab "Lô Mới"
-     */
     private JPanel createPanelLoMoi() {
         JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS)); // ✅ Sử dụng BoxLayout
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBackground(Color.WHITE);
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20)); // ✅ Padding
+        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        // Khởi tạo components
         txtMaLoMoi = new JTextField(maLoDeNghi);
         txtMaLoMoi.setFont(fontField);
         txtMaLoMoi.setEditable(false);
@@ -196,7 +174,6 @@ public class ChonLo_Dialog extends JDialog {
         txtDonGiaMoi.setBackground(new Color(0xF3F4F6));
         txtDonGiaMoi.setHorizontalAlignment(JTextField.RIGHT);
 
-        // Thêm các hàng vào panel
         panel.add(createRowPanel(new JLabel("Mã Lô (tự sinh):"), txtMaLoMoi));
         panel.add(Box.createVerticalStrut(15));
         panel.add(createRowPanel(new JLabel("Hạn sử dụng:"), dateHSDMoi));
@@ -207,28 +184,23 @@ public class ChonLo_Dialog extends JDialog {
         panel.add(Box.createVerticalStrut(15));
         panel.add(createRowPanel(new JLabel("Đơn giá (theo ĐVT):"), txtDonGiaMoi));
         
-        panel.add(Box.createVerticalGlue()); // Đẩy các trường lên trên
+        panel.add(Box.createVerticalGlue());
 
         return panel;
     }
 
-    /**
-     * ✅ [BoxLayout] Tạo Panel cho Tab "Sửa Lô Hiện Tại"
-     */
     private JPanel createPanelSuaLo() {
         JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS)); // ✅ Sử dụng BoxLayout
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBackground(Color.WHITE);
         panel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        // Hàng 0: Tiêu đề
         JLabel lblTitle = new JLabel("Chọn một lô bên dưới để sửa số lượng:");
         lblTitle.setFont(fontLabel);
         lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(lblTitle);
         panel.add(Box.createVerticalStrut(10));
 
-        // Hàng 1: Danh sách
         modelLoCu = new DefaultListModel<>();
         listLoCu = new JList<>(modelLoCu);
         listLoCu.setFont(fontField);
@@ -241,14 +213,12 @@ public class ChonLo_Dialog extends JDialog {
         panel.add(scrollList);
         panel.add(Box.createVerticalStrut(10));
 
-        // Hàng 2: Đường kẻ
         JSeparator separator = new JSeparator();
         separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 2));
         separator.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(separator);
         panel.add(Box.createVerticalStrut(15));
         
-        // Khởi tạo components
         cmbQuyCachCu = new JComboBox<>();
         cmbQuyCachCu.setFont(fontField);
         cmbQuyCachCu.setBackground(Color.WHITE);
@@ -263,7 +233,6 @@ public class ChonLo_Dialog extends JDialog {
         txtDonGiaCu.setBackground(new Color(0xF3F4F6));
         txtDonGiaCu.setHorizontalAlignment(JTextField.RIGHT);
 
-        // Hàng 3, 4, 5: Thêm các hàng
         panel.add(createRowPanel(new JLabel("Đơn vị tính (Mới):"), cmbQuyCachCu));
         panel.add(Box.createVerticalStrut(15));
         panel.add(createRowPanel(new JLabel("Số lượng nhập (Mới):"), spinnerSoLuongCu));
@@ -273,9 +242,6 @@ public class ChonLo_Dialog extends JDialog {
         return panel;
     }
 
-    /**
-     * ✅ [Helper] Tạo một hàng (row) chuẩn cho form BoxLayout
-     */
     private JPanel createRowPanel(JLabel label, Component component) {
         JPanel panel = new JPanel(new BorderLayout(15, 0));
         panel.setBackground(Color.WHITE);
@@ -297,9 +263,6 @@ public class ChonLo_Dialog extends JDialog {
         return panel;
     }
     
-    /**
-     * Nạp dữ liệu Quy Cách vào JComboBox
-     */
     private void loadQuyCachComboBox(JComboBox<QuyCachDongGoi> cmb) {
         cmb.setRenderer(new DefaultListCellRenderer() {
             @Override
@@ -319,25 +282,44 @@ public class ChonLo_Dialog extends JDialog {
 
     // ===== IV. XỬ LÝ SỰ KIỆN & NGHIỆP VỤ (LOGIC) =====
 
-    /**
-     * Gán sự kiện cho các component
-     */
     private void registerEvents() {
-        btnLuu.addActionListener(e -> xuLyXacNhan());
-        
-        btnThoat.addActionListener(e -> {
-            confirmed = false;
-            dispose();
-        });
+        // Đăng ký ActionListener cho các nút và ComboBox
+        btnLuu.addActionListener(this);
+        btnThoat.addActionListener(this);
+        cmbQuyCachMoi.addActionListener(this);
+        cmbQuyCachCu.addActionListener(this);
 
-        // Sự kiện cập nhật giá khi đổi ComboBox
-        cmbQuyCachMoi.addActionListener(e -> capNhatGiaTheoQuyCach(cmbQuyCachMoi, txtDonGiaMoi));
-        cmbQuyCachCu.addActionListener(e -> capNhatGiaTheoQuyCach(cmbQuyCachCu, txtDonGiaCu));
+        // Đăng ký MouseListener cho List
+        listLoCu.addMouseListener(this);
+    }
+    
+    /**
+     * Hàm cập nhật form từ List khi người dùng chọn dòng
+     */
+    private void capNhatFormTuList() {
+        ChiTietPhieuNhap itemDuocChon = listLoCu.getSelectedValue();
+        
+        if (itemDuocChon != null) {
+            // 1. Cập nhật số lượng
+            spinnerSoLuongCu.setValue(itemDuocChon.getSoLuongNhap());
+
+            // 2. Cập nhật ComboBox Đơn vị tính
+            DonViTinh dvtHienTai = itemDuocChon.getDonViTinh();
+            if (dvtHienTai != null) {
+                for (int i = 0; i < cmbQuyCachCu.getItemCount(); i++) {
+                    QuyCachDongGoi qc = cmbQuyCachCu.getItemAt(i);
+                    if (qc.getDonViTinh().getMaDonViTinh().equals(dvtHienTai.getMaDonViTinh())) {
+                        cmbQuyCachCu.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+            
+            // 3. Cập nhật giá tiền
+            capNhatGiaTheoQuyCach(cmbQuyCachCu, txtDonGiaCu);
+        }
     }
 
-    /**
-     * Xử lý khi nhấn nút Lưu (Xác nhận)
-     */
     private void xuLyXacNhan() {
         int selectedIndex = tabbedPane.getSelectedIndex();
 
@@ -381,7 +363,6 @@ public class ChonLo_Dialog extends JDialog {
                 this.loDaChon = ctDuocChon.getLoSanPham();
             }
 
-            // Set các giá trị chung
             this.donGiaNhapGoc = this.sanPham.getGiaNhap();
             this.donViTinhGoc = this.quyCachGoc.getDonViTinh();
             this.confirmed = true;
@@ -398,18 +379,18 @@ public class ChonLo_Dialog extends JDialog {
     private void capNhatGiaTheoQuyCach(JComboBox<QuyCachDongGoi> cmb, JTextField txtDonGia) {
         QuyCachDongGoi qcDaChon = (QuyCachDongGoi) cmb.getSelectedItem();
         if (qcDaChon == null) return;
+        
         double giaGoc = sanPham.getGiaNhap();
         int heSo = qcDaChon.getHeSoQuyDoi();
-        double tiLeGiam = qcDaChon.getTiLeGiam();
-        double giaHienThi = (giaGoc * heSo) * (1 - tiLeGiam);
+        
+        // Giá hiển thị = Giá gốc * Hệ số
+        double giaHienThi = giaGoc * heSo;
+        
         txtDonGia.setText(df.format(giaHienThi));
     }
 
     // ===== V. TẢI DỮ LIỆU (DATA) =====
 
-    /**
-     * Nạp dữ liệu Lô hiện tại từ danh sách được truyền vào
-     */
     private void loadDataLoHienTai() {
         modelLoCu.clear();
         if (this.dsLoHienTai != null) {
@@ -445,11 +426,52 @@ public class ChonLo_Dialog extends JDialog {
         return chiTietCanSua;
     }
 
-    // ===== VII. LỚP NỘI BỘ (INNER CLASS) =====
+    // ===== VII. IMPLEMENTS LISTENERS =====
 
-    /**
-     * Lớp nội bộ để render JList (Đổi sang ChiTietPhieuNhap)
-     */
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object source = e.getSource();
+        
+        if (source == btnLuu) {
+            xuLyXacNhan();
+        } else if (source == btnThoat) {
+            confirmed = false;
+            dispose();
+        } else if (source == cmbQuyCachMoi) {
+            capNhatGiaTheoQuyCach(cmbQuyCachMoi, txtDonGiaMoi);
+        } else if (source == cmbQuyCachCu) {
+            capNhatGiaTheoQuyCach(cmbQuyCachCu, txtDonGiaCu);
+        }
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        // Xử lý khi click vào list
+        if (e.getSource() == listLoCu) {
+            if (listLoCu.getSelectedIndex() != -1) {
+                capNhatFormTuList();
+            }
+        }
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+    }
+
+    // ===== VIII. LỚP NỘI BỘ (INNER CLASS) =====
+
     class ChiTietPhieuNhapRenderer extends DefaultListCellRenderer {
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -464,12 +486,6 @@ public class ChonLo_Dialog extends JDialog {
                 );
                 setText(text);
                 setBorder(new EmptyBorder(5, 5, 5, 5));
-
-                if (lo.isHetHan()) {
-                    setForeground(Color.RED);
-                } else {
-                    setForeground(Color.BLACK);
-                }
             }
             return this;
         }

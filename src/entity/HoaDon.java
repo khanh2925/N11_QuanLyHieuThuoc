@@ -5,270 +5,258 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import enums.HinhThucKM; // Đảm bảo bạn đã import enum này
+
 public class HoaDon {
 
-	private static final double TY_LE_DIEM_QUY_DOI = 1000; // 1 điểm = 1000đ
+    private String maHoaDon;
+    private NhanVien nhanVien;
+    private KhachHang khachHang;
+    private LocalDate ngayLap;
 
-	private String maHoaDon;
-	private NhanVien nhanVien;
-	private KhachHang khachHang;
-	private LocalDate ngayLap;
-	private double tongTien;
-	private double tongThanhToan;
-	private double diemSuDung;
-	private KhuyenMai khuyenMai;
-	private double soTienGiamKhuyenMai;
-	private List<ChiTietHoaDon> danhSachChiTiet;
+    // ✅ Chỉ có Getter, không có Setter công khai
+    private double tongTien;           // Tổng tiền hàng GỐC (chưa trừ gì cả)
+    private double tongThanhToan;      // Số tiền khách phải trả cuối cùng
+    private double soTienGiamKhuyenMai;// Tổng tiền được giảm (từ SP hoặc từ HĐ)
 
-	// ✅ Thuốc kê đơn (true = có toa bác sĩ)
-	private boolean thuocKeDon;
+    // Khuyến mãi áp ở mức HÓA ĐƠN
+    private KhuyenMai khuyenMai;
 
-	// ===== CONSTRUCTORS =====
-	public HoaDon() {
-		this.danhSachChiTiet = new ArrayList<>();
-		this.ngayLap = LocalDate.now();
-		this.diemSuDung = 0;
-		this.soTienGiamKhuyenMai = 0;
-		this.thuocKeDon = false;
-	}
+    private List<ChiTietHoaDon> danhSachChiTiet;
 
-	public HoaDon(String maHoaDon, NhanVien nhanVien, KhachHang khachHang, LocalDate ngayLap, KhuyenMai khuyenMai,
-			List<ChiTietHoaDon> danhSachChiTiet, boolean thuocKeDon) {
-		setMaHoaDon(maHoaDon);
-		setNhanVien(nhanVien);
-		setKhachHang(khachHang);
-		setNgayLap(ngayLap);
-		setDanhSachChiTiet(danhSachChiTiet != null ? danhSachChiTiet : new ArrayList<>());
-		setKhuyenMai(khuyenMai);
-		setThuocKeDon(thuocKeDon);
-		capNhatTongTien();
-	}
+    private boolean thuocKeDon;
 
-	// ===== GETTERS / SETTERS =====
-	public String getMaHoaDon() {
-		return maHoaDon;
-	}
+    // ===== CONSTRUCTORS =====
+    public HoaDon() {
+        this.danhSachChiTiet = new ArrayList<>();
+        this.ngayLap = LocalDate.now();
+        this.thuocKeDon = false;
+        this.tongTien = 0;
+        this.tongThanhToan = 0;
+        this.soTienGiamKhuyenMai = 0;
+    }
 
-	public void setMaHoaDon(String maHoaDon) {
-		if (maHoaDon == null)
-			throw new IllegalArgumentException("Mã hoá đơn không được để trống");
+    public HoaDon(String maHoaDon,
+                  NhanVien nhanVien,
+                  KhachHang khachHang,
+                  LocalDate ngayLap,
+                  KhuyenMai khuyenMai,
+                  List<ChiTietHoaDon> danhSachChiTiet,
+                  boolean thuocKeDon) {
 
-		maHoaDon = maHoaDon.trim(); // loại bỏ khoảng trắng đầu/cuối
+        setMaHoaDon(maHoaDon);
+        setNhanVien(nhanVien);
+        setKhachHang(khachHang);
+        setNgayLap(ngayLap);
+        setThuocKeDon(thuocKeDon);
+        
+        // Lưu ý: setDanhSachChiTiet và setKhuyenMai sẽ tự động gọi tính toán tiền
+        setDanhSachChiTiet(danhSachChiTiet != null ? danhSachChiTiet : new ArrayList<>());
+        setKhuyenMai(khuyenMai);
+    }
 
-		// Regex chuẩn: HD-yyyymmdd-xxxx (ví dụ HD-20251104-0001)
-		if (!maHoaDon.matches("^HD-\\d{8}-\\d{4}$")) {
-			throw new IllegalArgumentException("Mã hoá đơn không hợp lệ. Định dạng: HD-yyyymmdd-xxxx");
-		}
+    // ===== CORE LOGIC: TÍNH TOÁN TIỀN & KHUYẾN MÃI =====
 
-		this.maHoaDon = maHoaDon;
-	}
+    /**
+     * Hàm tính toán trung tâm. 
+     * Tự động chạy khi set danh sách chi tiết hoặc set khuyến mãi.
+     */
+    public void capNhatDuLieuHoaDon() {
+        double tongTienHangGoc = 0;       // Tổng tiền niêm yết
+        double tongTienGiamTuSanPham = 0; // Tổng tiền giảm được tích lũy từ từng sản phẩm
+        boolean coKhuyenMaiSanPham = false;
 
-	public boolean isThuocKeDon() {
-		return thuocKeDon;
-	}
+        // 1. Duyệt chi tiết để lấy số liệu
+        for (ChiTietHoaDon ct : danhSachChiTiet) {
+            // Giá gốc của dòng này (SL * Giá Bán Niêm Yết)
+            // Lưu ý: ct.getGiaBan() phải là giá gốc.
+            double thanhTienGoc = ct.getSoLuong() * ct.getGiaBan();
+            tongTienHangGoc += thanhTienGoc;
 
-	public void setThuocKeDon(boolean thuocKeDon) {
-		this.thuocKeDon = thuocKeDon;
-	}
+            // Kiểm tra chi tiết này có áp dụng KM sản phẩm không
+            if (ct.getKhuyenMai() != null) {
+                coKhuyenMaiSanPham = true;
+                // Tiền giảm = Giá gốc - Giá thực tế (thanh tiền trong chi tiết đã trừ KM)
+                tongTienGiamTuSanPham += (thanhTienGoc - ct.getThanhTien());
+            }
+        }
 
-	public NhanVien getNhanVien() {
-		return nhanVien;
-	}
+        // 2. Cập nhật TỔNG TIỀN (Luôn là tổng giá gốc)
+        this.tongTien = tongTienHangGoc;
 
-	public void setNhanVien(NhanVien nhanVien) {
-		if (nhanVien == null)
-			throw new IllegalArgumentException("Nhân viên không được null.");
-		this.nhanVien = nhanVien;
-	}
+        // 3. Tính TỔNG TIỀN GIẢM (Chọn 1 trong 2)
+        if (coKhuyenMaiSanPham) {
+            // Ưu tiên KM sản phẩm -> Hủy KM hóa đơn
+            this.khuyenMai = null; 
+            this.soTienGiamKhuyenMai = tongTienGiamTuSanPham;
+        } else {
+            // Không có KM sản phẩm -> Tính KM hóa đơn (nếu có)
+            this.soTienGiamKhuyenMai = tinhGiamGiaTheoHoaDon(tongTienHangGoc);
+        }
 
-	public KhachHang getKhachHang() {
-		return khachHang;
-	}
+        // 4. Tính TỔNG THANH TOÁN
+        this.tongThanhToan = this.tongTien - this.soTienGiamKhuyenMai;
 
-	public void setKhachHang(KhachHang khachHang) {
-		if (khachHang == null)
-			throw new IllegalArgumentException("Khách hàng không được null.");
-		this.khachHang = khachHang;
-	}
+        // Validate không âm
+        if (this.tongThanhToan < 0) this.tongThanhToan = 0;
+    }
 
-	public LocalDate getNgayLap() {
-		return ngayLap;
-	}
+    /**
+     * Helper: Tính tiền giảm dựa trên khuyến mãi hóa đơn hiện tại
+     */
+    private double tinhGiamGiaTheoHoaDon(double tongTienGoc) {
+        // Check null, check hoạt động, check loại KM
+        if (this.khuyenMai == null 
+                || !this.khuyenMai.isDangHoatDong() 
+                || !this.khuyenMai.isKhuyenMaiHoaDon()) {
+            return 0;
+        }
 
-	public void setNgayLap(LocalDate ngayLap) {
-		if (ngayLap == null || ngayLap.isAfter(LocalDate.now()))
-			throw new IllegalArgumentException("Ngày lập không hợp lệ.");
-		this.ngayLap = ngayLap;
-	}
+        // Check điều kiện tổng tiền tối thiểu
+        if (tongTienGoc < this.khuyenMai.getDieuKienApDungHoaDon()) {
+            return 0;
+        }
 
-	public List<ChiTietHoaDon> getDanhSachChiTiet() {
-		return danhSachChiTiet;
-	}
+        double tienGiam = 0;
+        switch (this.khuyenMai.getHinhThuc()) {
+            case GIAM_GIA_PHAN_TRAM -> 
+                tienGiam = tongTienGoc * (this.khuyenMai.getGiaTri() / 100.0);
+            case GIAM_GIA_TIEN -> 
+                tienGiam = this.khuyenMai.getGiaTri();
+            default -> 
+                tienGiam = 0;
+        }
 
-	public void setDanhSachChiTiet(List<ChiTietHoaDon> danhSachChiTiet) {
-		if (danhSachChiTiet == null)
-			throw new IllegalArgumentException("Danh sách chi tiết hoá đơn không được null.");
-		this.danhSachChiTiet = danhSachChiTiet;
-		capNhatTongTien();
-	}
+        // Không giảm quá tổng tiền
+        return Math.min(tienGiam, tongTienGoc);
+    }
 
-	public double getTongTien() {
-		return tongTien;
-	}
+    // ===== GETTERS (NO SETTERS FOR CALCULATED FIELDS) =====
+    
+    public double getTongTien() {
+        return tongTien;
+    }
 
-	public double getTongThanhToan() {
-		return tongThanhToan;
-	}
+    public double getTongThanhToan() {
+        return tongThanhToan;
+    }
 
-	public double getDiemSuDung() {
-		return diemSuDung;
-	}
+    public double getSoTienGiamKhuyenMai() {
+        return soTienGiamKhuyenMai;
+    }
 
-	public double getSoTienGiamTuDiem() {
-		return diemSuDung * TY_LE_DIEM_QUY_DOI;
-	}
+    // ===== GETTERS / SETTERS KHÁC =====
 
-	public KhuyenMai getKhuyenMai() {
-		return khuyenMai;
-	}
+    public String getMaHoaDon() {
+        return maHoaDon;
+    }
 
-	public double getSoTienGiamKhuyenMai() {
-		return soTienGiamKhuyenMai;
-	}
+    public void setMaHoaDon(String maHoaDon) {
+        if (maHoaDon == null)
+            throw new IllegalArgumentException("Mã hoá đơn không được để trống");
+        maHoaDon = maHoaDon.trim();
+        if (!maHoaDon.matches("^HD-\\d{8}-\\d{4}$")) {
+            throw new IllegalArgumentException("Mã hoá đơn không hợp lệ. Định dạng: HD-yyyymmdd-xxxx");
+        }
+        this.maHoaDon = maHoaDon;
+    }
 
-	public void setDiemSuDung(double diemSuDung) {
-		if (diemSuDung < 0)
-			throw new IllegalArgumentException("Số điểm sử dụng không hợp lệ.");
-		this.diemSuDung = diemSuDung;
-		capNhatTongThanhToan();
-	}
+    public NhanVien getNhanVien() {
+        return nhanVien;
+    }
 
-	public void setKhuyenMai(KhuyenMai khuyenMai) {
-		// 1️⃣ Nếu null → bỏ khuyến mãi hóa đơn, reset tiền giảm và tính lại
-		if (khuyenMai == null) {
-			this.khuyenMai = null;
-			this.soTienGiamKhuyenMai = 0;
-			capNhatTongThanhToan();
-			return;
-		}
+    public void setNhanVien(NhanVien nhanVien) {
+        if (nhanVien == null) throw new IllegalArgumentException("Nhân viên không được null.");
+        this.nhanVien = nhanVien;
+    }
 
-		// 2️⃣ Nếu khuyến mãi là loại "sản phẩm" → không áp dụng ở hóa đơn
-		if (!khuyenMai.isKhuyenMaiHoaDon()) {
-			// chỉ bỏ qua, KHÔNG ném lỗi
-			this.khuyenMai = null;
-			this.soTienGiamKhuyenMai = 0;
-			capNhatTongThanhToan();
-			return;
-		}
+    public KhachHang getKhachHang() {
+        return khachHang;
+    }
 
-		// 3️⃣ Nếu khuyến mãi là loại "hóa đơn" → phải kiểm tra xung đột với chi tiết
-		for (ChiTietHoaDon ct : getDanhSachChiTiet()) { // dùng getter để tránh null
-			if (ct.getKhuyenMai() != null) {
-				throw new IllegalStateException(
-						"Không thể áp dụng khuyến mãi hóa đơn khi chi tiết có khuyến mãi sản phẩm.");
-			}
-		}
+    public void setKhachHang(KhachHang khachHang) {
+        if (khachHang == null) throw new IllegalArgumentException("Khách hàng không được null.");
+        this.khachHang = khachHang;
+    }
 
-		// 4️⃣ Gán và áp dụng
-		this.khuyenMai = khuyenMai;
-		apDungKhuyenMaiHoaDon();
-	}
+    public LocalDate getNgayLap() {
+        return ngayLap;
+    }
 
-	// ===== BUSINESS LOGIC =====
-	public void capNhatTongTien() {
-		tongTien = 0;
-		for (ChiTietHoaDon ct : danhSachChiTiet) {
-			if (ct != null && ct.getThanhTien() > 0)
-				tongTien += ct.getThanhTien();
-		}
-		apDungKhuyenMaiHoaDon();
-		capNhatTongThanhToan();
-	}
+    public void setNgayLap(LocalDate ngayLap) {
+        if (ngayLap == null || ngayLap.isAfter(LocalDate.now()))
+            throw new IllegalArgumentException("Ngày lập không hợp lệ.");
+        this.ngayLap = ngayLap;
+    }
 
-	public void capNhatTongThanhToan() {
-		this.tongThanhToan = Math.max(0, tongTien - getSoTienGiamTuDiem() - soTienGiamKhuyenMai);
-	}
+    public boolean isThuocKeDon() {
+        return thuocKeDon;
+    }
 
-	public void apDungDiemTichLuy(double soDiemMuonDung) {
-		if (khachHang == null)
-			throw new IllegalStateException("Hóa đơn chưa gắn khách hàng, không thể sử dụng điểm.");
-		khachHang.dungDiemTichLuy(soDiemMuonDung);
-		setDiemSuDung(soDiemMuonDung);
-	}
+    public void setThuocKeDon(boolean thuocKeDon) {
+        this.thuocKeDon = thuocKeDon;
+    }
 
-	private void apDungKhuyenMaiHoaDon() {
-		soTienGiamKhuyenMai = 0;
+    public List<ChiTietHoaDon> getDanhSachChiTiet() {
+        return danhSachChiTiet;
+    }
 
-		if (khuyenMai == null || !khuyenMai.isDangHoatDong())
-			return;
+    // Setter này quan trọng: Gán list -> Tính lại tiền ngay
+    public void setDanhSachChiTiet(List<ChiTietHoaDon> danhSachChiTiet) {
+        if (danhSachChiTiet == null)
+            throw new IllegalArgumentException("Danh sách chi tiết hoá đơn không được null.");
+        this.danhSachChiTiet = danhSachChiTiet;
+        
+        // Cập nhật lại toàn bộ số liệu
+        capNhatDuLieuHoaDon();
+    }
 
-		if (tongTien < khuyenMai.getDieuKienApDungHoaDon())
-			return;
+    public KhuyenMai getKhuyenMai() {
+        return khuyenMai;
+    }
 
-		switch (khuyenMai.getHinhThuc()) {
-		case GIAM_GIA_PHAN_TRAM -> soTienGiamKhuyenMai = tongTien * (khuyenMai.getGiaTri() / 100.0);
-		case GIAM_GIA_TIEN -> soTienGiamKhuyenMai = khuyenMai.getGiaTri();
-		default -> soTienGiamKhuyenMai = 0;
-		}
+    // Setter này quan trọng: Gán KM -> Tính lại tiền ngay
+    public void setKhuyenMai(KhuyenMai khuyenMai) {
+        // Nếu null thì gán null
+        if (khuyenMai == null) {
+            this.khuyenMai = null;
+        } 
+        // Nếu không phải loại KM hóa đơn thì từ chối (gán null)
+        else if (!khuyenMai.isKhuyenMaiHoaDon()) {
+            this.khuyenMai = null;
+        } 
+        else {
+            this.khuyenMai = khuyenMai;
+        }
 
-		capNhatTongThanhToan();
-	}
+        // Cập nhật lại toàn bộ số liệu (hàm này sẽ tự check nếu có KM SP thì hủy KM HĐ này đi)
+        capNhatDuLieuHoaDon();
+    }
 
-	public void hoanTatHoaDon() {
-		if (khachHang != null)
-			khachHang.congDiemTheoHoaDon(this);
-	}
+    // ===== OVERRIDES =====
+    @Override
+    public String toString() {
+        return String.format(
+                "HoaDon[%s | KH:%s | Tổng Gốc:%.0f | Giảm KM:-%.0f | Thanh Toán:%.0f | Thuốc kê đơn:%s]",
+                maHoaDon,
+                khachHang != null ? khachHang.getTenKhachHang() : "Khách lẻ",
+                tongTien,
+                soTienGiamKhuyenMai,
+                tongThanhToan,
+                thuocKeDon ? "Có" : "Không"
+        );
+    }
 
-	public boolean coKhuyenMaiSanPham() {
-		for (ChiTietHoaDon ct : danhSachChiTiet) {
-			if (ct.getKhuyenMai() != null)
-				return true;
-		}
-		return false;
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof HoaDon)) return false;
+        HoaDon hoaDon = (HoaDon) o;
+        return Objects.equals(maHoaDon, hoaDon.maHoaDon);
+    }
 
-	public void tuDongApDungKhuyenMaiHoaDon(KhuyenMai kmHoaDon) {
-		if (coKhuyenMaiSanPham()) {
-			this.khuyenMai = null;
-			this.soTienGiamKhuyenMai = 0;
-			capNhatTongTien();
-			return;
-		}
-
-		if (kmHoaDon != null && kmHoaDon.isKhuyenMaiHoaDon() && kmHoaDon.isDangHoatDong()) {
-			if (tongTien >= kmHoaDon.getDieuKienApDungHoaDon()) {
-				this.khuyenMai = kmHoaDon;
-				apDungKhuyenMaiHoaDon();
-				return;
-			}
-		}
-
-		this.khuyenMai = null;
-		this.soTienGiamKhuyenMai = 0;
-		capNhatTongThanhToan();
-	}
-
-	// ===== OVERRIDES =====
-	@Override
-	public String toString() {
-		return String.format(
-				"HoaDon[%s | KH:%s | Tổng:%.0fđ | KM:-%.0fđ | Điểm:-%.0f (%.0fđ) | Còn:%.0fđ | Thuốc kê đơn:%s]",
-				maHoaDon, khachHang != null ? khachHang.getTenKhachHang() : "Khách lẻ", tongTien, soTienGiamKhuyenMai,
-				diemSuDung, getSoTienGiamTuDiem(), tongThanhToan, thuocKeDon ? "Có" : "Không");
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (!(o instanceof HoaDon))
-			return false;
-		HoaDon hoaDon = (HoaDon) o;
-		return Objects.equals(maHoaDon, hoaDon.maHoaDon);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(maHoaDon);
-	}
+    @Override
+    public int hashCode() {
+        return Objects.hash(maHoaDon);
+    }
 }
