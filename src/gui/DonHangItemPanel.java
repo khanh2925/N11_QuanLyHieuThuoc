@@ -20,6 +20,7 @@ import entity.SanPham;
 /**
  * JPanel đại diện 1 dòng sản phẩm trong đơn hàng
  */
+
 public class DonHangItemPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -51,6 +52,7 @@ public class DonHangItemPanel extends JPanel {
     private JTextField txtThanhTien;
     private JButton btnNhanDoi;
     private JButton btnXoa;
+    
 
     // ===== Listener callback về GUI cha =====
     public interface ItemPanelListener {
@@ -117,7 +119,7 @@ public class DonHangItemPanel extends JPanel {
         lblAnh.setPreferredSize(new Dimension(80, 80));
         lblAnh.setBorder(new LineBorder(Color.LIGHT_GRAY));
         try {
-            ImageIcon icon = new ImageIcon(getClass().getResource(anhPath));
+            ImageIcon icon = new ImageIcon(getClass().getResource("/images/"+anhPath));
             lblAnh.setIcon(new ImageIcon(icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH)));
         } catch (Exception e) {
             lblAnh.setText("Ảnh");
