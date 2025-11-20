@@ -1,18 +1,18 @@
 package dao;
 
-import connectDB.connectDB;
-import entity.ChiTietHoaDon;
-import entity.DonViTinh;
-import entity.HoaDon;
-import entity.KhuyenMai;
-import entity.LoSanPham;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import connectDB.connectDB;
+import entity.ChiTietHoaDon;
+import entity.DonViTinh;
+import entity.HoaDon;
+import entity.KhuyenMai;
+import entity.LoSanPham;
 
 public class ChiTietHoaDon_DAO {
 
