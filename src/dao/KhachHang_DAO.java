@@ -224,11 +224,9 @@ public class KhachHang_DAO {
 		Date d = rs.getDate("NgaySinh");
 		LocalDate ns = (d != null) ? d.toLocalDate() : null;
 		boolean hoatDong = rs.getBoolean("HoatDong");
-		double diem = rs.getDouble("DiemTichLuy");
 
 		KhachHang kh = new KhachHang(ma, ten, gt, sdt, ns);
 		kh.setHoatDong(hoatDong);
-		kh.setDiemTichLuy(diem);
 		return kh;
 	}
 

@@ -35,10 +35,13 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
 
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblPPr;
+
 import com.toedter.calendar.JDateChooser;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
+import customcomponent.TaoJtextNhanh;
 import dao.ChiTietPhieuTra_DAO;
 import dao.LoSanPham_DAO;
 import dao.PhieuTra_DAO;
@@ -96,11 +99,10 @@ public class QLTraHang_GUI extends JPanel {
 		pnHeader.setLayout(null);
 		add(pnHeader, BorderLayout.NORTH);
 
-		txtSearch = new JTextField();
-		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		txtSearch = TaoJtextNhanh.timKiem();
+		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 16));
 		txtSearch.setBounds(10, 17, 420, 60);
 		txtSearch.setBorder(new RoundedBorder(20));
-		txtSearch.setBackground(Color.WHITE);
 		PlaceholderSupport.addPlaceholder(txtSearch, txtSearchPlaceholderText);
 
 		btnXuatFile = new PillButton("Xuất file");
@@ -182,6 +184,7 @@ public class QLTraHang_GUI extends JPanel {
 			}
 
 			private void filter() {
+				resetChiTiet();
 				String keyword = txtSearch.getText().trim();
 
 				// Nếu text == placeholder → reset filter
@@ -206,6 +209,7 @@ public class QLTraHang_GUI extends JPanel {
 				String keyword = txtSearch.getText().trim();
 				if (keyword.isEmpty()) {
 					sorterPT.setRowFilter(null); // ⭐ FIX LỖI BỊ TRẮNG BẢNG
+					resetChiTiet();
 				}
 			}
 		});
@@ -312,8 +316,8 @@ public class QLTraHang_GUI extends JPanel {
 		scrPT = new JScrollPane(tblPT);
 
 		// === BẢNG CHI TIẾT PHIẾU TRẢ ===
-		String[] cTPhieuTraCols = { "Mã hoá đơn", "Mã lô", "Tên SP", "Hạn dùng", "Số lượng", "Giá bán", "Khuyến mãi",
-				"Lý do trả", "Thành tiền", "Trạng thái" };
+		String[] cTPhieuTraCols = { "Mã hoá đơn", "Mã lô", "Tên SP", "Hạn dùng", "Số lượng", "Đơn vị tính", "Giá bán",
+				"Khuyến mãi", "Lý do trả", "Thành tiền", "Trạng thái" };
 
 		modelCTPT = new DefaultTableModel(cTPhieuTraCols, 0) {
 			@Override
@@ -462,6 +466,7 @@ public class QLTraHang_GUI extends JPanel {
 					ct.getChiTietHoaDon().getLoSanPham().getHanSuDung()
 							.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
 					ct.getSoLuong(), df.format(ct.getChiTietHoaDon().getGiaBan()),
+					ct.getChiTietHoaDon().getDonViTinh().getTenDonViTinh(),
 					ct.getChiTietHoaDon().getKhuyenMai() == null ? "Không có"
 							: ct.getChiTietHoaDon().getKhuyenMai().getTenKM(),
 					ct.getLyDoChiTiet(), df.format(ct.getThanhTienHoan()), ct.getTrangThaiText() });
@@ -621,7 +626,8 @@ public class QLTraHang_GUI extends JPanel {
 	}
 
 	private void locPhieuTraTheoNgay() {
-
+		resetChiTiet();
+		
 		java.util.Date tu = dateTu.getDate();
 		java.util.Date den = dateDen.getDate();
 
@@ -678,6 +684,15 @@ public class QLTraHang_GUI extends JPanel {
 		modelCTPT.setRowCount(0);
 
 		// 6. Disable nút hành động
+		btnNhapKho.setEnabled(false);
+		btnHuyHang.setEnabled(false);
+	}
+
+	/** Reset bảng chi tiết và disable nút hành động */
+	private void resetChiTiet() {
+		modelCTPT.setRowCount(0);
+		tblCTPT.clearSelection();
+		tblPT.clearSelection();
 		btnNhapKho.setEnabled(false);
 		btnHuyHang.setEnabled(false);
 	}

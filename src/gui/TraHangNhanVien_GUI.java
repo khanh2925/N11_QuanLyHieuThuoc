@@ -26,7 +26,7 @@ import javax.swing.table.DefaultTableModel;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
-
+import customcomponent.TaoJtextNhanh;
 import dao.ChiTietHoaDon_DAO;
 import dao.ChiTietPhieuTra_DAO;
 import dao.HoaDon_DAO;
@@ -87,7 +87,6 @@ public class TraHangNhanVien_GUI extends JPanel {
 	private final HoaDon_DAO hoaDonDAO = new HoaDon_DAO();
 	private final ChiTietHoaDon_DAO cthdDAO = new ChiTietHoaDon_DAO();
 	private final PhieuTra_DAO ptDAO = new PhieuTra_DAO();
-//	private final SanPham_DAO spDAO = new SanPham_DAO();
 	private final LoSanPham_DAO loDAO = new LoSanPham_DAO();
 	private DefaultTableModel modelTraHang;
 	private JTable tblTraHang;
@@ -112,7 +111,7 @@ public class TraHangNhanVien_GUI extends JPanel {
 		// Ô tìm kiếm
 		txtTimHoaDon = new JTextField();
 		PlaceholderSupport.addPlaceholder(txtTimHoaDon, "Tìm hoá đơn theo mã");
-		txtTimHoaDon.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+		txtTimHoaDon.setFont(new Font("Segoe UI", Font.PLAIN, 20));
 		txtTimHoaDon.setBounds(25, 17, 420, 60);
 		txtTimHoaDon.setBorder(new RoundedBorder(20));
 		txtTimHoaDon.setBackground(Color.WHITE);
@@ -183,30 +182,13 @@ public class TraHangNhanVien_GUI extends JPanel {
 		pnCotPhaiRight.add(Box.createVerticalStrut(10));
 
 		// Ô tìm khách hàng
-		txtTimKH = new JTextField("Tìm hoá đơn theo số điện thoại khách hàng");
-		txtTimKH.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		txtTimKH.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
-		txtTimKH.setBorder(BorderFactory.createCompoundBorder(new LineBorder(new Color(0xCCCCCC), 2, true),
-				new EmptyBorder(5, 10, 5, 10)));
-		txtTimKH.setBackground(new Color(0xFAFAFA));
-		txtTimKH.setForeground(Color.GRAY);
-		txtTimKH.addFocusListener(new FocusAdapter() {
-			@Override
-			public void focusGained(FocusEvent e) {
-				if (txtTimKH.getText().equals("Tìm hoá đơn theo số điện thoại khách hàng")) {
-					txtTimKH.setText("");
-					txtTimKH.setForeground(Color.BLACK);
-				}
-			}
-
-			@Override
-			public void focusLost(FocusEvent e) {
-				if (txtTimKH.getText().isEmpty()) {
-					txtTimKH.setText("Tìm hoá đơn theo số điện thoại khách hàng");
-					txtTimKH.setForeground(Color.GRAY);
-				}
-			}
-		});
+		txtTimKH = TaoJtextNhanh.timKiem();
+		txtTimKH = TaoJtextNhanh.timKiem();
+		txtTimKH.setPreferredSize(new Dimension(0, 60));
+		txtTimKH.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+		txtTimKH.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+		PlaceholderSupport.addPlaceholder(txtTimKH, "Tìm hoá đơn theo số điện thoại khách hàng");
+		
 		pnCotPhaiRight.add(txtTimKH);
 		pnCotPhaiRight.add(Box.createVerticalStrut(15));
 
@@ -269,11 +251,8 @@ public class TraHangNhanVien_GUI extends JPanel {
 		scrollTraHang.setPreferredSize(new Dimension(400, 150));
 
 		txtTimHoaDon.addActionListener(e -> xyLyTimHD());
-
 		txtTimKH.addActionListener(e -> xuLyTimHDTheoSDTKH());
-
 		btnHuyBo.addActionListener(e -> resetForm());
-
 		btnTraHang.addActionListener(this::xuLyTraHang);
 	}
 
@@ -560,12 +539,6 @@ public class TraHangNhanVien_GUI extends JPanel {
 
 		// ⭐ Hiển thị phiếu trả cho nhân viên xem
 		new PhieuTraPreviewDialog(SwingUtilities.getWindowAncestor(this), pt, dsCT).setVisible(true);
-
-//		JOptionPane
-//				.showMessageDialog(this,
-//						String.format("Tạo phiếu trả hàng thành công!\nMã phiếu: %s\nTiền hoàn: %,.0f đ",
-//								pt.getMaPhieuTra(), pt.getTongTienHoan()),
-//						"Thành công", JOptionPane.INFORMATION_MESSAGE);
 
 		resetForm();
 
@@ -900,8 +873,8 @@ public class TraHangNhanVien_GUI extends JPanel {
 		JPanel pn = new JPanel(new BorderLayout());
 		pn.setOpaque(false);
 		JLabel l = new JLabel(left);
-		l.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		rightLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		l.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+		rightLabel.setFont(new Font("Segoe UI", Font.PLAIN, 20));
 		pn.add(l, BorderLayout.WEST);
 		pn.add(rightLabel, BorderLayout.EAST);
 		pn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
