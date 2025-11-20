@@ -121,11 +121,6 @@ public class TraCuuKhuyenMai_GUI extends JPanel {
         btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnTim);
 
-        // Nút tạo mới KM
-        PillButton btnThem = new PillButton("Tạo KM");
-        btnThem.setBounds(1320, 22, 120, 50);
-        btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        pnHeader.add(btnThem);
     }
 
     // ==============================================================================

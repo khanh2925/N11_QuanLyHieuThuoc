@@ -133,10 +133,6 @@ public class TraCuuNhaCungCap_GUI extends JPanel {
         btnMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnMoi);
 
-        PillButton btnThem = new PillButton("Thêm NCC");
-        btnThem.setBounds(1360, 22, 120, 50);
-        btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        pnHeader.add(btnThem);
     }
 
     // ==============================================================================

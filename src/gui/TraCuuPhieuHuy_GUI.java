@@ -146,11 +146,6 @@ public class TraCuuPhieuHuy_GUI extends JPanel {
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnLamMoi);
 
-        // Nút duyệt (chỉ hiện khi admin/quản lý đăng nhập)
-        PillButton btnDuyet = new PillButton("Duyệt");
-        btnDuyet.setBounds(1370, 22, 100, 50);
-        btnDuyet.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        pnHeader.add(btnDuyet);
     }
 
     // ==============================================================================

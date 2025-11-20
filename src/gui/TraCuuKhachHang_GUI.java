@@ -132,10 +132,6 @@ public class TraCuuKhachHang_GUI extends JPanel {
         btnMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnMoi);
         
-        PillButton btnThem = new PillButton("Thêm KH");
-        btnThem.setBounds(1330, 22, 120, 50);
-        btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        pnHeader.add(btnThem);
     }
 
     // ==============================================================================

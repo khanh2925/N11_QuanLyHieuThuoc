@@ -144,37 +144,33 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener {
 
     // --- FORM NHẬP LIỆU ---
     private void taoFormNhapLieu(JPanel p) {
-        // Cấu hình kích thước (Căn chỉnh cho cân đối)
-        int xStart = 100;       
-        int yStart = 40;
-        int hText = 40;         
-        int wLbl = 120;         
-        int wTxt = 350;         
-        int gap = 30;
-        
-        int xCol2 = xStart + wLbl + wTxt + 80; // Cột 2 cách cột 1 80px
+        int xStart = 50, yStart = 40;
+        int hText = 35, wLbl = 100, wTxt = 300, gap = 25;
 
-        // --- CỘT 1 ---
+        // Cột 2 giống Quản lý NCC
+        int xCol2 = xStart + wLbl + wTxt + 50;
+
+        // ===== CỘT 1 =====
         // Mã KH
         p.add(createLabel("Mã KH:", xStart, yStart));
         txtMaKH = createTextField(xStart + wLbl, yStart, wTxt);
-        txtMaKH.setEditable(false); // Mã tự sinh
+        txtMaKH.setEditable(false);
         p.add(txtMaKH);
 
         // Tên KH
         p.add(createLabel("Tên KH:", xStart, yStart + gap + hText));
         txtTenKH = createTextField(xStart + wLbl, yStart + gap + hText, wTxt);
         p.add(txtTenKH);
-        
+
         // Giới tính
         p.add(createLabel("Giới tính:", xStart, yStart + (gap + hText) * 2));
         cboGioiTinh = new JComboBox<>(new String[]{"Nam", "Nữ"});
-        cboGioiTinh.setBounds(xStart + wLbl, yStart + (gap + hText) * 2, 150, hText);
+        cboGioiTinh.setBounds(xStart + wLbl, yStart + (gap + hText) * 2, wTxt, hText);
         cboGioiTinh.setFont(FONT_TEXT);
         p.add(cboGioiTinh);
 
-        // --- CỘT 2 ---
-        // Số điện thoại
+        // ===== CỘT 2 =====
+        // Số ĐT
         p.add(createLabel("Số ĐT:", xCol2, yStart));
         txtSDT = createTextField(xCol2 + wLbl, yStart, wTxt);
         p.add(txtSDT);
@@ -182,11 +178,8 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener {
         // Ngày sinh
         p.add(createLabel("Ngày sinh:", xCol2, yStart + gap + hText));
         txtNgaySinh = createTextField(xCol2 + wLbl, yStart + gap + hText, wTxt);
-        // Gợi ý placeholder
         PlaceholderSupport.addPlaceholder(txtNgaySinh, "dd/MM/yyyy");
         p.add(txtNgaySinh);
-        
-        // (Có thể thêm Địa chỉ hoặc Email vào đây nếu cần lấp đầy)
     }
 
     // --- PANEL NÚT BẤM (BÊN PHẢI) ---

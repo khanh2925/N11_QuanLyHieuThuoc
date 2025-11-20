@@ -131,12 +131,6 @@ public class TraCuuDonTraHang_GUI extends JPanel {
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnLamMoi);
 
-        // Button duyệt đơn (Chỉ hiện khi chọn đơn chờ duyệt - Logic xử lý sau)
-        PillButton btnDuyetDon = new PillButton("Duyệt đơn");
-        btnDuyetDon.setBounds(1340, 22, 120, 50);
-        btnDuyetDon.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        // btnDuyetDon.setBackground(new Color(0x2E7D32)); // Màu xanh lá đặc biệt
-        pnHeader.add(btnDuyetDon);
     }
 
     // ==============================================================================

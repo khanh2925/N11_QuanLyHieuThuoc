@@ -78,12 +78,6 @@ public class TraCuuDonViTinh_GUI extends JPanel {
         btnTim.setBounds(550, 22, 140, 50);
         btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnTim);
-
-        // Nút Thêm Mới (Vì ĐVT hay phải thêm nhanh)
-        PillButton btnThem = new PillButton("Thêm ĐVT");
-        btnThem.setBounds(710, 22, 140, 50);
-        btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        pnHeader.add(btnThem);
         
         // Nút Làm mới
         PillButton btnLamMoi = new PillButton("Làm mới");

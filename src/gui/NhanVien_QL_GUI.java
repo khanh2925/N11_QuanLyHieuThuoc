@@ -153,79 +153,75 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
     }
 
     private void taoFormNhapLieu(JPanel p) {
-        // Canh chỉnh tọa độ thủ công cho đẹp
-        int xStart = 250, yStart = 30, hText = 35, wLbl = 100, wTxt = 250, gap = 20;
 
-        // 1. Ảnh Nhân Viên (Bên trái)
-        lblHinhAnh = new JLabel("Ảnh", SwingConstants.CENTER);
-        lblHinhAnh.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-        lblHinhAnh.setBounds(30, 40, 180, 180);
-        setHinhAnh("icon_anh_nv_null.png");
-        p.add(lblHinhAnh);
+        // ===== FORM CHUẨN HOÁ THEO HỆ THỐNG =====
+        int xStart = 50, yStart = 30;
+        int hText = 35, wLbl = 110, wTxt = 300, gap = 25;
 
-        btnChonAnh = new JButton("Chọn ảnh");
-        btnChonAnh.setBounds(60, 230, 120, 30);
-        btnChonAnh.setFont(FONT_TEXT);
-        btnChonAnh.setFocusPainted(false);
-        btnChonAnh.addActionListener(this);
-        p.add(btnChonAnh);
+        // Cột 2 (đẩy xa cho thoáng)
+        int xCol2 = xStart + wLbl + wTxt + 120;
 
-        // 2. Các trường nhập liệu
-        // Hàng 1
+        // ===== HÀNG 1 =====
         p.add(createLabel("Mã NV:", xStart, yStart));
-        txtMaNV = createTextField(xStart + 100, yStart, wTxt + 50);
-        txtMaNV.setEditable(false); // Mã tự sinh
+        txtMaNV = createTextField(xStart + wLbl, yStart, wTxt);
+        txtMaNV.setEditable(false);
         p.add(txtMaNV);
 
-        p.add(createLabel("Trạng thái:", xStart + 450, yStart));
+        p.add(createLabel("Trạng thái:", xCol2, yStart));
         cboTrangThai = new JComboBox<>(new String[]{"Đang làm", "Đã nghỉ"});
-        cboTrangThai.setBounds(xStart + 550, yStart, wTxt + 50, hText);
+        cboTrangThai.setBounds(xCol2 + wLbl, yStart, wTxt, hText);
         cboTrangThai.setFont(FONT_TEXT);
         p.add(cboTrangThai);
 
-        // Hàng 2
+        // ===== HÀNG 2 =====
         yStart += hText + gap;
+
         p.add(createLabel("Họ tên:", xStart, yStart));
-        txtTenNV = createTextField(xStart + 100, yStart, 750);
+        txtTenNV = createTextField(xStart + wLbl, yStart, wTxt);
         p.add(txtTenNV);
 
-        // Hàng 3
-        yStart += hText + gap;
-        p.add(createLabel("Ngày sinh:", xStart, yStart));
-        txtNgaySinh = createTextField(xStart + 100, yStart, wTxt + 50);
+        p.add(createLabel("Ngày sinh:", xCol2, yStart));
+        txtNgaySinh = createTextField(xCol2 + wLbl, yStart, wTxt);
         PlaceholderSupport.addPlaceholder(txtNgaySinh, "dd/MM/yyyy");
         p.add(txtNgaySinh);
 
-        p.add(createLabel("Giới tính:", xStart + 450, yStart));
+        // ===== HÀNG 3 =====
+        yStart += hText + gap;
+
+        p.add(createLabel("Giới tính:", xStart, yStart));
         cboGioiTinh = new JComboBox<>(new String[]{"Nam", "Nữ"});
-        cboGioiTinh.setBounds(xStart + 550, yStart, wTxt + 50, hText);
+        cboGioiTinh.setBounds(xStart + wLbl, yStart, wTxt, hText);
         cboGioiTinh.setFont(FONT_TEXT);
         p.add(cboGioiTinh);
 
-        // Hàng 4
-        yStart += hText + gap;
-        p.add(createLabel("SĐT:", xStart, yStart));
-        txtSDT = createTextField(xStart + 100, yStart, wTxt + 50);
+        p.add(createLabel("SĐT:", xCol2, yStart));
+        txtSDT = createTextField(xCol2 + wLbl, yStart, wTxt);
         p.add(txtSDT);
 
-        p.add(createLabel("Chức vụ:", xStart + 450, yStart));
+        // ===== HÀNG 4 =====
+        yStart += hText + gap;
+
+        p.add(createLabel("Chức vụ:", xStart, yStart));
         cboChucVu = new JComboBox<>(new String[]{"Nhân viên", "Quản lý"});
-        cboChucVu.setBounds(xStart + 550, yStart, wTxt + 50, hText);
+        cboChucVu.setBounds(xStart + wLbl, yStart, wTxt, hText);
         cboChucVu.setFont(FONT_TEXT);
         p.add(cboChucVu);
 
-        // Hàng 5
-        yStart += hText + gap;
-        p.add(createLabel("Địa chỉ:", xStart, yStart));
-        txtDiaChi = createTextField(xStart + 100, yStart, wTxt + 50);
-        p.add(txtDiaChi);
-
-        p.add(createLabel("Ca làm:", xStart + 450, yStart));
+        p.add(createLabel("Ca làm:", xCol2, yStart));
         cboCaLam = new JComboBox<>(new String[]{"Sáng", "Chiều", "Tối", "Hành chính"});
-        cboCaLam.setBounds(xStart + 550, yStart, wTxt + 50, hText);
+        cboCaLam.setBounds(xCol2 + wLbl, yStart, wTxt, hText);
         cboCaLam.setFont(FONT_TEXT);
         p.add(cboCaLam);
+
+        // ===== HÀNG 5 =====
+        yStart += hText + gap;
+
+        p.add(createLabel("Địa chỉ:", xStart, yStart));
+        txtDiaChi = createTextField(xStart + wLbl, yStart, wTxt);
+        p.add(txtDiaChi);
     }
+
+
 
     private void taoPanelNutBam(JPanel p) {
         p.setPreferredSize(new Dimension(200, 0));

@@ -153,20 +153,23 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 
     // --- FORM NHẬP LIỆU ---
     private void taoFormNhapLieu(JPanel p) {
-        int xStart = 50, yStart = 30, hText = 35, wLbl = 100, wTxt = 280, gap = 25;
-        int xCol2 = xStart + wLbl + wTxt + 50;
+        int xStart = 50, yStart = 30;
+        int hText = 35, wLbl = 120, wTxt = 320, gap = 25;
 
-        // Hàng 1
+        // ĐẨY CỘT 2 SANG PHẢI NHIỀU HƠN CHO THOÁNG
+        int xCol2 = xStart + wLbl + wTxt + 120;
+
+        // ===== HÀNG 1 =====
         p.add(createLabel("Mã KM:", xStart, yStart));
         txtMaKM = createTextField(xStart + wLbl, yStart, wTxt);
-        txtMaKM.setEditable(false); // Mã tự sinh
+        txtMaKM.setEditable(false);
         p.add(txtMaKM);
 
         p.add(createLabel("Tên KM:", xCol2, yStart));
         txtTenKM = createTextField(xCol2 + wLbl, yStart, wTxt);
         p.add(txtTenKM);
 
-        // Hàng 2
+        // ===== HÀNG 2 =====
         yStart += hText + gap;
         p.add(createLabel("Ngày BĐ:", xStart, yStart));
         txtNgayBD = createTextField(xStart + wLbl, yStart, wTxt);
@@ -176,7 +179,7 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
         txtNgayKT = createTextField(xCol2 + wLbl, yStart, wTxt);
         p.add(txtNgayKT);
 
-        // Hàng 3
+        // ===== HÀNG 3 =====
         yStart += hText + gap;
         p.add(createLabel("Loại KM:", xStart, yStart));
         cboLoaiKM = new JComboBox<>(new String[]{"Theo hóa đơn", "Theo sản phẩm"});
@@ -189,18 +192,18 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
         cboHinhThuc.setBounds(xCol2 + wLbl, yStart, wTxt, hText);
         cboHinhThuc.setFont(FONT_TEXT);
         p.add(cboHinhThuc);
-        
-        // Hàng 4
+
+        // ===== HÀNG 4 =====
         yStart += hText + gap;
         p.add(createLabel("Giá trị:", xStart, yStart));
         txtGiaTri = createTextField(xStart + wLbl, yStart, wTxt);
         p.add(txtGiaTri);
 
         p.add(createLabel("Điều kiện:", xCol2, yStart));
-        txtDieuKien = createTextField(xCol2 + wLbl, yStart, wTxt); 
+        txtDieuKien = createTextField(xCol2 + wLbl, yStart, wTxt);
         p.add(txtDieuKien);
 
-        // Hàng 5
+        // ===== HÀNG 5 =====
         yStart += hText + gap;
         p.add(createLabel("Số lượng:", xStart, yStart));
         txtSoLuong = createTextField(xStart + wLbl, yStart, wTxt);
@@ -212,6 +215,7 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
         cboTrangThai.setFont(FONT_TEXT);
         p.add(cboTrangThai);
     }
+
 
     // --- PANEL NÚT ---
     private void taoPanelNutBam(JPanel p) {

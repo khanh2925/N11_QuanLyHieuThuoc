@@ -163,10 +163,9 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener {
 
     // --- FORM NHẬP LIỆU (LAYOUT TUYỆT ĐỐI) ---
     private void taoFormNhapLieu(JPanel p) {
-        int xStart = 250, yStart = 30, hText = 35, wLbl = 100, wTxt = 250, gap = 20;
 
-        // 1. Ảnh Sản Phẩm (Bên trái)
-        lblHinhAnh = new JLabel("Ảnh", SwingConstants.CENTER);
+        // Ảnh (bên trái giống Nhân viên)
+        lblHinhAnh = new JLabel("", SwingConstants.CENTER);
         lblHinhAnh.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         lblHinhAnh.setBounds(30, 40, 180, 180);
         setHinhAnh("icon_anh_sp_null.png");
@@ -175,72 +174,81 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener {
         btnChonAnh = new JButton("Chọn ảnh");
         btnChonAnh.setBounds(60, 230, 120, 30);
         btnChonAnh.setFont(FONT_TEXT);
-        btnChonAnh.setFocusPainted(false);
         btnChonAnh.addActionListener(this);
         p.add(btnChonAnh);
 
-        // 2. Các trường nhập liệu (Bên phải)
-        // Hàng 1
+        // ===== FORM CHUẨN HOÁ (COPY STRUCTURE NHÂN VIÊN) =====
+        int xStart = 300, yStart = 30;
+        int hText = 35, wLbl = 110, wTxt = 300, gap = 25;
+
+        int xCol2 = xStart + wLbl + wTxt + 120; // cột 2 (chuẩn hệ thống)
+
+        // ===== HÀNG 1 =====
         p.add(createLabel("Mã SP:", xStart, yStart));
-        txtMaSP = createTextField(xStart + 100, yStart, wTxt + 50);
-        txtMaSP.setEditable(false); // Mã tự sinh
+        txtMaSP = createTextField(xStart + wLbl, yStart, wTxt);
+        txtMaSP.setEditable(false);
         p.add(txtMaSP);
 
-        p.add(createLabel("Trạng thái:", xStart + 450, yStart));
+        p.add(createLabel("Trạng thái:", xCol2, yStart));
         cboTrangThai = new JComboBox<>(new String[]{"Đang bán", "Ngừng bán"});
-        cboTrangThai.setBounds(xStart + 550, yStart, wTxt + 50, hText);
+        cboTrangThai.setBounds(xCol2 + wLbl, yStart, wTxt, hText);
         cboTrangThai.setFont(FONT_TEXT);
         p.add(cboTrangThai);
 
-        // Hàng 2
+        // ===== HÀNG 2 =====
         yStart += hText + gap;
         p.add(createLabel("Tên SP:", xStart, yStart));
-        txtTenSP = createTextField(xStart + 100, yStart, 750);
+        txtTenSP = createTextField(xStart + wLbl, yStart, wTxt + 530); // tên dài → tăng width giống nhân viên
         p.add(txtTenSP);
 
-        // Hàng 3
+        
+
+        // ===== HÀNG 3 =====
         yStart += hText + gap;
-        p.add(createLabel("Loại:", xStart, yStart));
+        p.add(createLabel("Loại SP:", xStart, yStart));
         cboLoaiSP = new JComboBox<>();
         for (LoaiSanPham l : LoaiSanPham.values()) cboLoaiSP.addItem(l.name());
-        cboLoaiSP.setBounds(xStart + 100, yStart, wTxt + 50, hText);
+        cboLoaiSP.setBounds(xStart + wLbl, yStart, wTxt, hText);
         cboLoaiSP.setFont(FONT_TEXT);
         p.add(cboLoaiSP);
-
-        p.add(createLabel("Số ĐK:", xStart + 450, yStart));
-        txtSoDK = createTextField(xStart + 550, yStart, wTxt + 50);
+        
+        p.add(createLabel("Số ĐK:", xCol2, yStart));
+        txtSoDK = createTextField(xCol2 + wLbl, yStart, wTxt);
         p.add(txtSoDK);
+        
 
-        // Hàng 4
+        // ===== HÀNG 4 =====
         yStart += hText + gap;
-        p.add(createLabel("Đường dùng:", xStart, yStart));
+        p.add(createLabel("Giá nhập:", xStart, yStart));
+        txtGiaNhap = createTextField(xStart + wLbl, yStart, wTxt);
+        p.add(txtGiaNhap);
+
+        p.add(createLabel("Đường dùng:", xCol2, yStart));
         cboDuongDung = new JComboBox<>();
         for (DuongDung d : DuongDung.values()) cboDuongDung.addItem(d.name());
-        cboDuongDung.setBounds(xStart + 100, yStart, wTxt + 50, hText);
+        cboDuongDung.setBounds(xCol2 + wLbl, yStart, wTxt, hText);
         cboDuongDung.setFont(FONT_TEXT);
         p.add(cboDuongDung);
 
-        p.add(createLabel("Kệ bán:", xStart + 450, yStart));
-        txtKeBan = createTextField(xStart + 550, yStart, wTxt + 50);
-        p.add(txtKeBan);
-
-        // Hàng 5
-        yStart += hText + gap;
-        p.add(createLabel("Giá nhập:", xStart, yStart));
-        txtGiaNhap = createTextField(xStart + 100, yStart, wTxt + 50);
-        p.add(txtGiaNhap);
-
-        JLabel lblGB = createLabel("Giá bán:", xStart + 450, yStart);
-        lblGB.setForeground(new Color(220, 0, 0)); // Màu đỏ cho giá bán
-        lblGB.setFont(FONT_BOLD);
-        p.add(lblGB);
         
-        txtGiaBan = createTextField(xStart + 550, yStart, wTxt + 50);
+        // ===== HÀNG 5 =====
+        yStart += hText + gap;
+        p.add(createLabel("Kệ bán:", xStart, yStart));
+        txtKeBan = createTextField(xStart + wLbl, yStart, wTxt);
+        p.add(txtKeBan);
+        
+        JLabel lblGiaBan = createLabel("Giá bán:", xCol2, yStart);
+        lblGiaBan.setFont(FONT_BOLD);
+        lblGiaBan.setForeground(new Color(199, 0, 0));
+        p.add(lblGiaBan);
+        txtGiaBan = createTextField(xCol2 + wLbl, yStart, wTxt);
         txtGiaBan.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        txtGiaBan.setForeground(new Color(220, 0, 0));
-        txtGiaBan.setEditable(false); // Giá bán tính theo bảng giá
+        txtGiaBan.setForeground(new Color(199, 0, 0));
+        txtGiaBan.setEditable(false);
         p.add(txtGiaBan);
+
     }
+
 
     // --- PANEL NÚT BẤM (BÊN PHẢI) ---
     private void taoPanelNutBam(JPanel p) {

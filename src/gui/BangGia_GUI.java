@@ -156,44 +156,46 @@ public class BangGia_GUI extends JPanel implements ActionListener {
 
     // --- FORM NHẬP LIỆU ---
     private void taoFormNhapLieu(JPanel p) {
-        // Cấu hình kích thước (Căn giữa vì ít trường)
-        int xStart = 150;       
-        int yStart = 40;
-        int hText = 40;         
-        int wTxt = 350;         
-        int gap = 30;           
+        int xStart = 50, yStart = 40;
+        int hText = 35, wLbl = 120, wTxt = 300, gap = 25;
 
-        // Hàng 1
+        // =========== CỘT 1 ===========
         p.add(createLabel("Mã BG:", xStart, yStart));
-        txtMaBG = createTextField(xStart + 100, yStart, wTxt);
-        txtMaBG.setEditable(false); // Mã tự sinh
+        txtMaBG = createTextField(xStart + wLbl, yStart, wTxt);
+        txtMaBG.setEditable(false);
         p.add(txtMaBG);
 
-        p.add(createLabel("Ngày áp dụng:", xStart + 500, yStart));
-        txtNgayApDung = createTextField(xStart + 620, yStart, wTxt);
-        txtNgayApDung.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-        p.add(txtNgayApDung);
-
-        // Hàng 2
-        yStart += hText + gap;
-        p.add(createLabel("Tên BG:", xStart, yStart));
-        txtTenBG = createTextField(xStart + 100, yStart, wTxt);
+        p.add(createLabel("Tên BG:", xStart, yStart + (hText + gap)));
+        txtTenBG = createTextField(xStart + wLbl, yStart + (hText + gap), wTxt);
         p.add(txtTenBG);
 
-        p.add(createLabel("Trạng thái:", xStart + 500, yStart));
-        cboTrangThai = new JComboBox<>(new String[]{"Đang hoạt động", "Ngừng hoạt động", "Chưa áp dụng"});
-        cboTrangThai.setBounds(xStart + 620, yStart, wTxt, hText);
-        cboTrangThai.setFont(FONT_TEXT);
-        p.add(cboTrangThai);
-        
-        // Hàng 3 (Checkbox tùy chọn)
-        yStart += hText + gap;
-        chkHoatDong = new JCheckBox("Đặt làm bảng giá mặc định ngay khi tạo");
-        chkHoatDong.setFont(new Font("Segoe UI", Font.ITALIC, 14));
+        // Checkbox (trải ngang rộng giống NCC – dòng riêng)
+        p.add(createLabel("Áp dụng:", xStart, yStart + (hText + gap)*2));
+        chkHoatDong = new JCheckBox("Đặt làm bảng giá mặc định");
+        chkHoatDong.setFont(new Font("Segoe UI", Font.PLAIN, 15));
         chkHoatDong.setBackground(Color.WHITE);
-        chkHoatDong.setBounds(xStart + 100, yStart, 400, 30);
+        chkHoatDong.setBounds(xStart + wLbl, yStart + (hText + gap)*2 + 5, wTxt + 150, hText);
         p.add(chkHoatDong);
+
+
+        // =========== CỘT 2 ===========
+        int xCol2 = xStart + wLbl + wTxt + 50;
+
+        p.add(createLabel("Ngày áp dụng:", xCol2, yStart));
+        txtNgayApDung = createTextField(xCol2 + wLbl, yStart, wTxt);
+        p.add(txtNgayApDung);
+
+        p.add(createLabel("Trạng thái:", xCol2, yStart + (hText + gap)));
+        cboTrangThai = new JComboBox<>(new String[]{
+            "Đang hoạt động",
+            "Ngừng hoạt động",
+            "Chưa áp dụng"
+        });
+        cboTrangThai.setFont(FONT_TEXT);
+        cboTrangThai.setBounds(xCol2 + wLbl, yStart + (hText + gap), wTxt, hText);
+        p.add(cboTrangThai);
     }
+
 
     // --- PANEL NÚT BẤM (MASTER) ---
     private void taoPanelNutBam(JPanel p) {
