@@ -39,7 +39,6 @@ import entity.SanPham;
 import entity.Session;
 import entity.TaiKhoan;
 import dao.KhuyenMai_DAO;
-import entity.KhuyenMai;
 import enums.HinhThucKM;
 
 /**
@@ -91,6 +90,7 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 	private final String PLACEHOLDER_TIM_KH = "Nhập số điện thoại khách hàng";
 	private final String PLACEHOLDER_TIM_THUOC = "Nhập mã sản phẩm hoặc số đăng ký";
 	private final String PLACEHOLDER_TIEN_KHACH = "Nhập tiền khách đưa";
+	private JTextField textField;
 
 	public BanHang_GUI() {
 		setPreferredSize(new Dimension(1537, 850));
@@ -116,10 +116,11 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 	}
 
 	private JPanel createHeaderPanel() {
-		JPanel pnHeader = new JPanel(null);
+		JPanel pnHeader = new JPanel();
+		pnHeader.setLayout(null); 
 		pnHeader.setPreferredSize(new Dimension(1073, 88));
 		pnHeader.setBackground(new Color(0xE3F2F5));
-
+		
 		txtTimThuoc = TaoJtextNhanh.timKiem();
 		txtTimThuoc.setBorder(new LineBorder(new Color(0x00C0E2), 3, true));
 		txtTimThuoc.setBounds(25, 17, 480, 60);
@@ -147,13 +148,13 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 		});
 		pnHeader.add(txtTimThuoc);
 
-
 		return pnHeader;
 	}
 
 	private JPanel createCenterPanel() {
 		JPanel pnCenter = new JPanel(new BorderLayout());
 		pnCenter.setBackground(Color.WHITE);
+		pnCenter.setPreferredSize(new Dimension(1087, 1080));
 		pnCenter.setBorder(
 				new CompoundBorder(new LineBorder(new Color(0x00C853), 3, true), new EmptyBorder(10, 10, 10, 10)));
 
@@ -169,53 +170,10 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 
 		return pnCenter;
 	}
-
-	/**
-	 * Tạo 1 dòng sản phẩm trong panel từ ItemDonHang
-	 */
-	private void themSanPham(ItemDonHang item, int stt, String[] donViArr, int[] heSoArr, double[] giaArr,
-			String anhPath) {
-		DonHangItemPanel panel = new DonHangItemPanel(item, stt, donViArr, heSoArr, giaArr, anhPath,
-				new DonHangItemPanel.ItemPanelListener() {
-					@Override
-					public void onItemUpdated(ItemDonHang it) {
-						capNhatTongTien();
-					}
-
-					@Override
-					public void onItemDeleted(ItemDonHang it, DonHangItemPanel p) {
-						pnDanhSachDon.remove(p);
-						pnDanhSachDon.revalidate();
-						pnDanhSachDon.repaint();
-						capNhatTongTien();
-						capNhatSTT();
-					}
-				}, this, dsItem, loSanPhamDao, quyCachDongGoiDao);
-
-		pnDanhSachDon.add(panel);
-		pnDanhSachDon.add(Box.createVerticalStrut(5));
-		pnDanhSachDon.revalidate();
-		pnDanhSachDon.repaint();
-		capNhatSTT();
-	}
-
-	/**
-	 * Cho DonHangItemPanel gọi ngược khi tự tạo ItemDonHang mới (nhân dòng, lô mới)
-	 */
-	public void themSanPhamTuPanel(ItemDonHang itemMoi, String[] donViArr, int[] heSoArr, double[] giaArr,
-			String anhPath) {
-		int sttMoi = dsItem.size(); // đơn giản: theo thứ tự trong dsItem
-		themSanPham(itemMoi, sttMoi, donViArr, heSoArr, giaArr, anhPath);
-	}
-
-	private String formatTien(double tien) {
-		DecimalFormat df = new DecimalFormat("#,##0");
-		return df.format(tien) + " đ";
-	}
-
+	
 	private JPanel createRightPanel() {
 		JPanel pnRight = new JPanel();
-		pnRight.setPreferredSize(new Dimension(450, 1080));
+		pnRight.setPreferredSize(new Dimension(1920 - 383 - 1073, 1080));
 		pnRight.setBackground(Color.WHITE);
 		pnRight.setBorder(new EmptyBorder(25, 25, 25, 25));
 		pnRight.setLayout(new BoxLayout(pnRight, BoxLayout.Y_AXIS));
@@ -397,6 +355,51 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 
 		return pnRight;
 	}
+
+	/**
+	 * Tạo 1 dòng sản phẩm trong panel từ ItemDonHang
+	 */
+	private void themSanPham(ItemDonHang item, int stt, String[] donViArr, int[] heSoArr, double[] giaArr,
+			String anhPath) {
+		DonHangItemPanel panel = new DonHangItemPanel(item, stt, donViArr, heSoArr, giaArr, anhPath,
+				new DonHangItemPanel.ItemPanelListener() {
+					@Override
+					public void onItemUpdated(ItemDonHang it) {
+						capNhatTongTien();
+					}
+
+					@Override
+					public void onItemDeleted(ItemDonHang it, DonHangItemPanel p) {
+						pnDanhSachDon.remove(p);
+						pnDanhSachDon.revalidate();
+						pnDanhSachDon.repaint();
+						capNhatTongTien();
+						capNhatSTT();
+					}
+				}, this, dsItem, loSanPhamDao, quyCachDongGoiDao);
+
+		pnDanhSachDon.add(panel);
+		pnDanhSachDon.add(Box.createVerticalStrut(5));
+		pnDanhSachDon.revalidate();
+		pnDanhSachDon.repaint();
+		capNhatSTT();
+	}
+
+	/**
+	 * Cho DonHangItemPanel gọi ngược khi tự tạo ItemDonHang mới (nhân dòng, lô mới)
+	 */
+	public void themSanPhamTuPanel(ItemDonHang itemMoi, String[] donViArr, int[] heSoArr, double[] giaArr,
+			String anhPath) {
+		int sttMoi = dsItem.size(); // đơn giản: theo thứ tự trong dsItem
+		themSanPham(itemMoi, sttMoi, donViArr, heSoArr, giaArr, anhPath);
+	}
+
+	private String formatTien(double tien) {
+		DecimalFormat df = new DecimalFormat("#,##0");
+		return df.format(tien) + " đ";
+	}
+
+	
 
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
@@ -1009,5 +1012,4 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 			giam = tongSauGiamSP;
 		return giam;
 	}
-
 }

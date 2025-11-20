@@ -134,29 +134,11 @@ public class Main_GUI extends JFrame {
 			addSubmenuButton("tracuu", "tracuunhacungcap", "Nhà cung cấp", "/images/icon_nha_cung_cap.png",
 					new TraCuuNhaCungCap_GUI());
 			addSubmenuButton("tracuu", "tracuukhuyenmai", "Khuyến mãi", "/images/icon_khuyen_mai.png",
-					new JPanel(new GridBagLayout()) {
-						{
-							JLabel lbl = new JLabel("Màn hình tra cứu khuyến mãi");
-							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-							add(lbl);
-						}
-					});
+					new TraCuuKhuyenMai_GUI());
 			addSubmenuButton("tracuu", "tracuudonvitinh", "Đơn vị tính", "/images/icon_don_vi_tinh.png",
-					new JPanel(new GridBagLayout()) {
-						{
-							JLabel lbl = new JLabel("Màn hình tra cứu đơn vị tính");
-							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-							add(lbl);
-						}
-					});
+					new TraCuuDonViTinh_GUI());
 			addSubmenuButton("tracuu", "tracuubanggia", "Bảng giá", "/images/icon_bang_gia.png",
-					new JPanel(new GridBagLayout()) {
-						{
-							JLabel lbl = new JLabel("Màn hình tra cứu bảng giá");
-							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-							add(lbl);
-						}
-					});
+					new TraCuuBangGia_GUI());
 			
 			addMenuButton(menuScrollContent, "Quản lý nhập hàng", "nhaphang", "/images/icon_nhap_hang.png");
 			addMenuButton(menuScrollContent, "Quản lý xuất huỷ", "xuathuy", "/images/icon_xuat_huy.png");
@@ -197,13 +179,7 @@ public class Main_GUI extends JFrame {
 						}
 					});
 			addSubmenuButton("tracuu", "tracuukhuyenmai", "Khuyến mãi", "/images/icon_khuyen_mai.png",
-					new JPanel(new GridBagLayout()) {
-						{
-							JLabel lbl = new JLabel("Màn hình tra cứu khuyến mãi");
-							lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-							add(lbl);
-						}
-					});
+					new TraCuuKhuyenMai_GUI());
 			addSubmenuButton("tracuu", "tracuukhachhang", "Khách hàng", "/images/icon_khach_hang.png",
 					new JPanel(new GridBagLayout()) {
 						{
