@@ -93,42 +93,36 @@ public class ChiTietHoaDon_DAO {
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 
+		// ✅ List tạm lưu dữ liệu thô từ ResultSet
+		class RowData {
+			String maLo;
+			double soLuong;
+			double giaBan;
+			String maKM;
+			String maDVT;
+		}
+		List<RowData> rows = new ArrayList<>();
+
 		try {
 			connectDB.getInstance();
 			con = connectDB.getConnection();
 
-			// ✅ SỬA SQL: Lấy thêm MaDonViTinh
 			String sql = "SELECT MaLo, MaKM, SoLuong, GiaBan, MaDonViTinh FROM ChiTietHoaDon WHERE MaHoaDon = ?";
 			stmt = con.prepareStatement(sql);
 			stmt.setString(1, maHD);
 			rs = stmt.executeQuery();
 
-			HoaDon hd = new HoaDon();
-			hd.setMaHoaDon(maHD);
-
+			// ❗ CHỈ ĐỌC DỮ LIỆU THÔ, KHÔNG GỌI DAO Ở ĐÂY
 			while (rs.next()) {
-				String maLo = rs.getString("MaLo");
-				String maKM = rs.getString("MaKM");
-				int soLuong = rs.getInt("SoLuong");
-				double giaBan = rs.getDouble("GiaBan");
-				String maDVT = rs.getString("MaDonViTinh"); // ✅ Lấy MaDonViTinh
-
-				LoSanPham lo = loSanPhamDAO.timLoTheoMa(maLo);
-				KhuyenMai km = null;
-				if (maKM != null)
-					km = khuyenMaiDAO.timKhuyenMaiTheoMa(maKM);
-
-				// ✅ Load DonViTinh
-				DonViTinh donViTinh = null;
-				if (maDVT != null)
-					donViTinh = donViTinhDAO.timDonViTinhTheoMa(maDVT);
-
-				if (lo != null) {
-					// ✅ Cập nhật constructor với DonViTinh
-					ChiTietHoaDon cthd = new ChiTietHoaDon(hd, lo, soLuong, donViTinh, giaBan, km);
-					danhSachChiTiet.add(cthd);
-				}
+				RowData row = new RowData();
+				row.maLo = rs.getString("MaLo");
+				row.maKM = rs.getString("MaKM");
+				row.soLuong = rs.getDouble("SoLuong");
+				row.giaBan = rs.getDouble("GiaBan");
+				row.maDVT = rs.getString("MaDonViTinh");
+				rows.add(row);
 			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -141,6 +135,32 @@ public class ChiTietHoaDon_DAO {
 				e.printStackTrace();
 			}
 		}
+
+		// ✅ SAU KHI ResultSet & Statement ĐÃ ĐÓNG → GIỜ MỚI GỌI DAO KHÁC
+
+		HoaDon hd = new HoaDon();
+		hd.setMaHoaDon(maHD);
+
+		for (RowData r : rows) {
+			LoSanPham lo = loSanPhamDAO.timLoTheoMa(r.maLo);
+			System.out.println(lo.getSanPham());
+
+			KhuyenMai km = null;
+			if (r.maKM != null) {
+				km = khuyenMaiDAO.timKhuyenMaiTheoMa(r.maKM);
+			}
+
+			DonViTinh donViTinh = null;
+			if (r.maDVT != null) {
+				donViTinh = donViTinhDAO.timDonViTinhTheoMa(r.maDVT);
+			}
+
+			if (lo != null) {
+				ChiTietHoaDon cthd = new ChiTietHoaDon(hd, lo, r.soLuong, donViTinh, r.giaBan, km);
+				danhSachChiTiet.add(cthd);
+			}
+		}
+
 		return danhSachChiTiet;
 	}
 }

@@ -1,6 +1,5 @@
 package gui;
 
-import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -33,7 +32,6 @@ import dao.HoaDon_DAO;
 import dao.KhachHang_DAO;
 import dao.LoSanPham_DAO;
 import dao.PhieuTra_DAO;
-import dao.SanPham_DAO;
 import entity.Session;
 import entity.ChiTietHoaDon;
 import entity.ChiTietPhieuTra;
@@ -42,7 +40,6 @@ import entity.KhachHang;
 import entity.LoSanPham;
 import entity.PhieuTra;
 import entity.TaiKhoan;
-import entity.DonViTinh;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -183,12 +180,11 @@ public class TraHangNhanVien_GUI extends JPanel {
 
 		// Ô tìm khách hàng
 		txtTimKH = TaoJtextNhanh.timKiem();
-		txtTimKH = TaoJtextNhanh.timKiem();
 		txtTimKH.setPreferredSize(new Dimension(0, 60));
 		txtTimKH.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
 		txtTimKH.setFont(new Font("Segoe UI", Font.PLAIN, 20));
 		PlaceholderSupport.addPlaceholder(txtTimKH, "Tìm hoá đơn theo số điện thoại khách hàng");
-		
+
 		pnCotPhaiRight.add(txtTimKH);
 		pnCotPhaiRight.add(Box.createVerticalStrut(15));
 
@@ -272,12 +268,24 @@ public class TraHangNhanVien_GUI extends JPanel {
 						"Hết hạn trả hàng", JOptionPane.WARNING_MESSAGE);
 			} else {
 				List<ChiTietHoaDon> dsCT = cthdDAO.layDanhSachChiTietTheoMaHD(maHD);
-				pnDanhSachDon.removeAll();
 
-				for (ChiTietHoaDon ct : dsCT) {
-					pnDanhSachDon.add(createPanelDongCTPT(ct, false)); // false = không cho tăng
+				// Mở dialog cho nhân viên chọn sản phẩm cần trả
+				ChonSanPhamTraDialog dlg = new ChonSanPhamTraDialog(dsCT);
+				dlg.setVisible(true);
+
+				// Lấy danh sách cthd được chọn
+				List<ChiTietHoaDon> dsChon = dlg.getDsSanPhamDuocChon();
+				// ❗ Nếu nhấn Cancel → dsChon rỗng → reset form
+				if (dsChon.isEmpty()) {
+					resetForm();
+					return;
 				}
 
+				// Hiển thị panel chỉ cho các sản phẩm được chọn
+				pnDanhSachDon.removeAll();
+				for (ChiTietHoaDon ct : dsChon) {
+					pnDanhSachDon.add(createPanelDongCTPT(ct, true));
+				}
 				pnDanhSachDon.revalidate();
 				pnDanhSachDon.repaint();
 
@@ -393,6 +401,38 @@ public class TraHangNhanVien_GUI extends JPanel {
 			return String.format("%.2f", x);
 	}
 
+	private JTextField timTxtSoLuong(JPanel panel) {
+		for (Component comp : panel.getComponents()) {
+			if (comp instanceof JPanel childPanel) {
+				JTextField rs = timTxtSoLuong(childPanel);
+				if (rs != null)
+					return rs;
+			}
+			if (comp instanceof JTextField txt) {
+				if ("txtSoLuong".equals(txt.getName())) {
+					return txt;
+				}
+			}
+		}
+		return null;
+	}
+
+	private String timTenSanPham(JPanel panel) {
+		for (Component comp : panel.getComponents()) {
+			if (comp instanceof JPanel childPanel) {
+				String rs = timTenSanPham(childPanel);
+				if (rs != null)
+					return rs;
+			}
+			if (comp instanceof JLabel lbl) {
+				if ("lblTenThuoc".equals(lbl.getName())) {
+					return lbl.getText();
+				}
+			}
+		}
+		return null;
+	}
+
 	private void xuLyTraHang(ActionEvent e) {
 		String maHD = txtTimHoaDon.getText().trim();
 
@@ -416,9 +456,28 @@ public class TraHangNhanVien_GUI extends JPanel {
 			}
 		}
 
-		if (modelTraHang.getRowCount() == 0) {
-			JOptionPane.showMessageDialog(this, "Chưa có sản phẩm nào để trả hàng!");
+		modelTraHang.setRowCount(0); // clear cũ
+		// ❗ Kiểm tra nếu không có sản phẩm nào được chọn
+		if (pnDanhSachDon.getComponentCount() == 0) {
+			JOptionPane.showMessageDialog(this, "Bạn chưa chọn sản phẩm nào để trả hàng!", "Chưa có sản phẩm",
+					JOptionPane.WARNING_MESSAGE);
 			return;
+		}
+
+		for (Component comp : pnDanhSachDon.getComponents()) {
+			if (!(comp instanceof JPanel panel))
+				continue;
+
+			String maLo = (String) panel.getClientProperty("maLo");
+			double donGia = (double) panel.getClientProperty("donGia");
+
+			JTextField txtSL = timTxtSoLuong(panel);
+			int sl = Integer.parseInt(txtSL.getText());
+
+			String tenSP = timTenSanPham(panel);
+			double thanhTien = sl * donGia;
+
+			modelTraHang.addRow(new Object[] { maLo, tenSP, sl, donGia, thanhTien, "" });
 		}
 
 		Map<String, ChiTietHoaDon> chiTietTheoLo = new HashMap<>();
@@ -447,7 +506,8 @@ public class TraHangNhanVien_GUI extends JPanel {
 
 			ChiTietHoaDon cthd = cthdDAO.timKiemChiTietHoaDonBangMa(maHD, maLo);
 			if (cthd == null) {
-				JOptionPane.showMessageDialog(this, "Không tìm thấy chi tiết hoá đơn cho lô " + lo.getHanSuDung());
+				JOptionPane.showMessageDialog(this,
+						"Không tìm thấy chi tiết hoá đơn cho lô " + lo.getMaLo() + " - " + lo.getHanSuDung());
 				return;
 			}
 
@@ -455,28 +515,31 @@ public class TraHangNhanVien_GUI extends JPanel {
 				JOptionPane.showMessageDialog(this,
 						String.format("Số lượng trả (%d) vượt quá số lượng đã mua (%d) ở dòng %d.", soLuong,
 								(int) cthd.getSoLuong(), i + 1));
+
 				return;
 			}
 
-			// ===== Kiểm tra đã trả trùng chưa =====
+			// ===== Kiểm tra trả trùng =====
 			double daTra = ChiTietPhieuTra_DAO.tongSoLuongDaTra(maHD, maLo);
 			double soLuongDaMua = cthd.getSoLuong();
-			if (daTra > 0.0001) { // có thể sai số nhỏ do kiểu double
-				double conLai = soLuongDaMua - daTra;
-				if (conLai <= 0.0001) {
-					JOptionPane.showMessageDialog(this,
-							String.format("⚠️  Lô %s của hóa đơn này đã được trả đủ (%.0f/%s). Không thể trả thêm.",
-									lo.getHanSuDung().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), daTra,
-									formatSo(soLuongDaMua)),
-							"Đã trả đủ", JOptionPane.WARNING_MESSAGE);
-					return;
-				}
-				if (soLuong > conLai + 0.0001) {
-					JOptionPane.showMessageDialog(this,
-							String.format("Lô %s đã được trả %.2f, chỉ còn %.2f có thể trả.", maLo, daTra, conLai),
-							"Số lượng không hợp lệ", JOptionPane.WARNING_MESSAGE);
-					return;
-				}
+
+			double conLai = soLuongDaMua - daTra;
+
+			if (conLai <= 0) {
+				JOptionPane.showMessageDialog(
+						this, String.format("⚠️ Lô %s đã được trả đủ (%s/%s). Không thể trả thêm.", maLo,
+								formatSo(daTra), formatSo(soLuongDaMua)),
+						"Không thể trả thêm", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+
+			// Kiểm tra số lượng trả lần này
+			if (soLuong > conLai) {
+				JOptionPane.showMessageDialog(this,
+						String.format("⚠️ Lô %s chỉ còn được phép trả tối đa %s sản phẩm.\nBạn đang nhập %s.", maLo,
+								formatSo(conLai), formatSo(soLuong)),
+						"Vượt quá số lượng cho phép", JOptionPane.WARNING_MESSAGE);
+				return;
 			}
 
 			chiTietTheoLo.put(maLo, cthd);
@@ -544,6 +607,19 @@ public class TraHangNhanVien_GUI extends JPanel {
 
 	}
 
+	private void capNhatModel(String maLo, int soLuong, double donGia) {
+		int colSL = modelTraHang.findColumn("Số lượng");
+		int colTT = modelTraHang.findColumn("Thành tiền");
+
+		for (int i = 0; i < modelTraHang.getRowCount(); i++) {
+			if (modelTraHang.getValueAt(i, 0).equals(maLo)) {
+				modelTraHang.setValueAt(soLuong, i, colSL);
+				modelTraHang.setValueAt(soLuong * donGia, i, colTT);
+				break;
+			}
+		}
+	}
+
 	private JPanel createPanelDongCTPT(ChiTietHoaDon cthd, boolean allowIncrease) {
 		JPanel pnDongCTPT = new JPanel();
 		pnDongCTPT.setPreferredSize(new Dimension(1040, 120));
@@ -583,6 +659,8 @@ public class TraHangNhanVien_GUI extends JPanel {
 		lblTenThuoc.setFont(new Font("Segoe UI", Font.BOLD, 20));
 		lblTenThuoc.setBounds(168, centerY - 30, 320, 34);
 		lblTenThuoc.setToolTipText(strTenThuoc); // Tooltip hiển thị tên đầy đủ
+		lblTenThuoc.setName("lblTenThuoc");
+
 		pnDongCTPT.add(lblTenThuoc);
 
 		// ==== ĐƠN VỊ TÍNH ====
@@ -623,6 +701,7 @@ public class TraHangNhanVien_GUI extends JPanel {
 		txtSoLuong.setFont(new Font("Segoe UI", Font.BOLD, 16));
 		txtSoLuong.setBorder(null);
 		txtSoLuong.setBackground(Color.WHITE);
+		txtSoLuong.setName("txtSoLuong");
 		pnTangGiam.add(txtSoLuong, BorderLayout.CENTER);
 
 		JButton btnTang = new JButton("+");
@@ -743,12 +822,8 @@ public class TraHangNhanVien_GUI extends JPanel {
 
 				// --- Đồng bộ lại model (cập nhật cột Số lượng) ---
 				String maLo = (String) pnDongCTPT.getClientProperty("maLo");
-				for (int i = 0; i < modelTraHang.getRowCount(); i++) {
-					if (modelTraHang.getValueAt(i, 0).equals(maLo)) {
-						modelTraHang.setValueAt(sl, i, 4); // cột 4: Số lượng
-						break;
-					}
-				}
+				capNhatModel(maLo, sl, donGia);
+
 				// Cho phép tăng trở lại
 				btnTang.setEnabled(true);
 				btnTang.setBackground(new Color(0xE0F2F1));
@@ -770,16 +845,12 @@ public class TraHangNhanVien_GUI extends JPanel {
 			if (sl < soLuongBanDau) {
 				sl++;
 				txtSoLuong.setText(String.valueOf(sl));
-				lblTongTien.setText(String.format("%,.0fđ", sl * donGia));
+				lblTongTien.setText(String.format("%,.0f đ", sl * donGia));
 
 				// --- Đồng bộ lại model (cập nhật cột Số lượng) ---
 				String maLo = (String) pnDongCTPT.getClientProperty("maLo");
-				for (int i = 0; i < modelTraHang.getRowCount(); i++) {
-					if (modelTraHang.getValueAt(i, 0).equals(maLo)) {
-						modelTraHang.setValueAt(sl, i, 4); // cột 4: Số lượng
-						break;
-					}
-				}
+				capNhatModel(maLo, sl, donGia);
+
 				// Khi tăng lại > 1 thì bật lại nút giảm
 				btnGiam.setEnabled(true);
 				btnGiam.setBackground(new Color(0xE0F2F1));
@@ -815,27 +886,40 @@ public class TraHangNhanVien_GUI extends JPanel {
 		txtSoLuong.addActionListener(e -> {
 			try {
 				int slMoi = Integer.parseInt(txtSoLuong.getText().trim());
+
+				// Nếu <=0 thì xóa dòng
 				if (slMoi <= 0) {
-					// Nếu nhập 0 hoặc nhỏ hơn thì xoá dòng
 					pnDanhSachDon.remove(pnDongCTPT);
 					pnDanhSachDon.revalidate();
 					pnDanhSachDon.repaint();
+
+					// Xóa trong bảng
+					String maLo = (String) pnDongCTPT.getClientProperty("maLo");
+					for (int i = 0; i < modelTraHang.getRowCount(); i++) {
+						if (modelTraHang.getValueAt(i, 0).equals(maLo)) {
+							modelTraHang.removeRow(i);
+							break;
+						}
+					}
 					capNhatTongTienTra();
 					return;
 				}
 
+				// Giới hạn số lượng không vượt quá số lượng mua ban đầu
 				if (slMoi > soLuongBanDau) {
 					slMoi = soLuongBanDau;
 					txtSoLuong.setText(String.valueOf(soLuongBanDau));
 				}
 
-				// Cập nhật lại thành tiền cho sản phẩm này
+				// Cập nhật lại tổng tiền dòng này
 				double thanhTienMoi = slMoi * donGia;
+				lblTongTien.setText(String.format("%,.0f đ", thanhTienMoi));
 
-				// Cập nhật tổng tiền trả (trừ tiền cũ, cộng tiền mới)
-				lblTongTien.setText(String.format("%,.0fđ", thanhTienMoi));
+				// === Đồng bộ bảng modelTraHang ===
+				String maLo = (String) pnDongCTPT.getClientProperty("maLo");
+				capNhatModel(maLo, slMoi, donGia);
 
-				// Cập nhật trạng thái nút tăng / giảm
+				// === Cập nhật nút tăng / giảm ===
 				btnTang.setEnabled(slMoi < soLuongBanDau);
 				btnTang.setBackground(slMoi < soLuongBanDau ? new Color(0xE0F2F1) : new Color(0xE0E0E0));
 				btnTang.setCursor(slMoi < soLuongBanDau ? new Cursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
@@ -845,26 +929,15 @@ public class TraHangNhanVien_GUI extends JPanel {
 				btnGiam.setCursor(slMoi > 1 ? new Cursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
 
 			} catch (NumberFormatException ex) {
-				txtSoLuong.setText("1");
+				JOptionPane.showMessageDialog(this, "Số lượng không hợp lệ. Vui lòng nhập số!", "Lỗi",
+						JOptionPane.ERROR_MESSAGE);
 			}
+
 			capNhatTongTienTra();
 		});
 
 		pnDongCTPT.setMaximumSize(new Dimension(1060, 150));
 		pnDongCTPT.setMinimumSize(new Dimension(1040, 120));
-
-		// === Lấy thông tin từ cthd để thêm vào bảng dữ liệu ===
-		String maLo = cthd.getLoSanPham() != null ? cthd.getLoSanPham().getMaLo() : "";
-		String tenSP = cthd.getSanPham() != null ? cthd.getSanPham().getTenSanPham()
-				: (cthd.getLoSanPham() != null && cthd.getLoSanPham().getSanPham() != null
-						? cthd.getLoSanPham().getSanPham().getTenSanPham()
-						: "");
-		int soLuong = (int) cthd.getSoLuong();
-		double giaBan = cthd.getGiaBan();
-		double thanhTien = giaBan * soLuong;
-
-		// === Thêm dòng vào bảng ===
-		modelTraHang.addRow(new Object[] { maLo, tenSP, soLuong, giaBan, thanhTien, "" });
 
 		return pnDongCTPT;
 	}
@@ -883,23 +956,12 @@ public class TraHangNhanVien_GUI extends JPanel {
 
 	private void capNhatTongTienTra() {
 		double tong = 0;
-		for (Component comp : pnDanhSachDon.getComponents()) {
-			if (comp instanceof JPanel p) {
-				for (Component c : p.getComponents()) {
-					if (c instanceof JLabel lbl && "lblTongTien".equals(lbl.getName())) {
-						String txt = lbl.getText();
-						if (txt != null) {
-							txt = txt.replace("vnđ", "").replace("đ", "").replace(".", "").replace(",", "")
-									.replace(" ", "").trim();
-							try {
-								tong += Double.parseDouble(txt);
-							} catch (NumberFormatException ignored) {
-							}
-						}
-					}
-				}
-			}
+		int colTT = modelTraHang.findColumn("Thành tiền");
+
+		for (int i = 0; i < modelTraHang.getRowCount(); i++) {
+			tong += Double.parseDouble(modelTraHang.getValueAt(i, colTT).toString());
 		}
+
 		tienTra = tong;
 		lblTienTra.setText(String.format("%,.0f đ", tienTra));
 	}

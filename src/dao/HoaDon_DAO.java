@@ -25,7 +25,7 @@ public class HoaDon_DAO {
 		this.khuyenMaiDAO = new KhuyenMai_DAO();
 	}
 
-	/** 🔍 Tìm hóa đơn theo mã (load đầy đủ chi tiết, nhân viên, khách hàng, KM) */
+	/** 🔍 Tìm hóa đơn theo mã (load đầy đủ chi tiết, nhân viên, khách hàng) */
 	public HoaDon timHoaDonTheoMa(String maHD) {
 		Connection con = null;
 		PreparedStatement stmt = null;
@@ -39,37 +39,50 @@ public class HoaDon_DAO {
 			stmt = con.prepareStatement(sql);
 			stmt.setString(1, maHD);
 			rs = stmt.executeQuery();
-
+			
+			HoaDon hd = new HoaDon();
+			
+			String maNV = "";
+			String maKH = "";
+			LocalDate ngayLap = null;
+			String maKM = "";
+			double tongTien = 0.0;
+			boolean thuocKeDon = false;
+			
 			if (rs.next()) {
-				String maNV = rs.getString("MaNhanVien");
-				String maKH = rs.getString("MaKhachHang");
-				LocalDate ngayLap = rs.getDate("NgayLap").toLocalDate();
-				boolean thuocKeDon = rs.getBoolean("ThuocKeDon");
-				String maKM = rs.getString("MaKM");
-
-				// Lấy nhân viên & khách hàng
-				NhanVien nhanVien = nhanVienDAO.timNhanVienTheoMa(maNV);
-				KhachHang khachHang = khachHangDAO.timKhachHangTheoMa(maKH);
-
-				// KM hóa đơn (nếu có)
-				KhuyenMai kmHoaDon = null;
-				if (maKM != null && !maKM.isBlank()) {
-					kmHoaDon = khuyenMaiDAO.timKhuyenMaiTheoMa(maKM);
+				maNV = rs.getString("MaNhanVien");
+				maKH = rs.getString("MaKhachHang");
+				ngayLap = rs.getDate("NgayLap").toLocalDate();
+				maKM = rs.getString("MaKM");
+				tongTien = rs.getDouble("TongThanhToan");
+				thuocKeDon = rs.getBoolean("ThuocKeDon");
+				
+				// Gán lại tổng tiền (nếu cần đảm bảo trùng DB)
+				try {
+					var setTongTien = HoaDon.class.getDeclaredField("tongTien");
+					setTongTien.setAccessible(true);
+					setTongTien.set(hd, tongTien);
+				} catch (Exception ignore) {
 				}
-
-				// 🔹 Load danh sách chi tiết hóa đơn
-				List<ChiTietHoaDon> dsCT = chiTietHoaDonDAO.layDanhSachChiTietTheoMaHD(maHD);
-
-				// ✅ Tạo hóa đơn đầy đủ
-				HoaDon hd = new HoaDon(maHD, nhanVien, khachHang, ngayLap, kmHoaDon, dsCT, thuocKeDon);
-
-				// Nếu muốn dùng đúng số tiền đã lưu DB (phòng khi rule KM thay đổi):
-				double tongThanhToan = rs.getDouble("TongThanhToan");
-				double soTienGiamKM = rs.getDouble("SoTienGiamKhuyenMai");
-				hd.capNhatDuLieuHoaDon();
-
-				return hd;
+				
 			}
+			
+			NhanVien nhanVien = nhanVienDAO.timNhanVienTheoMa(maNV);
+			KhachHang khachHang = khachHangDAO.timKhachHangTheoMa(maKH);
+			KhuyenMai khuyenMai = khuyenMaiDAO.timKhuyenMaiTheoMa(maKM);
+			List<ChiTietHoaDon> dsCT = chiTietHoaDonDAO.layDanhSachChiTietTheoMaHD(maHD);
+			
+			// ✅ Tạo hóa đơn đầy đủ (constructor cũ)
+
+			hd.setMaHoaDon(maHD);
+			hd.setNhanVien(nhanVien);
+			hd.setKhachHang(khachHang);
+			hd.setNgayLap(ngayLap);
+			hd.setKhuyenMai(khuyenMai);
+			hd.setDanhSachChiTiet(dsCT);
+			hd.setThuocKeDon(thuocKeDon);			
+			
+			return hd;
 		} catch (Exception e) {
 			System.err.println("❌ Lỗi khi tìm hóa đơn theo mã: " + e.getMessage());
 		} finally {
