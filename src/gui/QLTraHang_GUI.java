@@ -316,7 +316,7 @@ public class QLTraHang_GUI extends JPanel {
 		scrPT = new JScrollPane(tblPT);
 
 		// === BẢNG CHI TIẾT PHIẾU TRẢ ===
-		String[] cTPhieuTraCols = { "Mã hoá đơn", "Mã lô", "Tên SP", "Hạn dùng", "Số lượng", "Đơn vị tính", "Giá bán",
+		String[] cTPhieuTraCols = { "Mã hoá đơn", "Mã lô", "Tên SP", "Hạn dùng", "Số lượng", "Giá bán", "Đơn vị tính",
 				"Khuyến mãi", "Lý do trả", "Thành tiền", "Trạng thái" };
 
 		modelCTPT = new DefaultTableModel(cTPhieuTraCols, 0) {
