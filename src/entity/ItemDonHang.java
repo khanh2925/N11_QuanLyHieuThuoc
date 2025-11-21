@@ -233,6 +233,11 @@ public class ItemDonHang {
 
         return null;
     }
+    public void setKhuyenMai(ChiTietKhuyenMaiSanPham khuyenMai) {
+        this.khuyenMai = khuyenMai;
+        // Sau khi set (hoặc xóa) KM, phải tính lại tiền ngay
+        tinhLaiThanhTien();
+    }
 
     /**
      * Text hiển thị khuyến mãi (cho txtKM ở GUI)
