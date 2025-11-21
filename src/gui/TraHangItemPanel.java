@@ -97,7 +97,7 @@ public class TraHangItemPanel extends JPanel {
 		loBox.add(Box.createHorizontalStrut(8));
 
 		txtSoLuongMua = TaoJtextNhanh.taoTextDonHang(
-                "Tồn: " + item.getSoLuongMua(), new Font("Segoe UI", Font.BOLD, 16), new Color(0x00796B), 150);
+                "Đã mua: " + item.getSoLuongMua(), new Font("Segoe UI", Font.BOLD, 16), new Color(0x00796B), 150);
         loBox.add(txtSoLuongMua);
 		
 		infoBox.add(loBox);
