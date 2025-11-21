@@ -141,8 +141,8 @@ public class PhieuTra_DAO {
 				""";
 
 		String sqlCT = """
-						INSERT INTO ChiTietPhieuTra(maPhieuTra, maHoaDon, maLo, soLuong, thanhTienHoan, lyDoChiTiet, trangThai)
-						VALUES (?, ?, ?, ?, ?, ?, ?)
+						INSERT INTO ChiTietPhieuTra(maPhieuTra, maHoaDon, maLo, soLuong, thanhTienHoan, lyDoChiTiet, trangThai, MaDonViTinh)
+						VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 				""";
 
 		Connection con = connectDB.getConnection();
@@ -166,6 +166,7 @@ public class PhieuTra_DAO {
 
 			// Insert chi tiết
 			for (ChiTietPhieuTra ct : dsChiTiet) {
+				System.out.println(ct + " " + ct.getChiTietHoaDon());
 				psCT.setString(1, pt.getMaPhieuTra());
 				psCT.setString(2, ct.getChiTietHoaDon().getHoaDon().getMaHoaDon());
 				psCT.setString(3, ct.getChiTietHoaDon().getLoSanPham().getMaLo());
@@ -173,6 +174,7 @@ public class PhieuTra_DAO {
 				psCT.setDouble(5, ct.getThanhTienHoan());
 				psCT.setString(6, ct.getLyDoChiTiet());
 				psCT.setInt(7, ct.getTrangThai());
+				psCT.setString(8, ct.getChiTietHoaDon().getDonViTinh().getMaDonViTinh());
 				psCT.addBatch();
 			}
 
