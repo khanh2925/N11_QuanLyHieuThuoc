@@ -279,16 +279,33 @@ public class QLTraHang_GUI extends JPanel {
 			@Override
 			public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
 				Component c = super.prepareRenderer(renderer, row, column);
+
+				// Mặc định mọi ô: CHỮ ĐEN + KHÔNG BOLD
+				c.setForeground(Color.BLACK);
+				c.setFont(c.getFont().deriveFont(Font.PLAIN));
+
+				// striping
 				if (!isRowSelected(row)) {
-					// striping dòng
-					if (row % 2 == 0) {
+					if (row % 2 == 0)
 						c.setBackground(Color.WHITE);
-					} else {
+					else
 						c.setBackground(new Color(242, 248, 252));
-					}
 				} else {
-					c.setBackground(selectionTop);
+					c.setBackground(new Color(210, 245, 220)); // xanh lá pastel
 				}
+
+				// 🎨 Chỉ cột trạng thái mới có màu
+				if (column == 5) {
+					String tt = getValueAt(row, column).toString().trim();
+					c.setFont(c.getFont().deriveFont(Font.BOLD)); // in đậm
+
+					if (tt.equalsIgnoreCase("Đã duyệt") || tt.equalsIgnoreCase("Đã xử lý")) {
+						c.setForeground(new Color(0, 128, 0)); // xanh lá
+					} else if (tt.equalsIgnoreCase("Chờ duyệt")) {
+						c.setForeground(new Color(217, 83, 0)); // cam
+					}
+				}
+
 				return c;
 			}
 
@@ -360,15 +377,34 @@ public class QLTraHang_GUI extends JPanel {
 			@Override
 			public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
 				Component c = super.prepareRenderer(renderer, row, column);
+
+				// mặc định: chữ đen, không bold
+				c.setForeground(Color.BLACK);
+				c.setFont(c.getFont().deriveFont(Font.PLAIN));
+
+				// striping
 				if (!isRowSelected(row)) {
-					if (row % 2 == 0) {
+					if (row % 2 == 0)
 						c.setBackground(Color.WHITE);
-					} else {
+					else
 						c.setBackground(new Color(252, 246, 248));
-					}
 				} else {
-					c.setBackground(selectionBottom);
+					c.setBackground(new Color(210, 245, 220)); // xanh lá pastel
 				}
+
+				// 🎨 cột trạng thái (10)
+				if (column == 10) {
+					String tt = getValueAt(row, column).toString().trim().toLowerCase();
+					c.setFont(c.getFont().deriveFont(Font.BOLD));
+
+					if (tt.contains("chờ"))
+						c.setForeground(new Color(217, 83, 0)); // cam
+					else if (tt.contains("nhập"))
+						c.setForeground(new Color(0, 102, 204)); // xanh dương
+					else if (tt.contains("hủy") || tt.contains("huỷ"))
+						c.setForeground(new Color(200, 0, 0)); // đỏ
+				}
+
 				return c;
 			}
 
@@ -505,7 +541,7 @@ public class QLTraHang_GUI extends JPanel {
 			String sdt = pt.getKhachHang() != null ? pt.getKhachHang().getSoDienThoai() : "";
 			String nguoiTra = pt.getNhanVien().getTenNhanVien();
 			String ngayLap = dtf.format(pt.getNgayLap());
-			String trangThai = pt.isDaDuyet() ? "Đã xử lý" : "Chờ duyệt";
+			String trangThai = pt.isDaDuyet() ? "Đã duyệt" : "Chờ duyệt";
 			String tongTien = df.format(pt.getTongTienHoan());
 
 			modelPT.addRow(new Object[] { maPT, tenKH, sdt, nguoiTra, ngayLap, trangThai, tongTien });
