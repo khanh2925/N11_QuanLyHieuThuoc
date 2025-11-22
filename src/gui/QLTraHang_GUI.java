@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -27,6 +28,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.RowFilter;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -440,6 +442,30 @@ public class QLTraHang_GUI extends JPanel {
 		scrCTPT.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 1, new Color(200, 210, 220)));
 
 		JPanel pnBottomTable = new JPanel(new BorderLayout());
+
+		// ====== PANEL NÚT – nằm TRÊN, canh TRÁI ======
+		JPanel pnActionTop = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+		pnActionTop.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+		pnActionTop.setBackground(Color.WHITE);
+
+		btnNhapKho = new PillButton("Nhập lại kho");
+		btnNhapKho.setFont(new Font("Segoe UI", Font.BOLD, 16));
+		btnNhapKho.setPreferredSize(new Dimension(150, 32));
+
+		btnHuyHang = new PillButton("Hủy hàng");
+		btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 16));
+		btnHuyHang.setPreferredSize(new Dimension(120, 32));
+
+		pnActionTop.add(btnNhapKho);
+		pnActionTop.add(btnHuyHang);
+
+		// ====== THÊM PANEL NÚT VÀO BẮC ======
+		pnBottomTable.add(pnActionTop, BorderLayout.NORTH);
+
+		// ====== WRAPPER chứa TIÊU ĐỀ + BẢNG CT ======
+		JPanel pnTableWrapper = new JPanel(new BorderLayout());
+
+		// ====== TIÊU ĐỀ – sát bảng, full width ======
 		JLabel lblBottomTitle = new JLabel("Chi tiết sản phẩm trả");
 		lblBottomTitle.setOpaque(true);
 		lblBottomTitle.setBackground(new Color(13, 139, 217));
@@ -447,8 +473,11 @@ public class QLTraHang_GUI extends JPanel {
 		lblBottomTitle.setFont(new Font("Segoe UI", Font.BOLD, 13));
 		lblBottomTitle.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 4));
 
-		pnBottomTable.add(lblBottomTitle, BorderLayout.NORTH);
-		pnBottomTable.add(scrCTPT, BorderLayout.CENTER);
+		pnTableWrapper.add(lblBottomTitle, BorderLayout.NORTH);
+		pnTableWrapper.add(scrCTPT, BorderLayout.CENTER);
+
+		// ====== ĐƯA WRAPPER VÀO CENTER ======
+		pnBottomTable.add(pnTableWrapper, BorderLayout.CENTER);
 
 		// ====== SPLITPANE TRÊN / DƯỚI ======
 		splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pnTopTable, pnBottomTable);
@@ -458,25 +487,6 @@ public class QLTraHang_GUI extends JPanel {
 		splitPane.setDividerSize(6);
 
 		pnCenter.add(splitPane, BorderLayout.CENTER);
-
-		// ====== PANEL NÚT DƯỚI BẢNG CHI TIẾT ======
-		pnAction = new JPanel(new BorderLayout());
-		pnAction.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
-
-		JPanel pnBtnRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
-		btnNhapKho = new PillButton("Nhập lại kho");
-		btnNhapKho.setFont(new Font("Segoe UI", Font.BOLD, 16));
-		btnNhapKho.setPreferredSize(new Dimension(150, 36));
-
-		btnHuyHang = new PillButton("Hủy hàng");
-		btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 16));
-		btnHuyHang.setPreferredSize(new Dimension(120, 36));
-
-		pnBtnRight.add(btnNhapKho);
-		pnBtnRight.add(btnHuyHang);
-
-		pnAction.add(pnBtnRight, BorderLayout.EAST);
-		pnCenter.add(pnAction, BorderLayout.SOUTH);
 
 		// ====== LOAD DATA BAN ĐẦU ======
 		loadPhieuTraData();
