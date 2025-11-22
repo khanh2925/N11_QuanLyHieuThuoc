@@ -381,6 +381,7 @@ public class LoSanPham_DAO {
                 JOIN SanPham SP ON L.MaSanPham = SP.MaSanPham
                 WHERE SP.LoaiSanPham = ?
                   AND L.HanSuDung < ?
+                  AND L.SoLuongTon > 0
                 """;
 
         try (PreparedStatement stmt = con.prepareStatement(sql)) {
