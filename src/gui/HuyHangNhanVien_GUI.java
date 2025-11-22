@@ -21,6 +21,7 @@ import entity.PhieuHuy;
 import entity.SanPham;
 import entity.Session;
 import entity.TaiKhoan;
+import enums.LoaiSanPham;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -35,7 +36,7 @@ import java.util.List;
  * Lập phiếu huỷ trạng thái CHỜ DUYỆT - Không trừ tồn kho tại đây (trừ tồn khi
  * QL duyệt chi tiết)
  */
-public class HuyHangNhanVien_GUI extends JPanel {
+public class HuyHangNhanVien_GUI extends JPanel implements ActionListener{
 
 	// ====== TÌM KIẾM / DANH SÁCH ======
 	private JTextField txtTimLo; // tìm theo mã lô / sau này có thể mở dialog chọn lô
@@ -48,6 +49,12 @@ public class HuyHangNhanVien_GUI extends JPanel {
 	private JLabel lblTongSoLuong;
 	private JLabel lblTongTien;
 	private JTextArea txtGhiChuChung;
+	private PillButton btnTaoPhieu;
+	private PillButton btnHSD;
+	private JButton btnLamMoi;
+
+	
+	
 
 	// ====== MODEL TẠM LƯU DỮ LIỆU HUỶ ======
 	// Mỗi dòng: MaLo, TenSP, HSD, SLTon, SLHuy, DonGiaNhap, ThanhTien, LyDo
@@ -79,12 +86,18 @@ public class HuyHangNhanVien_GUI extends JPanel {
 
 		txtTimLo = new JTextField();
 		txtTimLo.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		txtTimLo.setBounds(25, 17, 420, 60);
+		txtTimLo.setBounds(25, 17, 510, 60);
 		txtTimLo.setBorder(new RoundedBorder(20));
 		txtTimLo.setBackground(Color.WHITE);
 		txtTimLo.setForeground(Color.GRAY);
-		PlaceholderSupport.addPlaceholder(txtTimLo, "Nhập mã lô (LO-xxxxxx) để huỷ...");
+		PlaceholderSupport.addPlaceholder(txtTimLo, "Nhập mã lô (LO-xxxxxx),mã SP (SP-xxxxxx), tên SP");
 		pnHeader.add(txtTimLo);
+		
+		btnHSD = new PillButton("HUỶ THEO HSD");
+		pnHeader.add(btnHSD);
+		btnHSD.setBounds(545, 28, 154, 40);
+		
+
 
 		// ===== CENTER (DANH SÁCH LÔ HUỶ) =====
 		pnCotPhaiCenter = new JPanel();
@@ -185,12 +198,12 @@ public class HuyHangNhanVien_GUI extends JPanel {
 		JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
 		actionPanel.setBackground(null);
 
-		PillButton btnTaoPhieu = new PillButton("Tạo phiếu huỷ");
+		btnTaoPhieu = new PillButton("Tạo phiếu huỷ");
 		btnTaoPhieu.setFont(new Font("Segoe UI", Font.BOLD, 20));
 		btnTaoPhieu.setAlignmentX(Component.CENTER_ALIGNMENT);
 		actionPanel.add(btnTaoPhieu);
 
-		JButton btnLamMoi = new JButton("Làm mới");
+		btnLamMoi = new JButton("Làm mới");
 		actionPanel.add(btnLamMoi);
 
 		pnRight.add(actionPanel);
@@ -205,10 +218,11 @@ public class HuyHangNhanVien_GUI extends JPanel {
 			}
 		};
 
-		// ===== SỰ KIỆN =====
-		txtTimLo.addActionListener(e -> xuLyTimKiem());
-		btnLamMoi.addActionListener(e -> resetForm());
-		btnTaoPhieu.addActionListener(e -> xuLyTaoPhieuHuy());
+		// ===== SỰ KIỆN =====		
+		btnLamMoi.addActionListener(this);
+		txtTimLo.addActionListener(this);
+		btnTaoPhieu.addActionListener(this);
+		btnHSD.addActionListener(this);
 	}
 
 	// ===========================================
@@ -243,15 +257,8 @@ public class HuyHangNhanVien_GUI extends JPanel {
 			return;
 		}
 
-		// 2) Nếu nhập dạng ngày → mở dialog lọc theo HSD
-		if (input.matches("^\\d{1,2}/\\d{1,2}/\\d{4}$") || input.matches("^\\d{4}-\\d{1,2}-\\d{1,2}$")) {
 
-			MoDialogChonLo(input, "HSD");
-			txtTimLo.setText("");
-			return;
-		}
-
-		// 3) Nếu là mã sản phẩm → mở dialog chọn lô theo mã SP
+		// 2) Nếu là mã sản phẩm → mở dialog chọn lô theo mã SP
 		if (input.matches("^SP-\\w+$") || input.matches("^[A-Za-z0-9_-]+$")) {
 
 			MoDialogChonLo(input, "MASP");
@@ -259,7 +266,7 @@ public class HuyHangNhanVien_GUI extends JPanel {
 			return;
 		}
 
-		// 4) Còn lại xem như tên sản phẩm → mở dialog theo tên
+		// 3) Còn lại xem như tên sản phẩm → mở dialog theo tên
 		MoDialogChonLo(input, "TENSP");
 		txtTimLo.setText("");
 	}
@@ -733,4 +740,32 @@ public class HuyHangNhanVien_GUI extends JPanel {
 			frame.setVisible(true);
 		});
 	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+	    Object src = e.getSource();
+
+	    if (src == txtTimLo) {
+	        xuLyTimKiem();
+	        return;
+	    }
+
+	    if (src == btnLamMoi) {
+	        resetForm();
+	        return;
+	    }
+
+	    if (src == btnTaoPhieu) {
+	        xuLyTaoPhieuHuy();
+	        return;
+	    }
+
+	    if (src == btnHSD) {
+	        // Mở dialog chọn lô theo HSD (gần hết hạn)
+	        MoDialogChonLo("", "HSD");   // keyword giờ không dùng nữa trong HSD
+	        return;
+	    }
+	}
+
+
 }

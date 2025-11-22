@@ -92,6 +92,10 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 	private final String PLACEHOLDER_TIEN_KHACH = "Nhập tiền khách đưa";
 	private JTextField textField;
 
+	private JButton btnApDungKMHD;
+	private KhuyenMai kmHoaDonGoiY; // Lưu tạm KM ngon nhất tìm được
+	private boolean cheDoUuTienHoaDon = false; // Mặc định là False (Ưu tiên KM Sản phẩm)
+
 	public BanHang_GUI() {
 		setPreferredSize(new Dimension(1537, 850));
 		initialize();
@@ -246,6 +250,22 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 		boxGiamHD.add(txtGiamHDValue);
 		pnRight.add(boxGiamHD);
 		pnRight.add(Box.createVerticalStrut(10));
+		
+		// === [MỚI] NÚT GỢI Ý ÁP DỤNG KM HÓA ĐƠN ===
+	    btnApDungKMHD = new JButton("Áp dụng KM Hóa Đơn");
+	    btnApDungKMHD.setBackground(new Color(0xFF9800)); // Màu cam nổi bật
+	    btnApDungKMHD.setForeground(Color.WHITE);
+	    btnApDungKMHD.setFont(new Font("Segoe UI", Font.BOLD, 14));
+	    btnApDungKMHD.setCursor(new Cursor(Cursor.HAND_CURSOR));
+	    btnApDungKMHD.setAlignmentX(Component.CENTER_ALIGNMENT);
+	    // Mặc định ẩn, chỉ hiện khi có kèo thơm
+	    btnApDungKMHD.setVisible(false); 
+	    
+	    // Sự kiện bấm nút
+	    btnApDungKMHD.addActionListener(e -> xuLyApDungKMHoaDon());
+	    
+	    pnRight.add(btnApDungKMHD);
+	    pnRight.add(Box.createVerticalStrut(10));
 
 		// ==== TỔNG HÓA ĐƠN ====
 		Box boxTongHD = Box.createHorizontalBox();
@@ -354,6 +374,71 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 		pnRight.add(btnBanHang);
 
 		return pnRight;
+	}
+
+	private void xuLyApDungKMHoaDon() {
+	    if (!cheDoUuTienHoaDon) {
+	        // === TRƯỜNG HỢP 1: CHUYỂN SANG KM HÓA ĐƠN ===
+	        if (kmHoaDonGoiY == null) return;
+
+	        int confirm = JOptionPane.showConfirmDialog(this, 
+	            "Bạn muốn bỏ khuyến mãi sản phẩm để áp dụng:\n" +
+	            "➤ " + kmHoaDonGoiY.getTenKM() + "\n\n" +
+	            "Xác nhận chuyển đổi?",
+	            "Áp dụng KM Hóa Đơn",
+	            JOptionPane.YES_NO_OPTION);
+
+	        if (confirm == JOptionPane.YES_OPTION) {
+	            cheDoUuTienHoaDon = true;
+	            
+	            // 1. Xóa KM trong dữ liệu (Entity)
+	            for (ItemDonHang item : dsItem) {
+	                item.setKhuyenMai(null);
+	            }
+	            
+	            // 2. Bắt giao diện vẽ lại ngay lập tức (UI)
+	            capNhatGiaoDienDanhSachItem(); // <--- Gọi hàm helper mới (xem bên dưới)
+
+	            capNhatTongTien();
+	            JOptionPane.showMessageDialog(this, "Đã chuyển sang ưu tiên KM Hóa Đơn!");
+	        }
+
+	    } else {
+	        // === TRƯỜNG HỢP 2: QUAY VỀ KM SẢN PHẨM ===
+	        int confirm = JOptionPane.showConfirmDialog(this, 
+	            "Hủy KM Hóa Đơn và tính lại khuyến mãi theo từng sản phẩm?\n",
+	            "Quay lại KM Sản Phẩm",
+	            JOptionPane.YES_NO_OPTION);
+
+	        if (confirm == JOptionPane.YES_OPTION) {
+	            cheDoUuTienHoaDon = false; 
+	            
+	            // 1. Khôi phục dữ liệu
+	            khoiPhucKMSanPham();
+	            
+	            // 2. Bắt giao diện vẽ lại ngay lập tức
+	            capNhatGiaoDienDanhSachItem(); // <--- Gọi hàm helper mới
+
+	            capNhatTongTien();
+	            JOptionPane.showMessageDialog(this, "Đã quay lại tính khuyến mãi theo sản phẩm!");
+	        }
+	    }
+	}
+
+	// === HÀM HELPER ĐỂ QUÉT VÀ VẼ LẠI UI ===
+	// Bạn copy hàm này để dưới cùng file BanHang_GUI
+	private void capNhatGiaoDienDanhSachItem() {
+	    // Duyệt qua tất cả các component con trong panel danh sách
+	    for (Component comp : pnDanhSachDon.getComponents()) {
+	        if (comp instanceof DonHangItemPanel) {
+	            // Ép kiểu về DonHangItemPanel và gọi hàm cập nhật
+	            DonHangItemPanel panel = (DonHangItemPanel) comp;
+	            panel.capNhatGiaoDien();
+	        }
+	    }
+	    // Vẽ lại khung chứa (đề phòng layout bị lệch)
+	    pnDanhSachDon.revalidate();
+	    pnDanhSachDon.repaint();
 	}
 
 	/**
@@ -555,10 +640,22 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 		JOptionPane.showMessageDialog(this, "Lập hóa đơn thành công!\nMã hóa đơn: " + maHD, "Thành công",
 				JOptionPane.INFORMATION_MESSAGE);
 
+		// Sau khi lưu thành công và trước khi gọi lamMoiSauKhiBanThanhCong()
+		int confirmPrint = JOptionPane.showConfirmDialog(this, 
+		    "Lập hóa đơn thành công! Bạn có muốn xem/in hóa đơn không?", 
+		    "Thành công", 
+		    JOptionPane.YES_NO_OPTION);
+
+		if (confirmPrint == JOptionPane.YES_OPTION) {
+		    new HoaDonPreviewDialog(SwingUtilities.getWindowAncestor(this), hd).setVisible(true);
+		}
+
 		lamMoiSauKhiBanThanhCong();
 	}
 
 	private void lamMoiSauKhiBanThanhCong() {
+		cheDoUuTienHoaDon = false; // <--- Thêm dòng này
+	    btnApDungKMHD.setVisible(false); // <--- Ẩn nút đi
         dsItem.clear();
         pnDanhSachDon.removeAll();
         pnDanhSachDon.revalidate();
@@ -773,70 +870,115 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 
 	// ================= CẬP NHẬT TỔNG TIỀN ==================
 	private void capNhatTongTien() {
-		tongTienHang = 0;
-		tongGiamSP = 0;
+	    tongTienHang = 0;
+	    tongGiamSP = 0;
+	    boolean coKmSanPham = false;
 
-		boolean coKmSanPham = false;
+	    // 1. Tính toán bình thường theo hiện trạng giỏ hàng
+	    for (ItemDonHang item : dsItem) {
+	        tongTienHang += item.getThanhTienSauKM() + item.getTongGiamGiaSP(); // Tổng gốc
+	        tongGiamSP += item.getTongGiamGiaSP();
+	        
+	        if (item.getKhuyenMai() != null) {
+	            coKmSanPham = true;
+	        }
+	    }
 
-		// 1. Tính tổng tiền hàng gốc + tổng giảm SP, check xem có KM SP không
-		for (ItemDonHang item : dsItem) {
-			double thanhTienSauKM = item.getThanhTienSauKM(); // đã trừ KM SP
-			double giamSP = item.getTongGiamGiaSP(); // số tiền giảm cho item
+	    // 2. Logic tính toán KM Hóa Đơn hiện tại (như code cũ của bạn)
+	    double tienSauKmSP = tongTienHang - tongGiamSP;
+	    if (tienSauKmSP < 0) tienSauKmSP = 0;
 
-			tongTienHang += thanhTienSauKM + giamSP; // cộng lại thành tiền gốc
-			tongGiamSP += giamSP;
+	    tongGiamHD = 0;
+	    kmHoaDonDangApDung = null;
 
-			if (item.getKhuyenMai() != null) {
-				coKmSanPham = true;
-			}
-		}
+	    // Chỉ áp dụng KM HĐ nếu KHÔNG CÓ KM SP nào (Logic ưu tiên SP mặc định)
+	    if (!coKmSanPham && !dsItem.isEmpty()) {
+	        // Tìm KM hóa đơn tốt nhất cho số tiền hiện tại
+	        KhuyenMai kmTotNhat = timKMHoaDonTotNhat(tienSauKmSP);
+	        if (kmTotNhat != null) {
+	            kmHoaDonDangApDung = kmTotNhat;
+	            tongGiamHD = tinhTienGiam(tienSauKmSP, kmTotNhat);
+	        }
+	    }
 
-		// 2. Tính số tiền sau KM SP
-		double tienSauKmSP = tongTienHang - tongGiamSP;
-		if (tienSauKmSP < 0)
-			tienSauKmSP = 0;
+	    // 3. Tổng thanh toán cuối cùng
+	    tongHoaDon = tienSauKmSP - tongGiamHD;
+	    if (tongHoaDon < 0) tongHoaDon = 0;
 
-		// 3. Tính KM hóa đơn (chỉ khi KHÔNG có KM sản phẩm)
-		tongGiamHD = 0;
-		kmHoaDonDangApDung = null;
+	    // 4. Update UI Text
+	    txtTongTienHang.setText(formatTien(tongTienHang));
+	    txtGiamSPValue.setText(formatTien(tongGiamSP));
+	    txtGiamHDValue.setText(formatTien(tongGiamHD));
+	    txtTongHDValue.setText(formatTien(tongHoaDon));
+	    capNhatTienThua();
+	    capNhatGoiYTien();
 
-		if (!coKmSanPham && !dsItem.isEmpty()) {
-			List<KhuyenMai> dsKm = khuyenMaiDao.layKhuyenMaiDangHoatDong();
-			double giamMax = 0;
-			KhuyenMai kmChon = null;
+	    // ============================================================
+	    // 5. LOGIC GỢI Ý (Cái button thông minh nằm ở đây)
+	    // ============================================================
+	    checkVaHienNutGoiY(tongTienHang, tongGiamSP, tongGiamHD);
+	}
+	// Hàm kiểm tra xem có nên hiện nút gợi ý không
+	private void checkVaHienNutGoiY(double tongTienGoc, double giamSPHienTai, double giamHDHienTai) {
+	    // TRƯỜNG HỢP 1: Đang bật chế độ ưu tiên Hóa Đơn
+	    // Nút sẽ đóng vai trò là nút "HUỶ / QUAY LẠI"
+	    if (cheDoUuTienHoaDon) {
+	        btnApDungKMHD.setText("<html><center style='color:red'>✖ Hủy KM Hóa Đơn<br>(Quay lại KM SP)</center></html>");
+	        btnApDungKMHD.setBackground(new Color(0xFFEBEE)); // Màu đỏ nhạt cảnh báo
+	        btnApDungKMHD.setForeground(Color.RED);
+	        btnApDungKMHD.setVisible(true);
+	        return;
+	    }
 
-			for (KhuyenMai km : dsKm) {
-				if (!km.isKhuyenMaiHoaDon())
-					continue; // chỉ lấy KM hóa đơn
+	    // TRƯỜNG HỢP 2: Đang dùng KM SP (Mặc định) -> Tìm kèo thơm
+	    KhuyenMai kmCandidate = timKMHoaDonTotNhat(tongTienGoc);
+	    
+	    if (kmCandidate != null) {
+	        double tienGiamDuKien = tinhTienGiam(tongTienGoc, kmCandidate);
+	        
+	        // Chỉ gợi ý nếu KM Hóa đơn ngon hơn tổng KM SP hiện tại
+	        if (tienGiamDuKien > giamSPHienTai) {
+	            kmHoaDonGoiY = kmCandidate;
+	            
+	            // Nút đóng vai trò "GỢI Ý ÁP DỤNG"
+	            btnApDungKMHD.setText("<html><center>Dùng " + kmCandidate.getTenKM() + "<br>(Giảm " + formatTienShort((long)tienGiamDuKien) + ")</center></html>");
+	            btnApDungKMHD.setBackground(new Color(0xFF9800)); // Màu cam nổi bật
+	            btnApDungKMHD.setForeground(Color.WHITE);
+	            btnApDungKMHD.setVisible(true);
+	        } else {
+	            btnApDungKMHD.setVisible(false);
+	        }
+	    } else {
+	        btnApDungKMHD.setVisible(false);
+	    }
+	}
 
-				double dieuKien = km.getDieuKienApDungHoaDon();
-				if (tienSauKmSP < dieuKien)
-					continue; // không đủ điều kiện
+	// Hàm tìm KM hóa đơn tốt nhất (Helper)
+	private KhuyenMai timKMHoaDonTotNhat(double tongTien) {
+	    List<KhuyenMai> dsKm = khuyenMaiDao.layKhuyenMaiDangHoatDong();
+	    double maxGiam = 0;
+	    KhuyenMai kmChon = null;
+	    
+	    for (KhuyenMai km : dsKm) {
+	        if (!km.isKhuyenMaiHoaDon()) continue;
+	        if (tongTien < km.getDieuKienApDungHoaDon()) continue;
+	        
+	        double giam = tinhTienGiam(tongTien, km);
+	        if (giam > maxGiam) {
+	            maxGiam = giam;
+	            kmChon = km;
+	        }
+	    }
+	    return kmChon;
+	}
 
-				double giam = tinhTienGiamHoaDon(tienSauKmSP, km);
-				if (giam > giamMax) {
-					giamMax = giam;
-					kmChon = km;
-				}
-			}
-
-			tongGiamHD = giamMax;
-			kmHoaDonDangApDung = kmChon;
-		}
-
-		// 4. Tổng hóa đơn = sau KM SP - KM HĐ
-		tongHoaDon = tienSauKmSP - tongGiamHD;
-		if (tongHoaDon < 0)
-			tongHoaDon = 0;
-
-		// 5. Cập nhật UI
-		txtTongTienHang.setText(formatTien(tongTienHang));
-		txtGiamSPValue.setText(formatTien(tongGiamSP));
-		txtGiamHDValue.setText(formatTien(tongGiamHD));
-		txtTongHDValue.setText(formatTien(tongHoaDon));
-
-		capNhatTienThua();
-		capNhatGoiYTien();
+	// Hàm tính tiền giảm (Helper)
+	private double tinhTienGiam(double tongTien, KhuyenMai km) {
+	    if (km.getHinhThuc() == HinhThucKM.GIAM_GIA_PHAN_TRAM) {
+	        return tongTien * (km.getGiaTri() / 100.0);
+	    } else {
+	        return km.getGiaTri();
+	    }
 	}
 
 	private void capNhatTienThua() {
@@ -1011,5 +1153,20 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 		if (giam > tongSauGiamSP)
 			giam = tongSauGiamSP;
 		return giam;
+	}
+	private void khoiPhucKMSanPham() {
+	    for (ItemDonHang item : dsItem) {
+	        // Lấy lại KM từ CSDL dựa vào mã sản phẩm
+	        SanPham sp = item.getSanPham();
+	        List<ChiTietKhuyenMaiSanPham> dsKMSP = ctKMSPDao.layChiTietKhuyenMaiDangHoatDongTheoMaSP(sp.getMaSanPham());
+	        
+	        if (!dsKMSP.isEmpty()) {
+	            // Tìm thấy KM -> Set lại vào item
+	            item.setKhuyenMai(dsKMSP.get(0)); 
+	        } else {
+	            // Không có KM -> Đảm bảo là null
+	            item.setKhuyenMai(null);
+	        }
+	    }
 	}
 }

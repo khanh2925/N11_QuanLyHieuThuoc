@@ -36,6 +36,7 @@ import connectDB.connectDB;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
+import customcomponent.TaoJtextNhanh;
 import dao.DonViTinh_DAO;
 import dao.LoSanPham_DAO;
 import dao.NhaCungCap_DAO;
@@ -59,10 +60,10 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
     private JPanel pnDanhSachDon;
     private JTextField txtSearch;
     private JTextField txtTimNCC;
-    private JLabel lblTongTienHangValue;
-    private JLabel lblTenNCCValue;
-    private JLabel lblDiaChiNCCValue;
-    private JLabel lblEmailNCCValue;
+    private JTextField txtTongTienHang;
+    private JTextField txtTenNCC;
+    private JTextField txtDiaChiNCC;
+    private JTextField txtEmailNCC;
 
     private JButton btnThemLo, btnNhapFile, btnNhapPhieu;
     private JScrollPane scrollPane;
@@ -127,7 +128,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
         }
 
         this.setPreferredSize(new Dimension(1537, 850));
-        initialize(); // <-- ĐÃ VIỆT HÓA (từ initialize)
+        initialize(); //
     }
 
     /**
@@ -188,11 +189,11 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
         pnHeader.setBorder(new EmptyBorder(15, 20, 15, 20));
         add(pnHeader, BorderLayout.NORTH);
 
-        txtSearch = new JTextField();
+        txtSearch = TaoJtextNhanh.nhapLieu("Nhập Mã SP để thêm lô và nhấn Enter...");
         txtSearch.setBounds(20, 15, 420, 58);
-        PlaceholderSupport.addPlaceholder(txtSearch, "Nhập Mã SP để thêm lô và nhấn Enter...");
-        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        txtSearch.setBorder(new RoundedBorder(15));
+//        PlaceholderSupport.addPlaceholder(txtSearch, "Nhập Mã SP để thêm lô và nhấn Enter...");
+//        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+//        txtSearch.setBorder(new RoundedBorder(15));
         txtSearch.addActionListener(this);
         pnHeader.setLayout(null);
         txtSearch.setPreferredSize(new Dimension(420, 60));
@@ -221,7 +222,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
         JPanel pnCenterPanel = new JPanel();
         pnCenterPanel.setBackground(Color.WHITE);
         add(pnCenterPanel, BorderLayout.CENTER);
-        pnCenterPanel.setBorder(new CompoundBorder(new LineBorder(new Color(0x00BFA5), 2, true), new EmptyBorder(5, 5, 5, 5)));
+        pnCenterPanel.setBorder(new CompoundBorder(new LineBorder(new Color(0, 191, 165), 4, true), new EmptyBorder(5, 5, 5, 5)));
         pnCenterPanel.setLayout(new BorderLayout(0, 0));
 
         pnDanhSachDon = new JPanel();
@@ -264,64 +265,80 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
         pnSidebar.add(Box.createVerticalStrut(15));
 
         // --- Giao diện tìm kiếm NCC ---
-        JLabel lblTimNCC = new JLabel("Tìm Nhà Cung Cấp (Mã hoặc SĐT):");
-        lblTimNCC.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        lblTimNCC.setAlignmentX(Component.LEFT_ALIGNMENT);
-        pnSidebar.add(lblTimNCC);
-        pnSidebar.add(Box.createVerticalStrut(8));
+
 
         JPanel pnTimNCC = new JPanel(new BorderLayout(5, 0));
-        pnTimNCC.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        pnTimNCC.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
         pnTimNCC.setOpaque(false);
 
-        txtTimNCC = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimNCC, "Nhập mã NCC hoặc SĐT rồi nhấn Enter");
-        txtTimNCC.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        txtTimNCC.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(0xCCCCCC), 1, true),
-                new EmptyBorder(5,10,5,10)
-        ));
+        txtTimNCC = TaoJtextNhanh.nhapLieu("Nhập Số điện thoại NCC rồi nhấn Enter");
+        txtTimNCC.setPreferredSize(new Dimension(120, 200));;
+
         txtTimNCC.addActionListener(this);
         pnTimNCC.add(txtTimNCC, BorderLayout.CENTER);
         pnSidebar.add(pnTimNCC);
         pnSidebar.add(Box.createVerticalStrut(15));
 
-        // --- Panel thông tin NCC ---
+     // --- Panel thông tin NCC ---
         JPanel pnThongTinNCC = new JPanel();
         pnThongTinNCC.setBackground(Color.WHITE);
-
-        Border titledBorder = BorderFactory.createTitledBorder(
-            new LineBorder(new Color(0xCCCCCC), 1, true),
-            "Thông tin Nhà Cung Cấp",
-            TitledBorder.LEADING, TitledBorder.TOP,
-            new Font("Segoe UI", Font.BOLD, 16),
-            new Color(0x007BFF)
-        );
-        Border paddingBorder = new EmptyBorder(10, 10, 10, 10);
-        pnThongTinNCC.setBorder(new CompoundBorder(titledBorder, paddingBorder));
-
         pnThongTinNCC.setLayout(new BoxLayout(pnThongTinNCC, BoxLayout.Y_AXIS));
         pnThongTinNCC.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // Khai báo Font chữ
+        Font fontLabelNCC = new Font("Segoe UI", Font.PLAIN, 18);
+        Font fontValueNCC = new Font("Segoe UI", Font.BOLD, 18); // Font đậm cho nội dung
+        int txtWidth = 310; // Chiều rộng trường hiển thị (Sidebar 450 - padding - label)
 
-        Font fontLabelNCC = new Font("Segoe UI", Font.PLAIN, 16);
-        Font fontValueNCC = new Font("Segoe UI", Font.BOLD, 16);
+        // --- Hàng 1: Tên Nhà Cung Cấp ---
+        Box boxTen = Box.createHorizontalBox();
+        boxTen.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        lblTenNCCValue = new JLabel("Chưa chọn nhà cung cấp");
-        lblTenNCCValue.setFont(fontValueNCC);
-        lblTenNCCValue.setForeground(Color.BLACK);
+        JLabel lblTitleTen = new JLabel("Tên NCC: ");
+        lblTitleTen.setFont(fontLabelNCC);
+        lblTitleTen.setPreferredSize(new Dimension(80, 30)); // Cố định chiều rộng label tiêu đề
 
-        lblDiaChiNCCValue = new JLabel("Địa chỉ: N/A");
-        lblDiaChiNCCValue.setFont(fontLabelNCC);
+        // SỬA Ở ĐÂY: Dùng TaoJtextNhanh
+        txtTenNCC = TaoJtextNhanh.hienThi("Chưa chọn NCC", new Font("Segoe UI", Font.BOLD, 18), new Color(0x00796B));
 
-        lblEmailNCCValue = new JLabel("Email: N/A");
-        lblEmailNCCValue.setFont(fontLabelNCC);
+        boxTen.add(lblTitleTen);
+        boxTen.add(txtTenNCC);
 
-        pnThongTinNCC.add(lblTenNCCValue);
+        // --- Hàng 2: Địa chỉ ---
+        Box boxDiaChi = Box.createHorizontalBox();
+        boxDiaChi.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel lblTitleDiaChi = new JLabel("Địa chỉ: ");
+        lblTitleDiaChi.setFont(fontLabelNCC);
+        lblTitleDiaChi.setPreferredSize(new Dimension(80, 30));
+
+        // SỬA Ở ĐÂY: Dùng TaoJtextNhanh
+        txtDiaChiNCC = TaoJtextNhanh.hienThi("N/A", new Font("Segoe UI", Font.BOLD, 18), new Color(0x00796B));
+
+        boxDiaChi.add(lblTitleDiaChi);
+        boxDiaChi.add(txtDiaChiNCC);
+
+        // --- Hàng 3: Email ---
+        Box boxEmail = Box.createHorizontalBox();
+        boxEmail.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel lblTitleEmail = new JLabel("Email: ");
+        lblTitleEmail.setFont(fontLabelNCC);
+        lblTitleEmail.setPreferredSize(new Dimension(80, 30));
+
+        // SỬA Ở ĐÂY: Dùng TaoJtextNhanh
+        txtEmailNCC = TaoJtextNhanh.hienThi("N/A", new Font("Segoe UI", Font.BOLD, 18), new Color(0x00796B));
+
+        boxEmail.add(lblTitleEmail);
+        boxEmail.add(txtEmailNCC);
+
+        // --- Thêm các Box vào Panel chính ---
+        pnThongTinNCC.add(boxTen);
+        pnThongTinNCC.add(Box.createVerticalStrut(10)); // Khoảng cách dòng
+        pnThongTinNCC.add(boxDiaChi);
         pnThongTinNCC.add(Box.createVerticalStrut(10));
-        pnThongTinNCC.add(lblDiaChiNCCValue);
-        pnThongTinNCC.add(Box.createVerticalStrut(8));
-        pnThongTinNCC.add(lblEmailNCCValue);
+        pnThongTinNCC.add(boxEmail);
 
+        // Thiết lập kích thước cho panel chứa
         int desiredHeight = 150;
         Dimension fixedSize = new Dimension(Integer.MAX_VALUE, desiredHeight);
         pnThongTinNCC.setPreferredSize(fixedSize);
@@ -338,10 +355,23 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
         pnSidebar.add(Box.createVerticalStrut(10));
 
         // --- Tổng tiền và Nút Nhập ---
-        lblTongTienHangValue = taoNhanThongTin("Tổng tiền hàng:", "0 đ"); // <-- ĐÃ VIỆT HÓA (từ makeInfoLabel)
-        lblTongTienHangValue.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        lblTongTienHangValue.setAlignmentX(Component.LEFT_ALIGNMENT);
-        pnSidebar.add(lblTongTienHangValue);
+     // --- Tổng tiền hàng (Đã sửa thành Label + TextField) ---
+        Box boxTongTien = Box.createHorizontalBox();
+        boxTongTien.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        JLabel lblTitleTongTien = new JLabel("Tổng tiền hàng: ");
+        lblTitleTongTien.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        
+        // Tạo TextField hiển thị tổng tiền: Font to, màu đỏ, rộng khoảng 250px
+        txtTongTienHang = TaoJtextNhanh.hienThi("0 đ", new Font("Segoe UI", Font.BOLD, 20), Color.RED);
+        txtTongTienHang.setHorizontalAlignment(SwingConstants.RIGHT); // Căn phải số tiền cho đẹp
+        txtTongTienHang.setBackground(Color.WHITE); // Nền trắng cho nổi bật
+        
+        boxTongTien.add(lblTitleTongTien);
+        boxTongTien.add(Box.createHorizontalGlue()); // Đẩy text field sang hết bên phải (tùy chọn)
+        boxTongTien.add(txtTongTienHang);
+        
+        pnSidebar.add(boxTongTien);
         pnSidebar.add(Box.createVerticalStrut(15));
 
         btnNhapPhieu = new PillButton("Nhập Phiếu");
@@ -353,29 +383,43 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
     }
 
 
+
     /**
      * Helper: Tạo một JLabel để hiển thị thông tin (dạng Nhãn: Giá trị)
      */
     private JLabel taoNhanThongTin(String labelText, String valueText) {
         JLabel label = new JLabel(String.format("<html>%s <b style='color: #333;'>%s</b></html>", labelText, valueText));
-        label.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        label.setFont(new Font("Segoe UI", Font.PLAIN, 20));
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
         label.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         return label;
     }
+    /**
+     * Hàm đánh lại số thứ tự cho các dòng sản phẩm
+     */
+    private void capNhatLaiSTT() {
+        Component[] components = pnDanhSachDon.getComponents();
+        int stt = 1;
+        for (Component comp : components) {
+            if (comp instanceof ChiTietSanPhamPanel panel) {
+                panel.setSTT(stt++);
+            }
+        }
+    }
 
     /**
-     * Cập nhật tổng tiền hàng (hiển thị trên sidebar)
+     * Cập nhật tổng tiền hàng (hiển thị lên TextField)
      */
     public void capNhatTongTienHang() {
         double tongTien = 0;
         Component[] components = pnDanhSachDon.getComponents();
         for (Component comp : components) {
             if (comp instanceof ChiTietSanPhamPanel panel) {
-                tongTien += panel.layTongThanhTien(); // <-- ĐÃ VIỆT HÓA
+                tongTien += panel.layTongThanhTien();
             }
         }
-        lblTongTienHangValue.setText(String.format("<html>Tổng tiền hàng: <b style='color: red;'>%s đ</b></html>", df.format(tongTien)));
+        // Cập nhật giá trị vào TextField
+        txtTongTienHang.setText(df.format(tongTien) + " đ");
     }
 
     /**
@@ -525,6 +569,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
                             ChiTietSanPhamPanel newPanel = new ChiTietSanPhamPanel(sp, dvtGoc, sp.getGiaNhap());
                             newPanel.themLot(chiTietMoi);
                             pnDanhSachDon.add(newPanel);
+                            capNhatLaiSTT();
                         }
                         successCount++;
 
@@ -639,10 +684,13 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
      */
     private void datLaiThongTinNCC() {
         nhaCungCapDaChon = null;
-        lblTenNCCValue.setText("Chưa chọn nhà cung cấp");
-        lblTenNCCValue.setForeground(Color.BLACK);
-        lblDiaChiNCCValue.setText("Địa chỉ: N/A");
-        lblEmailNCCValue.setText("Email: N/A");
+        txtTenNCC.setText("N/A");
+        txtTenNCC.setForeground(Color.GRAY);
+        
+        txtDiaChiNCC.setText("N/A");
+        txtDiaChiNCC.setToolTipText(null);
+
+        txtEmailNCC.setText("N/A");
     }
 
     /**
@@ -650,14 +698,20 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
      */
     private void capNhatThongTinNCC(NhaCungCap ncc) {
         nhaCungCapDaChon = ncc;
-        txtTimNCC.setText(ncc.getMaNhaCungCap());
+        txtTimNCC.setText(ncc.getSoDienThoai());
         txtTimNCC.setForeground(Color.BLACK);
 
-        lblTenNCCValue.setText("Tên NCC: "+ncc.getTenNhaCungCap());
-        lblTenNCCValue.setForeground(new Color(0x007BFF));
+        // Cập nhật Tên
+        txtTenNCC.setText(ncc.getTenNhaCungCap());
+        txtTenNCC.setForeground(new Color(0x007BFF)); // Màu xanh nổi bật
+        txtTenNCC.setToolTipText(ncc.getTenNhaCungCap()); // Hiển thị tooltip nếu tên quá dài
 
-        lblDiaChiNCCValue.setText("Địa chỉ: " + ncc.getDiaChi());
-        lblEmailNCCValue.setText("Email: " + (ncc.getEmail() != null ? ncc.getEmail() : "N/A"));
+        // Cập nhật Địa chỉ
+        txtDiaChiNCC.setText(ncc.getDiaChi());
+        txtDiaChiNCC.setToolTipText(ncc.getDiaChi());
+
+        // Cập nhật Email
+        txtEmailNCC.setText(ncc.getEmail() != null ? ncc.getEmail() : "N/A");
     }
 
     /**
@@ -673,13 +727,15 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
          NhaCungCap ncc = nhaCungCapDAO.timNhaCungCapTheoMaHoacSDT(keyword);
 
          if (ncc != null) {
-              capNhatThongTinNCC(ncc);
-         } else {
-              datLaiThongTinNCC(); // <-- ĐÃ VIỆT HÓA
-              lblTenNCCValue.setText("Không tìm thấy nhà cung cấp");
-              lblTenNCCValue.setForeground(Color.RED);
-              txtTimNCC.setForeground(Color.RED);
-         }
+             capNhatThongTinNCC(ncc);
+        } else {
+             datLaiThongTinNCC(); 
+             // Sửa dòng dưới đây
+             txtTenNCC.setText("Không tìm thấy nhà cung cấp");
+             txtTenNCC.setForeground(Color.RED);
+             
+             txtTimNCC.setForeground(Color.RED);
+        }
     }
 
     /**
@@ -757,8 +813,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
                     ChiTietSanPhamPanel newPanel = new ChiTietSanPhamPanel(sp, dvtGoc, donGiaGoc);
                     newPanel.themLot(chiTietMoi);
                     pnDanhSachDon.add(newPanel);
-                    // ✅ SỬA 1: Xóa khoảng cách 5px
-                    // pnDanhSachDon.add(Box.createVerticalStrut(5)); 
+                    capNhatLaiSTT(); 
                 }
 
                 this.soLoTiepTheo++; 
@@ -1017,15 +1072,17 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
         return dashedLinePanel;
     }
 
-    // ✅ ===================================================================
-    // ✅ LỚP NỘI BỘ (INNER CLASS) ĐỂ HIỂN THỊ PANEL SẢN PHẨM THEO MẪU
+// ✅ ===================================================================
+    // ✅ CLASS CHI TIẾT SẢN PHẨM (ĐÃ CẬP NHẬT STT VÀ NÚT XÓA)
     // ✅ ===================================================================
     class ChiTietSanPhamPanel extends JPanel {
         private SanPham sanPham;
-        private DonViTinh donViTinh; // ✅ Sẽ luôn là ĐVT Gốc
-        private double donGia; // ✅ Sẽ luôn là Giá Nhập Gốc
+        private DonViTinh donViTinh;
+        private double donGia;
         private List<ChiTietPhieuNhap> dsChiTietCuaSP;
 
+        // UI Components
+        private JLabel lblSTT; // <-- MỚI: Label số thứ tự
         private JLabel lblTenSP;
         private JTextField txtTongSoLuong;
         private JLabel lblDonViTinh;
@@ -1045,10 +1102,9 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
 
             setLayout(new BorderLayout(5, 5));
             setBackground(Color.WHITE);
-            // ✅ SỬA 3: Giảm padding trên/dưới từ 10 -> 5
             setBorder(new CompoundBorder(
                 new MatteBorder(0, 0, 1, 0, new Color(230, 230, 230)),
-                new EmptyBorder(5, 10, 5, 10) // <-- SỬA Ở ĐÂY
+                new EmptyBorder(5, 10, 5, 10)
             ));
 
             // ----- HÀNG 1: Thông tin sản phẩm (GridBagLayout) -----
@@ -1057,84 +1113,80 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
             pnMain.setLayout(new GridBagLayout());
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.insets = new Insets(0, 5, 0, 5);
-            gbc.anchor = GridBagConstraints.WEST;
+            gbc.anchor = GridBagConstraints.CENTER; // Căn giữa theo chiều dọc
+            gbc.fill = GridBagConstraints.VERTICAL;
             gbc.gridy = 0; 
             gbc.gridheight = 1; 
 
-            // Cột 0: Nút Xóa
+            // --- Cột 0: Số Thứ Tự (MỚI) ---
             gbc.gridx = 0; gbc.weightx = 0;
-            JButton btnXoaSP = new JButton();
-             ImageIcon icon = new ImageIcon(getClass().getResource("/images/bin.png"));
-             btnXoaSP.setIcon(new ImageIcon(icon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH)));
-            btnXoaSP.setToolTipText("Xóa sản phẩm này");
-            btnXoaSP.setMargin(new Insets(0, 0, 0, 0));
-            btnXoaSP.setPreferredSize(new Dimension(40, 40));
-            btnXoaSP.setContentAreaFilled(false);
-            btnXoaSP.setBorderPainted(false);
-            btnXoaSP.setFocusPainted(false);
-            btnXoaSP.addActionListener(e -> {
-                int confirm = JOptionPane.showConfirmDialog(this,
-                    "Xóa tất cả các lô của sản phẩm '" + sanPham.getTenSanPham() + "'?",
-                    "Xác nhận", JOptionPane.YES_NO_OPTION);
-                if (confirm == JOptionPane.YES_OPTION) {
-                    pnDanhSachDon.remove(this);
-                    capNhatTongTienHang();
-                    pnDanhSachDon.revalidate();
-                    pnDanhSachDon.repaint();
-                }
-            });
-            pnMain.add(btnXoaSP, gbc);
+            lblSTT = new JLabel("1");
+            lblSTT.setFont(new Font("Segoe UI", Font.BOLD, 16));
+            lblSTT.setForeground(Color.black);
+            lblSTT.setPreferredSize(new Dimension(30, 40));
+            lblSTT.setHorizontalAlignment(SwingConstants.CENTER);
+            pnMain.add(lblSTT, gbc);
 
-            // Cột 1: Hình ảnh
-            gbc.gridx = 1;
+            // --- Cột 1: Hình ảnh ---
+            gbc.gridx = 1; gbc.weightx = 0;
             JLabel lblHinhAnh = new JLabel();
             lblHinhAnh.setBorder(new LineBorder(Color.LIGHT_GRAY));
             lblHinhAnh.setPreferredSize(new Dimension(80, 80));
             lblHinhAnh.setHorizontalAlignment(SwingConstants.CENTER);
-            
             try {
                 String imagePath = "/images/" + sp.getHinhAnh(); 
-                if (sp.getHinhAnh() == null || sp.getHinhAnh().isBlank()) {
-                    throw new Exception("Sản phẩm không có hình ảnh");
+                if (sp.getHinhAnh() != null && !sp.getHinhAnh().isBlank()) {
+                    ImageIcon imgIcon = new ImageIcon(getClass().getResource(imagePath));
+                    if (imgIcon.getIconWidth() != -1) { 
+                         Image img = imgIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+                         lblHinhAnh.setIcon(new ImageIcon(img));
+                    }
                 }
-                ImageIcon imgIcon = new ImageIcon(getClass().getResource(imagePath));
-                if (imgIcon.getIconWidth() == -1) { 
-                    throw new Exception("Không tìm thấy ảnh: " + imagePath);
-                }
-                Image img = imgIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
-                lblHinhAnh.setIcon(new ImageIcon(img));
             } catch (Exception ex) {
                 lblHinhAnh.setText("Ảnh"); 
-                lblHinhAnh.setFont(new Font("Segoe UI", Font.PLAIN, 14));
             }
             pnMain.add(lblHinhAnh, gbc);
 
-            // Cột 2: Tên SP
-            gbc.gridx = 2; gbc.weightx = 1.0; 
+            // --- Cột 2: Tên SP ---
+            gbc.gridx = 2; gbc.weightx = 1.0; // Chiếm phần dư
+            gbc.anchor = GridBagConstraints.WEST; // Canh trái tên
             lblTenSP = new JLabel(sp.getTenSanPham());
             lblTenSP.setFont(new Font("Segoe UI", Font.BOLD, 16));
             pnMain.add(lblTenSP, gbc);
             
-            // Cột 3: Đơn vị tính
-            gbc.gridx = 3; gbc.weightx = 0; 
+            // Reset anchor về Center cho các cột sau
+            gbc.anchor = GridBagConstraints.CENTER;
+            gbc.weightx = 0;
+
+            // --- Cột 3: Đơn vị tính ---
+            gbc.gridx = 3; 
             lblDonViTinh = new JLabel(dvt.getTenDonViTinh()); 
             lblDonViTinh.setFont(new Font("Segoe UI", Font.PLAIN, 15));
             lblDonViTinh.setPreferredSize(new Dimension(80, 30));
             lblDonViTinh.setHorizontalAlignment(SwingConstants.CENTER);
             pnMain.add(lblDonViTinh, gbc);
 
-            // Cột 4: Tổng số lượng
+         // --- Cột 4: Tổng số lượng ---
             gbc.gridx = 4;
+            gbc.fill = GridBagConstraints.NONE; // <--- QUAN TRỌNG: Thêm dòng này để không bị giãn chiều cao theo ảnh
+            
             txtTongSoLuong = new JTextField("0"); 
             txtTongSoLuong.setFont(new Font("Segoe UI", Font.BOLD, 14));
-            txtTongSoLuong.setForeground(Color.GRAY);
+            txtTongSoLuong.setForeground(Color.BLACK); // Màu chữ đen cho dễ nhìn
             txtTongSoLuong.setEditable(false); 
             txtTongSoLuong.setBackground(Color.WHITE); 
             txtTongSoLuong.setHorizontalAlignment(JTextField.CENTER); 
-            txtTongSoLuong.setPreferredSize(new Dimension(100, 30));
+            
+            // Set kích thước cố định cho ô nhập
+            txtTongSoLuong.setPreferredSize(new Dimension(80, 30)); 
+            txtTongSoLuong.setMinimumSize(new Dimension(80, 30));
+            
+            // Thêm viền nhẹ cho đẹp (tùy chọn)
+            txtTongSoLuong.setBorder(new LineBorder(new Color(0xD1D5DB), 1));
+            
             pnMain.add(txtTongSoLuong, gbc);
 
-            // Cột 5: Đơn giá
+            // --- Cột 5: Đơn giá ---
             gbc.gridx = 5;
             lblDonGia = new JLabel(df.format(donGia) + " đ"); 
             lblDonGia.setFont(new Font("Segoe UI", Font.PLAIN, 15));
@@ -1142,17 +1194,46 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
             lblDonGia.setHorizontalAlignment(SwingConstants.RIGHT);
             pnMain.add(lblDonGia, gbc);
 
-            // Cột 6: Tổng thành tiền
+            // --- Cột 6: Tổng thành tiền ---
             gbc.gridx = 6;
             lblTongThanhTien = new JLabel("0 đ");
             lblTongThanhTien.setFont(new Font("Segoe UI", Font.BOLD, 16));
             lblTongThanhTien.setPreferredSize(new Dimension(140, 30));
             lblTongThanhTien.setHorizontalAlignment(SwingConstants.RIGHT);
             pnMain.add(lblTongThanhTien, gbc);
+
+            // --- Cột 7: Nút Xóa (Đã chuyển xuống cuối) ---
+            gbc.gridx = 7;
+            JButton btnXoaSP = new JButton();
+            // Lưu ý: Đảm bảo đường dẫn icon đúng
+            ImageIcon icon = new ImageIcon(getClass().getResource("/images/bin.png")); 
+            btnXoaSP.setIcon(new ImageIcon(icon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH)));
+            btnXoaSP.setToolTipText("Xóa sản phẩm này");
+            btnXoaSP.setPreferredSize(new Dimension(40, 40));
+            btnXoaSP.setContentAreaFilled(false);
+            btnXoaSP.setBorderPainted(false);
+            btnXoaSP.setFocusPainted(false);
+            btnXoaSP.setCursor(new Cursor(Cursor.HAND_CURSOR)); // Thêm hiệu ứng tay
+            btnXoaSP.addActionListener(e -> {
+                int confirm = JOptionPane.showConfirmDialog(ChiTietSanPhamPanel.this,
+                    "Xóa tất cả các lô của sản phẩm '" + sanPham.getTenSanPham() + "'?",
+                    "Xác nhận", JOptionPane.YES_NO_OPTION);
+                if (confirm == JOptionPane.YES_OPTION) {
+                    pnDanhSachDon.remove(ChiTietSanPhamPanel.this);
+                    capNhatTongTienHang();
+                    
+                    // Quan trọng: Cập nhật lại STT sau khi xóa
+                    capNhatLaiSTT(); 
+
+                    pnDanhSachDon.revalidate();
+                    pnDanhSachDon.repaint();
+                }
+            });
+            pnMain.add(btnXoaSP, gbc);
             
             add(pnMain, BorderLayout.CENTER);
 
-            // ----- HÀNG 2: Nút Chọn Lô và Thanh cuộn Lô -----
+            // ----- HÀNG 2: (Code giữ nguyên) -----
             pnRow2 = new JPanel(new BorderLayout(10, 5)); 
             pnRow2.setOpaque(false);
 
@@ -1163,15 +1244,13 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
             btnChonLo.setBackground(Color.WHITE);
             btnChonLo.setBorder(new LineBorder(Color.LIGHT_GRAY, 1));
             btnChonLo.setFocusPainted(false);
-            btnChonLo.addActionListener(e -> {
-                xuLyChonLoNoiBo(); 
-            });
+            btnChonLo.addActionListener(e -> xuLyChonLoNoiBo());
             
-            JPanel pnButtonWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            JPanel pnButtonWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT,0, 0));
             pnButtonWrapper.setOpaque(false);
             pnButtonWrapper.add(btnChonLo);
-            // Căn lề cho nút (Nút Xóa 40 + Ảnh 80 + 3*Insets 5 = 135)
-            pnButtonWrapper.setBorder(new EmptyBorder(0, 70, 0, 0)); 
+            // Tăng lề trái để nút Chọn lô thẳng hàng với Tên SP (STT 30 + Ảnh 80 + Spacing ~15)
+            pnButtonWrapper.setBorder(new EmptyBorder(0, 60, 0, 0)); 
             
             pnRow2.add(pnButtonWrapper, BorderLayout.WEST);
 
@@ -1188,115 +1267,100 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
             scrollLots.setPreferredSize(new Dimension(100, 45)); 
 
             pnRow2.add(scrollLots, BorderLayout.CENTER);
-            
             add(pnRow2, BorderLayout.SOUTH);
             
             capNhatTongSoLuongVaTien();
         }
-        
+
         /**
-         * Xử lý riêng cho nút "Chọn Lô" nội bộ
+         * Hàm setter để cập nhật số thứ tự từ bên ngoài
          */
+        public void setSTT(int stt) {
+            lblSTT.setText(String.valueOf(stt));
+        }
+
+        // ... (Các hàm xuLyChonLoNoiBo, laySanPham, v.v. giữ nguyên như cũ)
+        // Chỉ lưu ý sửa chỗ xóa lô cuối cùng:
         
-private void xuLyChonLoNoiBo() {
+        private void xoaLoKhoiPanel(ChiTietPhieuNhap chiTiet) {
+            if (dsChiTietCuaSP.contains(chiTiet)) {
+                dsChiTietCuaSP.remove(chiTiet);
+            }
+            xoaTagChiTiet(chiTiet);
+            capNhatTongSoLuongVaTien(); 
+            
+            if (dsChiTietCuaSP.isEmpty()) {
+                pnDanhSachDon.remove(this);
+                // Cập nhật lại STT nếu panel tự hủy
+                capNhatLaiSTT(); 
+                
+                pnDanhSachDon.revalidate();
+                pnDanhSachDon.repaint();
+                capNhatTongTienHang(); 
+            }
+        }
+
+        // ... (Giữ nguyên phần còn lại của class ChiTietSanPhamPanel)
+        // Copy lại các hàm xuLyChonLoNoiBo, getters, themLot, xoaTagChiTiet, capNhatTongSoLuongVaTien từ code cũ vào đây
+        
+        private void xuLyChonLoNoiBo() {
+             // Copy y nguyên logic cũ
             SanPham sp = this.sanPham; 
             String maLoHienThi = String.format("LO-%06d", soLoTiepTheo);
-            
             ArrayList<QuyCachDongGoi> dsQuyCach = quyCachDAO.layDanhSachQuyCachTheoSanPham(sp.getMaSanPham());
             QuyCachDongGoi qc_goc = quyCachDAO.timQuyCachGocTheoSanPham(sp.getMaSanPham());
 
             if (dsQuyCach == null || dsQuyCach.isEmpty() || qc_goc == null) {
-                JOptionPane.showMessageDialog(this, "Sản phẩm '" + sp.getTenSanPham() + "' chưa được cấu hình Quy Cách Đóng Gói.", "Lỗi cấu hình", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Sản phẩm chưa cấu hình Quy Cách.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-
-            // ✅ SỬA 2: Gọi ChonLo_Dialog (Constructor 2 - Thêm hoặc Sửa)
-            // Truyền danh sách lô hiện tại (dsChiTietCuaSP) vào
             ChonLo_Dialog dialog = new ChonLo_Dialog(mainFrame, sp, maLoHienThi, dsQuyCach, qc_goc, this.dsChiTietCuaSP);
             dialog.setVisible(true);
 
             if (dialog.isConfirmed()) {
                 try {
-                    // Lấy kết quả
                     double donGiaGoc = dialog.getDonGiaNhap(); 
                     DonViTinh dvtGoc = dialog.getDonViTinh(); 
-                    
-                    // Validate: Đơn vị tính và Đơn giá phải khớp (luôn luôn)
                     if (!this.donViTinh.equals(dvtGoc) || this.donGia != donGiaGoc) {
-                        JOptionPane.showMessageDialog(this, 
-                            String.format("Lỗi: Lô mới phải có cùng Đơn vị tính (%s) và Đơn giá (%,.0f đ) với các lô đã thêm.",
-                                this.donViTinh.getTenDonViTinh(), this.donGia),
-                            "Lỗi Thêm Lô", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, "Lỗi: ĐVT/Giá nhập không khớp lô cũ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         return; 
                     }
-                    
                     ChiTietPhieuNhap ctCanSua = dialog.getChiTietCanSua();
                     int soLuongNhapMoi_Goc = dialog.getSoLuongNhap();
 
                     if (ctCanSua != null) {
-                        // ===== CHẾ ĐỘ SỬA LÔ =====
-                        
                         if (soLuongNhapMoi_Goc > 0) {
-                            // SỬA SỐ LƯỢNG (Lớn hơn 0)
                             ctCanSua.setSoLuongNhap(soLuongNhapMoi_Goc); 
                             xoaTagChiTiet(ctCanSua); 
                             dsChiTietCuaSP.remove(ctCanSua); 
                             themLot(ctCanSua);       
                         } else {
-                            // ✅ XÓA LÔ (Vì số lượng = 0)
-                            // Logic này đã tồn tại và chính xác
                             xoaLoKhoiPanel(ctCanSua); 
                         }
-                        
                     } else {
-                        // ===== CHẾ ĐỘ THÊM LÔ MỚI =====
                         LoSanPham loMoi = dialog.getLoSanPham(); 
-                        
                         ChiTietPhieuNhap chiTietMoi = new ChiTietPhieuNhap();
                         chiTietMoi.setLoSanPham(loMoi);
                         chiTietMoi.setDonViTinh(dvtGoc);
                         chiTietMoi.setSoLuongNhap(soLuongNhapMoi_Goc);
                         chiTietMoi.setDonGiaNhap(donGiaGoc);
-                        
                         this.themLot(chiTietMoi);
-                        
-                        // Chỉ tăng số lô nếu đó là LÔ MỚI
-                        if (loMoi.getMaLo().equals(maLoHienThi)) {
-                            soLoTiepTheo++; 
-                        }
+                        if (loMoi.getMaLo().equals(maLoHienThi)) soLoTiepTheo++; 
                     }
-                    
                     capNhatTongTienHang();
                     pnDanhSachDon.revalidate();
                     pnDanhSachDon.repaint();
-                    
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Lỗi khi thêm/sửa lô: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    ex.printStackTrace(); 
-                }
+                } catch (Exception ex) { ex.printStackTrace(); }
             }
         }
-        
-        public SanPham laySanPham() { 
-            return sanPham;
-        }
-        
-        public DonViTinh layDonViTinh() { 
-            return donViTinh;
-        }
-        
-        public double layDonGia() { 
-            return donGia;
-        }
-
+        public SanPham laySanPham() { return sanPham; }
+        public DonViTinh layDonViTinh() { return donViTinh; }
+        public double layDonGia() { return donGia; }
         public double layTongThanhTien() { 
             double total = 0;
-            for (ChiTietPhieuNhap ct : dsChiTietCuaSP) {
-                total += ct.getThanhTien();
-            }
+            for (ChiTietPhieuNhap ct : dsChiTietCuaSP) total += ct.getThanhTien();
             return total;
         }
-        
         public List<ChiTietPhieuNhap> layTatCaChiTiet(PhieuNhap pn) { 
             for(ChiTietPhieuNhap ctpn : dsChiTietCuaSP) {
                 ctpn.setPhieuNhap(pn); 
@@ -1306,40 +1370,26 @@ private void xuLyChonLoNoiBo() {
         }
         private void xoaTagChiTiet(ChiTietPhieuNhap chiTiet) {
             String maLoCanXoa = chiTiet.getLoSanPham().getMaLo();
-            
             for (Component comp : pnDanhSachLo.getComponents()) {
                 if (comp instanceof JPanel pnlLoTag) {
-                    // Dùng tên của component để định danh
                     if (pnlLoTag.getName() != null && pnlLoTag.getName().equals(maLoCanXoa)) {
                         pnDanhSachLo.remove(pnlLoTag);
-                        // Không gọi capNhatTongSoLuongVaTien() ở đây
-                        // vì nó sẽ được gọi ngay sau khi thêm lại tag
                         return; 
                     }
                 }
             }
         }
-
-        // Hàm quan trọng: Thêm 1 lô vào panel sản phẩm này
         public void themLot(ChiTietPhieuNhap chiTiet) {
             dsChiTietCuaSP.add(chiTiet);
-            
             JPanel pnlLoTag = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
             pnlLoTag.setBackground(new Color(0x3B82F6));
             pnlLoTag.setBorder(new EmptyBorder(2, 5, 2, 5));
-            // ✅ Đặt tên cho tag để tìm và xóa khi sửa
             pnlLoTag.setName(chiTiet.getLoSanPham().getMaLo());
-            
-            String loText = String.format("%s - %s - SL: %d", 
-                chiTiet.getLoSanPham().getMaLo(),
-                chiTiet.getLoSanPham().getHanSuDung().format(fmtDate),
-                chiTiet.getSoLuongNhap()
-            );
+            String loText = String.format("%s - %s - SL: %d", chiTiet.getLoSanPham().getMaLo(), chiTiet.getLoSanPham().getHanSuDung().format(fmtDate), chiTiet.getSoLuongNhap());
             JLabel lblLoInfo = new JLabel(loText);
             lblLoInfo.setFont(new Font("Segoe UI", Font.BOLD, 12));
             lblLoInfo.setForeground(Color.WHITE);
             pnlLoTag.add(lblLoInfo);
-            
             JButton btnXoaLo = new JButton("X");
             btnXoaLo.setFont(new Font("Segoe UI", Font.BOLD, 12));
             btnXoaLo.setForeground(Color.WHITE);
@@ -1348,67 +1398,34 @@ private void xuLyChonLoNoiBo() {
             btnXoaLo.setContentAreaFilled(false);
             btnXoaLo.setCursor(new Cursor(Cursor.HAND_CURSOR));
             btnXoaLo.addActionListener(e -> {
-                // Kiểm tra xem dsChiTietCuaSP có chứa chiTiet này không trước khi xóa
-                if (dsChiTietCuaSP.contains(chiTiet)) {
-                    dsChiTietCuaSP.remove(chiTiet);
-                }
+                if (dsChiTietCuaSP.contains(chiTiet)) dsChiTietCuaSP.remove(chiTiet);
                 pnDanhSachLo.remove(pnlLoTag);
                 capNhatTongSoLuongVaTien();
-                
-                // Nếu xóa lô cuối cùng, xóa cả panel sản phẩm
                 if (dsChiTietCuaSP.isEmpty()) {
                     pnDanhSachDon.remove(this);
+                    capNhatLaiSTT(); // <-- CẬP NHẬT STT
                     pnDanhSachDon.revalidate();
                     pnDanhSachDon.repaint();
                     capNhatTongTienHang();
                 }
             });
             pnlLoTag.add(btnXoaLo);
-            
             pnDanhSachLo.add(pnlLoTag);
             capNhatTongSoLuongVaTien();
         }
-        private void xoaLoKhoiPanel(ChiTietPhieuNhap chiTiet) {
-            // 1. Xóa khỏi Data
-            if (dsChiTietCuaSP.contains(chiTiet)) {
-                dsChiTietCuaSP.remove(chiTiet);
-            }
-            
-            // 2. Xóa Tag UI
-            xoaTagChiTiet(chiTiet);
-            
-            // 3. Cập nhật tổng tiền
-            capNhatTongSoLuongVaTien(); 
-            
-            // 4. Nếu là lô cuối cùng, xóa cả panel
-            if (dsChiTietCuaSP.isEmpty()) {
-                pnDanhSachDon.remove(this);
-                pnDanhSachDon.revalidate();
-                pnDanhSachDon.repaint();
-                capNhatTongTienHang(); // Cập nhật tổng chung một lần nữa
-            }
-        }
-
-        
-        // Cập nhật tổng của riêng panel này
         private void capNhatTongSoLuongVaTien() {
             int tongSoLuong = 0;
             double tongThanhTien = 0;
-            
             for (ChiTietPhieuNhap ct : dsChiTietCuaSP) {
                 tongSoLuong += ct.getSoLuongNhap();
                 tongThanhTien += ct.getThanhTien();
             }
-            
             txtTongSoLuong.setText(String.valueOf(tongSoLuong));
             lblTongThanhTien.setText(df.format(tongThanhTien) + " đ");
-            
             capNhatTongTienHang();
-            
             int totalHeight = 150; 
             setMaximumSize(new Dimension(Integer.MAX_VALUE, totalHeight));
             setPreferredSize(new Dimension(getPreferredSize().width, totalHeight));
-            
             revalidate();
             repaint();
         }

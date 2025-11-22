@@ -27,13 +27,13 @@ GO
 CREATE TABLE NhanVien (
     MaNhanVien CHAR(17) PRIMARY KEY CHECK (MaNhanVien LIKE 'NV-%'),
     TenNhanVien NVARCHAR(50) NOT NULL,
-    GioiTinh BIT NOT NULL,
+    GioiTinh BIT NOT NULL, 
     NgaySinh DATE NOT NULL CHECK (DATEDIFF(YEAR, NgaySinh, GETDATE()) >= 18),
     SoDienThoai CHAR(10) NOT NULL CHECK (SoDienThoai LIKE '0[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'),
     DiaChi NVARCHAR(100) NOT NULL,
-    QuanLy BIT NOT NULL DEFAULT 0,
-    CaLam TINYINT NOT NULL CHECK (CaLam BETWEEN 1 AND 3),
-    TrangThai BIT NOT NULL DEFAULT 1
+    QuanLy BIT NOT NULL DEFAULT 0, 
+    CaLam TINYINT NOT NULL CHECK (CaLam BETWEEN 1 AND 3), 
+    TrangThai BIT NOT NULL DEFAULT 1 
 );
 GO
 
@@ -49,11 +49,11 @@ GO
 CREATE TABLE KhachHang (
     MaKhachHang CHAR(17) PRIMARY KEY CHECK (MaKhachHang LIKE 'KH-%'),
     TenKhachHang NVARCHAR(100) NOT NULL,
-    GioiTinh BIT NOT NULL,
+    GioiTinh BIT NOT NULL, 
     SoDienThoai CHAR(10) NOT NULL CHECK (soDienThoai LIKE '0[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'),
     NgaySinh DATE NOT NULL,
-    HoatDong BIT NOT NULL DEFAULT 1,
-    DiemTichLuy FLOAT DEFAULT 0
+    HoatDong BIT NOT NULL DEFAULT 1 
+    -- ❌ Đã xóa DiemTichLuy
 );
 GO
 
@@ -83,10 +83,10 @@ CREATE TABLE KhuyenMai (
     NgayBatDau DATE NOT NULL,
     NgayKetThuc DATE NOT NULL,
     TrangThai BIT NOT NULL,
-    KhuyenMaiHoaDon BIT NOT NULL,
-    HinhThuc VARCHAR(30) NOT NULL CHECK (HinhThuc IN ('GIAM_GIA_PHAN_TRAM','GIAM_GIA_TIEN','TANG_THEM')),
+    KhuyenMaiHoaDon BIT NOT NULL, 
+    HinhThuc VARCHAR(30) NOT NULL CHECK (HinhThuc IN ('GIAM_GIA_PHAN_TRAM','GIAM_GIA_TIEN')), -- Đã bỏ TANG_THEM
     GiaTri FLOAT NOT NULL,
-    DieuKienApDungHoaDon FLOAT DEFAULT 0,
+    DieuKienApDungHoaDon FLOAT DEFAULT 0, 
     SoLuongKhuyenMai INT DEFAULT 0
 );
 GO
@@ -105,7 +105,7 @@ CREATE TABLE SanPham (
     GiaNhap FLOAT NOT NULL CHECK (GiaNhap > 0),
     GiaBan FLOAT,
     HinhAnh NVARCHAR(255),
-    KeBanSanPham NVARCHAR(100),
+    KeBanSanPham NVARCHAR(100), 
     HoatDong BIT NOT NULL DEFAULT 1
 );
 GO
@@ -204,11 +204,11 @@ CREATE TABLE HoaDon (
     MaNhanVien CHAR(17) NOT NULL,
     MaKhachHang CHAR(17) NOT NULL,
     NgayLap DATE NOT NULL,
-    TongTien FLOAT DEFAULT 0,
-    TongThanhToan FLOAT DEFAULT 0,
-    DiemSuDung FLOAT DEFAULT 0,
+    -- ❌ Đã xóa TongTien
+    TongThanhToan FLOAT DEFAULT 0, -- Tổng tiền thực tế khách thanh toán
+    -- ❌ Đã xóa DiemSuDung
     MaKM CHAR(17) NULL,
-    SoTienGiamKhuyenMai FLOAT DEFAULT 0,
+    SoTienGiamKhuyenMai FLOAT DEFAULT 0, 
     ThuocKeDon BIT NOT NULL DEFAULT 0,
     CONSTRAINT FK_HD_NV FOREIGN KEY (MaNhanVien) REFERENCES NhanVien(MaNhanVien),
     CONSTRAINT FK_HD_KH FOREIGN KEY (MaKhachHang) REFERENCES KhachHang(MaKhachHang),
@@ -219,13 +219,15 @@ GO
 CREATE TABLE ChiTietHoaDon (
     MaHoaDon CHAR(17) NOT NULL,
     MaLo CHAR(9) NOT NULL,
-    SoLuong FLOAT NOT NULL,
-    GiaBan FLOAT NOT NULL,
-    MaKM CHAR(17) NULL,
-    ThanhTien FLOAT,
-    CONSTRAINT PK_CTHD PRIMARY KEY (MaHoaDon, MaLo),
-    CONSTRAINT FK_CTHD_HD FOREIGN KEY (MaHoaDon) REFERENCES HoaDon(MaHoaDon),
+    MaDonViTinh CHAR(7) NOT NULL,           
+    SoLuong FLOAT NOT NULL CHECK (SoLuong > 0),
+    GiaBan FLOAT NOT NULL CHECK (GiaBan > 0),    
+    ThanhTien FLOAT NOT NULL,                    
+    MaKM CHAR(17) NULL,                          
+    CONSTRAINT PK_CTHD PRIMARY KEY (MaHoaDon, MaLo, MaDonViTinh),
+    CONSTRAINT FK_CTHD_HD FOREIGN KEY (MaHoaDon) REFERENCES HoaDon(MaHoaDon) ON DELETE CASCADE,
     CONSTRAINT FK_CTHD_Lo FOREIGN KEY (MaLo) REFERENCES LoSanPham(MaLo),
+    CONSTRAINT FK_CTHD_DVT FOREIGN KEY (MaDonViTinh) REFERENCES DonViTinh(MaDonViTinh),
     CONSTRAINT FK_CTHD_KM FOREIGN KEY (MaKM) REFERENCES KhuyenMai(MaKM)
 );
 GO
@@ -243,19 +245,22 @@ CREATE TABLE PhieuTra (
 GO
 
 CREATE TABLE ChiTietPhieuTra (
-    MaPhieuTra CHAR(17) NOT NULL,
-    MaHoaDon CHAR(17) NOT NULL,
-    MaLo CHAR(9) NOT NULL,
-    SoLuong INT NOT NULL,
+    MaPhieuTra CHAR(17) NOT NULL,          -- PT-yyyymmdd-xxxx
+    MaHoaDon CHAR(17) NOT NULL,            -- HD-yyyymmdd-xxxx
+    MaLo CHAR(9) NOT NULL,                 -- LO-xxxx
+    MaDonViTinh CHAR(7) NOT NULL,
+    SoLuong INT NOT NULL CHECK (SoLuong > 0),
     LyDoChiTiet NVARCHAR(200),
     ThanhTienHoan FLOAT,
-    TrangThai INT CHECK (trangThai BETWEEN 0 AND 2),
-    CONSTRAINT PK_CTPTRA PRIMARY KEY (MaPhieuTra, MaHoaDon, MaLo),
+    TrangThai INT CHECK (TrangThai BETWEEN 0 AND 2),
+    CONSTRAINT PK_CTPTRA PRIMARY KEY (MaPhieuTra, MaHoaDon, MaLo, MaDonViTinh),
     CONSTRAINT FK_CTPTRA_PT FOREIGN KEY (MaPhieuTra) REFERENCES PhieuTra(MaPhieuTra),
     CONSTRAINT FK_CTPTRA_HD FOREIGN KEY (MaHoaDon) REFERENCES HoaDon(MaHoaDon),
-    CONSTRAINT FK_CTPTRA_Lo FOREIGN KEY (MaLo) REFERENCES LoSanPham(MaLo)
+    CONSTRAINT FK_CTPTRA_LO FOREIGN KEY (MaLo) REFERENCES LoSanPham(MaLo),
+    CONSTRAINT FK_CTPTRA_DVT FOREIGN KEY (MaDonViTinh) REFERENCES DonViTinh(MaDonViTinh)
 );
 GO
+
 
 ------------------------------------------------------------
 -- 6. KHÁC: CHI TIẾT KHUYẾN MÃI - SẢN PHẨM
@@ -263,8 +268,6 @@ GO
 CREATE TABLE ChiTietKhuyenMaiSanPham (
     MaKM CHAR(17) NOT NULL,
     MaSanPham CHAR(9) NOT NULL,
-    SoLuongToiThieu INT DEFAULT 0,
-    SoLuongTangThem INT DEFAULT 0,
     CONSTRAINT PK_CTKMSP PRIMARY KEY (MaKM, MaSanPham),
     CONSTRAINT FK_CTKMSP_KM FOREIGN KEY (MaKM) REFERENCES KhuyenMai(MaKM),
     CONSTRAINT FK_CTKMSP_SP FOREIGN KEY (MaSanPham) REFERENCES SanPham(MaSanPham)

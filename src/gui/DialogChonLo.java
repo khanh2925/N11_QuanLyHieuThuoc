@@ -4,10 +4,14 @@ import dao.LoSanPham_DAO;
 import dao.SanPham_DAO;
 import entity.LoSanPham;
 import entity.SanPham;
+import enums.LoaiSanPham;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+
+import com.toedter.calendar.JDateChooser;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.time.LocalDate;
@@ -19,8 +23,10 @@ public class DialogChonLo extends JDialog {
     private JTextField txtTim;
     private JTable tblLo;
     private DefaultTableModel model;
-
+	private JComboBox<LoaiSanPham> cboLoaiHang;
+	private JPanel pnTop;
     private LoSanPham selectedLo = null;
+    private ArrayList<LoSanPham> dsLoHSD;
 
     private final LoSanPham_DAO loDAO = new LoSanPham_DAO();
     private final SanPham_DAO spDAO = new SanPham_DAO();
@@ -29,6 +35,7 @@ public class DialogChonLo extends JDialog {
 
     private String keyword;
     private String loaiTim; // "MASP" , "TENSP" , "HSD"
+    
 
     public DialogChonLo(String keyword, String loaiTim) {
         this.keyword = keyword.trim();
@@ -46,7 +53,7 @@ public class DialogChonLo extends JDialog {
 
     private void initUI() {
 
-        JPanel pnTop = new JPanel(new BorderLayout(10, 10));
+        pnTop = new JPanel(new BorderLayout(10, 10));
         pnTop.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         txtTim = new JTextField(keyword);
@@ -54,9 +61,22 @@ public class DialogChonLo extends JDialog {
         txtTim.addActionListener(e -> loc());
         pnTop.add(txtTim, BorderLayout.CENTER);
 
+        /*
+         * xử lý theo 2 cách là tìm theo hsd và từ khóa
+         */
+        
         JButton btnTim = new JButton("Tìm");
-        btnTim.addActionListener(e -> loc());
+        btnTim.addActionListener(e -> {
+            if ("HSD".equals(loaiTim)) {
+                // Đang ở mode gần hết hạn → dùng combobox loại hàng
+                timGanHetHanTheoLoai();
+            } else {
+                // Các mode khác (MASP, TENSP) dùng logic cũ
+                loc();
+            }
+        });
         pnTop.add(btnTim, BorderLayout.EAST);
+
 
         add(pnTop, BorderLayout.NORTH);
 
@@ -84,7 +104,15 @@ public class DialogChonLo extends JDialog {
 
         add(pnBottom, BorderLayout.SOUTH);
     }
-
+    private void ThemComboBox() {
+    	// combo loai hàng   	 
+    	cboLoaiHang = new JComboBox<>(LoaiSanPham.values());
+	    cboLoaiHang.setFont(new Font("Tahoma", Font.PLAIN, 18));
+	    cboLoaiHang.setBounds(550, 25, 250, 40);
+	    pnTop.remove(txtTim);
+    	pnTop.add(cboLoaiHang, BorderLayout.CENTER);
+    
+	}
     // =====================================================
     // =============== LOAD DỮ LIỆU BAN ĐẦU ================
     // =====================================================
@@ -118,14 +146,12 @@ public class DialogChonLo extends JDialog {
             }
 
             case "HSD" -> {
-                LocalDate hsd = parseDate(keyword);
-                if (hsd != null) {
-                    for (LoSanPham lo : dsLo) {
-                        if (lo.getHanSuDung().equals(hsd))
-                            ketQua.add(taiDayDuSanPham(lo));
-                    }
-                }
+                // Đổi ô nhập text thành combobox loại hàng
+                ThemComboBox();
+                // Lần đầu mở dialog -> tự load theo loại đang chọn
+                timGanHetHanTheoLoai();
             }
+
         }
 
         fill(ketQua);
@@ -136,12 +162,16 @@ public class DialogChonLo extends JDialog {
     // =====================================================
 
     private void loc() {
+        
+        if ("HSD".equals(loaiTim)) {
+            timGanHetHanTheoLoai();
+            return;
+        }
 
         String text = txtTim.getText().trim();
         if (text.isEmpty()) return;
 
         ArrayList<LoSanPham> dsLo = loDAO.layTatCaLoSanPham();
-
         ArrayList<LoSanPham> ketQua = new ArrayList<>();
 
         // 1. Nhập MÃ LÔ
@@ -176,10 +206,27 @@ public class DialogChonLo extends JDialog {
         fill(ketQua);
     }
 
+
     // =====================================================
     // ====================== CHỌN LÔ ======================
     // =====================================================
+    
+    private void timGanHetHanTheoLoai() {
+        if (cboLoaiHang == null) return;
 
+        LoaiSanPham loai = (LoaiSanPham) cboLoaiHang.getSelectedItem();
+        if (loai == null) return;
+
+        ArrayList<LoSanPham> ketQua = new ArrayList<>();
+
+        // Gọi DAO: dùng ngày hiện tại + số ngày cảnh báo
+        for (LoSanPham lo : loDAO.timLoGanHetHanTheoLoai(loai)) {
+            ketQua.add(taiDayDuSanPham(lo)); // nạp đủ thông tin sản phẩm
+        }
+
+        fill(ketQua);
+    }
+    
     private void chonLo() {
         int row = tblLo.getSelectedRow();
         if (row == -1) {
