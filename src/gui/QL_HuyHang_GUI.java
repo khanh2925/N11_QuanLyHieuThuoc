@@ -283,7 +283,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		loadDataTablePH();
 		
 		// Bảng chi tiết phiếu huỷ
-		String[] cTPhieuCols = { "Mã PH", "Mã lô",  "Tên SP", "SL huỷ", "Lý do","Trạng thái" };
+		String[] cTPhieuCols = { "Mã lô",  "Tên SP", "SL huỷ", "Lý do","Trạng thái" };
 
 		modelCTPH = new DefaultTableModel(cTPhieuCols, 0) {
 			@Override
@@ -359,7 +359,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 			ph.getMaPhieuHuy(),
 			ph.getNgayLapPhieu(),
 			ph.getNhanVien().getTenNhanVien(),
-			ph.getTongTien(),
+			df.format(ph.getTongTien()),
 			ph.getTrangThaiText() 
 			});
 		}
@@ -390,7 +390,6 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		
 		for (ChiTietPhieuHuy ctph : dsCTPhieuHuy) {			
 			modelCTPH.addRow(new Object[] {
-				ctph.getPhieuHuy().getMaPhieuHuy(),
 				ctph.getLoSanPham().getMaLo(),
 				ctph.getLoSanPham().getSanPham().getTenSanPham(),
 				ctph.getSoLuongHuy(),
@@ -471,7 +470,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 			JOptionPane.showMessageDialog(null, "Vui lòng chọn chi tiết phiếu hủy để cập nhật trạng thái!!");
 			return;
 		}
-		String trangThai = modelCTPH.getValueAt(selectRow, 5).toString();
+		String trangThai = modelCTPH.getValueAt(selectRow, 4).toString();
 		if(trangThai.trim().equals("Đã từ chối")) {
 			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy này đã ở trạng thái từ chối hủy");
 			return;
@@ -482,13 +481,13 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy này đã hủy hàng, không được cập nhật trạng thái");
 			return;
 		}
-		String maPH = modelCTPH.getValueAt(selectRow, 0).toString();
-		String maLo = modelCTPH.getValueAt(selectRow, 1).toString();
+		String maPH = modelPH.getValueAt(selectRow, 0).toString();
+		String maLo = modelCTPH.getValueAt(selectRow, 0).toString();
 		
 		
 		
 		if(ctph_dao.capNhatTrangThaiChiTiet(maPH, maLo, 3)) {
-			modelCTPH.setValueAt("Đã từ chối hủy", selectRow, 5);
+			modelCTPH.setValueAt("Đã từ chối hủy", selectRow, 4);
 			JOptionPane.showMessageDialog(null, "Đã từ chối hủy hàng!");
 			
 			 capNhatTrangThaiPhieuSauKhiCapNhatCTPH(maPH);
@@ -509,19 +508,19 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 			JOptionPane.showMessageDialog(null, "Vui lòng chọn chi tiết phiếu hủy để cập nhật trạng thái!!");
 			return;
 		}
-		String trangThai = modelCTPH.getValueAt(selectRow, 5).toString();
+		String trangThai = modelCTPH.getValueAt(selectRow, 4).toString();
 		
 		if (trangThai.trim().equals("Đã hủy hàng")) {
 			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy đã ở trạng thái đã hủy!!");
 			return;
 		}
-		String maPH = modelCTPH.getValueAt(selectRow, 0).toString();
-		String maLo = modelCTPH.getValueAt(selectRow, 1).toString();
+		String maPH = modelPH.getValueAt(selectRow, 0).toString();
+		String maLo = modelCTPH.getValueAt(selectRow, 0).toString();
 		
 		
 		
 		if(ctph_dao.capNhatTrangThaiChiTiet(maPH, maLo, 2)) {
-			modelCTPH.setValueAt("Đã hủy hàng", selectRow, 5);
+			modelCTPH.setValueAt("Đã hủy hàng", selectRow, 4);
 			JOptionPane.showMessageDialog(null, "Hủy hàng thành công!");
 			
 			 capNhatTrangThaiPhieuSauKhiCapNhatCTPH(maPH);
