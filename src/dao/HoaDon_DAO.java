@@ -14,13 +14,15 @@ public class HoaDon_DAO {
 	private final NhanVien_DAO nhanVienDAO;
 	private final KhachHang_DAO khachHangDAO;
 	private final ChiTietHoaDon_DAO chiTietHoaDonDAO;
-	private QuyCachDongGoi_DAO quyCachDongGoiDAO;
+	private final QuyCachDongGoi_DAO quyCachDongGoiDAO;
+	private final KhuyenMai_DAO khuyenMaiDAO;
 
 	public HoaDon_DAO() {
 		this.nhanVienDAO = new NhanVien_DAO();
 		this.khachHangDAO = new KhachHang_DAO();
 		this.chiTietHoaDonDAO = new ChiTietHoaDon_DAO();
 		this.quyCachDongGoiDAO = new QuyCachDongGoi_DAO();
+		this.khuyenMaiDAO = new KhuyenMai_DAO();
 	}
 
 	/** 🔍 Tìm hóa đơn theo mã (load đầy đủ chi tiết, nhân viên, khách hàng) */
@@ -37,24 +39,24 @@ public class HoaDon_DAO {
 			stmt = con.prepareStatement(sql);
 			stmt.setString(1, maHD);
 			rs = stmt.executeQuery();
-
+			
+			HoaDon hd = new HoaDon();
+			
+			String maNV = "";
+			String maKH = "";
+			LocalDate ngayLap = null;
+			String maKM = "";
+			double tongTien = 0.0;
+			boolean thuocKeDon = false;
+			
 			if (rs.next()) {
-				String maNV = rs.getString("MaNhanVien");
-				String maKH = rs.getString("MaKhachHang");
-				LocalDate ngayLap = rs.getDate("NgayLap").toLocalDate();
-				double tongTien = rs.getDouble("TongTien");
-				boolean thuocKeDon = rs.getBoolean("ThuocKeDon");
-
-				// Lấy nhân viên & khách hàng
-				NhanVien nhanVien = nhanVienDAO.timNhanVienTheoMa(maNV);
-				KhachHang khachHang = khachHangDAO.timKhachHangTheoMa(maKH);
-
-				// 🔹 Load danh sách chi tiết hóa đơn
-				List<ChiTietHoaDon> dsCT = chiTietHoaDonDAO.layDanhSachChiTietTheoMaHD(maHD);
-
-				// ✅ Tạo hóa đơn đầy đủ (constructor cũ)
-				HoaDon hd = new HoaDon(maHD, nhanVien, khachHang, ngayLap, null, dsCT, thuocKeDon);
-
+				maNV = rs.getString("MaNhanVien");
+				maKH = rs.getString("MaKhachHang");
+				ngayLap = rs.getDate("NgayLap").toLocalDate();
+				maKM = rs.getString("MaKM");
+				tongTien = rs.getDouble("TongThanhToan");
+				thuocKeDon = rs.getBoolean("ThuocKeDon");
+				
 				// Gán lại tổng tiền (nếu cần đảm bảo trùng DB)
 				try {
 					var setTongTien = HoaDon.class.getDeclaredField("tongTien");
@@ -62,9 +64,25 @@ public class HoaDon_DAO {
 					setTongTien.set(hd, tongTien);
 				} catch (Exception ignore) {
 				}
-
-				return hd;
+				
 			}
+			
+			NhanVien nhanVien = nhanVienDAO.timNhanVienTheoMa(maNV);
+			KhachHang khachHang = khachHangDAO.timKhachHangTheoMa(maKH);
+			KhuyenMai khuyenMai = khuyenMaiDAO.timKhuyenMaiTheoMa(maKM);
+			List<ChiTietHoaDon> dsCT = chiTietHoaDonDAO.layDanhSachChiTietTheoMaHD(maHD);
+			
+			// ✅ Tạo hóa đơn đầy đủ (constructor cũ)
+
+			hd.setMaHoaDon(maHD);
+			hd.setNhanVien(nhanVien);
+			hd.setKhachHang(khachHang);
+			hd.setNgayLap(ngayLap);
+			hd.setKhuyenMai(khuyenMai);
+			hd.setDanhSachChiTiet(dsCT);
+			hd.setThuocKeDon(thuocKeDon);			
+			
+			return hd;
 		} catch (Exception e) {
 			System.err.println("❌ Lỗi khi tìm hóa đơn theo mã: " + e.getMessage());
 		} finally {
@@ -125,27 +143,40 @@ public class HoaDon_DAO {
 		try {
 			con.setAutoCommit(false); // bắt đầu transaction
 
-			// 1. Tính tổng tiền từ chi tiết
-			double tongTien = hd.getTongTien();
+			// 1. Tính lại tổng tiền + KM hóa đơn
+			hd.capNhatDuLieuHoaDon(); // sẽ gọi luôn capNhatTongThanhToan bên trong
 
-			// 2. Thêm hóa đơn
+			double tongThanhToan = hd.getTongThanhToan();
+			double soTienGiamKM = hd.getSoTienGiamKhuyenMai();
+			KhuyenMai kmHD = hd.getKhuyenMai();
+
+			// 2. Thêm hóa đơn (KHÔNG còn cột TongTien, DiemSuDung)
 			String sqlHD = """
-					INSERT INTO HoaDon (MaHoaDon, NgayLap, MaNhanVien, MaKhachHang, TongTien, ThuocKeDon)
-					VALUES (?, ?, ?, ?, ?, ?)
+					INSERT INTO HoaDon (MaHoaDon, NgayLap, MaNhanVien, MaKhachHang,
+					                    TongThanhToan, MaKM, SoTienGiamKhuyenMai, ThuocKeDon)
+					VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 					""";
 			stmtHD = con.prepareStatement(sqlHD);
 			stmtHD.setString(1, hd.getMaHoaDon());
 			stmtHD.setDate(2, Date.valueOf(hd.getNgayLap()));
 			stmtHD.setString(3, hd.getNhanVien().getMaNhanVien());
 			stmtHD.setString(4, hd.getKhachHang().getMaKhachHang());
-			stmtHD.setDouble(5, tongTien);
-			stmtHD.setBoolean(6, hd.isThuocKeDon());
+			stmtHD.setDouble(5, tongThanhToan);
+
+			if (kmHD != null) {
+				stmtHD.setString(6, kmHD.getMaKM());
+			} else {
+				stmtHD.setNull(6, Types.CHAR);
+			}
+
+			stmtHD.setDouble(7, soTienGiamKM);
+			stmtHD.setBoolean(8, hd.isThuocKeDon());
 			stmtHD.executeUpdate();
 
 			// 3. Thêm chi tiết hóa đơn
 			String sqlCT = """
-					INSERT INTO ChiTietHoaDon (MaHoaDon, MaLo, MaKM, SoLuong, GiaBan, MaDonViTinh)
-					VALUES (?, ?, ?, ?, ?, ?)
+					INSERT INTO ChiTietHoaDon (MaHoaDon, MaLo, MaDonViTinh, SoLuong, GiaBan, ThanhTien, MaKM)
+					VALUES (?, ?, ?, ?, ?, ?, ?)
 					""";
 			stmtCTHD = con.prepareStatement(sqlCT);
 
@@ -158,19 +189,24 @@ public class HoaDon_DAO {
 			stmtUpdateTon = con.prepareStatement(sqlUpdateTon);
 
 			for (ChiTietHoaDon cthd : hd.getDanhSachChiTiet()) {
-				// ==== INSERT CHI TIẾT HÓA ĐƠN ====
+				double soLuongBan = cthd.getSoLuong(); // theo đơn vị bán
+				double giaBanRow = cthd.getGiaBan(); // GIÁ GỐC / 1 đơn vị
+				double thanhTienRow = cthd.getThanhTien(); // ✅ ĐÃ GIẢM KM SẢN PHẨM
+
 				stmtCTHD.setString(1, hd.getMaHoaDon());
 				stmtCTHD.setString(2, cthd.getLoSanPham().getMaLo());
+				stmtCTHD.setString(3, cthd.getDonViTinh().getMaDonViTinh());
+				stmtCTHD.setDouble(4, soLuongBan);
+				stmtCTHD.setDouble(5, giaBanRow);
+				stmtCTHD.setDouble(6, thanhTienRow);
 
 				KhuyenMai km = cthd.getKhuyenMai();
-				if (km != null)
-					stmtCTHD.setString(3, km.getMaKM());
-				else
-					stmtCTHD.setNull(3, Types.VARCHAR);
+				if (km != null) {
+					stmtCTHD.setString(7, km.getMaKM());
+				} else {
+					stmtCTHD.setNull(7, Types.CHAR);
+				}
 
-				stmtCTHD.setDouble(4, cthd.getSoLuong()); // số lượng theo đơn vị bán
-				stmtCTHD.setDouble(5, cthd.getGiaBan());
-				stmtCTHD.setString(6, cthd.getDonViTinh().getMaDonViTinh());
 				stmtCTHD.addBatch();
 
 				// ==== TÍNH SỐ LƯỢNG BASE ĐỂ TRỪ TỒN ====
@@ -185,8 +221,8 @@ public class HoaDon_DAO {
 				}
 
 				int heSo = qc.getHeSoQuyDoi(); // ví dụ: 1 hộp = 100 viên => heSo = 100
-				double soLuongBan = cthd.getSoLuong(); // bán bao nhiêu hộp/vỉ/viên...
-				double soLuongBanBase = soLuongBan * heSo; // quy về viên
+				double soLBan = cthd.getSoLuong(); // bán bao nhiêu hộp/vỉ/...
+				double soLuongBanBase = soLBan * heSo;
 
 				// ==== TRỪ TỒN KHO ====
 				stmtUpdateTon.setDouble(1, soLuongBanBase);
@@ -265,22 +301,18 @@ public class HoaDon_DAO {
 
 	/**
 	 * 🔍 Tìm danh sách hóa đơn theo số điện thoại khách hàng (Dùng cho dialog chọn
-	 * hóa đơn, chỉ load thông tin cơ bản)
+	 * hóa đơn, chỉ load danh sách rồi gọi timHoaDonTheoMa)
 	 */
 	public List<HoaDon> timHoaDonTheoSoDienThoai(String soDienThoai) {
 		List<HoaDon> dsHD = new ArrayList<>();
 
 		String sql = """
-				    SELECT hd.MaHoaDon, hd.NgayLap, hd.TongTien, hd.TongThanhToan,
-				           hd.DiemSuDung, hd.SoTienGiamKhuyenMai, hd.ThuocKeDon,
-				           hd.MaNhanVien, nv.TenNhanVien,
-				           hd.MaKhachHang, kh.TenKhachHang, kh.SoDienThoai,
-				           hd.MaKM
-				    FROM HoaDon hd
-				    JOIN KhachHang kh ON hd.MaKhachHang = kh.MaKhachHang
-				    JOIN NhanVien nv ON hd.MaNhanVien = nv.MaNhanVien
-				    WHERE kh.SoDienThoai = ?
-				    ORDER BY hd.NgayLap DESC
+				SELECT hd.MaHoaDon, hd.NgayLap
+				FROM HoaDon hd
+				JOIN KhachHang kh ON hd.MaKhachHang = kh.MaKhachHang
+				JOIN NhanVien nv ON hd.MaNhanVien = nv.MaNhanVien
+				WHERE kh.SoDienThoai = ?
+				ORDER BY hd.NgayLap DESC
 				""";
 
 		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
@@ -290,7 +322,8 @@ public class HoaDon_DAO {
 			try (ResultSet rs = ps.executeQuery()) {
 
 				while (rs.next()) {
-					HoaDon hd = timHoaDonTheoMa(rs.getString("MaHoaDon"));
+					String maHD = rs.getString("MaHoaDon");
+					HoaDon hd = timHoaDonTheoMa(maHD);
 					if (hd != null)
 						dsHD.add(hd);
 				}

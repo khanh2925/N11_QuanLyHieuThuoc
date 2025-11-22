@@ -265,7 +265,7 @@ public class PhieuHuy_DAO {
 	}
 
 	/** update DB nếu đủ điều kiện */
-	public boolean capNhatTrangThaiTuDong(String maPhieuHuy) {
+	public boolean capNhatTrangThaiPhieuHuy(String maPhieuHuy) {
 		if (checkTrangThai(maPhieuHuy)) {
 			return capNhatTrangThai(maPhieuHuy, true);
 		}

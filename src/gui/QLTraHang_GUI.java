@@ -35,17 +35,22 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
 
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblPPr;
+
 import com.toedter.calendar.JDateChooser;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
+import customcomponent.TaoJtextNhanh;
 import dao.ChiTietPhieuTra_DAO;
 import dao.LoSanPham_DAO;
 import dao.PhieuTra_DAO;
 import entity.ChiTietPhieuTra;
 import entity.KhuyenMai;
 import entity.LoSanPham;
+import entity.NhanVien;
 import entity.PhieuTra;
+import entity.Session;
 
 public class QLTraHang_GUI extends JPanel {
 
@@ -63,6 +68,7 @@ public class QLTraHang_GUI extends JPanel {
 	private PillButton btnNhapKho;
 	private JDateChooser dateTu;
 	private JDateChooser dateDen;
+	private JLabel lblTuNgay, lblDenNgay;
 
 	private String txtSearchPlaceholderText = "Tìm kiếm theo mã phiếu, tên khách hàng hoặc SDT";
 
@@ -71,12 +77,16 @@ public class QLTraHang_GUI extends JPanel {
 
 	private final Color blueMint = new Color(180, 220, 240);
 	private final Color pinkPastel = new Color(255, 200, 220);
+	private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 16);
+	private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 16);
+	private final Color COLOR_PRIMARY = new Color(33, 150, 243);
 
 	private PhieuTra_DAO phieuTraDAO = new PhieuTra_DAO();
 	private ChiTietPhieuTra_DAO chiTietPhieuTraDAO = new ChiTietPhieuTra_DAO();
 	private JSplitPane splitPane;
 	private TableRowSorter<DefaultTableModel> sorterPT;
 	private TableRowSorter<DefaultTableModel> sorterCTPT;
+	private PillButton btnLamMoi;
 
 	public QLTraHang_GUI() {
 		this.setPreferredSize(new Dimension(1537, 850));
@@ -87,76 +97,8 @@ public class QLTraHang_GUI extends JPanel {
 		setLayout(new BorderLayout());
 		setPreferredSize(new Dimension(1537, 1168));
 
-		// ===== HEADER =====
-		pnHeader = new JPanel();
-		pnHeader.setPreferredSize(new Dimension(1073, 88));
-		pnHeader.setLayout(null);
-		add(pnHeader, BorderLayout.NORTH);
-
-		txtSearch = new JTextField();
-		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		txtSearch.setBounds(10, 17, 420, 60);
-		txtSearch.setBorder(new RoundedBorder(20));
-		txtSearch.setBackground(Color.WHITE);
-		PlaceholderSupport.addPlaceholder(txtSearch, txtSearchPlaceholderText);
-
-		btnXuatFile = new PillButton("Xuất file");
-		btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnXuatFile.setSize(120, 40);
-		btnXuatFile.setLocation(946, 30);
-
-		btnNhapKho = new PillButton("Nhập lại kho");
-		btnNhapKho.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnNhapKho.setBounds(1090, 26, 150, 40);
-
-		btnHuyHang = new PillButton("Hủy hàng");
-		btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnHuyHang.setBounds(1260, 26, 120, 40);
-
-		JLabel lblTuNgay = new JLabel("Từ ngày:");
-		lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		lblTuNgay.setBounds(478, 30, 90, 40);
-
-		dateTu = new JDateChooser();
-		dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		dateTu.setDateFormatString("dd/MM/yyyy");
-		dateTu.setBounds(560, 35, 130, 30);
-
-		JLabel lblDenNgay = new JLabel("Đến:");
-		lblDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		lblDenNgay.setBounds(743, 26, 80, 40);
-
-		dateDen = new JDateChooser();
-		dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		dateDen.setDateFormatString("dd/MM/yyyy");
-		dateDen.setBounds(780, 35, 130, 30);
-
-		// Lọc theo ngày — mỗi khi chọn ngày
-		dateTu.addPropertyChangeListener(evt -> {
-			if ("date".equals(evt.getPropertyName())) {
-				locPhieuTraTheoNgay();
-			}
-		});
-
-		dateDen.addPropertyChangeListener(evt -> {
-			if ("date".equals(evt.getPropertyName())) {
-				locPhieuTraTheoNgay();
-			}
-		});
-
-		pnHeader.add(txtSearch);
-		pnHeader.add(btnXuatFile);
-		pnHeader.add(btnNhapKho);
-		pnHeader.add(btnHuyHang);
-		pnHeader.add(lblTuNgay);
-		pnHeader.add(dateTu);
-		pnHeader.add(lblDenNgay);
-		pnHeader.add(dateDen);
-
-		// ===== CENTER =====
-		pnCenter = new JPanel(new BorderLayout());
-		add(pnCenter, BorderLayout.CENTER);
-
+		TaoHeader();
+		TaoPnCenter();
 		initTable();
 
 		// Events
@@ -174,6 +116,7 @@ public class QLTraHang_GUI extends JPanel {
 			}
 
 			private void filter() {
+				resetChiTiet();
 				String keyword = txtSearch.getText().trim();
 
 				// Nếu text == placeholder → reset filter
@@ -198,14 +141,98 @@ public class QLTraHang_GUI extends JPanel {
 				String keyword = txtSearch.getText().trim();
 				if (keyword.isEmpty()) {
 					sorterPT.setRowFilter(null); // ⭐ FIX LỖI BỊ TRẮNG BẢNG
+					resetChiTiet();
 				}
 			}
 		});
 
 		btnNhapKho.addActionListener(e -> capNhatTrangThai(1));
 		btnHuyHang.addActionListener(e -> capNhatTrangThai(2));
+		btnLamMoi.addActionListener(e -> lamMoiDuLieu());
 	}
-	
+
+	private void TaoHeader() {
+		// ===== HEADER =====
+		pnHeader = new JPanel();
+		pnHeader.setPreferredSize(new Dimension(1073, 88));
+		pnHeader.setLayout(null);
+		add(pnHeader, BorderLayout.NORTH);
+
+		txtSearch = TaoJtextNhanh.timKiem();
+		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+		txtSearch.setBounds(10, 17, 420, 60);
+		txtSearch.setBorder(new RoundedBorder(20));
+		PlaceholderSupport.addPlaceholder(txtSearch, txtSearchPlaceholderText);
+
+		btnXuatFile = new PillButton("Xuất file");
+		btnXuatFile.setFont(FONT_BOLD);
+		btnXuatFile.setSize(120, 40);
+		btnXuatFile.setLocation(946, 30);
+
+		btnNhapKho = new PillButton("Nhập lại kho");
+		btnNhapKho.setFont(FONT_BOLD);
+		btnNhapKho.setBounds(1090, 26, 150, 40);
+
+		btnHuyHang = new PillButton("Hủy hàng");
+		btnHuyHang.setFont(FONT_BOLD);
+		btnHuyHang.setBounds(1260, 26, 120, 40);
+
+		btnLamMoi = new PillButton("Làm mới");
+		btnLamMoi.setFont(FONT_BOLD);
+		btnLamMoi.setBounds(1420, 26, 120, 40);
+		pnHeader.add(btnLamMoi);
+
+		TaoPanelLocTheoNgay();
+
+		pnHeader.add(txtSearch);
+		pnHeader.add(btnXuatFile);
+		pnHeader.add(btnNhapKho);
+		pnHeader.add(btnHuyHang);
+		pnHeader.add(lblTuNgay);
+		pnHeader.add(dateTu);
+		pnHeader.add(lblDenNgay);
+		pnHeader.add(dateDen);
+	}
+
+	private void TaoPanelLocTheoNgay() {
+		lblTuNgay = new JLabel("Từ ngày:");
+		lblTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		lblTuNgay.setBounds(478, 30, 90, 40);
+
+		dateTu = new JDateChooser();
+		dateTu.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		dateTu.setDateFormatString("dd/MM/yyyy");
+		dateTu.setBounds(560, 35, 130, 30);
+
+		lblDenNgay = new JLabel("Đến:");
+		lblDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		lblDenNgay.setBounds(735, 30, 80, 40);
+
+		dateDen = new JDateChooser();
+		dateDen.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		dateDen.setDateFormatString("dd/MM/yyyy");
+		dateDen.setBounds(781, 35, 130, 30);
+
+		// Lọc theo ngày — mỗi khi chọn ngày
+		dateTu.addPropertyChangeListener(evt -> {
+			if ("date".equals(evt.getPropertyName())) {
+				locPhieuTraTheoNgay();
+			}
+		});
+
+		dateDen.addPropertyChangeListener(evt -> {
+			if ("date".equals(evt.getPropertyName())) {
+				locPhieuTraTheoNgay();
+			}
+		});
+	}
+
+	private void TaoPnCenter() {
+		// ===== CENTER =====
+		pnCenter = new JPanel(new BorderLayout());
+		add(pnCenter, BorderLayout.CENTER);
+	}
+
 	// Loại bỏ dấu của từ
 	private String normalize(String s) {
 		return java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD)
@@ -303,8 +330,8 @@ public class QLTraHang_GUI extends JPanel {
 		scrPT = new JScrollPane(tblPT);
 
 		// === BẢNG CHI TIẾT PHIẾU TRẢ ===
-		String[] cTPhieuTraCols = { "Mã hoá đơn", "Mã lô", "Tên SP", "Hạn dùng", "Số lượng", "Giá bán", "Khuyến mãi",
-				"Lý do trả", "Thành tiền", "Trạng thái" };
+		String[] cTPhieuTraCols = { "Mã hoá đơn", "Mã lô", "Tên SP", "Hạn dùng", "Số lượng", "Giá bán", "Đơn vị tính",
+				"Khuyến mãi", "Lý do trả", "Thành tiền", "Trạng thái" };
 
 		modelCTPT = new DefaultTableModel(cTPhieuTraCols, 0) {
 			@Override
@@ -341,8 +368,8 @@ public class QLTraHang_GUI extends JPanel {
 		scrCTPT = new JScrollPane(tblCTPT);
 
 		// === SPLIT PANE NGANG ===
-		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrPT, scrCTPT);
-		splitPane.setResizeWeight(0.4); // 40% - 60%
+		splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, scrPT, scrCTPT);
+		splitPane.setDividerLocation(350);
 		splitPane.setContinuousLayout(true);
 		splitPane.setOneTouchExpandable(true);
 
@@ -395,6 +422,18 @@ public class QLTraHang_GUI extends JPanel {
 				btnHuyHang.setEnabled(true);
 			}
 		});
+	}
+
+	private JTable setupTable(DefaultTableModel model) {
+		JTable table = new JTable(model);
+		table.setFont(FONT_TEXT);
+		table.setRowHeight(35);
+		table.setSelectionBackground(new Color(0xC8E6C9));
+		table.setSelectionForeground(Color.BLACK);
+		table.getTableHeader().setFont(FONT_BOLD);
+		table.getTableHeader().setBackground(COLOR_PRIMARY);
+		table.getTableHeader().setForeground(Color.WHITE);
+		return table;
 	}
 
 	private void loadPhieuTraData() {
@@ -453,6 +492,7 @@ public class QLTraHang_GUI extends JPanel {
 					ct.getChiTietHoaDon().getLoSanPham().getHanSuDung()
 							.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
 					ct.getSoLuong(), df.format(ct.getChiTietHoaDon().getGiaBan()),
+					ct.getChiTietHoaDon().getDonViTinh().getTenDonViTinh(),
 					ct.getChiTietHoaDon().getKhuyenMai() == null ? "Không có"
 							: ct.getChiTietHoaDon().getKhuyenMai().getTenKM(),
 					ct.getLyDoChiTiet(), df.format(ct.getThanhTienHoan()), ct.getTrangThaiText() });
@@ -542,7 +582,8 @@ public class QLTraHang_GUI extends JPanel {
 		}
 
 		// 6. GỌI DAO CẬP NHẬT TRẠNG THÁI
-		String result = phieuTraDAO.capNhatTrangThai_GiaoDich(maPhieuTra, maHoaDon, maLo, trangThaiMoi);
+		NhanVien nv = Session.getInstance().getTaiKhoanDangNhap().getNhanVien();
+		String result = phieuTraDAO.capNhatTrangThai_GiaoDich(maPhieuTra, maHoaDon, maLo, nv, trangThaiMoi);
 
 		if (result.equals("ERR")) {
 			JOptionPane.showMessageDialog(this, "Cập nhật thất bại!\nKhông có thay đổi nào được lưu.", "Lỗi",
@@ -611,6 +652,7 @@ public class QLTraHang_GUI extends JPanel {
 	}
 
 	private void locPhieuTraTheoNgay() {
+		resetChiTiet();
 
 		java.util.Date tu = dateTu.getDate();
 		java.util.Date den = dateDen.getDate();
@@ -645,6 +687,40 @@ public class QLTraHang_GUI extends JPanel {
 				}
 			}
 		});
+	}
+
+	private void lamMoiDuLieu() {
+
+		// 1. Xóa text tìm kiếm
+		txtSearch.setText("");
+		PlaceholderSupport.addPlaceholder(txtSearch, txtSearchPlaceholderText);
+
+		// 2. Reset lọc sorter
+		if (sorterPT != null)
+			sorterPT.setRowFilter(null);
+
+		// 3. Reset ngày lọc
+		dateTu.setDate(null);
+		dateDen.setDate(null);
+
+		// 4. Load lại bảng phiếu trả
+		loadPhieuTraData();
+
+		// 5. Clear bảng chi tiết
+		modelCTPT.setRowCount(0);
+
+		// 6. Disable nút hành động
+		btnNhapKho.setEnabled(false);
+		btnHuyHang.setEnabled(false);
+	}
+
+	/** Reset bảng chi tiết và disable nút hành động */
+	private void resetChiTiet() {
+		modelCTPT.setRowCount(0);
+		tblCTPT.clearSelection();
+		tblPT.clearSelection();
+		btnNhapKho.setEnabled(false);
+		btnHuyHang.setEnabled(false);
 	}
 
 	public static void main(String[] args) {

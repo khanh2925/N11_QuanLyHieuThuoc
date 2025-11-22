@@ -114,62 +114,38 @@ public class ItemDonHang {
      * (KHÔNG còn khuyến mãi tặng thêm, KHÔNG còn số lượng tối thiểu)
      */
     public void tinhLaiThanhTien() {
-        // ===== 0. Giá theo đơn vị hiện tại (đã có TiLeGiam của quy cách) =====
-        // donGiaGoc ở đây là GIÁ BÁN / 1 ĐƠN VỊ HIỆN TẠI (viên / vỉ / hộp...) sau khi áp TiLeGiam.
-        double giaTheoDonViHienTai = this.donGiaGoc;
+        // 1. Giá gốc của đơn vị hiện tại (Ví dụ: Giá Hộp = 100k)
+        double giaGocDonViHienTai = this.donGiaGoc;
 
-        // Reset
-        this.coHangTang    = false;
-        this.tongGiamGiaSP = 0;
-        this.donGiaSauKM   = giaTheoDonViHienTai;
+        // Lấy hệ số quy đổi của đơn vị hiện tại (Ví dụ Hộp = 100 viên -> heSo = 100)
+        int heSo = getHeSoQuyCach(); 
 
-        // Nếu không có KM thì khỏi tính nhiều
-        if (this.khuyenMai == null) {
-            if (this.donGiaSauKM < 0) this.donGiaSauKM = 0;
-            this.thanhTienSauKM = this.donGiaSauKM * this.soLuongMua;
-            return;
+        // 2. Tính tiền giảm (nếu có KM)
+        double tienGiamTren1DonVi = 0;
+
+        if (this.khuyenMai != null) {
+            String hinhThuc = this.khuyenMai.getKhuyenMai().getHinhThuc().name();
+            double giaTriKM = this.khuyenMai.getKhuyenMai().getGiaTri(); // Đây là tiền giảm cho 1 ĐƠN VỊ GỐC
+
+            if (hinhThuc.equals("GIAM_GIA_PHAN_TRAM")) {
+                // Phần trăm thì không cần nhân hệ số, vì giá hộp đã cao gấp 100 lần giá viên rồi
+                // 10% của 100k tự động to hơn 10% của 1k.
+                tienGiamTren1DonVi = giaGocDonViHienTai * (giaTriKM / 100.0);
+                
+            } else if (hinhThuc.equals("GIAM_GIA_TIEN")) {
+                // ⚠️ LOGIC MỚI:
+                // Tiền giảm = (Tiền giảm gốc) * (Hệ số quy đổi)
+                // Ví dụ: Giảm 500đ/viên. Bán Hộp (100 viên) -> Giảm 500 * 100 = 50.000
+                tienGiamTren1DonVi = giaTriKM * heSo;
+            }
         }
 
-        // ===== 1. Quy TẤT CẢ về đơn vị gốc =====
-        QuyCachDongGoi qc = getQuyCachHienTai();
-        int heSo = (qc != null) ? qc.getHeSoQuyDoi() : 1;  // số đơn vị gốc / 1 đơn vị hiện tại
+        // 3. Đảm bảo không âm (Chặn giá chót)
+        this.donGiaSauKM = Math.max(0, giaGocDonViHienTai - tienGiamTren1DonVi);
 
-        int soLuongBase = this.soLuongMua * heSo;          // tổng số đơn vị gốc
-        if (soLuongBase <= 0) {
-            // phòng hờ trường hợp số lượng <= 0
-            this.soLuongMua = 1;
-            soLuongBase = heSo;
-        }
-
-        double giaBasePerUnit = sanPham.getGiaBan();       // GIÁ / 1 ĐƠN VỊ GỐC
-        double thanhTienBaseTruocKM = giaBasePerUnit * soLuongBase; // tiền gốc tính theo ĐƠN VỊ GỐC
-
-        // ===== 2. TÍNH SỐ TIỀN GIẢM KM THEO ĐƠN VỊ GỐC =====
-        String hinhThuc = this.khuyenMai.getKhuyenMai().getHinhThuc().name();
-        double giaTriKM = this.khuyenMai.getKhuyenMai().getGiaTri();
-
-        double tongGiamKmBase = 0; // tổng tiền giảm KM TÍNH THEO ĐƠN VỊ GỐC
-
-        if (hinhThuc.equals("GIAM_GIA_PHAN_TRAM")) {
-            // % khuyến mãi tính trên tổng tiền gốc theo đơn vị gốc
-            tongGiamKmBase = thanhTienBaseTruocKM * (giaTriKM / 100.0);
-        } else if (hinhThuc.equals("GIAM_GIA_TIEN")) {
-            // GIAM_GIA_TIEN hiểu là giảm X tiền / 1 ĐƠN VỊ GỐC
-            tongGiamKmBase = giaTriKM * soLuongBase;
-        }
-
-        if (tongGiamKmBase < 0) tongGiamKmBase = 0;
-        if (tongGiamKmBase > thanhTienBaseTruocKM) tongGiamKmBase = thanhTienBaseTruocKM;
-
-        // ===== 3. Phân bổ lại tiền giảm về đơn vị hiện tại =====
-        // Tổng giảm trên cả dòng (theo base) -> giảm mỗi 1 đơn vị hiện tại bao nhiêu?
-        double giamMoiDonViHienTai = tongGiamKmBase / this.soLuongMua;  // vì dòng có 'soLuongMua' đơn vị hiện tại
-
-        this.donGiaSauKM = giaTheoDonViHienTai - giamMoiDonViHienTai;
-        if (this.donGiaSauKM < 0) this.donGiaSauKM = 0;
-
+        // 4. Tổng tiền
         this.thanhTienSauKM = this.donGiaSauKM * this.soLuongMua;
-        this.tongGiamGiaSP  = giamMoiDonViHienTai * this.soLuongMua; // = tongGiamKmBase (sau clamp)
+        this.tongGiamGiaSP  = (giaGocDonViHienTai - this.donGiaSauKM) * this.soLuongMua; 
     }
 
 
@@ -256,6 +232,11 @@ public class ItemDonHang {
         }
 
         return null;
+    }
+    public void setKhuyenMai(ChiTietKhuyenMaiSanPham khuyenMai) {
+        this.khuyenMai = khuyenMai;
+        // Sau khi set (hoặc xóa) KM, phải tính lại tiền ngay
+        tinhLaiThanhTien();
     }
 
     /**

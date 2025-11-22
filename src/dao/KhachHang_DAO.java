@@ -3,6 +3,7 @@ package dao;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+
 import connectDB.connectDB;
 import entity.KhachHang;
 
@@ -35,8 +36,8 @@ public class KhachHang_DAO {
 		Connection con = connectDB.getConnection();
 
 		String sql = """
-				    INSERT INTO KhachHang (MaKhachHang, TenKhachHang, GioiTinh, SoDienThoai, NgaySinh, HoatDong, DiemTichLuy)
-				    VALUES (?, ?, ?, ?, ?, ?, ?)
+				INSERT INTO KhachHang (MaKhachHang, TenKhachHang, GioiTinh, SoDienThoai, NgaySinh, HoatDong)
+				VALUES (?, ?, ?, ?, ?, ?)
 				""";
 
 		try (PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -46,7 +47,6 @@ public class KhachHang_DAO {
 			stmt.setString(4, kh.getSoDienThoai());
 			stmt.setDate(5, kh.getNgaySinh() != null ? Date.valueOf(kh.getNgaySinh()) : null);
 			stmt.setBoolean(6, kh.isHoatDong());
-			stmt.setDouble(7, kh.getDiemTichLuy());
 			return stmt.executeUpdate() > 0;
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi thêm khách hàng: " + e.getMessage());
@@ -60,9 +60,9 @@ public class KhachHang_DAO {
 		Connection con = connectDB.getConnection();
 
 		String sql = """
-				    UPDATE KhachHang
-				    SET TenKhachHang=?, GioiTinh=?, SoDienThoai=?, NgaySinh=?, HoatDong=?, DiemTichLuy=?
-				    WHERE MaKhachHang=?
+				UPDATE KhachHang
+				SET TenKhachHang = ?, GioiTinh = ?, SoDienThoai = ?, NgaySinh = ?, HoatDong = ?
+				WHERE MaKhachHang = ?
 				""";
 
 		try (PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -71,8 +71,7 @@ public class KhachHang_DAO {
 			stmt.setString(3, kh.getSoDienThoai());
 			stmt.setDate(4, kh.getNgaySinh() != null ? Date.valueOf(kh.getNgaySinh()) : null);
 			stmt.setBoolean(5, kh.isHoatDong());
-			stmt.setDouble(6, kh.getDiemTichLuy());
-			stmt.setString(7, kh.getMaKhachHang());
+			stmt.setString(6, kh.getMaKhachHang());
 			return stmt.executeUpdate() > 0;
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi cập nhật khách hàng: " + e.getMessage());
@@ -85,7 +84,7 @@ public class KhachHang_DAO {
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 
-		String sql = "DELETE FROM KhachHang WHERE MaKhachHang=?";
+		String sql = "DELETE FROM KhachHang WHERE MaKhachHang = ?";
 
 		try (PreparedStatement stmt = con.prepareStatement(sql)) {
 			stmt.setString(1, maKhachHang);
@@ -103,10 +102,10 @@ public class KhachHang_DAO {
 		Connection con = connectDB.getConnection();
 
 		String sql = """
-				    SELECT * FROM KhachHang
-				    WHERE MaKhachHang LIKE ?
-				       OR TenKhachHang LIKE ?
-				       OR SoDienThoai LIKE ?
+				SELECT * FROM KhachHang
+				WHERE MaKhachHang LIKE ?
+				   OR TenKhachHang LIKE ?
+				   OR SoDienThoai LIKE ?
 				""";
 
 		try (PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -140,28 +139,6 @@ public class KhachHang_DAO {
 			}
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi tìm khách hàng hoạt động: " + e.getMessage());
-		}
-		return danhSach;
-	}
-
-	/** 🔹 Tìm khách hàng có điểm tích lũy ≥ mức chỉ định */
-	public ArrayList<KhachHang> timKhachHangTheoDiemTichLuy(double diemToiThieu) {
-		ArrayList<KhachHang> danhSach = new ArrayList<>();
-		connectDB.getInstance();
-		Connection con = connectDB.getConnection();
-
-		String sql = "SELECT * FROM KhachHang WHERE DiemTichLuy >= ?";
-
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.setDouble(1, diemToiThieu);
-
-			try (ResultSet rs = stmt.executeQuery()) {
-				while (rs.next()) {
-					danhSach.add(taoKhachHangTuResultSet(rs));
-				}
-			}
-		} catch (SQLException e) {
-			System.err.println("❌ Lỗi tìm khách hàng theo điểm tích lũy: " + e.getMessage());
 		}
 		return danhSach;
 	}
@@ -224,11 +201,9 @@ public class KhachHang_DAO {
 		Date d = rs.getDate("NgaySinh");
 		LocalDate ns = (d != null) ? d.toLocalDate() : null;
 		boolean hoatDong = rs.getBoolean("HoatDong");
-		double diem = rs.getDouble("DiemTichLuy");
 
 		KhachHang kh = new KhachHang(ma, ten, gt, sdt, ns);
 		kh.setHoatDong(hoatDong);
-		kh.setDiemTichLuy(diem);
 		return kh;
 	}
 

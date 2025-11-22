@@ -20,6 +20,7 @@ import entity.SanPham;
 /**
  * JPanel đại diện 1 dòng sản phẩm trong đơn hàng
  */
+
 public class DonHangItemPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -51,6 +52,7 @@ public class DonHangItemPanel extends JPanel {
     private JTextField txtThanhTien;
     private JButton btnNhanDoi;
     private JButton btnXoa;
+    
 
     // ===== Listener callback về GUI cha =====
     public interface ItemPanelListener {
@@ -110,24 +112,23 @@ public class DonHangItemPanel extends JPanel {
         lblSTT.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lblSTT.setPreferredSize(new Dimension(40, 30));
         add(lblSTT);
-        add(Box.createHorizontalStrut(10));
+        add(Box.createHorizontalStrut(5));
 
         // ===== ẢNH =====
         JLabel lblAnh = new JLabel();
         lblAnh.setPreferredSize(new Dimension(80, 80));
         lblAnh.setBorder(new LineBorder(Color.LIGHT_GRAY));
         try {
-            ImageIcon icon = new ImageIcon(getClass().getResource(anhPath));
+            ImageIcon icon = new ImageIcon(getClass().getResource("/images/"+anhPath));
             lblAnh.setIcon(new ImageIcon(icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH)));
         } catch (Exception e) {
             lblAnh.setText("Ảnh");
         }
         add(lblAnh);
-        add(Box.createHorizontalStrut(10));
+        add(Box.createHorizontalStrut(5));
 
         // ===== THÔNG TIN THUỐC =====
         Box infoBox = Box.createVerticalBox();
-        infoBox.setBorder(new LineBorder(Color.BLACK));
 
         JTextField txtTenThuoc = TaoJtextNhanh.taoTextDonHang(
                 item.getTenSanPham(), new Font("Segoe UI", Font.BOLD, 16), new Color(0x00796B), 300);
@@ -147,7 +148,7 @@ public class DonHangItemPanel extends JPanel {
 
         infoBox.add(loBox);
         add(infoBox);
-        add(Box.createHorizontalStrut(10));
+        add(Box.createHorizontalStrut(5));
 
         // ===== ĐƠN VỊ =====
         cbDonVi = new JComboBox<>(donViArr);
@@ -159,11 +160,11 @@ public class DonHangItemPanel extends JPanel {
 
         lblQuyDoi = new JLabel();
         lblQuyDoi.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblQuyDoi.setPreferredSize(new Dimension(80, 30));
+        lblQuyDoi.setPreferredSize(new Dimension(50, 30));
         add(Box.createHorizontalStrut(5));
         add(lblQuyDoi);
 
-        add(Box.createHorizontalStrut(20));
+        add(Box.createHorizontalStrut(10));
 
         // ===== SỐ LƯỢNG + / - =====
         Box soLuongBox = Box.createHorizontalBox();
@@ -194,21 +195,24 @@ public class DonHangItemPanel extends JPanel {
         soLuongBox.add(btnTang);
 
         add(soLuongBox);
-        add(Box.createHorizontalStrut(10));
+        add(Box.createHorizontalStrut(5));
 
         // ===== KHUYẾN MÃI =====
         txtKM = TaoJtextNhanh.taoTextDonHang(
                 item.getTextKM(), new Font("Segoe UI", Font.PLAIN, 16), Color.BLACK, 110);
         txtKM.setToolTipText(item.getTooltipKM());
+        txtKM.setMaximumSize(new Dimension(90, 30));
+        txtKM.setPreferredSize(new Dimension(90, 30));
+        txtKM.setBorder(new LineBorder(Color.black));
         add(txtKM);
-        add(Box.createHorizontalStrut(10));
+        add(Box.createHorizontalStrut(5));
 
         // ===== ĐƠN GIÁ =====
         txtDonGia = TaoJtextNhanh.taoTextDonHang(
-                formatTien(item.getDonGiaSauKM()), new Font("Segoe UI", Font.PLAIN, 16), Color.BLACK, 100);
+                formatTien(item.getDonGiaGoc()), new Font("Segoe UI", Font.PLAIN, 16), Color.BLACK, 100);
         txtDonGia.setHorizontalAlignment(SwingConstants.RIGHT);
         add(txtDonGia);
-        add(Box.createHorizontalStrut(10));
+        add(Box.createHorizontalStrut(5));
 
         // ===== THÀNH TIỀN =====
         txtThanhTien = TaoJtextNhanh.taoTextDonHang(
@@ -218,10 +222,15 @@ public class DonHangItemPanel extends JPanel {
         add(Box.createHorizontalGlue());
 
         // ===== NHÂN DÒNG =====
-        btnNhanDoi = new JButton("Nhân dòng");
-        btnNhanDoi.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        btnNhanDoi = new JButton();
         btnNhanDoi.setPreferredSize(new Dimension(40, 40));
-        btnNhanDoi.setFocusPainted(false);
+        btnNhanDoi.setBorderPainted(false);
+        btnNhanDoi.setContentAreaFilled(false);
+        btnNhanDoi.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        try {
+            ImageIcon icon = new ImageIcon(getClass().getResource("/images/dublicate.png"));
+            btnNhanDoi.setIcon(new ImageIcon(icon.getImage().getScaledInstance(22, 22, Image.SCALE_SMOOTH)));
+        } catch (Exception ignored) {}
         add(Box.createHorizontalStrut(5));
         add(btnNhanDoi);
 
@@ -630,11 +639,11 @@ public class DonHangItemPanel extends JPanel {
     // =====================================================
     // ================== CẬP NHẬT UI ======================
     // =====================================================
-    private void capNhatGiaoDien() {
+    public void capNhatGiaoDien() {
         lblQuyDoi.setText("x" + item.getHeSoQuyCach() + " " + item.getDonViGoc());
         txtTonLocal.setText("Tồn: " + item.getTonKho());
         txtSoLuong.setText(String.valueOf(item.getSoLuongMua()));
-        txtDonGia.setText(formatTien(item.getDonGiaSauKM()));
+        txtDonGia.setText(formatTien(item.getDonGiaGoc()));
         txtThanhTien.setText(formatTien(item.getThanhTienSauKM()));
         txtKM.setText(item.getTextKM());
         txtKM.setToolTipText(item.getTooltipKM());
