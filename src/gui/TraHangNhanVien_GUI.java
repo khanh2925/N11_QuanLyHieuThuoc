@@ -2,33 +2,27 @@ package gui;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.border.MatteBorder;
-import javax.swing.table.DefaultTableModel;
 
 import customcomponent.PillButton;
 import customcomponent.TaoJtextNhanh;
 import customcomponent.TaoLabelNhanh;
 import dao.ChiTietHoaDon_DAO;
+import dao.ChiTietPhieuTra_DAO;
 import dao.HoaDon_DAO;
 import dao.KhachHang_DAO;
-import dao.LoSanPham_DAO;
 import dao.PhieuTra_DAO;
+import dao.QuyCachDongGoi_DAO;
 import entity.Session;
 import entity.ChiTietHoaDon;
 import entity.ChiTietPhieuTra;
@@ -36,6 +30,8 @@ import entity.HoaDon;
 import entity.ItemTraHang;
 import entity.KhachHang;
 import entity.PhieuTra;
+import entity.QuyCachDongGoi;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,13 +39,10 @@ import java.util.Map;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.Image;
 import java.awt.event.*;
-import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -71,9 +64,7 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 	private JTextField txtTenKhachHang;
 	private JTextField txtNguoiBan;
 	private JTextField txtMaHoaDon;
-	private JLabel lblThoiGian;
 
-	private double tongTien;
 	private double tienTra = 0;
 
 	private LocalDate today = LocalDate.now();
@@ -82,7 +73,8 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 	private final HoaDon_DAO hoaDonDAO;
 	private final ChiTietHoaDon_DAO cthdDAO;
 	private final PhieuTra_DAO ptDAO;
-	private final LoSanPham_DAO loDAO;
+	private final ChiTietPhieuTra_DAO ctptDAO;
+	private final QuyCachDongGoi_DAO qcdgDAO;
 
 	private JTextArea txtGhiChuGiamGia;
 
@@ -98,7 +90,8 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 		hoaDonDAO = new HoaDon_DAO();
 		cthdDAO = new ChiTietHoaDon_DAO();
 		ptDAO = new PhieuTra_DAO();
-		loDAO = new LoSanPham_DAO();
+		ctptDAO = new ChiTietPhieuTra_DAO();
+		qcdgDAO = new QuyCachDongGoi_DAO();
 	}
 
 	private void initialize() {
@@ -326,17 +319,6 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 		}
 	}
 
-//	private void capNhatTongTienTra() {
-//		double tong = 0;
-//		int colTT = modelTraHang.findColumn("Thành tiền");
-//
-//		for (int i = 0; i < modelTraHang.getRowCount(); i++) {
-//			tong += Double.parseDouble(modelTraHang.getValueAt(i, colTT).toString());
-//		}
-//
-//		tienTra = tong;
-//		txtTienTra.setText(String.format("%,.0f đ", tienTra));
-//	}
 	private void capNhatTongTienTra() {
 		double tong = 0;
 		for (ItemTraHang it : dsTraHang) {
@@ -399,8 +381,10 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 			return;
 		}
 
+		// Lấy toàn bộ CTHD theo hoá đơn
 		List<ChiTietHoaDon> dsCT = cthdDAO.layDanhSachChiTietTheoMaHD(maHD);
 
+		// Dialog chọn sản phẩm (theo tên như bạn đã làm)
 		ChonSanPhamTraDialog dlg = new ChonSanPhamTraDialog(dsCT);
 		dlg.setVisible(true);
 		List<ChiTietHoaDon> dsChon = dlg.getDsSanPhamDuocChon();
@@ -410,20 +394,83 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 			return;
 		}
 
+		// Gom nhóm CTHD theo LÔ (mỗi lô = 1 ItemTraHang, nhưng có thể có nhiều DVT)
+		Map<String, List<ChiTietHoaDon>> mapTheoLo = new java.util.LinkedHashMap<>();
+		for (ChiTietHoaDon ct : dsChon) {
+			String maLo = ct.getLoSanPham().getMaLo();
+			mapTheoLo.computeIfAbsent(maLo, k -> new ArrayList<>()).add(ct);
+		}
+
 		pnDanhSachDon.removeAll();
 		dsTraHang.clear();
 
 		int stt = 1;
 
-		for (ChiTietHoaDon ct : dsChon) {
+		for (Map.Entry<String, List<ChiTietHoaDon>> entry : mapTheoLo.entrySet()) {
+			List<ChiTietHoaDon> dsTheoLo = entry.getValue();
+			if (dsTheoLo.isEmpty())
+				continue;
 
-			ItemTraHang item = new ItemTraHang(ct.getLoSanPham().getMaLo(),
-					ct.getLoSanPham().getSanPham().getTenSanPham(), ct.getDonViTinh().getTenDonViTinh(), ct.getGiaBan(),
-					(int) ct.getSoLuong(), ct);
+			ChiTietHoaDon ctDau = dsTheoLo.get(0);
+			String maLo = ctDau.getLoSanPham().getMaLo();
+
+			var sp = ctDau.getLoSanPham().getSanPham();
+
+			// Lấy tất cả quy cách (DVT) của sản phẩm
+			List<QuyCachDongGoi> dsQuyCach = qcdgDAO.layDanhSachQuyCachTheoSanPham(sp.getMaSanPham());
+			if (dsQuyCach == null || dsQuyCach.isEmpty()) {
+				// fallback: không có quy cách → vẫn tạo item như cũ (1 DVT)
+				ItemTraHang item = new ItemTraHang(maLo, sp.getTenSanPham(), ctDau.getDonViTinh().getTenDonViTinh(),
+						ctDau.getGiaBan(), (int) ctDau.getSoLuong(), ctDau);
+
+				dsTraHang.add(item);
+
+				String anh = sp.getHinhAnh();
+				TraHangItemPanel pnl = new TraHangItemPanel(item, stt++, new TraHangItemPanel.Listener() {
+					@Override
+					public void onUpdate(ItemTraHang i) {
+						capNhatTongTienTra();
+					}
+
+					@Override
+					public void onDelete(ItemTraHang i, TraHangItemPanel p) {
+						dsTraHang.remove(i);
+						pnDanhSachDon.remove(p);
+						pnDanhSachDon.revalidate();
+						pnDanhSachDon.repaint();
+						capNhatTongTienTra();
+						capNhatSTT();
+					}
+				}, anh);
+
+				pnDanhSachDon.add(pnl);
+				pnDanhSachDon.add(Box.createVerticalStrut(5));
+				continue;
+			}
+
+			// Tính tổng số lượng đã mua quy về đơn vị gốc (viên)
+			int tongMuaGoc = 0;
+			for (ChiTietHoaDon ct : dsTheoLo) {
+				QuyCachDongGoi qc = timQuyCachTheoDVT(dsQuyCach, ct.getDonViTinh().getMaDonViTinh());
+				if (qc != null) {
+					tongMuaGoc += (int) ct.getSoLuong() * qc.getHeSoQuyDoi();
+				}
+			}
+			if (tongMuaGoc <= 0) {
+				continue;
+			}
+
+			// Chọn quy cách mặc định: đơn vị có hệ số quy đổi lớn nhất nhưng <= SL mua
+			QuyCachDongGoi qcMacDinh = chonQuyCachMacDinh(dsQuyCach, tongMuaGoc);
+
+			// Tạo ItemTraHang theo quy đổi
+			// Tạo ItemTraHang theo quy đổi (gom tất cả CTHD theo lô)
+			ItemTraHang item = new ItemTraHang(maLo, sp.getTenSanPham(), dsTheoLo, // list ChiTietHoaDon của lô này
+					dsQuyCach, qcMacDinh);
 
 			dsTraHang.add(item);
 
-			String anh = ct.getLoSanPham().getSanPham().getHinhAnh();
+			String anh = sp.getHinhAnh();
 
 			TraHangItemPanel pnl = new TraHangItemPanel(item, stt++, new TraHangItemPanel.Listener() {
 				@Override
@@ -440,8 +487,7 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 					capNhatTongTienTra();
 					capNhatSTT();
 				}
-			}, anh // ảnh sản phẩm
-			);
+			}, anh);
 
 			pnDanhSachDon.add(pnl);
 			pnDanhSachDon.add(Box.createVerticalStrut(5));
@@ -460,36 +506,69 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 		capNhatGhiChuKhuyenMai(dsChon);
 	}
 
-	private JTextField timTxtSoLuong(JPanel panel) {
-		for (Component comp : panel.getComponents()) {
-			if (comp instanceof JPanel childPanel) {
-				JTextField rs = timTxtSoLuong(childPanel);
-				if (rs != null)
-					return rs;
-			}
-			if (comp instanceof JTextField txt) {
-				if ("txtSoLuong".equals(txt.getName())) {
-					return txt;
-				}
+	private QuyCachDongGoi timQuyCachTheoDVT(List<QuyCachDongGoi> dsQuyCach, String maDonViTinh) {
+		if (dsQuyCach == null || maDonViTinh == null)
+			return null;
+		for (QuyCachDongGoi qc : dsQuyCach) {
+			if (qc.getDonViTinh().getMaDonViTinh().equals(maDonViTinh)) {
+				return qc;
 			}
 		}
 		return null;
 	}
 
-	private String timTenSanPham(JPanel panel) {
-		for (Component comp : panel.getComponents()) {
-			if (comp instanceof JPanel childPanel) {
-				String rs = timTenSanPham(childPanel);
-				if (rs != null)
-					return rs;
-			}
-			if (comp instanceof JLabel lbl) {
-				if ("lblTenThuoc".equals(lbl.getName())) {
-					return lbl.getText();
+	/**
+	 * Chọn quy cách mặc định: ưu tiên DVT có hệ số lớn nhất nhưng không vượt quá
+	 * tổng số lượng đã mua (quy về gốc).
+	 */
+	private QuyCachDongGoi chonQuyCachMacDinh(List<QuyCachDongGoi> dsQuyCach, int tongMuaGoc) {
+		if (dsQuyCach == null || dsQuyCach.isEmpty())
+			return null;
+
+		QuyCachDongGoi best = null;
+		for (QuyCachDongGoi qc : dsQuyCach) {
+			// chỉ chọn những DVT mà 1 đơn vị của nó không vượt quá SL đã mua
+			if (qc.getHeSoQuyDoi() <= tongMuaGoc) {
+				if (best == null || qc.getHeSoQuyDoi() > best.getHeSoQuyDoi()) {
+					best = qc;
 				}
 			}
 		}
-		return null;
+		if (best != null)
+			return best;
+
+		// fallback: nếu tất cả đều > tongMuaGoc, lấy đơn vị gốc
+		for (QuyCachDongGoi qc : dsQuyCach) {
+			if (qc.isDonViGoc())
+				return qc;
+		}
+		return dsQuyCach.get(0);
+	}
+
+	/**
+	 * Kiểm tra số lượng trả hợp lệ dựa trên số lượng đã trả trước đó. Trả về: true
+	 * = hợp lệ, false = vượt số lượng cho phép.
+	 */
+	private boolean kiemTraSoLuongHopLe(String maHD, ItemTraHang it) {
+
+		String maLo = it.getMaLo();
+
+		// Giả định: ctptDAO.tongSoLuongDaTra(maHD, maLo) đã quy về đơn vị gốc
+		double daTraGoc = ctptDAO.tongSoLuongDaTra(maHD, maLo);
+		int daMuaGoc = it.getSoLuongMuaGoc();
+		double conLaiGoc = daMuaGoc - daTraGoc;
+
+//		int slTraGoc = it.getSoLuongTraQuyVeGoc();
+		int slTraGoc = it.getSoLuongTra() * it.getQuyCachDangChon().getHeSoQuyDoi();
+
+		if (slTraGoc > conLaiGoc) {
+			JOptionPane.showMessageDialog(this,
+					"Lô " + maLo + " chỉ còn được trả tối đa: " + (int) conLaiGoc + " (quy về đơn vị gốc).",
+					"Vượt số lượng còn lại", JOptionPane.WARNING_MESSAGE);
+			return false;
+		}
+
+		return true;
 	}
 
 	private void xuLyTraHang(ActionEvent e) {
@@ -515,14 +594,58 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 		List<ChiTietPhieuTra> dsCT = new ArrayList<>();
 
 		for (ItemTraHang it : dsTraHang) {
+
+			String maHD = txtMaHoaDon.getText().trim();
+			String maLo = it.getMaLo();
+
+			// 1) Lấy tổng đã trả trước đó (quy về gốc)
+			double daTraGoc = ctptDAO.tongSoLuongDaTra(maHD, maLo);
+
+			// 2) Tổng số lượng đã mua của sản phẩm (quy về gốc)
+			int daMuaGoc = it.getSoLuongMuaGoc();
+
+			// 3) Số lượng muốn trả lần này (quy về gốc)
+			int slTraGoc = it.getSoLuongTra() * it.getQuyCachDangChon().getHeSoQuyDoi();
+
+			// 4) Kiểm tra vượt số lượng cho phép
+			if (daTraGoc + slTraGoc > daMuaGoc) {
+				JOptionPane.showMessageDialog(this,
+						"Sản phẩm: " + it.getTenSanPham() + "\n" + "Đã mua: " + daMuaGoc + " (gốc)\n"
+								+ "Đã trả trước đó: " + (int) daTraGoc + " (gốc)\n" + "Muốn trả thêm: " + slTraGoc
+								+ " (gốc)\n\n" + "❌ Tổng vượt mức cho phép!",
+						"Vượt số lượng", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+
+			// 5) Kiểm tra nếu đã trả hết mà vẫn trả tiếp
+			if (daTraGoc >= daMuaGoc) {
+				JOptionPane.showMessageDialog(this,
+						"Sản phẩm " + it.getTenSanPham() + " đã được trả đủ.\nKhông thể trả thêm!", "Đã trả hết",
+						JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+
+			// 6) Tạo chi tiết phiếu trả
 			ChiTietPhieuTra ct = new ChiTietPhieuTra();
+
+			// hóa đơn gốc để biết mã HĐ, lô, KM... (dùng cho log + đơn giá tham khảo)
 			ct.setChiTietHoaDon(it.getChiTietHoaDonGoc());
+
+			// số lượng trả theo đơn vị đang chọn
 			ct.setSoLuong(it.getSoLuongTra());
-//			ct.setThanhTienHoan(it.getThanhTien());
-			ct.capNhatThanhTienHoan();
+
+			// đơn vị tính ĐANG CHỌN trong combobox (vỉ / hộp / viên)
+			if (it.getQuyCachDangChon() != null) {
+				ct.setDonViTinh(it.getQuyCachDangChon().getDonViTinh());
+			}
+
+			// tiền hoàn: dùng đúng đơn giá & số lượng mà UI đang hiển thị
+			ct.setThanhTienHoan(it.getThanhTien());
+
 			ct.setLyDoChiTiet(it.getLyDo());
 			ct.setTrangThai(0);
 			dsCT.add(ct);
+
 		}
 
 		pt.setChiTietPhieuTraList(dsCT);
@@ -532,7 +655,7 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 			JOptionPane.showMessageDialog(this, "Không thể lưu phiếu trả!");
 			return;
 		}
-		
+
 		new PhieuTraPreviewDialog(SwingUtilities.getWindowAncestor(this), pt, dsCT).setVisible(true);
 		resetForm();
 	}

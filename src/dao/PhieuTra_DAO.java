@@ -141,8 +141,8 @@ public class PhieuTra_DAO {
 				""";
 
 		String sqlCT = """
-						INSERT INTO ChiTietPhieuTra(maPhieuTra, maHoaDon, maLo, soLuong, thanhTienHoan, lyDoChiTiet, trangThai, MaDonViTinh)
-						VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+				    	INSERT INTO ChiTietPhieuTra(maPhieuTra, maHoaDon, maLo, soLuong, thanhTienHoan, lyDoChiTiet, trangThai, MaDonViTinh)
+				    	VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 				""";
 
 		Connection con = connectDB.getConnection();
@@ -166,7 +166,6 @@ public class PhieuTra_DAO {
 
 			// Insert chi tiết
 			for (ChiTietPhieuTra ct : dsChiTiet) {
-				System.out.println(ct + " " + ct.getChiTietHoaDon());
 				psCT.setString(1, pt.getMaPhieuTra());
 				psCT.setString(2, ct.getChiTietHoaDon().getHoaDon().getMaHoaDon());
 				psCT.setString(3, ct.getChiTietHoaDon().getLoSanPham().getMaLo());
@@ -174,7 +173,15 @@ public class PhieuTra_DAO {
 				psCT.setDouble(5, ct.getThanhTienHoan());
 				psCT.setString(6, ct.getLyDoChiTiet());
 				psCT.setInt(7, ct.getTrangThai());
-				psCT.setString(8, ct.getChiTietHoaDon().getDonViTinh().getMaDonViTinh());
+
+				// ✅ DVT đang chọn khi trả (set ở GUI)
+				if (ct.getDonViTinh() != null) {
+					psCT.setString(8, ct.getDonViTinh().getMaDonViTinh());
+				} else {
+					// fallback: vẫn dùng DVT trên hóa đơn nếu chưa set
+					psCT.setString(8, ct.getChiTietHoaDon().getDonViTinh().getMaDonViTinh());
+				}
+
 				psCT.addBatch();
 			}
 
@@ -211,7 +218,8 @@ public class PhieuTra_DAO {
 	// ============================================================
 	// 🔄 Cập nhật trạng thái (transaction)
 	// ============================================================
-	public String capNhatTrangThai_GiaoDich(String maPhieuTra, String maHoaDon, String maLo, NhanVien nv, int trangThaiMoi) {
+	public String capNhatTrangThai_GiaoDich(String maPhieuTra, String maHoaDon, String maLo, NhanVien nv,
+			int trangThaiMoi) {
 
 		Connection con = connectDB.getConnection();
 		String maPhieuHuyDuocTao = null;
@@ -457,6 +465,30 @@ public class PhieuTra_DAO {
 		}
 
 		return String.format("%s%s-%04d", prefix, today, 1);
+	}
+
+	public boolean daTraLoTrongHoaDon(String maHD, String maLo) {
+		String sql = """
+				    SELECT COUNT(*)
+				    FROM ChiTietPhieuTra ct
+				    JOIN PhieuTra pt ON ct.MaPhieuTra = pt.MaPhieuTra
+				    WHERE pt.MaHoaDon = ? AND ct.MaLo = ?
+				""";
+
+		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+			ps.setString(1, maHD);
+			ps.setString(2, maLo);
+
+			ResultSet rs = ps.executeQuery();
+			if (rs.next())
+				return rs.getInt(1) > 0;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return false;
 	}
 
 }
