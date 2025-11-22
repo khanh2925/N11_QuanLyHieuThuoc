@@ -86,7 +86,7 @@ public class PhieuTra_DAO {
 		String sql = """
 				    SELECT MaPhieuTra
 				    FROM PhieuTra
-				    ORDER BY NgayLap DESC
+				    ORDER BY NgayLap DESC, MaPhieuTra DESC
 				""";
 
 		Connection con = connectDB.getConnection();
@@ -218,8 +218,8 @@ public class PhieuTra_DAO {
 	// ============================================================
 	// 🔄 Cập nhật trạng thái (transaction)
 	// ============================================================
-	public String capNhatTrangThai_GiaoDich(String maPhieuTra, String maHoaDon, String maLo, NhanVien nv,
-			int trangThaiMoi) {
+	public String capNhatTrangThai_GiaoDich(String maPhieuTra, String maHoaDon, String maLo, String maDonViTinh,
+			NhanVien nv, int trangThaiMoi, String lyDoMoi) {
 
 		Connection con = connectDB.getConnection();
 		String maPhieuHuyDuocTao = null;
@@ -233,7 +233,7 @@ public class PhieuTra_DAO {
 			String sqlGetOld = """
 					        SELECT TrangThai, SoLuong, LyDoChiTiet
 					        FROM ChiTietPhieuTra
-					        WHERE MaPhieuTra=? AND MaHoaDon=? AND MaLo=?
+					        WHERE MaPhieuTra=? AND MaHoaDon=? AND MaLo=? AND MaDonViTinh=?
 					""";
 
 			int trangThaiCu = 0;
@@ -245,6 +245,7 @@ public class PhieuTra_DAO {
 				ps.setString(1, maPhieuTra);
 				ps.setString(2, maHoaDon);
 				ps.setString(3, maLo);
+				ps.setString(4, maDonViTinh);
 
 				try (ResultSet rs = ps.executeQuery()) {
 					if (rs.next()) {
@@ -307,7 +308,7 @@ public class PhieuTra_DAO {
 			String sqlUpdCT = """
 					        UPDATE ChiTietPhieuTra
 					        SET TrangThai = ?
-					        WHERE MaPhieuTra=? AND MaHoaDon=? AND MaLo=?
+					        WHERE MaPhieuTra=? AND MaHoaDon=? AND MaLo=? AND MaDonViTinh=?
 					""";
 
 			try (PreparedStatement ps = con.prepareStatement(sqlUpdCT)) {
@@ -315,9 +316,9 @@ public class PhieuTra_DAO {
 				ps.setString(2, maPhieuTra);
 				ps.setString(3, maHoaDon);
 				ps.setString(4, maLo);
+				ps.setString(5, maDonViTinh);
 				ps.executeUpdate();
 			}
-
 			// =====================================================
 			// 6. Nếu chuyển sang HỦY → tạo phiếu hủy tự động
 			// =====================================================
@@ -333,7 +334,7 @@ public class PhieuTra_DAO {
 				ChiTietPhieuHuy ctHuy = new ChiTietPhieuHuy();
 				ctHuy.setLoSanPham(lo);
 				ctHuy.setSoLuongHuy(soLuongTra);
-				ctHuy.setLyDoChiTiet(lyDo);
+				ctHuy.setLyDoChiTiet(lyDoMoi != null ? lyDoMoi : lyDo);
 				ctHuy.setDonGiaNhap(donGiaNhap);
 				ctHuy.capNhatThanhTien();
 				ctHuy.setTrangThai(2); // 2 = Hủy
@@ -345,9 +346,7 @@ public class PhieuTra_DAO {
 				String maPH = phieuHuyDAO.taoMaPhieuHuy();
 				maPhieuHuyDuocTao = maPH; // gắn vào để GUI báo
 
-				PhieuHuy ph = new PhieuHuy(maPH, LocalDate.now(), nv, // ⭐ nhân viên đang thao tác
-						false // trạng thái mặc định = Chưa duyệt
-				);
+				PhieuHuy ph = new PhieuHuy(maPH, LocalDate.now(), nv, true);
 				ph.setChiTietPhieuHuyList(ds);
 				ph.capNhatTongTienTheoChiTiet();
 
