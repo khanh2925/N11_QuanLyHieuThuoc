@@ -8,13 +8,16 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
+import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
@@ -25,17 +28,21 @@ import customcomponent.RoundedBorder;
 
 public class NhapHang_GUI extends JPanel {
 
-    private JPanel pnCenter;
     private JPanel pnHeader;
-    private JPanel pnRight;
     private PillButton btnThem;
     private PillButton btnXuatFile;
+    
+    // Thay thế panel cũ bằng SplitPane
+    private JSplitPane splitPane;
+    
     private DefaultTableModel modelPN;
     private JTable tblPN;
-    private JScrollPane scrCTPN;
-    private DefaultTableModel modelCTPN;
     private JScrollPane scrPN;
+    
+    private DefaultTableModel modelCTPN;
     private JTable tblCTPN;
+    private JScrollPane scrCTPN;
+    
     private JTextField txtSearch;
 
     DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -43,6 +50,7 @@ public class NhapHang_GUI extends JPanel {
 
     private Color blueMint = new Color(180, 220, 240);
     private Color pinkPastel = new Color(255, 200, 220);
+    private Color primaryColor = new Color(0, 128, 255); // Màu viền tiêu đề
 
     public NhapHang_GUI() {
         this.setPreferredSize(new Dimension(1537, 850));
@@ -53,7 +61,7 @@ public class NhapHang_GUI extends JPanel {
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(1537, 1168));
 
-        // ===== HEADER =====
+        // ===== HEADER (Giữ nguyên) =====
         pnHeader = new JPanel();
         pnHeader.setPreferredSize(new Dimension(1073, 88));
         pnHeader.setLayout(null);
@@ -89,12 +97,10 @@ public class NhapHang_GUI extends JPanel {
         cal.add(java.util.Calendar.DATE, 1);
         dateDen.setDate(cal.getTime());
 
-        // ==== Nút thêm phiếu ====
         btnThem = new PillButton("Thêm");
         btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnThem.setBounds(922, 30, 120, 40);
 
-        // Giữ nguyên sự kiện (nếu có màn ThemPhieuNhap_GUI)
         btnThem.addActionListener(e -> {
             java.awt.Window win = SwingUtilities.getWindowAncestor(this);
             if (win instanceof JFrame frame) {
@@ -116,38 +122,62 @@ public class NhapHang_GUI extends JPanel {
         pnHeader.add(btnThem);
         pnHeader.add(btnXuatFile);
 
-        // ===== CENTER =====
-        pnCenter = new JPanel(new BorderLayout());
-        add(pnCenter, BorderLayout.CENTER);
-
-        // ===== RIGHT =====
-        pnRight = new JPanel();
-        pnRight.setPreferredSize(new Dimension(600, 1080));
-        pnRight.setBackground(new Color(0, 128, 255));
-        pnRight.setLayout(new javax.swing.BoxLayout(pnRight, javax.swing.BoxLayout.Y_AXIS));
-        add(pnRight, BorderLayout.EAST);
+        // ===== CENTER: Dùng SplitPane để chia dọc =====
+        splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        splitPane.setResizeWeight(0.5); // Chia đều 50-50 ban đầu
+        splitPane.setOneTouchExpandable(true); // Có nút mũi tên nhỏ để thu gọn nhanh
+        add(splitPane, BorderLayout.CENTER);
 
         initTable();
-        LoadPhieuNhap(); // nạp data fake
+        LoadPhieuNhap(); 
     }
 
     private void initTable() {
+        // --- Bảng 1: Danh sách Phiếu Nhập (Ở TRÊN) ---
         String[] phieuNhapCols = {"Mã PN", "Ngày lập phiếu", "Nhân Viên", "NCC", "Tổng tiền"};
         modelPN = new DefaultTableModel(phieuNhapCols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         tblPN = new JTable(modelPN);
         scrPN = new JScrollPane(tblPN);
-        pnCenter.add(scrPN);
-
+        
+        // Tạo Panel bọc bảng để thêm Tiêu đề (Title Border)
+        JPanel pnTableTop = new JPanel(new BorderLayout());
+        pnTableTop.add(scrPN, BorderLayout.CENTER);
+        pnTableTop.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(primaryColor), 
+            "DANH SÁCH PHIẾU NHẬP", 
+            TitledBorder.DEFAULT_JUSTIFICATION, 
+            TitledBorder.DEFAULT_POSITION, 
+            new Font("Segoe UI", Font.BOLD, 14), 
+            primaryColor
+        ));
+        
+        // --- Bảng 2: Chi tiết Phiếu Nhập (Ở DƯỚI) ---
         String[] cTPhieuCols = {"Mã lô", "Mã SP", "Tên SP", "SL nhập", "Đơn giá", "Thành tiền"};
         modelCTPN = new DefaultTableModel(cTPhieuCols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         tblCTPN = new JTable(modelCTPN);
         scrCTPN = new JScrollPane(tblCTPN);
-        pnRight.add(scrCTPN);
 
+        // Tạo Panel bọc bảng chi tiết
+        JPanel pnTableBottom = new JPanel(new BorderLayout());
+        pnTableBottom.add(scrCTPN, BorderLayout.CENTER);
+        pnTableBottom.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(primaryColor), 
+            "CHI TIẾT PHIẾU NHẬP", 
+            TitledBorder.DEFAULT_JUSTIFICATION, 
+            TitledBorder.DEFAULT_POSITION, 
+            new Font("Segoe UI", Font.BOLD, 14), 
+            primaryColor
+        ));
+
+        // --- Thêm 2 bảng vào SplitPane ---
+        splitPane.setTopComponent(pnTableTop);
+        splitPane.setBottomComponent(pnTableBottom);
+
+        // Format màu sắc bảng
         formatTable(tblPN);
         tblPN.setSelectionBackground(blueMint);
         tblPN.getTableHeader().setBackground(pinkPastel);
@@ -157,17 +187,13 @@ public class NhapHang_GUI extends JPanel {
         tblCTPN.getTableHeader().setBackground(blueMint);
     }
 
-    /** Data fake thuần tuý, không dùng entity/enums */
     public void LoadPhieuNhap() {
-        // ==== PHIẾU NHẬP (master) ====
-        // fields: maPN, ngayLap, tenNV, tenNCC, tongTien (sẽ tính từ chi tiết)
+        // Giữ nguyên logic nạp dữ liệu cũ của bạn
         Object[][] pnData = {
             { "PN001", LocalDate.of(2025, 10, 18), "Lê Thanh Kha", "Công ty Dược Hậu Giang", 0.0 },
             { "PN002", LocalDate.of(2025, 10, 20), "Trần Thị B",   "Mekophar",               0.0 }
         };
 
-        // ==== CHI TIẾT (detail) ====
-        // fields: (maPN), maLo, maSP, tenSP, slNhap, donGia
         Object[][] ctData = {
             { "PN001", "LO000001", "SP000001", "Paracetamol 500mg", 50, 800.0 },
             { "PN001", "LO000002", "SP000002", "Vitamin C 1000mg",  30, 1200.0 },
@@ -175,7 +201,6 @@ public class NhapHang_GUI extends JPanel {
             { "PN002", "LO000004", "SP000004", "Bông y tế",         80, 120.0 }
         };
 
-        // Tính tổng tiền cho từng PN từ ctData
         for (int i = 0; i < pnData.length; i++) {
             String maPN = pnData[i][0].toString();
             double tong = 0.0;
@@ -189,7 +214,6 @@ public class NhapHang_GUI extends JPanel {
             pnData[i][4] = tong;
         }
 
-        // Đổ master
         modelPN.setRowCount(0);
         for (Object[] pn : pnData) {
             modelPN.addRow(new Object[]{
@@ -201,19 +225,13 @@ public class NhapHang_GUI extends JPanel {
             });
         }
 
-        // Đổ detail
         modelCTPN.setRowCount(0);
         for (Object[] ct : ctData) {
             int sl = (int) ct[4];
             double donGia = ((Number) ct[5]).doubleValue();
             double thanhTien = sl * donGia;
             modelCTPN.addRow(new Object[]{
-                ct[1], // Mã lô
-                ct[2], // Mã SP
-                ct[3], // Tên SP
-                sl,
-                df.format(donGia),
-                df.format(thanhTien)
+                ct[1], ct[2], ct[3], sl, df.format(donGia), df.format(thanhTien)
             });
         }
     }
@@ -247,7 +265,7 @@ public class NhapHang_GUI extends JPanel {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Quản lý phiếu nhập - Data Fake");
+            JFrame frame = new JFrame("Quản lý phiếu nhập - Form Dọc");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1280, 800);
             frame.setLocationRelativeTo(null);
