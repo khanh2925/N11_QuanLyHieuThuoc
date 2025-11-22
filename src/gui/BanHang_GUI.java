@@ -640,6 +640,16 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 		JOptionPane.showMessageDialog(this, "Lập hóa đơn thành công!\nMã hóa đơn: " + maHD, "Thành công",
 				JOptionPane.INFORMATION_MESSAGE);
 
+		// Sau khi lưu thành công và trước khi gọi lamMoiSauKhiBanThanhCong()
+		int confirmPrint = JOptionPane.showConfirmDialog(this, 
+		    "Lập hóa đơn thành công! Bạn có muốn xem/in hóa đơn không?", 
+		    "Thành công", 
+		    JOptionPane.YES_NO_OPTION);
+
+		if (confirmPrint == JOptionPane.YES_OPTION) {
+		    new HoaDonPreviewDialog(SwingUtilities.getWindowAncestor(this), hd).setVisible(true);
+		}
+
 		lamMoiSauKhiBanThanhCong();
 	}
 
