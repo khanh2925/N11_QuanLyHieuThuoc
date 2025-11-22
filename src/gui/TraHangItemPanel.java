@@ -1,6 +1,7 @@
 package gui;
 
 import entity.ItemTraHang;
+import entity.QuyCachDongGoi;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -26,7 +27,7 @@ public class TraHangItemPanel extends JPanel {
 	private JTextField txtLo;
 	private JTextField txtSoLuongMua;
 	private JLabel lblAnh;
-	private JLabel lblDonViTinh;
+	private JComboBox<String> cboDonViTinh;
 	private JButton btnGiam;
 	private JButton btnTang;
 	private JTextField txtSoLuongTra;
@@ -82,7 +83,7 @@ public class TraHangItemPanel extends JPanel {
 
 		// ===== INFO (Tên + Lô + SL mua) =====
 		Box infoBox = Box.createVerticalBox();
-        infoBox.setBorder(new LineBorder(Color.BLACK));
+		infoBox.setBorder(new LineBorder(Color.BLACK));
 
 		txtTenThuoc = TaoJtextNhanh.taoTextDonHang(item.getTenSanPham(), new Font("Segoe UI", Font.BOLD, 16),
 				new Color(0x00796B), 300);
@@ -96,77 +97,111 @@ public class TraHangItemPanel extends JPanel {
 		loBox.add(txtLo);
 		loBox.add(Box.createHorizontalStrut(8));
 
-		txtSoLuongMua = TaoJtextNhanh.taoTextDonHang(
-                "Đã mua: " + item.getSoLuongMua(), new Font("Segoe UI", Font.BOLD, 16), new Color(0x00796B), 150);
-        loBox.add(txtSoLuongMua);
-		
+		txtSoLuongMua = TaoJtextNhanh.taoTextDonHang("Đã mua: " + item.getSoLuongMua(),
+				new Font("Segoe UI", Font.BOLD, 16), new Color(0x00796B), 150);
+		loBox.add(txtSoLuongMua);
+
 		infoBox.add(loBox);
 		add(infoBox);
 		add(Box.createHorizontalStrut(15));
 
-		// ===== ĐƠN VỊ (readonly – giống bán hàng) =====
-		lblDonViTinh = new JLabel(item.getDonViTinh());
-		lblDonViTinh.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		lblDonViTinh.setPreferredSize(new Dimension(70, 30));
-		add(lblDonViTinh);
+		// ===== ĐƠN VỊ (comboBox – có thể đổi DVT) =====
+		cboDonViTinh = new JComboBox<>();
+		cboDonViTinh.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		cboDonViTinh.setMaximumSize(new Dimension(80, 26)); // ép chiều cao nhỏ
+		cboDonViTinh.setPreferredSize(new Dimension(80, 26));
+		cboDonViTinh.setMinimumSize(new Dimension(80, 26));
+
+		// ===== LOAD DVT theo quy cách (chỉ load DVT ≤ DVT lúc mua) =====
+		if (item.getDsQuyCach() != null && !item.getDsQuyCach().isEmpty()) {
+
+			// Lấy dòng CTHD đầu tiên (dùng làm đại diện)
+			String maDVTmua = item.getDsCthd().get(0).getDonViTinh().getMaDonViTinh();
+			QuyCachDongGoi qcMua = item.getQuyCachTheoMaDonViTinh(maDVTmua);
+
+			int heSoMua = qcMua.getHeSoQuyDoi();
+
+			for (QuyCachDongGoi qc : item.getDsQuyCach()) {
+				int heSoQC = qc.getHeSoQuyDoi();
+
+				// Điều kiện: CHỈ load DVT nhỏ hơn hoặc bằng đơn vị lúc mua
+				if (heSoQC <= heSoMua) {
+					String tenDVT = qc.getDonViTinh().getTenDonViTinh();
+					cboDonViTinh.addItem(tenDVT);
+
+					// Chọn DVT đang được item chọn sẵn
+					if (item.getQuyCachDangChon() != null && item.getQuyCachDangChon().getDonViTinh().getMaDonViTinh()
+							.equals(qc.getDonViTinh().getMaDonViTinh())) {
+						cboDonViTinh.setSelectedItem(tenDVT);
+					}
+				}
+			}
+
+		} else {
+			// fallback: chỉ 1 DVT như cũ
+			cboDonViTinh.addItem(item.getDonViTinh());
+		}
+
+		add(cboDonViTinh);
 		add(Box.createHorizontalStrut(15));
 
 		// ===== SỐ LƯỢNG TRẢ (+/-) =====
 		Box soLuongBox = Box.createHorizontalBox();
 		soLuongBox.setMaximumSize(new Dimension(140, 30));
-        soLuongBox.setPreferredSize(new Dimension(140, 30));
-        soLuongBox.setBorder(new LineBorder(new Color(0xDDDDDD), 1, true));
+		soLuongBox.setPreferredSize(new Dimension(140, 30));
+		soLuongBox.setBorder(new LineBorder(new Color(0xDDDDDD), 1, true));
 
-        btnGiam = new JButton("-");
-        btnGiam.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnGiam.setPreferredSize(new Dimension(40, 30));
-        btnGiam.setMargin(new Insets(0, 0, 0, 0));
-        btnGiam.setFocusPainted(false);
-        soLuongBox.add(btnGiam);
-        
-        txtSoLuongTra = TaoJtextNhanh.hienThi(
-                String.valueOf(item.getSoLuongTra()), new Font("Segoe UI", Font.PLAIN, 16), Color.BLACK);
-        txtSoLuongTra.setMaximumSize(new Dimension(600, 30));
-        txtSoLuongTra.setHorizontalAlignment(SwingConstants.CENTER);
-        txtSoLuongTra.setEditable(true);
-        soLuongBox.add(txtSoLuongTra);
+		btnGiam = new JButton("-");
+		btnGiam.setFont(new Font("Segoe UI", Font.BOLD, 16));
+		btnGiam.setPreferredSize(new Dimension(40, 30));
+		btnGiam.setMargin(new Insets(0, 0, 0, 0));
+		btnGiam.setFocusPainted(false);
+		soLuongBox.add(btnGiam);
 
-        btnTang = new JButton("+");
-        btnTang.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnTang.setPreferredSize(new Dimension(40, 30));
-        btnTang.setMargin(new Insets(0, 0, 0, 0));
-        btnTang.setFocusPainted(false);
-        btnTang.setName("btnTang");
-        soLuongBox.add(btnTang);
+		txtSoLuongTra = TaoJtextNhanh.hienThi(String.valueOf(item.getSoLuongTra()),
+				new Font("Segoe UI", Font.PLAIN, 16), Color.BLACK);
+		txtSoLuongTra.setMaximumSize(new Dimension(600, 30));
+		txtSoLuongTra.setHorizontalAlignment(SwingConstants.CENTER);
+		txtSoLuongTra.setEditable(true);
+		soLuongBox.add(txtSoLuongTra);
+
+		btnTang = new JButton("+");
+		btnTang.setFont(new Font("Segoe UI", Font.BOLD, 16));
+		btnTang.setPreferredSize(new Dimension(40, 30));
+		btnTang.setMargin(new Insets(0, 0, 0, 0));
+		btnTang.setFocusPainted(false);
+		btnTang.setName("btnTang");
+		soLuongBox.add(btnTang);
 
 		add(soLuongBox);
 		add(Box.createHorizontalStrut(10));
 
 		// ===== ĐƠN GIÁ =====
-        txtDonGia = TaoJtextNhanh.taoTextDonHang(
-                formatTien(item.getDonGia()), new Font("Segoe UI", Font.PLAIN, 16), Color.BLACK, 100);
-        txtDonGia.setHorizontalAlignment(SwingConstants.RIGHT);
-        add(txtDonGia);
-        add(Box.createHorizontalStrut(5));
-		
+		txtDonGia = TaoJtextNhanh.taoTextDonHang(formatTien(item.getDonGia()), new Font("Segoe UI", Font.PLAIN, 16),
+				Color.BLACK, 100);
+		txtDonGia.setHorizontalAlignment(SwingConstants.RIGHT);
+		add(txtDonGia);
+		add(Box.createHorizontalStrut(5));
+
 		// ===== THÀNH TIỀN =====
-        txtThanhTien = TaoJtextNhanh.taoTextDonHang(
-                formatTien(0), new Font("Segoe UI", Font.BOLD, 16), new Color(0xD32F2F), 120);
-        txtThanhTien.setHorizontalAlignment(SwingConstants.RIGHT);
-        add(txtThanhTien);
-        add(Box.createHorizontalGlue());
+		txtThanhTien = TaoJtextNhanh.taoTextDonHang(formatTien(0), new Font("Segoe UI", Font.BOLD, 16),
+				new Color(0xD32F2F), 120);
+		txtThanhTien.setHorizontalAlignment(SwingConstants.RIGHT);
+		add(txtThanhTien);
+		add(Box.createHorizontalGlue());
 
 		// ===== XÓA =====
-        btnXoa = new JButton();
-        btnXoa.setPreferredSize(new Dimension(40, 40));
-        btnXoa.setBorderPainted(false);
-        btnXoa.setContentAreaFilled(false);
-        btnXoa.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        try {
-            ImageIcon icon = new ImageIcon(getClass().getResource("/images/bin.png"));
-            btnXoa.setIcon(new ImageIcon(icon.getImage().getScaledInstance(22, 22, Image.SCALE_SMOOTH)));
-        } catch (Exception ignored) {}
-        add(btnXoa);
+		btnXoa = new JButton();
+		btnXoa.setPreferredSize(new Dimension(40, 40));
+		btnXoa.setBorderPainted(false);
+		btnXoa.setContentAreaFilled(false);
+		btnXoa.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		try {
+			ImageIcon icon = new ImageIcon(getClass().getResource("/images/bin.png"));
+			btnXoa.setIcon(new ImageIcon(icon.getImage().getScaledInstance(22, 22, Image.SCALE_SMOOTH)));
+		} catch (Exception ignored) {
+		}
+		add(btnXoa);
 
 		// ===== LÝ DO TRẢ (đặt ở dưới – không phá layout gốc) =====
 		txtLyDo = new JTextField("Lý do trả (không bắt buộc)");
@@ -179,16 +214,6 @@ public class TraHangItemPanel extends JPanel {
 
 		addEvents();
 	}
-
-//	private JTextField taoTxt(String txt, Color c) {
-//		JTextField t = new JTextField(txt);
-//		t.setEditable(false);
-//		t.setBorder(null);
-//		t.setBackground(new Color(0xFAFAFA));
-//		t.setFont(new Font("Segoe UI", Font.BOLD, 15));
-//		t.setForeground(c);
-//		return t;
-//	}
 
 	private void addEvents() {
 
@@ -231,6 +256,27 @@ public class TraHangItemPanel extends JPanel {
 				item.setLyDo(txtLyDo.getText().trim());
 			}
 		});
+
+		// ===== ĐỔI ĐƠN VỊ TÍNH (comboBox) =====
+		cboDonViTinh.addActionListener(e -> {
+			if (item.getDsQuyCach() == null || item.getDsQuyCach().isEmpty()) {
+				return;
+			}
+			String tenDVT = (String) cboDonViTinh.getSelectedItem();
+			if (tenDVT == null) {
+				return;
+			}
+
+			for (QuyCachDongGoi qc : item.getDsQuyCach()) {
+				if (tenDVT.equals(qc.getDonViTinh().getTenDonViTinh())) {
+					item.applyQuyCach(qc);
+					updateUIValue();
+					listener.onUpdate(item);
+					break;
+				}
+			}
+		});
+
 	}
 
 	private void nhapSL() {
@@ -245,15 +291,28 @@ public class TraHangItemPanel extends JPanel {
 	}
 
 	private void updateUIValue() {
+		// số lượng trả
 		txtSoLuongTra.setText(String.valueOf(item.getSoLuongTra()));
-		txtThanhTien.setText(DF.format(item.getThanhTien()));
+
+		// đơn giá
+		txtDonGia.setText(formatTien(item.getDonGia()));
+
+		// thành tiền
+		txtThanhTien.setText(formatTien(item.getThanhTien()));
+
+		// CHỖ CẦN SỬA — cập nhật lại số lượng mua theo đơn vị hiện tại
+		txtSoLuongMua.setText("Đã mua: " + item.getSoLuongMua());
+
+		// notify cha để update tổng tiền
+		if (listener != null)
+			listener.onUpdate(item);
 	}
 
 	public void setSTT(int stt) {
 		lblSTT.setText(String.valueOf(stt));
 	}
 
-    private String formatTien(double t) {
-        return DF.format(t) + " đ";
-    }
+	private String formatTien(double t) {
+		return DF.format(t) + " đ";
+	}
 }
