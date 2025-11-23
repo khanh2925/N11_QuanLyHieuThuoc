@@ -3,6 +3,7 @@ package dao;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.time.format.DateTimeFormatter;
 
 import connectDB.connectDB;
 import entity.KhachHang;
@@ -206,5 +207,42 @@ public class KhachHang_DAO {
 		kh.setHoatDong(hoatDong);
 		return kh;
 	}
+	/** 🔹 Phát sinh mã khách hàng tiếp theo dạng KH-yyyymmdd-xxxx */
+	public String phatSinhMaKhachHangTiepTheo() {
+	    connectDB.getInstance();
+	    Connection con = connectDB.getConnection();
+
+	    LocalDate today = LocalDate.now();
+	    String ngayStr = today.format(DateTimeFormatter.BASIC_ISO_DATE); // yyyymmdd
+	    String prefix = "KH-" + ngayStr + "-";                           // KH-20251123-
+
+	    String sql = "SELECT MAX(MaKhachHang) AS MaxMa FROM KhachHang WHERE MaKhachHang LIKE ?";
+
+	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+	        stmt.setString(1, prefix + "%");
+
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            int next = 1;
+	            if (rs.next()) {
+	                String maxMa = rs.getString("MaxMa");
+	                if (maxMa != null) {
+	                    // 🟢 LẤY PHẦN SỐ SAU DẤU '-' VÀ TRIM KHOẢNG TRẮNG
+	                    String sttStr = maxMa.substring(maxMa.lastIndexOf('-') + 1).trim();
+	                    try {
+	                        next = Integer.parseInt(sttStr) + 1;
+	                    } catch (NumberFormatException e) {
+	                        next = 1; // nếu lỡ format lạ thì quay về 0001
+	                    }
+	                }
+	            }
+	            return prefix + String.format("%04d", next);
+	        }
+	    } catch (SQLException e) {
+	        System.err.println("❌ Lỗi phát sinh mã khách hàng: " + e.getMessage());
+	    }
+	    return null;
+	}
+
+
 
 }
