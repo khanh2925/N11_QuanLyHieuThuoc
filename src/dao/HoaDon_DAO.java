@@ -97,7 +97,6 @@ public class HoaDon_DAO {
 		return null;
 	}
 
-<<<<<<< HEAD
 /** 📜 Lấy toàn bộ hóa đơn (ĐÃ SỬA LỖI CLOSED CONNECTION) */
 	public List<HoaDon> layTatCaHoaDon() {
 		List<HoaDon> dsHD = new ArrayList<>();
@@ -132,37 +131,6 @@ public class HoaDon_DAO {
 			HoaDon hd = timHoaDonTheoMa(maHD);
 			if (hd != null) {
 				dsHD.add(hd);
-=======
-	/** 📜 Lấy toàn bộ hóa đơn */
-	public List<HoaDon> layTatCaHoaDon() {
-		List<HoaDon> dsHD = new ArrayList<>();
-		connectDB.getInstance();
-		Connection con = connectDB.getConnection(); // 👈 KHÔNG đưa vào try-with-resources
-
-		Statement st = null;
-		ResultSet rs = null;
-
-		try {
-			st = con.createStatement();
-			rs = st.executeQuery("SELECT MaHoaDon FROM HoaDon ORDER BY NgayLap DESC");
-
-			while (rs.next()) {
-				String maHD = rs.getString("MaHoaDon");
-				HoaDon hd = timHoaDonTheoMa(maHD);
-				if (hd != null)
-					dsHD.add(hd);
-			}
-		} catch (SQLException e) {
-			System.err.println("❌ Lỗi lấy danh sách hóa đơn: " + e.getMessage());
-		} finally {
-			try {
-				if (rs != null)
-					rs.close();
-				if (st != null)
-					st.close();
-				// ❌ KHÔNG được con.close();
-			} catch (SQLException ignore) {
->>>>>>> f710d40c30013c0a0c1e4efa9a3b06756aca52ab
 			}
 		}
 
