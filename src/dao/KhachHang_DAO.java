@@ -9,153 +9,202 @@ import entity.KhachHang;
 
 public class KhachHang_DAO {
 
-    public KhachHang_DAO() {}
+	public KhachHang_DAO() {
+	}
 
-    /** Lấy toàn bộ khách hàng */
-    public ArrayList<KhachHang> getAllKhachHang() {
-        ArrayList<KhachHang> ds = new ArrayList<>();
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+	/** 🔹 Lấy toàn bộ khách hàng */
+	public ArrayList<KhachHang> layTatCaKhachHang() {
+		ArrayList<KhachHang> danhSach = new ArrayList<>();
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
 
-        String sql = "SELECT MaKhachHang, TenKhachHang, GioiTinh, SoDienThoai, NgaySinh FROM KhachHang";
+		String sql = "SELECT * FROM KhachHang";
 
-        try (Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+		try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+			while (rs.next()) {
+				danhSach.add(taoKhachHangTuResultSet(rs));
+			}
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi lấy danh sách khách hàng: " + e.getMessage());
+		}
+		return danhSach;
+	}
 
-            while (rs.next()) {
-                String ma = rs.getString("MaKhachHang");
-                String ten = rs.getString("TenKhachHang");
-                boolean gt = rs.getBoolean("GioiTinh");
-                String sdt = rs.getString("SoDienThoai");
-                Date d = rs.getDate("NgaySinh");
-                LocalDate ns = (d != null) ? d.toLocalDate() : null;
+	/** 🔹 Thêm khách hàng mới */
+	public boolean themKhachHang(KhachHang kh) {
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
 
-                ds.add(new KhachHang(ma, ten, gt, sdt, ns));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return ds;
-    }
+		String sql = """
+				INSERT INTO KhachHang (MaKhachHang, TenKhachHang, GioiTinh, SoDienThoai, NgaySinh, HoatDong)
+				VALUES (?, ?, ?, ?, ?, ?)
+				""";
 
-    /** Thêm khách hàng */
-    public boolean createKhachHang(KhachHang kh) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setString(1, kh.getMaKhachHang());
+			stmt.setString(2, kh.getTenKhachHang());
+			stmt.setBoolean(3, kh.isGioiTinh());
+			stmt.setString(4, kh.getSoDienThoai());
+			stmt.setDate(5, kh.getNgaySinh() != null ? Date.valueOf(kh.getNgaySinh()) : null);
+			stmt.setBoolean(6, kh.isHoatDong());
+			return stmt.executeUpdate() > 0;
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi thêm khách hàng: " + e.getMessage());
+		}
+		return false;
+	}
 
-        String sql = "INSERT INTO KhachHang (MaKhachHang, TenKhachHang, GioiTinh, SoDienThoai, NgaySinh) VALUES (?, ?, ?, ?, ?)";
+	/** 🔹 Cập nhật thông tin khách hàng */
+	public boolean capNhatKhachHang(KhachHang kh) {
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
 
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, kh.getMaKhachHang());
-            stmt.setString(2, kh.getTenKhachHang());
-            stmt.setBoolean(3, kh.isGioiTinh());
-            stmt.setString(4, kh.getSoDienThoai());
-            stmt.setDate(5, kh.getNgaySinh() != null ? Date.valueOf(kh.getNgaySinh()) : null);
-            return stmt.executeUpdate() > 0;
+		String sql = """
+				UPDATE KhachHang
+				SET TenKhachHang = ?, GioiTinh = ?, SoDienThoai = ?, NgaySinh = ?, HoatDong = ?
+				WHERE MaKhachHang = ?
+				""";
 
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setString(1, kh.getTenKhachHang());
+			stmt.setBoolean(2, kh.isGioiTinh());
+			stmt.setString(3, kh.getSoDienThoai());
+			stmt.setDate(4, kh.getNgaySinh() != null ? Date.valueOf(kh.getNgaySinh()) : null);
+			stmt.setBoolean(5, kh.isHoatDong());
+			stmt.setString(6, kh.getMaKhachHang());
+			return stmt.executeUpdate() > 0;
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi cập nhật khách hàng: " + e.getMessage());
+		}
+		return false;
+	}
 
-    /** Cập nhật */
-    public boolean updateKhachHang(KhachHang kh) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+	/** 🔹 Xóa khách hàng */
+	public boolean xoaKhachHang(String maKhachHang) {
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
 
-        String sql = "UPDATE KhachHang SET TenKhachHang=?, GioiTinh=?, SoDienThoai=?, NgaySinh=? "
-                   + "WHERE MaKhachHang=?";
+		String sql = "DELETE FROM KhachHang WHERE MaKhachHang = ?";
 
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, kh.getTenKhachHang());
-            stmt.setBoolean(2, kh.isGioiTinh());
-            stmt.setString(3, kh.getSoDienThoai());
-            stmt.setDate(4, kh.getNgaySinh() != null ? Date.valueOf(kh.getNgaySinh()) : null);
-            stmt.setString(5, kh.getMaKhachHang());
-            return stmt.executeUpdate() > 0;
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setString(1, maKhachHang);
+			return stmt.executeUpdate() > 0;
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi xóa khách hàng: " + e.getMessage());
+		}
+		return false;
+	}
 
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
+	/** 🔹 Tìm khách hàng theo mã / tên / SĐT (LIKE gần đúng) */
+	public ArrayList<KhachHang> timKhachHang(String tuKhoa) {
+		ArrayList<KhachHang> danhSach = new ArrayList<>();
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
 
-    /** Xóa */
-    public boolean deleteKhachHang(String maKhachHang) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+		String sql = """
+				SELECT * FROM KhachHang
+				WHERE MaKhachHang LIKE ?
+				   OR TenKhachHang LIKE ?
+				   OR SoDienThoai LIKE ?
+				""";
 
-        String sql = "DELETE FROM KhachHang WHERE MaKhachHang = ?";
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			String key = "%" + tuKhoa.trim() + "%";
+			stmt.setString(1, key);
+			stmt.setString(2, key);
+			stmt.setString(3, key);
 
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, maKhachHang);
-            return stmt.executeUpdate() > 0;
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					danhSach.add(taoKhachHangTuResultSet(rs));
+				}
+			}
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi tìm khách hàng: " + e.getMessage());
+		}
+		return danhSach;
+	}
 
-        } catch (SQLException e) {
-            e.printStackTrace(); 
-        }
-        return false;
-    }
+	/** 🔹 Tìm khách hàng đang hoạt động */
+	public ArrayList<KhachHang> timKhachHangHoatDong() {
+		ArrayList<KhachHang> danhSach = new ArrayList<>();
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
 
-    /**  Tìm theo mã */
-    public KhachHang getKhachHangTheoMa(String maKhachHang) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+		String sql = "SELECT * FROM KhachHang WHERE HoatDong = 1";
 
-        String sql = "SELECT MaKhachHang, TenKhachHang, GioiTinh, SoDienThoai, NgaySinh "
-                   + "FROM KhachHang WHERE MaKhachHang = ?";
+		try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+			while (rs.next()) {
+				danhSach.add(taoKhachHangTuResultSet(rs));
+			}
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi tìm khách hàng hoạt động: " + e.getMessage());
+		}
+		return danhSach;
+	}
 
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, maKhachHang);
+	/** 🔹 Tìm khách hàng chính xác theo mã (dùng cho các DAO khác) */
+	public KhachHang timKhachHangTheoMa(String maKhachHang) {
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
+		String sql = "SELECT * FROM KhachHang WHERE MaKhachHang = ?";
 
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    String ten = rs.getString("TenKhachHang");
-                    boolean gt = rs.getBoolean("GioiTinh");
-                    String sdt = rs.getString("SoDienThoai");
-                    Date d = rs.getDate("NgaySinh");
-                    LocalDate ns = (d != null) ? d.toLocalDate() : null;
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setString(1, maKhachHang);
 
-                    return new KhachHang(maKhachHang, ten, gt, sdt, ns);
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-    // tim theo ten
-    /** Tìm khách hàng theo tên (LIKE) */
-    public ArrayList<KhachHang> getKhachHangTheoTen(String keyword) {
-        ArrayList<KhachHang> ds = new ArrayList<>();
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					KhachHang cc = taoKhachHangTuResultSet(rs);
+					System.out.println(cc);
+					return cc;
+				}
+			}
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi tìm khách hàng theo mã: " + e.getMessage());
+		}
 
-        String sql = "SELECT MaKhachHang, TenKhachHang, GioiTinh, SoDienThoai, NgaySinh "
-                   + "FROM KhachHang WHERE TenKhachHang LIKE ?";
+		return null; // Không tìm thấy
+	}
 
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, "%" + keyword.trim() + "%");
+	/** 🔹 Tìm 1 khách hàng chính xác theo SĐT */
+	public KhachHang timKhachHangTheoSoDienThoai(String soDienThoai) {
+		if (soDienThoai == null || soDienThoai.trim().isEmpty()) {
+			return null;
+		}
 
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    String ma = rs.getString("MaKhachHang");
-                    String ten = rs.getString("TenKhachHang");
-                    boolean gt = rs.getBoolean("GioiTinh");
-                    String sdt = rs.getString("SoDienThoai");
-                    Date d = rs.getDate("NgaySinh");
-                    LocalDate ns = (d != null) ? d.toLocalDate() : null;
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
 
-                    ds.add(new KhachHang(ma, ten, gt, sdt, ns));
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+		String sql = "SELECT * FROM KhachHang WHERE SoDienThoai = ? AND HoatDong = 1";
 
-        return ds;
-    }
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setString(1, soDienThoai.trim());
 
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return taoKhachHangTuResultSet(rs);
+				}
+			}
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi tìm khách hàng theo SĐT: " + e.getMessage());
+		}
+
+		return null; // Không tìm thấy
+	}
+
+	/** 🔹 Hàm tiện ích: Tạo đối tượng KhachHang từ ResultSet */
+	private KhachHang taoKhachHangTuResultSet(ResultSet rs) throws SQLException {
+		String ma = rs.getString("MaKhachHang");
+		String ten = rs.getString("TenKhachHang");
+		boolean gt = rs.getBoolean("GioiTinh");
+		String sdt = rs.getString("SoDienThoai");
+		Date d = rs.getDate("NgaySinh");
+		LocalDate ns = (d != null) ? d.toLocalDate() : null;
+		boolean hoatDong = rs.getBoolean("HoatDong");
+
+		KhachHang kh = new KhachHang(ma, ten, gt, sdt, ns);
+		kh.setHoatDong(hoatDong);
+		return kh;
+	}
 
 }

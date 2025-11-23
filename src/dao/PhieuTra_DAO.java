@@ -1,201 +1,494 @@
 package dao;
 
 import connectDB.connectDB;
-import entity.ChiTietPhieuTra;
-import entity.KhachHang;
-import entity.NhanVien;
-import entity.PhieuTra;
-
+import entity.*;
 import java.sql.*;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JOptionPane;
+
 public class PhieuTra_DAO {
 
-    public PhieuTra_DAO() {}
+	private final NhanVien_DAO nhanVienDAO;
+	private final KhachHang_DAO khachHangDAO;
+	private final ChiTietPhieuTra_DAO chiTietPhieuTraDAO;
+	private final PhieuHuy_DAO phieuHuyDAO;
 
-    // ===== Lấy 1 phiếu trả theo mã (kèm chi tiết) =====
-    public PhieuTra timKiemPhieuTraBangMa(String maPhieuTra) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+	public PhieuTra_DAO() {
+		this.nhanVienDAO = new NhanVien_DAO();
+		this.khachHangDAO = new KhachHang_DAO();
+		this.chiTietPhieuTraDAO = new ChiTietPhieuTra_DAO();
+		this.phieuHuyDAO = new PhieuHuy_DAO();
+	}
 
-        String sql = "SELECT MaPhieuTra, NgayLap, MaNhanVien, MaKhachHang, TongTienHoan, DaDuyet " +
-                     "FROM PhieuTra WHERE MaPhieuTra = ?";
+	// ============================================================
+	// 🔍 Tìm phiếu theo mã
+	// ============================================================
+	public PhieuTra timKiemPhieuTraBangMa(String maPhieuTra) {
 
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, maPhieuTra);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    String maNV = rs.getString("MaNhanVien");
-                    String maKH = rs.getString("MaKhachHang");
-                    LocalDate ngayLap = rs.getDate("NgayLap").toLocalDate();
-                    boolean daDuyet = rs.getBoolean("DaDuyet");
-                    // double tongTienHoanDB = rs.getBigDecimal("TongTienHoan") == null ? 0
-                    //         : rs.getBigDecimal("TongTienHoan").doubleValue();
+		String sql = """
+						SELECT MaPhieuTra, NgayLap, MaNhanVien, MaKhachHang, DaDuyet
+						FROM PhieuTra WHERE MaPhieuTra = ?
+				""";
 
-                    // nạp NV, KH
-                    NhanVien_DAO nhanVienDAO = new NhanVien_DAO();
-                    KhachHang_DAO khachHangDAO = new KhachHang_DAO();
-                    NhanVien nv = nhanVienDAO.getNhanVienTheoMa(maNV);
-                    KhachHang kh = khachHangDAO.getKhachHangTheoMa(maKH);
+		Connection con = connectDB.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
 
-                    // nạp chi tiết
-                    ChiTietPhieuTra_DAO ctDAO = new ChiTietPhieuTra_DAO();
-                    List<ChiTietPhieuTra> chiTietList = ctDAO.timKiemChiTietBangMaPhieuTra(maPhieuTra);
+		try {
+			ps = con.prepareStatement(sql);
+			ps.setString(1, maPhieuTra);
+			rs = ps.executeQuery();
 
-                    // dựng entity (constructor sẽ tự cập nhật tổng tiền hoàn)
-                    return new PhieuTra(maPhieuTra, kh, nv, ngayLap, daDuyet, chiTietList);
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
+			if (rs.next()) {
 
-    // ===== Lấy tất cả phiếu trả (kèm chi tiết) =====
-    public List<PhieuTra> layTatCaPhieuTra() {
-        List<PhieuTra> ds = new ArrayList<>();
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+				LocalDate ngayLap = rs.getDate("NgayLap").toLocalDate();
+				String maNV = rs.getString("MaNhanVien");
+				String maKH = rs.getString("MaKhachHang");
+				boolean daDuyet = rs.getBoolean("DaDuyet");
 
-        String sql = "SELECT MaPhieuTra FROM PhieuTra ORDER BY NgayLap DESC, MaPhieuTra DESC";
+				NhanVien nv = nhanVienDAO.timNhanVienTheoMa(maNV);
+				KhachHang kh = khachHangDAO.timKhachHangTheoMa(maKH);
 
-        try (Statement st = con.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
-            while (rs.next()) {
-                String maPT = rs.getString("MaPhieuTra");
-                PhieuTra pt = timKiemPhieuTraBangMa(maPT); // tái dùng hàm trên để kèm chi tiết
-                if (pt != null) ds.add(pt);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return ds;
-    }
+				List<ChiTietPhieuTra> dsCT = chiTietPhieuTraDAO.timKiemChiTietBangMaPhieuTra(maPhieuTra);
 
-    // ===== Thêm phiếu trả + chi tiết (transaction) =====
-    public boolean themPhieuTra(PhieuTra pt) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+				return new PhieuTra(maPhieuTra, kh, nv, ngayLap, daDuyet, dsCT);
+			}
 
-        // Lấy tổng tiền hoàn từ entity (đã tự tính theo chi tiết hợp lệ)
-        double tongTienHoan = pt.getTongTienHoan();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ignored) {
+			}
+		}
 
-        String sqlPT = "INSERT INTO PhieuTra " +
-                "(MaPhieuTra, NgayLap, MaNhanVien, MaKhachHang, TongTienHoan, DaDuyet) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+		return null;
+	}
 
-        // Giữ nguyên cú pháp bảng chi tiết hiện tại của bạn
-        String sqlCT = "INSERT INTO ChiTietPhieuTra " +
-                "(MaPhieuTra, MaHoaDon, MaSanPham, LyDoTra, SoLuong, ThanhTienHoan, TrangThai) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+	// ============================================================
+	// 📜 Lấy tất cả phiếu trả
+	// ============================================================
+	public List<PhieuTra> layTatCaPhieuTra() {
 
-        try {
-            con.setAutoCommit(false);
+		List<String> danhSachMa = new ArrayList<>();
+		List<PhieuTra> ketQua = new ArrayList<>();
 
-            // 1) Insert header
-            try (PreparedStatement ps = con.prepareStatement(sqlPT)) {
-                ps.setString(1, pt.getMaPhieuTra());
-                ps.setDate(2, Date.valueOf(pt.getNgayLap()));
-                ps.setString(3, pt.getNhanVien().getMaNhanVien());
-                ps.setString(4, pt.getKhachHang().getMaKhachHang());
-                // DECIMAL(18,2) -> BigDecimal
-                if (Double.isNaN(tongTienHoan)) tongTienHoan = 0;
-                ps.setBigDecimal(5, java.math.BigDecimal.valueOf(Math.round(tongTienHoan * 100.0) / 100.0));
-                ps.setBoolean(6, pt.isDaDuyet());
-                ps.executeUpdate();
-            }
+		String sql = """
+				    SELECT MaPhieuTra
+				    FROM PhieuTra
+				    ORDER BY NgayLap DESC
+				""";
 
-            // 2) Insert details
-            try (PreparedStatement psCT = con.prepareStatement(sqlCT)) {
-                for (ChiTietPhieuTra ct : pt.getChiTietPhieuTraList()) {
-                    psCT.setString(1, pt.getMaPhieuTra());
-                    psCT.setString(2, ct.getChiTietHoaDon().getHoaDon().getMaHoaDon());
-                    psCT.setString(3, ct.getChiTietHoaDon().getSanPham().getMaSanPham());
-                    psCT.setString(4, ct.getLyDoChiTiet());
-                    psCT.setInt(5, ct.getSoLuong());
-                    psCT.setBigDecimal(6, java.math.BigDecimal.valueOf(
-                            Math.round(ct.getThanhTienHoan() * 100.0) / 100.0));
+		Connection con = connectDB.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
 
-                    // Nếu cột TrangThai của bảng chi tiết là BIT -> dùng setBoolean.
-                    // Nếu cột TrangThai là NVARCHAR -> đổi thành setString tùy schema bạn đang dùng.
-                    // Ở đây ưu tiên BIT:
-                    psCT.setBoolean(7, ct.isHoanTien()); // hoặc ct.isTrangThai() nếu bạn đặt tên vậy
-                    psCT.addBatch();
-                }
-                psCT.executeBatch();
-            }
+		try {
+			// ====== PHA 1: chỉ lấy danh sách mã phiếu ======
+			ps = con.prepareStatement(sql);
+			rs = ps.executeQuery();
 
-            con.commit();
-            return true;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            try { con.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
-            return false;
-        } finally {
-            try { con.setAutoCommit(true); } catch (SQLException ignored) {}
-        }
-    }
+			while (rs.next()) {
+				danhSachMa.add(rs.getString("MaPhieuTra"));
+			}
 
-    // ===== Cập nhật trạng thái đã duyệt (BIT) =====
-    public boolean capNhatTrangThai(String maPhieuTra, boolean daDuyetMoi) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
-        String sql = "UPDATE PhieuTra SET DaDuyet = ? WHERE MaPhieuTra = ?";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setBoolean(1, daDuyetMoi);
-            ps.setString(2, maPhieuTra);
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ignored) {
+			}
+			// ❗ KHÔNG đóng connection
+		}
 
-    // ===== Cập nhật tổng tiền theo chi tiết (sync lại nếu chi tiết đổi) =====
-    public boolean capNhatTongTienTheoChiTiet(String maPhieuTra) {
-        PhieuTra pt = timKiemPhieuTraBangMa(maPhieuTra);
-        if (pt == null) return false;
+		// ====== PHA 2: dùng timKiemPhieuTraBangMa() để tạo entity đầy đủ ======
+		for (String maPT : danhSachMa) {
+			PhieuTra pt = timKiemPhieuTraBangMa(maPT);
+			if (pt != null) {
+				ketQua.add(pt);
+			}
+		}
 
-        double sum = pt.getTongTienHoan();
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
+		return ketQua;
+	}
 
-        String sql = "UPDATE PhieuTra SET TongTienHoan = ? WHERE MaPhieuTra = ?";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setBigDecimal(1, java.math.BigDecimal.valueOf(Math.round(sum * 100.0) / 100.0));
-            ps.setString(2, maPhieuTra);
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
+	// ============================================================
+	// ➕ Thêm phiếu trả và chi tiết
+	// ============================================================
+	public boolean themPhieuTraVaChiTiet(PhieuTra pt, List<ChiTietPhieuTra> dsChiTiet) {
+		boolean ok = false;
 
-    // ===== Tạo mã PTxxxxxx (đúng CK_PT_Ma) =====
-    public String taoMaPhieuTra() {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
-        String prefix = "PT";
+		String sqlPT = """
+						INSERT INTO PhieuTra(maPhieuTra, maNhanVien, maKhachHang, ngayLap, tongTienHoan, daDuyet)
+						VALUES (?, ?, ?, ?, ?, ?)
+				""";
 
-        String sql = "SELECT MAX(MaPhieuTra) AS MaxMa FROM PhieuTra WHERE MaPhieuTra LIKE 'PT%%%%%%'";
-        try (PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+		String sqlCT = """
+				    	INSERT INTO ChiTietPhieuTra(maPhieuTra, maHoaDon, maLo, soLuong, thanhTienHoan, lyDoChiTiet, trangThai, MaDonViTinh)
+				    	VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+				""";
 
-            if (rs.next()) {
-                String lastID = rs.getString("MaxMa");
-                if (lastID != null) {
-                    int lastNum = Integer.parseInt(lastID.substring(prefix.length()));
-                    return String.format("%s%06d", prefix, lastNum + 1);
-                }
-            }
-            return prefix + "000001";
-        } catch (SQLException | NumberFormatException e) {
-            e.printStackTrace();
-            return prefix + "000001";
-        }
-    }
+		Connection con = connectDB.getConnection();
+		PreparedStatement psPT = null;
+		PreparedStatement psCT = null;
+
+		try {
+			con.setAutoCommit(false);
+
+			psPT = con.prepareStatement(sqlPT);
+			psCT = con.prepareStatement(sqlCT);
+
+			// Insert phiếu trả
+			psPT.setString(1, pt.getMaPhieuTra());
+			psPT.setString(2, pt.getNhanVien().getMaNhanVien());
+			psPT.setString(3, pt.getKhachHang().getMaKhachHang());
+			psPT.setDate(4, java.sql.Date.valueOf(pt.getNgayLap()));
+			psPT.setDouble(5, pt.getTongTienHoan());
+			psPT.setBoolean(6, pt.isDaDuyet());
+			psPT.executeUpdate();
+
+			// Insert chi tiết
+			for (ChiTietPhieuTra ct : dsChiTiet) {
+				psCT.setString(1, pt.getMaPhieuTra());
+				psCT.setString(2, ct.getChiTietHoaDon().getHoaDon().getMaHoaDon());
+				psCT.setString(3, ct.getChiTietHoaDon().getLoSanPham().getMaLo());
+				psCT.setInt(4, ct.getSoLuong());
+				psCT.setDouble(5, ct.getThanhTienHoan());
+				psCT.setString(6, ct.getLyDoChiTiet());
+				psCT.setInt(7, ct.getTrangThai());
+
+				// ✅ DVT đang chọn khi trả (set ở GUI)
+				if (ct.getDonViTinh() != null) {
+					psCT.setString(8, ct.getDonViTinh().getMaDonViTinh());
+				} else {
+					// fallback: vẫn dùng DVT trên hóa đơn nếu chưa set
+					psCT.setString(8, ct.getChiTietHoaDon().getDonViTinh().getMaDonViTinh());
+				}
+
+				psCT.addBatch();
+			}
+
+			psCT.executeBatch();
+			con.commit();
+			ok = true;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			try {
+				con.rollback();
+			} catch (Exception ignored) {
+			}
+		} finally {
+			try {
+				if (psPT != null)
+					psPT.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (psCT != null)
+					psCT.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				con.setAutoCommit(true);
+			} catch (Exception ignored) {
+			}
+		}
+
+		return ok;
+	}
+
+	// ============================================================
+	// 🔄 Cập nhật trạng thái (transaction)
+	// ============================================================
+	public String capNhatTrangThai_GiaoDich(String maPhieuTra, String maHoaDon, String maLo, NhanVien nv,
+			int trangThaiMoi) {
+
+		Connection con = connectDB.getConnection();
+		String maPhieuHuyDuocTao = null;
+
+		try {
+			con.setAutoCommit(false);
+
+			// =====================================================
+			// 1. Lấy trạng thái cũ + số lượng + lý do (ĐÃ FIX)
+			// =====================================================
+			String sqlGetOld = """
+					        SELECT TrangThai, SoLuong, LyDoChiTiet
+					        FROM ChiTietPhieuTra
+					        WHERE MaPhieuTra=? AND MaHoaDon=? AND MaLo=?
+					""";
+
+			int trangThaiCu = 0;
+			int soLuongTra = 0;
+			String lyDo = "";
+
+			try (PreparedStatement ps = con.prepareStatement(sqlGetOld)) {
+
+				ps.setString(1, maPhieuTra);
+				ps.setString(2, maHoaDon);
+				ps.setString(3, maLo);
+
+				try (ResultSet rs = ps.executeQuery()) {
+					if (rs.next()) {
+						trangThaiCu = rs.getInt("TrangThai");
+						soLuongTra = rs.getInt("SoLuong");
+						lyDo = rs.getString("LyDoChiTiet");
+					}
+				}
+			}
+
+			// =====================================================
+			// 2. Chặn đổi từ HỦY sang trạng thái khác
+			// =====================================================
+			if (trangThaiCu == 2 && trangThaiMoi != 2) {
+				con.rollback();
+				return "ERR";
+			}
+
+			// =====================================================
+			// 3. Tính delta thay đổi tồn kho
+			// =====================================================
+			int delta = 0;
+
+			if (trangThaiCu != trangThaiMoi) {
+
+				// 0 → 1: nhập kho
+				if (trangThaiCu == 0 && trangThaiMoi == 1)
+					delta = +soLuongTra;
+
+				// 1 → 0: trả lại trạng thái chờ → giảm tồn
+				if (trangThaiCu == 1 && trangThaiMoi == 0)
+					delta = -soLuongTra;
+
+				// 1 → 2: từ nhập kho sang hủy → giảm tồn
+				if (trangThaiCu == 1 && trangThaiMoi == 2)
+					delta = -soLuongTra;
+
+				// ❗ 2 → 1 KHÔNG HỢP LỆ (GUI cũng không cho)
+				// đoạn cũ của bạn "+soLuong" bị sai → loại bỏ
+			}
+
+			// =====================================================
+			// 4. Update tồn kho nếu có delta
+			// =====================================================
+			if (delta != 0) {
+				String sqlUpdTon = """
+						        UPDATE LoSanPham SET SoLuongTon = SoLuongTon + ?
+						        WHERE MaLo = ?
+						""";
+				try (PreparedStatement ps = con.prepareStatement(sqlUpdTon)) {
+					ps.setInt(1, delta);
+					ps.setString(2, maLo);
+					ps.executeUpdate();
+				}
+			}
+
+			// =====================================================
+			// 5. Update trạng thái chi tiết
+			// =====================================================
+			String sqlUpdCT = """
+					        UPDATE ChiTietPhieuTra
+					        SET TrangThai = ?
+					        WHERE MaPhieuTra=? AND MaHoaDon=? AND MaLo=?
+					""";
+
+			try (PreparedStatement ps = con.prepareStatement(sqlUpdCT)) {
+				ps.setInt(1, trangThaiMoi);
+				ps.setString(2, maPhieuTra);
+				ps.setString(3, maHoaDon);
+				ps.setString(4, maLo);
+				ps.executeUpdate();
+			}
+
+			// =====================================================
+			// 6. Nếu chuyển sang HỦY → tạo phiếu hủy tự động
+			// =====================================================
+			if (trangThaiMoi == 2 && trangThaiCu != 2) {
+
+				// ⭐ 6.1. Lấy thông tin lô để tính đơn giá nhập
+				LoSanPham_DAO loDAO = new LoSanPham_DAO();
+				LoSanPham lo = loDAO.timLoTheoMa(maLo);
+
+				double donGiaNhap = (lo != null ? lo.getSanPham().getGiaNhap() : 0);
+
+				// ⭐ 6.2. Tạo chi tiết phiếu hủy
+				ChiTietPhieuHuy ctHuy = new ChiTietPhieuHuy();
+				ctHuy.setLoSanPham(lo);
+				ctHuy.setSoLuongHuy(soLuongTra);
+				ctHuy.setLyDoChiTiet(lyDo);
+				ctHuy.setDonGiaNhap(donGiaNhap);
+				ctHuy.capNhatThanhTien();
+				ctHuy.setTrangThai(2); // 2 = Hủy
+
+				List<ChiTietPhieuHuy> ds = new ArrayList<>();
+				ds.add(ctHuy);
+
+				// ⭐ 6.3. Tạo phiếu hủy
+				String maPH = phieuHuyDAO.taoMaPhieuHuy();
+				maPhieuHuyDuocTao = maPH; // gắn vào để GUI báo
+
+				PhieuHuy ph = new PhieuHuy(maPH, LocalDate.now(), nv, // ⭐ nhân viên đang thao tác
+						false // trạng thái mặc định = Chưa duyệt
+				);
+				ph.setChiTietPhieuHuyList(ds);
+				ph.capNhatTongTienTheoChiTiet();
+
+				// ⭐ 6.4. Lưu xuống DB (vẫn đang trong transaction của PhieuTra)
+				boolean okPH = phieuHuyDAO.themPhieuHuy(ph);
+
+				if (!okPH) {
+					con.rollback();
+					return "ERR";
+				}
+			}
+
+			// =====================================================
+			// 7. Kiểm tra phiếu đã xử lý hết chưa
+			// =====================================================
+			String sqlCheck = """
+					        SELECT COUNT(*) FROM ChiTietPhieuTra
+					        WHERE MaPhieuTra=? AND TrangThai=0
+					""";
+
+			boolean daXuLyHet = true;
+
+			try (PreparedStatement ps = con.prepareStatement(sqlCheck)) {
+				ps.setString(1, maPhieuTra);
+				try (ResultSet rs = ps.executeQuery()) {
+					if (rs.next() && rs.getInt(1) > 0)
+						daXuLyHet = false;
+				}
+			}
+
+			if (daXuLyHet) {
+				String sqlUpdPT = """
+						        UPDATE PhieuTra SET DaDuyet=1 WHERE MaPhieuTra=?
+						""";
+				try (PreparedStatement ps = con.prepareStatement(sqlUpdPT)) {
+					ps.setString(1, maPhieuTra);
+					ps.executeUpdate();
+				}
+			}
+
+			con.commit();
+			return (maPhieuHuyDuocTao != null) ? "OK|" + maPhieuHuyDuocTao : "OK";
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			try {
+				con.rollback();
+			} catch (Exception ignored) {
+			}
+			return "ERR";
+		} finally {
+			try {
+				con.setAutoCommit(true);
+			} catch (Exception ignored) {
+			}
+		}
+	}
+
+	// ============================================================
+	// 🧾 Sinh mã tự động
+	// ============================================================
+	public String taoMaPhieuTra() {
+
+		String prefix = "PT-";
+		String today = LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+		String likePattern = prefix + today + "-%";
+		String sql = "SELECT MAX(MaPhieuTra) AS MaxMa FROM PhieuTra WHERE MaPhieuTra LIKE ?";
+
+		Connection con = connectDB.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			ps = con.prepareStatement(sql);
+			ps.setString(1, likePattern);
+			rs = ps.executeQuery();
+
+			if (rs.next()) {
+
+				String lastID = rs.getString("MaxMa");
+				if (lastID != null) {
+
+					// Lấy phần số phía sau dấu "-"
+					String numberPart = lastID.substring(lastID.lastIndexOf('-') + 1);
+
+					// ⭐ BUGFIX: Trim bỏ khoảng trắng
+					numberPart = numberPart.trim();
+
+					// ⭐ BUGFIX: Nếu chuỗi chứa rác hoặc không phải số → reset về 0
+					int lastNum = 0;
+					try {
+						lastNum = Integer.parseInt(numberPart);
+					} catch (NumberFormatException e) {
+						System.err.println("⚠️ Mã phiếu trả trong DB bị lỗi format: " + numberPart + " → reset = 0");
+					}
+
+					return String.format("%s%s-%04d", prefix, today, lastNum + 1);
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ignored) {
+			}
+		}
+
+		return String.format("%s%s-%04d", prefix, today, 1);
+	}
+
+	public boolean daTraLoTrongHoaDon(String maHD, String maLo) {
+		String sql = """
+				    SELECT COUNT(*)
+				    FROM ChiTietPhieuTra ct
+				    JOIN PhieuTra pt ON ct.MaPhieuTra = pt.MaPhieuTra
+				    WHERE pt.MaHoaDon = ? AND ct.MaLo = ?
+				""";
+
+		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+			ps.setString(1, maHD);
+			ps.setString(2, maLo);
+
+			ResultSet rs = ps.executeQuery();
+			if (rs.next())
+				return rs.getInt(1) > 0;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return false;
+	}
+
 }

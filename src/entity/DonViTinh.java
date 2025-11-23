@@ -2,83 +2,81 @@ package entity;
 
 import java.util.Objects;
 
+/**
+ * Entity: DonViTinh
+ * 
+ * Mô tả:
+ *  - Biểu diễn đơn vị tính cơ bản cho sản phẩm (viên, vỉ, hộp, chai...).
+ *  - Mỗi đơn vị tính có thể được dùng trong nhiều quy cách đóng gói.
+ */
 public class DonViTinh {
 
+    private String maDonViTinh;   // DVT-xxx
+    private String tenDonViTinh;  // Ví dụ: "Viên", "Vỉ", "Hộp"
+
+    // ===== CONSTRUCTORS =====
+    public DonViTinh() {}
+
     public DonViTinh(String maDonViTinh) {
-		this.maDonViTinh = maDonViTinh;
-	}
-
-	private String maDonViTinh;
-    private String tenDonViTinh;
-    private String moTa;
-
-    public DonViTinh() {
+        setMaDonViTinh(maDonViTinh);
     }
 
-    public DonViTinh(String maDonViTinh, String tenDonViTinh, String moTa) {
+    public DonViTinh(String maDonViTinh, String tenDonViTinh) {
         setMaDonViTinh(maDonViTinh);
         setTenDonViTinh(tenDonViTinh);
-        setMoTa(moTa);
     }
 
-    public DonViTinh(DonViTinh dvt) {
-        this.maDonViTinh = dvt.maDonViTinh;
-        this.tenDonViTinh = dvt.tenDonViTinh;
-        this.moTa = dvt.moTa;
+    public DonViTinh(DonViTinh other) {
+        if (other == null)
+            throw new IllegalArgumentException("Đối tượng sao chép không được null.");
+        this.maDonViTinh = other.maDonViTinh;
+        this.tenDonViTinh = other.tenDonViTinh;
     }
 
+    // ===== GETTERS / SETTERS =====
     public String getMaDonViTinh() {
         return maDonViTinh;
     }
 
     public void setMaDonViTinh(String maDonViTinh) {
-        if (maDonViTinh != null && maDonViTinh.matches("^DVT-\\d{3}$")) {
-            this.maDonViTinh = maDonViTinh;
-        } else {
-            throw new IllegalArgumentException("Mã đơn vị tính không hợp lệ. Định dạng yêu cầu: DVT-xxx");
-        }
-    }
+        if (maDonViTinh == null)
+            throw new IllegalArgumentException("Mã đơn vị tính không được để trống");
 
+        maDonViTinh = maDonViTinh.trim(); // loại bỏ khoảng trắng đầu/cuối
+
+        if (!maDonViTinh.matches("^DVT-\\d{3}$")) {
+            throw new IllegalArgumentException("Mã đơn vị tính không hợp lệ. Định dạng: DVT-xxx");
+        }
+
+        this.maDonViTinh = maDonViTinh;
+    }
     public String getTenDonViTinh() {
         return tenDonViTinh;
     }
 
     public void setTenDonViTinh(String tenDonViTinh) {
-        if (tenDonViTinh == null || tenDonViTinh.trim().isEmpty()) {
+        if (tenDonViTinh == null)
+            throw new IllegalArgumentException("Tên đơn vị tính không được null.");
+        tenDonViTinh = tenDonViTinh.trim();
+        if (tenDonViTinh.isEmpty())
             throw new IllegalArgumentException("Tên đơn vị tính không được rỗng.");
-        }
-        if (tenDonViTinh.length() > 50) {
+        if (tenDonViTinh.length() > 50)
             throw new IllegalArgumentException("Tên đơn vị tính không được vượt quá 50 ký tự.");
-        }
         this.tenDonViTinh = tenDonViTinh;
     }
 
-    public String getMoTa() {
-        return moTa;
-    }
-
-    public void setMoTa(String moTa) {
-        if (moTa != null && moTa.length() > 200) {
-            throw new IllegalArgumentException("Mô tả quá dài, không được vượt quá 200 ký tự.");
-        }
-        this.moTa = moTa;
-    }
-
+    // ===== OVERRIDES =====
     @Override
     public String toString() {
-        return "DonViTinh{" +
-                "maDonViTinh='" + maDonViTinh + '\'' +
-                ", tenDonViTinh='" + tenDonViTinh + '\'' +
-                ", moTa='" + moTa + '\'' +
-                '}';
+        return String.format("DonViTinh[%s - %s]", maDonViTinh, tenDonViTinh);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        DonViTinh donViTinh = (DonViTinh) o;
-        return Objects.equals(maDonViTinh, donViTinh.maDonViTinh);
+        if (!(o instanceof DonViTinh)) return false;
+        DonViTinh that = (DonViTinh) o;
+        return Objects.equals(maDonViTinh, that.maDonViTinh);
     }
 
     @Override

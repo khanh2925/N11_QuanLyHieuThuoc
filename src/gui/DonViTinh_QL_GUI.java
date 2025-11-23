@@ -1,277 +1,378 @@
 package gui;
 
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.List;
-import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
 
-import customcomponent.ImagePanel;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
-import entity.DonViTinh;
 import customcomponent.PillButton;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
+import dao.DonViTinh_DAO;
+import entity.DonViTinh;
 
-public class DonViTinh_QL_GUI extends JPanel {
+@SuppressWarnings("serial")
+public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
 
-    private JPanel pnCenter;
-    private JPanel pnHeader;
+    // Components UI
+    private JPanel pnHeader, pnCenter;
+    private JSplitPane splitPane;
+
+    // Input fields
+    private JTextField txtMaDVT, txtTenDVT;
+    
+    // Search & Table
     private JTextField txtTimKiem;
-    private JTable table;
+    private JTable tblDonViTinh;
+    private DefaultTableModel modelDonViTinh;
 
-    private DefaultTableModel model;
-    private TableRowSorter<DefaultTableModel> sorter;
+    // Buttons
+    private PillButton btnThem, btnSua, btnXoa, btnLamMoi, btnTimKiem;
 
-    // Biến thành viên để quản lý danh sách
+    // DAO & Font
+    private final DonViTinh_DAO dvtDAO = new DonViTinh_DAO();
     private List<DonViTinh> dsDonViTinh;
-    private PillButton btnThem;
-    private PillButton btnCapNhat;
-    private PillButton btnXoa;
+    
+    private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 16);
+    private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 16);
+    private final Color COLOR_PRIMARY = new Color(33, 150, 243);
 
     public DonViTinh_QL_GUI() {
         setPreferredSize(new Dimension(1537, 850));
         initialize();
-        addEvents(); // Thêm phương thức gọi các sự kiện
     }
 
     private void initialize() {
         setLayout(new BorderLayout());
+        setBackground(Color.WHITE);
 
-        // ===== HEADER =====
-        pnHeader = new JPanel();
-        pnHeader.setPreferredSize(new Dimension(1073, 88));
-        pnHeader.setBackground(new Color(0xE3F2F5));
-        pnHeader.setLayout(null);
+        // 1. HEADER
+        taoPhanHeader();
         add(pnHeader, BorderLayout.NORTH);
 
-        txtTimKiem = new JTextField("");
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên đơn vị tính...");
-        txtTimKiem.setForeground(Color.GRAY);
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        txtTimKiem.setBounds(10, 17, 420, 60);
-        txtTimKiem.setBorder(new RoundedBorder(20));
-        pnHeader.add(txtTimKiem);
-        
-        btnThem = new PillButton("Thêm");
-        btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnThem.setBounds(520, 27, 120, 40);
-        pnHeader.add(btnThem);
-        
-        btnCapNhat = new PillButton("Cập nhật");
-        btnCapNhat.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnCapNhat.setBounds(920, 27, 120, 40);
-        pnHeader.add(btnCapNhat);
-        
-        btnXoa = new PillButton("Xoá");
-        btnXoa.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnXoa.setBounds(720, 27, 120, 40);
-        pnHeader.add(btnXoa);
-
-        // ===== CENTER =====
-        pnCenter = new JPanel(new BorderLayout());
-        pnCenter.setBackground(Color.WHITE);
-        pnCenter.setBorder(new LineBorder(new Color(200, 200, 200)));
+        // 2. CENTER (SplitPane)
+        taoPhanCenter();
         add(pnCenter, BorderLayout.CENTER);
 
-        // Khởi tạo danh sách và nạp dữ liệu mẫu
-        dsDonViTinh = new ArrayList<>();
-        dsDonViTinh.add(new DonViTinh("DVT-001", "Hộp", "Đựng sản phẩm theo đơn vị hộp"));
-        dsDonViTinh.add(new DonViTinh("DVT-002", "Vỉ", "Đựng thuốc theo từng vỉ"));
-        dsDonViTinh.add(new DonViTinh("DVT-003", "Chai", "Sản phẩm dạng lỏng, đựng trong chai"));
-        dsDonViTinh.add(new DonViTinh("DVT-004", "Tuýp", "Sản phẩm dạng kem, gel"));
-        dsDonViTinh.add(new DonViTinh("DVT-005", "Viên", "Sản phẩm dạng viên nén, viên nang"));
+        // 3. LOAD DATA
+        loadDataLenBang();
+    }
 
-        String[] columnNames = {"Mã Đơn Vị Tính", "Tên Đơn Vị Tính", "Mô Tả"};
-        model = new DefaultTableModel(columnNames, 0) {
-        	@Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Không cho phép chỉnh sửa trực tiếp trên table
-            }
+    // ==========================================================================
+    //                              PHẦN HEADER
+    // ==========================================================================
+    private void taoPhanHeader() {
+        pnHeader = new JPanel(null);
+        pnHeader.setPreferredSize(new Dimension(1073, 94));
+        pnHeader.setBackground(new Color(0xE3F2F5));
+
+        // Ô tìm kiếm
+        txtTimKiem = new JTextField();
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên đơn vị tính...");
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
+        txtTimKiem.setBounds(25, 17, 500, 60);
+        txtTimKiem.setBorder(new RoundedBorder(20));
+        txtTimKiem.setBackground(Color.WHITE);
+        txtTimKiem.setForeground(Color.GRAY);
+        pnHeader.add(txtTimKiem);
+
+        // Nút Tìm kiếm
+        btnTimKiem = new PillButton("Tìm kiếm");
+        btnTimKiem.setBounds(540, 22, 130, 50);
+        btnTimKiem.setFont(FONT_BOLD);
+        btnTimKiem.addActionListener(e -> xuLyTimKiem());
+        pnHeader.add(btnTimKiem);
+    }
+
+    // ==========================================================================
+    //                              PHẦN CENTER (SPLIT PANE)
+    // ==========================================================================
+    private void taoPhanCenter() {
+        pnCenter = new JPanel(new BorderLayout());
+        pnCenter.setBackground(Color.WHITE);
+        pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        // --- PHẦN TRÊN (TOP): CONTAINER CHỨA FORM VÀ NÚT ---
+        JPanel pnTopWrapper = new JPanel(new BorderLayout());
+        pnTopWrapper.setBackground(Color.WHITE);
+        pnTopWrapper.setBorder(createTitledBorder("Thông tin đơn vị tính"));
+
+        // 1. Panel Form (Nằm giữa - CENTER)
+        JPanel pnForm = new JPanel(null);
+        pnForm.setBackground(Color.WHITE);
+        taoFormNhapLieu(pnForm);
+        pnTopWrapper.add(pnForm, BorderLayout.CENTER);
+
+        // 2. Panel Nút (Nằm phải - EAST)
+        JPanel pnButton = new JPanel();
+        pnButton.setBackground(Color.WHITE);
+        taoPanelNutBam(pnButton);
+        pnTopWrapper.add(pnButton, BorderLayout.EAST);
+
+        // --- PHẦN DƯỚI (BOTTOM): DANH SÁCH ---
+        JPanel pnTable = new JPanel(new BorderLayout());
+        pnTable.setBackground(Color.WHITE);
+        taoBangDanhSach(pnTable);
+
+        // --- SPLIT PANE ---
+        splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pnTopWrapper, pnTable);
+        splitPane.setDividerLocation(250); // Form này ít trường nên thấp hơn (250px)
+        splitPane.setResizeWeight(0.0); // Cố định form
+        
+        pnCenter.add(splitPane, BorderLayout.CENTER);
+    }
+
+    private void taoFormNhapLieu(JPanel p) {
+        // Cấu hình kích thước (Căn giữa vì ít trường)
+        int xStart = 100;       
+        int yStart = 50;
+        int hText = 40;         
+        int wTxt = 400;         
+        int gap = 30;           
+
+        // Hàng 1: Mã Đơn Vị
+        p.add(createLabel("Mã ĐVT:", xStart, yStart));
+        txtMaDVT = createTextField(xStart + 100, yStart, wTxt);
+        // txtMaDVT.setEditable(false); // Nếu mã tự sinh thì mở dòng này
+        p.add(txtMaDVT);
+
+        // Hàng 2: Tên Đơn Vị Tính
+        yStart += hText + gap;
+        p.add(createLabel("Tên ĐVT:", xStart, yStart));
+        txtTenDVT = createTextField(xStart + 100, yStart, wTxt);
+        p.add(txtTenDVT);
+        
+        // Có thể thêm ghi chú hoặc thông tin khác nếu Entity mở rộng sau này
+    }
+
+    // --- PANEL RIÊNG CHO NÚT BẤM (BÊN PHẢI) ---
+    private void taoPanelNutBam(JPanel p) {
+        p.setPreferredSize(new Dimension(200, 0)); 
+        p.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, Color.LIGHT_GRAY)); 
+        
+        p.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.insets = new Insets(8, 0, 8, 0); 
+        gbc.fill = GridBagConstraints.HORIZONTAL; 
+
+        int btnH = 45;
+        int btnW = 140;
+
+        btnThem = new PillButton("Thêm");
+        btnThem.setFont(FONT_BOLD);
+        btnThem.setPreferredSize(new Dimension(btnW, btnH));
+        btnThem.addActionListener(this);
+        gbc.gridy = 0; p.add(btnThem, gbc);
+
+        btnSua = new PillButton("Cập nhật");
+        btnSua.setFont(FONT_BOLD);
+        btnSua.setPreferredSize(new Dimension(btnW, btnH));
+        btnSua.addActionListener(this);
+        gbc.gridy = 1; p.add(btnSua, gbc);
+
+        btnXoa = new PillButton("Xóa");
+        btnXoa.setFont(FONT_BOLD);
+        btnXoa.setPreferredSize(new Dimension(btnW, btnH));
+        btnXoa.addActionListener(this);
+        gbc.gridy = 2; p.add(btnXoa, gbc);
+
+        btnLamMoi = new PillButton("Làm mới");
+        btnLamMoi.setFont(FONT_BOLD);
+        btnLamMoi.setPreferredSize(new Dimension(btnW, btnH));
+        btnLamMoi.addActionListener(this);
+        gbc.gridy = 3; p.add(btnLamMoi, gbc);
+    }
+
+    private void taoBangDanhSach(JPanel p) {
+        String[] cols = {"Mã Đơn Vị Tính", "Tên Đơn Vị Tính"};
+        modelDonViTinh = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
         };
+        tblDonViTinh = setupTable(modelDonViTinh);
 
-        for (DonViTinh dvt : dsDonViTinh) {
-            addDonViTinhToTable(dvt);
-        }
+        // Căn lề
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(JLabel.CENTER);
+        DefaultTableCellRenderer left = new DefaultTableCellRenderer();
+        left.setHorizontalAlignment(JLabel.LEFT);
 
-        table = new JTable(model);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        table.setRowHeight(34);
-        table.setGridColor(new Color(230, 230, 230));
-        table.setShowHorizontalLines(true);
-        table.setShowVerticalLines(false);
-        table.setSelectionBackground(new Color(204, 229, 255));
-        table.setSelectionForeground(Color.BLACK);
-        table.setIntercellSpacing(new Dimension(8, 5));
-        table.setBackground(Color.WHITE);
-        table.setFillsViewportHeight(true);
-
-        JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        header.setBackground(new Color(33, 150, 243));
-        header.setForeground(Color.WHITE);
-        header.setPreferredSize(new Dimension(100, 40));
-        header.setReorderingAllowed(false);
+        // Apply render
+        tblDonViTinh.getColumnModel().getColumn(0).setCellRenderer(center);
+        tblDonViTinh.getColumnModel().getColumn(1).setCellRenderer(left);
         
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
-        leftRenderer.setHorizontalAlignment(SwingConstants.LEFT);
+        // Set width
+        tblDonViTinh.getColumnModel().getColumn(0).setPreferredWidth(200);
         
-        table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
-        table.getColumnModel().getColumn(1).setCellRenderer(centerRenderer);
-        table.getColumnModel().getColumn(2).setCellRenderer(leftRenderer);
-
-        table.getColumnModel().getColumn(0).setPreferredWidth(150);
-        table.getColumnModel().getColumn(1).setPreferredWidth(250);
-        table.getColumnModel().getColumn(2).setPreferredWidth(400);
-
-        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+        // Event click
+        tblDonViTinh.addMouseListener(new MouseAdapter() {
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value,
-                    boolean isSelected, boolean hasFocus, int row, int column) {
-                setBorder(new EmptyBorder(0, 8, 0, 8));
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                if (!isSelected) {
-                    c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(245, 248, 252));
+            public void mouseClicked(MouseEvent e) {
+                doToForm(tblDonViTinh.getSelectedRow());
+            }
+        });
+
+        JScrollPane scr = new JScrollPane(tblDonViTinh);
+        scr.setBorder(createTitledBorder("Danh sách đơn vị tính"));
+        p.add(scr, BorderLayout.CENTER);
+    }
+
+    // ==========================================================================
+    //                              XỬ LÝ LOGIC
+    // ==========================================================================
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object o = e.getSource();
+
+        if (o.equals(btnThem)) {
+            if (validData()) {
+                DonViTinh dvt = getFromForm();
+                if (dvtDAO.themDonViTinh(dvt)) {
+                    JOptionPane.showMessageDialog(this, "Thêm thành công!");
+                    loadDataLenBang();
+                    lamMoiForm();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Thêm thất bại (Trùng mã hoặc lỗi DB)!");
                 }
-                return c;
             }
-        });
-        
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        pnCenter.add(scrollPane, BorderLayout.CENTER);
-        
-        sorter = new TableRowSorter<>(model);
-        table.setRowSorter(sorter);
+        } 
+        else if (o.equals(btnSua)) {
+            if (tblDonViTinh.getSelectedRow() == -1) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng cần sửa!");
+                return;
+            }
+            if (validData()) {
+                DonViTinh dvt = getFromForm();
+                if (dvtDAO.capNhatDonViTinh(dvt)) {
+                    JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+                    loadDataLenBang();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Cập nhật thất bại!");
+                }
+            }
+        }
+        else if (o.equals(btnXoa)) {
+            int row = tblDonViTinh.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng cần xóa!");
+                return;
+            }
+            String ma = tblDonViTinh.getValueAt(row, 0).toString();
+            if (JOptionPane.showConfirmDialog(this, "Xóa đơn vị tính: " + ma + "?", "Xác nhận", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                if (dvtDAO.xoaDonViTinh(ma)) {
+                    JOptionPane.showMessageDialog(this, "Đã xóa!");
+                    loadDataLenBang();
+                    lamMoiForm();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Xóa thất bại (Có thể đang được sử dụng)!");
+                }
+            }
+        }
+        else if (o.equals(btnLamMoi)) {
+            lamMoiForm();
+            loadDataLenBang();
+        }
     }
 
-    /**
-     * Phương thức đăng ký các sự kiện cho component
-     */
-    private void addEvents() {
-        txtTimKiem.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyReleased(KeyEvent e) {
-                applySearchFilter();
-            }
-        });
-        
-        btnThem.addActionListener(e -> handleThem());
-        btnXoa.addActionListener(e -> handleXoa());
-        btnCapNhat.addActionListener(e -> handleCapNhat());
+    private void doToForm(int row) {
+        if (row < 0) return;
+        txtMaDVT.setText(tblDonViTinh.getValueAt(row, 0).toString());
+        txtTenDVT.setText(tblDonViTinh.getValueAt(row, 1).toString());
+        txtMaDVT.setEditable(false); // Khi click vào bảng (sửa) thì khóa mã lại
     }
-    
-    /**
-     * Xử lý sự kiện nhấn nút Thêm.
-     * Mở dialog thêm, nhận kết quả và cập nhật vào danh sách và bảng.
-     */
-    private void handleThem() {
-        Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
-        ThemDonViTinh_Dialog dialog = new ThemDonViTinh_Dialog(parentFrame);
-        dialog.setVisible(true);
-        
-        DonViTinh dvtMoi = dialog.getDonViTinhMoi();
-        if (dvtMoi != null) {
-            dsDonViTinh.add(dvtMoi);
-            addDonViTinhToTable(dvtMoi);
-            JOptionPane.showMessageDialog(this, "Thêm đơn vị tính thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+
+    private void loadDataLenBang() {
+        modelDonViTinh.setRowCount(0);
+        dsDonViTinh = dvtDAO.layTatCaDonViTinh();
+        for (DonViTinh dvt : dsDonViTinh) {
+            modelDonViTinh.addRow(new Object[]{dvt.getMaDonViTinh(), dvt.getTenDonViTinh()});
         }
     }
-    
-    /**
-     * Xử lý sự kiện nhấn nút Xóa.
-     * Yêu cầu xác nhận, sau đó xóa khỏi danh sách và bảng.
-     */
-    private void handleXoa() {
-        int selectedViewRow = table.getSelectedRow();
-        if (selectedViewRow == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn một đơn vị tính để xóa.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+
+    private DonViTinh getFromForm() {
+        String ma = txtMaDVT.getText().trim();
+        String ten = txtTenDVT.getText().trim();
+        return new DonViTinh(ma, ten);
+    }
+
+    private void lamMoiForm() {
+        txtMaDVT.setText("");
+        txtTenDVT.setText("");
+        txtMaDVT.setEditable(true); // Mở khóa mã để nhập mới
+        txtMaDVT.requestFocus();
+        tblDonViTinh.clearSelection();
+    }
+
+    private void xuLyTimKiem() {
+        String kw = txtTimKiem.getText().trim();
+        if(kw.isEmpty() || kw.equals("Tìm kiếm theo tên đơn vị tính...")) {
+            loadDataLenBang();
             return;
         }
-        
-        int choice = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa đơn vị tính này?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
-        if (choice == JOptionPane.YES_OPTION) {
-            int modelRow = table.convertRowIndexToModel(selectedViewRow);
-            String maDVT = (String) model.getValueAt(modelRow, 0);
-            
-            // Xóa khỏi danh sách
-            dsDonViTinh.removeIf(dvt -> dvt.getMaDonViTinh().equals(maDVT));
-            
-            // Xóa khỏi bảng
-            model.removeRow(modelRow);
-            
-            JOptionPane.showMessageDialog(this, "Xóa đơn vị tính thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
-    
-    /**
-     * Xử lý sự kiện nhấn nút Cập nhật.
-     * Mở dialog cập nhật, nhận kết quả và cập nhật lại danh sách và bảng.
-     */
-    private void handleCapNhat() {
-        int selectedViewRow = table.getSelectedRow();
-        if (selectedViewRow == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn một đơn vị tính để cập nhật.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        
-        int modelRow = table.convertRowIndexToModel(selectedViewRow);
-        String maDVT = (String) model.getValueAt(modelRow, 0);
-        
-        // Tìm DonViTinh trong danh sách để cập nhật
-        DonViTinh dvtCanCapNhat = dsDonViTinh.stream()
-            .filter(dvt -> dvt.getMaDonViTinh().equals(maDVT))
-            .findFirst()
-            .orElse(null);
-        
-        if (dvtCanCapNhat != null) {
-            Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
-            CapNhatDonViTinh_Dialog dialog = new CapNhatDonViTinh_Dialog(parentFrame, dvtCanCapNhat);
-            dialog.setVisible(true);
-            
-            if (dialog.isUpdateSuccess()) {
-                updateDonViTinhInTable(dvtCanCapNhat, modelRow);
-                JOptionPane.showMessageDialog(this, "Cập nhật đơn vị tính thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        // Nếu DAO có hàm tìm kiếm thì gọi, không thì filter list
+        // Ví dụ filter đơn giản:
+        modelDonViTinh.setRowCount(0);
+        for (DonViTinh dvt : dsDonViTinh) {
+            if (dvt.getTenDonViTinh().toLowerCase().contains(kw.toLowerCase())) {
+                modelDonViTinh.addRow(new Object[]{dvt.getMaDonViTinh(), dvt.getTenDonViTinh()});
             }
         }
     }
 
-    private void addDonViTinhToTable(DonViTinh dvt) {
-        model.addRow(new Object[]{
-            dvt.getMaDonViTinh(),
-            dvt.getTenDonViTinh(),
-            dvt.getMoTa()
-        });
-    }
-    
-    private void updateDonViTinhInTable(DonViTinh dvt, int row) {
-        model.setValueAt(dvt.getTenDonViTinh(), row, 1);
-        model.setValueAt(dvt.getMoTa(), row, 2);
-    }
-    
-    private void applySearchFilter() {
-        String text = txtTimKiem.getText();
-        if (text.trim().isEmpty()) {
-            sorter.setRowFilter(null);
-        } else {
-            // Lọc không phân biệt chữ hoa/thường theo Tên Đơn Vị Tính (cột 1)
-            sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 1));
+    private boolean validData() {
+        if (txtMaDVT.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Mã đơn vị tính không được rỗng");
+            txtMaDVT.requestFocus(); return false;
         }
+        if (txtTenDVT.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Tên đơn vị tính không được rỗng");
+            txtTenDVT.requestFocus(); return false;
+        }
+        return true;
+    }
+
+    // --- UI Helpers ---
+    private JLabel createLabel(String text, int x, int y) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(FONT_TEXT);
+        lbl.setBounds(x, y, 100, 35);
+        return lbl;
+    }
+
+    private JTextField createTextField(int x, int y, int w) {
+        JTextField txt = new JTextField();
+        txt.setFont(FONT_TEXT);
+        txt.setBounds(x, y, w, 35);
+        return txt;
+    }
+
+    private JTable setupTable(DefaultTableModel model) {
+        JTable table = new JTable(model);
+        table.setFont(FONT_TEXT);
+        table.setRowHeight(35);
+        table.setSelectionBackground(new Color(0xC8E6C9));
+        table.setSelectionForeground(Color.BLACK);
+        table.getTableHeader().setFont(FONT_BOLD);
+        table.getTableHeader().setBackground(COLOR_PRIMARY);
+        table.getTableHeader().setForeground(Color.WHITE);
+        return table;
+    }
+
+    private TitledBorder createTitledBorder(String title) {
+        return BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
+            TitledBorder.LEFT, TitledBorder.TOP, FONT_BOLD, Color.DARK_GRAY
+        );
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Quản lý Đơn Vị Tính");
+            JFrame frame = new JFrame("Quản Lý Đơn Vị Tính");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1280, 800);
+            frame.setSize(1300, 850);
             frame.setLocationRelativeTo(null);
             frame.setContentPane(new DonViTinh_QL_GUI());
             frame.setVisible(true);

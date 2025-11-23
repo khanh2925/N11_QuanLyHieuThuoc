@@ -9,30 +9,41 @@ public class ChiTietPhieuHuy {
     private int soLuongHuy;
     private String lyDoChiTiet;
     private double donGiaNhap;   
-    private double thanhTien;    // dẫn xuất, auto tính
+    private double thanhTien;    
+    private int trangThai;  // 🟢 1 = Chờ duyệt, 2 = Đã hủy, 3 = Từ chối hủy
 
+    // ===== CONSTANTS =====
+    public static final int CHO_DUYET = 1;
+    public static final int TU_CHOI = 3;
+    public static final int HUY_HANG = 2;
+
+    // ===== CONSTRUCTORS =====
     public ChiTietPhieuHuy() {}
 
     public ChiTietPhieuHuy(PhieuHuy phieuHuy, LoSanPham loSanPham,
-                           int soLuongHuy, double donGiaNhap, String lyDoChiTiet) {
+                           int soLuongHuy, double donGiaNhap,
+                           String lyDoChiTiet, int trangThai) {
         setPhieuHuy(phieuHuy);
         setLoSanPham(loSanPham);
         setSoLuongHuy(soLuongHuy);
         setDonGiaNhap(donGiaNhap);
         setLyDoChiTiet(lyDoChiTiet);
+        setTrangThai(trangThai);
         capNhatThanhTien();
     }
 
+    // ===== GETTERS / SETTERS =====
     public PhieuHuy getPhieuHuy() { return phieuHuy; }
     public void setPhieuHuy(PhieuHuy phieuHuy) {
-        if (phieuHuy == null) throw new IllegalArgumentException("Phiếu hủy không được null.");
+        if (phieuHuy == null)
+            throw new IllegalArgumentException("Phiếu hủy không được rỗng.");
         this.phieuHuy = phieuHuy;
     }
 
     public LoSanPham getLoSanPham() { return loSanPham; }
     public void setLoSanPham(LoSanPham loSanPham) {
         if (loSanPham == null)
-            throw new IllegalArgumentException("Lô sản phẩm không được null.");
+            throw new IllegalArgumentException("Lô sản phẩm không được rỗng.");
         this.loSanPham = loSanPham;
     }
 
@@ -64,12 +75,30 @@ public class ChiTietPhieuHuy {
         this.thanhTien = Math.round(soLuongHuy * donGiaNhap * 100.0) / 100.0;
     }
 
+    public int getTrangThai() { return trangThai; }
+    public void setTrangThai(int trangThai) {
+        if (trangThai < 1 || trangThai > 3)
+            throw new IllegalArgumentException("Trạng thái chi tiết không hợp lệ (1=Chờ duyệt, 2=Đã hủy hàng, 3=Đã từ chối hủy).");
+        this.trangThai = trangThai;
+    }
+
+    /** Lấy mô tả trạng thái (hiển thị trong bảng / GUI) */
+    public String getTrangThaiText() {
+        switch (trangThai) {
+            case CHO_DUYET: return "Chờ duyệt";
+            case HUY_HANG: return "Đã hủy hàng";
+            case TU_CHOI: return "Đã từ chối hủy";
+            default: return "Không rõ";
+        }
+    }
+
+    // ===== OVERRIDES =====
     @Override
     public String toString() {
-        return String.format("CTPH[%s - Lô:%s - SL:%d - Giá nhập:%.2f - Thành tiền:%.2f]",
+        return String.format("CTPH[%s - Lô:%s - SL:%d - Trạng thái:%s - Giá:%.2f - Thành tiền:%.2f]",
                 phieuHuy != null ? phieuHuy.getMaPhieuHuy() : "N/A",
                 loSanPham != null ? loSanPham.getMaLo() : "N/A",
-                soLuongHuy, donGiaNhap, thanhTien);
+                soLuongHuy, getTrangThaiText(), donGiaNhap, thanhTien);
     }
 
     @Override

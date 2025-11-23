@@ -225,8 +225,8 @@ public class CapNhatKhuyenMai_Dialog extends JDialog {
             txtGiaTri.setText(String.valueOf((int)khuyenMaiCanCapNhat.getGiaTri()));
         } else {
             cmbHinhThuc.setSelectedItem("Tặng thêm");
-            txtSoLuongToiThieu.setText(String.valueOf(khuyenMaiCanCapNhat.getSoLuongToiThieu()));
-            txtSoLuongTangThem.setText(String.valueOf(khuyenMaiCanCapNhat.getSoLuongTangThem()));
+//            txtSoLuongToiThieu.setText(String.valueOf(khuyenMaiCanCapNhat.getSoLuongToiThieu()));
+//            txtSoLuongTangThem.setText(String.valueOf(khuyenMaiCanCapNhat.getSoLuongTangThem()));
         }
 
         chkTrangThai.setSelected(khuyenMaiCanCapNhat.isTrangThai());
@@ -269,8 +269,8 @@ public class CapNhatKhuyenMai_Dialog extends JDialog {
 
             khuyenMaiCanCapNhat.setHinhThuc(hinhThuc);
             khuyenMaiCanCapNhat.setGiaTri(giaTri);
-            khuyenMaiCanCapNhat.setSoLuongToiThieu(slToiThieu);
-            khuyenMaiCanCapNhat.setSoLuongTangThem(slTangThem);
+//            khuyenMaiCanCapNhat.setSoLuongToiThieu(slToiThieu);
+//            khuyenMaiCanCapNhat.setSoLuongTangThem(slTangThem);
             khuyenMaiCanCapNhat.setDieuKienApDungHoaDon(dieuKien);
             khuyenMaiCanCapNhat.setTrangThai(chkTrangThai.isSelected());
             

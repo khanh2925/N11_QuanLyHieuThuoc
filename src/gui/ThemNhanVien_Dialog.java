@@ -13,6 +13,8 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 
 import com.toedter.calendar.JDateChooser; // Sử dụng thư viện JCalendar
+
+import dao.NhanVien_DAO;
 import dao.TaiKhoan_DAO; // Cần dùng để kiểm tra tên đăng nhập
 import entity.NhanVien;
 import entity.TaiKhoan;
@@ -194,22 +196,19 @@ public class ThemNhanVien_Dialog extends JDialog {
             boolean trangThai = true; // Nhân viên mới luôn đang làm
 
             // 2. Kiểm tra nghiệp vụ (ví dụ: tên đăng nhập tồn tại)
-            if (taiKhoan_DAO.isUsernameExists(tenDangNhap)) {
+            if (taiKhoan_DAO.kiemTraTenDangNhapTonTai(tenDangNhap)) {
                 JOptionPane.showMessageDialog(this, "Tên đăng nhập đã tồn tại.", "Lỗi trùng lặp", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            // 3. Tạo mã tự động theo định dạng CSDL
-            // Mã NV: NV + 10 số (dùng 10 số cuối của timestamp)
-            String maNV = "NV" + String.valueOf(System.currentTimeMillis() % 10000000000L);
-            // Mã TK: TK + 6 số (dùng 6 số cuối của timestamp)
-            String maTK = "TK" + String.valueOf(System.currentTimeMillis() % 1000000L);
 
-            // 4. Tạo đối tượng NhanVien
-            NhanVien nv = new NhanVien(maNV, ten, gioiTinh, ngaySinh, sdt, diaChi, isQuanLy, caLam, trangThai);
-            
-            // 5. Tạo đối tượng TaiKhoan
-            this.taiKhoanMoi = new TaiKhoan(maTK, tenDangNhap, matKhau, nv);
+
+            NhanVien_DAO nvDAO = new NhanVien_DAO();
+            TaiKhoan_DAO tkDAO = new TaiKhoan_DAO();
+
+            String maNV = nvDAO.taoMaNhanVienTuDong();
+            String maTK = tkDAO.taoMaTaiKhoanTuDong();
+
             
             // 6. Đóng dialog
             dispose();

@@ -1,361 +1,484 @@
 package gui;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.util.List;
-import java.util.regex.Pattern;
-import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.table.*;
 
-import connectDB.connectDB;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import customcomponent.ImagePanel;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
 import dao.NhaCungCap_DAO;
-import entity.KhachHang;
 import entity.NhaCungCap;
 
+@SuppressWarnings("serial")
 public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListener {
 
-    private JPanel pnCenter;
-    private JPanel pnHeader;
-    private JTextField txtTimKiem;
-    private JTable table;
+    // Components UI
+    private JPanel pnHeader, pnCenter;
+    private JSplitPane splitPane;
 
-    // === KHAI BÁO BIẾN THÀNH VIÊN ===
-    private DefaultTableModel model;
-    private TableRowSorter<DefaultTableModel> sorter;
-    private JButton btnThem;
-    private JButton btnSua;
-    private NhaCungCap_DAO nhaCC_dao;
-    private List<NhaCungCap> dsNhaCungCap;
-	private JFrame frameThemNCC;
-	private ThemNhaCungCap_Dialog dialogThemNCC;
-	private JFrame frameCapNhapNCC;
-	private ThemNhaCungCap_Dialog dialogCapNhapNCC;
+    // Form nhập liệu
+    private JTextField txtMaNCC, txtTenNCC, txtSDT, txtEmail, txtDiaChi;
+    private JComboBox<String> cboTrangThai;
+
+    // Search & Table
+    private JTextField txtTimKiem;
+    private JTable tblNhaCungCap;
+    private DefaultTableModel modelNhaCungCap;
+
+    // Buttons (Đã xóa btnXoa)
+    private PillButton btnThem, btnSua, btnLamMoi, btnTimKiem;
+
+    // DAO
+    private NhaCungCap_DAO nccDAO;
+
+    // Font & Color
+    private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 16);
+    private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 16);
+    private final Color COLOR_PRIMARY = new Color(33, 150, 243);
 
     public NhaCungCap_GUI() {
         setPreferredSize(new Dimension(1537, 850));
+        
+        // Khởi tạo DAO
+        nccDAO = new NhaCungCap_DAO();
+        
         initialize();
     }
 
     private void initialize() {
         setLayout(new BorderLayout());
+        setBackground(Color.WHITE);
 
-        // ===== HEADER =====
-        pnHeader = new JPanel();
-        pnHeader.setPreferredSize(new Dimension(1073, 88));
-        pnHeader.setBackground(new Color(0xE3F2F5));
-        pnHeader.setLayout(null);
+        // 1. HEADER
+        taoPhanHeader();
         add(pnHeader, BorderLayout.NORTH);
 
-        txtTimKiem = new JTextField("");
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên/ sđt nhà cung cấp");
-        txtTimKiem.setForeground(Color.GRAY);
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        txtTimKiem.setBounds(10, 17, 420, 60);
-        txtTimKiem.setBorder(new RoundedBorder(20));
-        pnHeader.add(txtTimKiem);
-        
-        btnThem=new PillButton("Thêm");
-        pnHeader.add(btnThem);
-        btnThem.setBounds(465, 26, 120, 40);
-        btnThem.setLayout(null);
-        btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        
-        btnSua =new PillButton("Cập nhật");
-        btnSua.setLayout(null);
-        btnSua.setBounds(614, 26, 120, 40);
-        pnHeader.add(btnSua);
-        btnSua.setFont(new Font("Segoe UI", Font.BOLD, 18));
-
-        // ===== CENTER =====
-        pnCenter = new JPanel(new BorderLayout());
-        pnCenter.setBackground(Color.WHITE);
-        pnCenter.setBorder(new LineBorder(new Color(200, 200, 200)));
+        // 2. CENTER (SplitPane)
+        taoPhanCenter();
         add(pnCenter, BorderLayout.CENTER);
 
-        List<NhaCungCap> dsNhaCungCap = new ArrayList<>();
-        String[] columnNames = {"Mã nhà cung cấp", "Tên nhà cung cấp", "Số điện thoại", "Địa chỉ"};
-        model = new DefaultTableModel(columnNames, 0);
+        // 3. LOAD DATA TỪ CSDL
+        loadDataLenBang();
+    }
 
-        for (NhaCungCap ncc : dsNhaCungCap) {
-            model.addRow(new Object[]{
-                ncc.getMaNhaCungCap(),
-                ncc.getTenNhaCungCap(),
-                ncc.getSoDienThoai(),
-                ncc.getDiaChi()
-            });
-        }
+    // ==========================================================================
+    //                              PHẦN HEADER
+    // ==========================================================================
+    private void taoPhanHeader() {
+        pnHeader = new JPanel(null);
+        pnHeader.setPreferredSize(new Dimension(1073, 94));
+        pnHeader.setBackground(new Color(0xE3F2F5));
 
-        table = new JTable(model);
-        // ... (Cấu hình JTable giữ nguyên)
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        table.setRowHeight(34);
-        table.setGridColor(new Color(230, 230, 230));
-        table.setShowHorizontalLines(true);
-        table.setShowVerticalLines(false);
-        table.setSelectionBackground(new Color(204, 229, 255));
-        table.setSelectionForeground(Color.BLACK);
-        table.setIntercellSpacing(new Dimension(8, 5));
-        table.setBackground(Color.WHITE);
-        table.setFillsViewportHeight(true);
+        txtTimKiem = new JTextField();
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Nhập mã hoặc số điện thoại NCC...");
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
+        txtTimKiem.setBounds(25, 17, 500, 60);
+        txtTimKiem.setBorder(new RoundedBorder(20));
+        txtTimKiem.setBackground(Color.WHITE);
+        txtTimKiem.setForeground(Color.GRAY);
+        // Sự kiện nhấn Enter để tìm kiếm
+        txtTimKiem.addActionListener(e -> xuLyTimKiem());
+        pnHeader.add(txtTimKiem);
 
-        JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        header.setBackground(new Color(33, 150, 243));
-        header.setForeground(Color.WHITE);
-        header.setPreferredSize(new Dimension(100, 40));
-        header.setReorderingAllowed(false);
+        btnTimKiem = new PillButton("Tìm kiếm");
+        btnTimKiem.setBounds(540, 22, 130, 50);
+        btnTimKiem.setFont(FONT_BOLD);
+        btnTimKiem.addActionListener(e -> xuLyTimKiem());
+        pnHeader.add(btnTimKiem);
+    }
 
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
-        table.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
+    // ==========================================================================
+    //                              PHẦN CENTER
+    // ==========================================================================
+    private void taoPhanCenter() {
+        pnCenter = new JPanel(new BorderLayout());
+        pnCenter.setBackground(Color.WHITE);
+        pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        table.getColumnModel().getColumn(0).setPreferredWidth(120);
-        table.getColumnModel().getColumn(1).setPreferredWidth(300);
-        table.getColumnModel().getColumn(2).setPreferredWidth(120);
-        table.getColumnModel().getColumn(3).setPreferredWidth(350);
+        // --- PHẦN TRÊN (TOP): FORM + NÚT ---
+        JPanel pnTopWrapper = new JPanel(new BorderLayout());
+        pnTopWrapper.setBackground(Color.WHITE);
+        pnTopWrapper.setBorder(createTitledBorder("Thông tin nhà cung cấp"));
 
-        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+        // 1. Form Nhập Liệu
+        JPanel pnForm = new JPanel(null);
+        pnForm.setBackground(Color.WHITE);
+        taoFormNhapLieu(pnForm);
+        pnTopWrapper.add(pnForm, BorderLayout.CENTER);
+
+        // 2. Panel Nút
+        JPanel pnButton = new JPanel();
+        pnButton.setBackground(Color.WHITE);
+        taoPanelNutBam(pnButton);
+        pnTopWrapper.add(pnButton, BorderLayout.EAST);
+
+        // --- PHẦN DƯỚI (BOTTOM): BẢNG ---
+        JPanel pnTable = new JPanel(new BorderLayout());
+        pnTable.setBackground(Color.WHITE);
+        taoBangDanhSach(pnTable);
+
+        // --- SPLIT PANE ---
+        splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pnTopWrapper, pnTable);
+        splitPane.setDividerLocation(300); 
+        splitPane.setResizeWeight(0.0); 
+        
+        pnCenter.add(splitPane, BorderLayout.CENTER);
+    }
+
+    private void taoFormNhapLieu(JPanel p) {
+        int xStart = 50, yStart = 40, hText = 35, wLbl = 100, wTxt = 300, gap = 25;
+        
+        // Cột 1
+        p.add(createLabel("Mã NCC:", xStart, yStart));
+        txtMaNCC = createTextField(xStart + wLbl, yStart, wTxt);
+        txtMaNCC.setEditable(false); // Mã tự sinh, không cho sửa
+        txtMaNCC.setBackground(new Color(245, 245, 245)); // Màu xám nhẹ
+        p.add(txtMaNCC);
+
+        p.add(createLabel("Tên NCC:", xStart, yStart + gap + hText));
+        txtTenNCC = createTextField(xStart + wLbl, yStart + gap + hText, wTxt);
+        p.add(txtTenNCC);
+        
+        p.add(createLabel("SĐT:", xStart, yStart + (gap + hText) * 2));
+        txtSDT = createTextField(xStart + wLbl, yStart + (gap + hText) * 2, wTxt);
+        p.add(txtSDT);
+
+        // Cột 2
+        int xCol2 = xStart + wLbl + wTxt + 50; // Cách cột 1 50px
+        
+        p.add(createLabel("Email:", xCol2, yStart));
+        txtEmail = createTextField(xCol2 + wLbl, yStart, wTxt);
+        p.add(txtEmail);
+        
+        p.add(createLabel("Địa chỉ:", xCol2, yStart + gap + hText));
+        txtDiaChi = createTextField(xCol2 + wLbl, yStart + gap + hText, wTxt);
+        p.add(txtDiaChi);
+        
+        p.add(createLabel("Trạng thái:", xCol2, yStart + (gap + hText) * 2));
+        cboTrangThai = new JComboBox<>(new String[]{"Hoạt động", "Ngừng hoạt động"});
+        cboTrangThai.setBounds(xCol2 + wLbl, yStart + (gap + hText) * 2, wTxt, hText);
+        cboTrangThai.setFont(FONT_TEXT);
+        p.add(cboTrangThai);
+    }
+
+    private void taoPanelNutBam(JPanel p) {
+        p.setPreferredSize(new Dimension(200, 0)); 
+        p.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, Color.LIGHT_GRAY)); 
+        
+        p.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.insets = new Insets(10, 0, 10, 0); 
+        gbc.fill = GridBagConstraints.HORIZONTAL; 
+
+        int btnH = 45;
+        int btnW = 140;
+
+        btnThem = createPillButton("Thêm", btnW, btnH);
+        gbc.gridy = 0; p.add(btnThem, gbc);
+
+        btnSua = createPillButton("Cập nhật", btnW, btnH);
+        gbc.gridy = 1; p.add(btnSua, gbc);
+
+        // Đã xóa nút Xóa ở vị trí này
+
+        btnLamMoi = createPillButton("Làm mới", btnW, btnH);
+        gbc.gridy = 2; p.add(btnLamMoi, gbc);
+    }
+
+    private void taoBangDanhSach(JPanel p) {
+        String[] cols = {"Mã NCC", "Tên nhà cung cấp", "SĐT", "Email", "Địa chỉ", "Trạng thái"};
+        modelNhaCungCap = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        tblNhaCungCap = setupTable(modelNhaCungCap);
+        
+        // Setup chiều rộng cột
+        tblNhaCungCap.getColumnModel().getColumn(0).setPreferredWidth(150); // Mã
+        tblNhaCungCap.getColumnModel().getColumn(1).setPreferredWidth(250); // Tên
+        tblNhaCungCap.getColumnModel().getColumn(4).setPreferredWidth(300); // Địa chỉ
+
+        // Custom Renderer cho cột Trạng thái (Xanh/Đỏ)
+        tblNhaCungCap.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value,
-                    boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                if (!isSelected) {
-                    c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(245, 248, 252));
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                lbl.setHorizontalAlignment(SwingConstants.CENTER);
+                if ("Hoạt động".equals(value)) {
+                    lbl.setForeground(new Color(0, 128, 0));
+                    lbl.setFont(FONT_BOLD);
+                } else {
+                    lbl.setForeground(Color.RED);
+                    lbl.setFont(FONT_TEXT);
                 }
-                return c;
+                return lbl;
             }
         });
-        
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        pnCenter.add(scrollPane, BorderLayout.CENTER);
-        
-        // ===== Sắp xếp và Lọc =====
-        sorter = new TableRowSorter<>(model);
-        table.setRowSorter(sorter);
-        
-        // ===== PHẦN THÊM SỰ KIỆN TÌM KIẾM (ĐẶT Ở ĐÂY) =====
-        txtTimKiem.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyReleased(KeyEvent e) {
-                applySearchFilter();
-            }
-        });
-        
-        try {
-			connectDB.getInstance().connect();
-        } catch (Exception e) {
-			e.printStackTrace();
-		}
-        
-        nhaCC_dao = new NhaCungCap_DAO();        
-        btnThem.addActionListener(this);
-        btnSua.addActionListener(this);
-        table.addMouseListener(this);
-        
-        // đưa dữ liệu lên table
-        loadTableData();
 
-        // --- SỰ KIỆN TÌM KIẾM THEO TEXTFIELD ---
-        txtTimKiem.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                applyFilters();
-            }
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                applyFilters();
-            }
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                // Not used for plain text fields
-            }
-        });
-        
-  
-     
-        
+        // Đăng ký sự kiện click chuột
+        tblNhaCungCap.addMouseListener(this);
+
+        JScrollPane scr = new JScrollPane(tblNhaCungCap);
+        scr.setBorder(createTitledBorder("Danh sách nhà cung cấp"));
+        p.add(scr, BorderLayout.CENTER);
     }
-    
-    private void loadTableData() {
-        dsNhaCungCap = new ArrayList<>();
-        model.setRowCount(0);
-        
-        try {
-			dsNhaCungCap = nhaCC_dao.getAllNhaCungCap();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 
-        for (NhaCungCap ncc : dsNhaCungCap) {
-            model.addRow(new Object[]{
-            	ncc.getMaNhaCungCap(),
-                ncc.getTenNhaCungCap(),
-                ncc.getSoDienThoai(),
-                ncc.getDiaChi(),
+    // ==========================================================================
+    //                              XỬ LÝ LOGIC (DAO)
+    // ==========================================================================
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object o = e.getSource();
+
+        // --- NÚT THÊM ---
+        if (o.equals(btnThem)) {
+            if (validData()) {
+                NhaCungCap ncc = getFromForm();
+                // Sinh mã tự động trước khi thêm
+                String maMoi = nccDAO.taoMaTuDong();
+                ncc.setMaNhaCungCap(maMoi);
                 
-            });
-        }
-    }
-    
-    private void applyFilters() {
-        List<RowFilter<Object, Object>> filters = new ArrayList<>();
-
-        // --- Lọc theo tên và SĐT ---
-        String text = txtTimKiem.getText().trim();
-        if (!text.isEmpty() && !txtTimKiem.getForeground().equals(Color.GRAY)) {
-            filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(text), 1, 3));
-        }
-
-        if (filters.isEmpty()) {
-            sorter.setRowFilter(null);
-        } else {
-            sorter.setRowFilter(RowFilter.andFilter(filters));
-        }
-    }
-
-    
-    // ===== PHƯƠNG THỨC LỌC DỮ LIỆU TRÊN BẢNG (ĐẶT Ở ĐÂY) =====
-
-    private void applySearchFilter() {
-        String text = txtTimKiem.getText();
+                if (nccDAO.themNhaCungCap(ncc)) {
+                    JOptionPane.showMessageDialog(this, "Thêm nhà cung cấp thành công: " + maMoi);
+                    loadDataLenBang();
+                    lamMoiForm();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Thêm thất bại. Vui lòng kiểm tra lại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } 
         
-        // Kiểm tra xem người dùng đã xóa hết chữ chưa
-        // Hoặc kiểm tra xem ô tìm kiếm có đang hiển thị placeholder không (nếu có)
-        if (text.trim().isEmpty() || txtTimKiem.getForeground().equals(Color.GRAY)) {
-            sorter.setRowFilter(null);
-        } else {
-            // Tạo một danh sách các bộ lọc
-            List<RowFilter<Object, Object>> filters = new ArrayList<>();
-            
-            // Thêm "^" để chỉ tìm kiếm những dòng BẮT ĐẦU BẰNG chuỗi `text`
-            // Lọc trên cột Tên NCC (index 1) - (?i) để không phân biệt hoa thường
-            filters.add(RowFilter.regexFilter("(?i)^" + text, 1));
-            // Lọc trên cột SĐT (index 2)
-            filters.add(RowFilter.regexFilter("(?i)^" + text, 2));
-            
-            // Áp dụng bộ lọc "OR", hàng nào khớp với 1 trong các điều kiện sẽ được hiển thị
-            sorter.setRowFilter(RowFilter.orFilter(filters));
+        // --- NÚT SỬA ---
+        else if (o.equals(btnSua)) {
+            int row = tblNhaCungCap.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn nhà cung cấp cần cập nhật!");
+                return;
+            }
+            if (validData()) {
+                NhaCungCap ncc = getFromForm();
+                // Khi sửa, mã NCC lấy từ textfield (đã set từ bảng)
+                if (nccDAO.capNhatNhaCungCap(ncc)) {
+                    JOptionPane.showMessageDialog(this, "Cập nhật thông tin thành công!");
+                    loadDataLenBang();
+                    // Chọn lại dòng vừa sửa
+                    tblNhaCungCap.setRowSelectionInterval(row, row);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+        
+        // --- ĐÃ XÓA LOGIC NÚT XÓA ---
+        
+        // --- NÚT LÀM MỚI ---
+        else if (o.equals(btnLamMoi)) {
+            lamMoiForm();
+            loadDataLenBang(); // Reset bảng nếu đang tìm kiếm
         }
     }
 
-    // ===== MAIN =====
+    /**
+     * Tải dữ liệu từ CSDL lên bảng
+     */
+    private void loadDataLenBang() {
+        modelNhaCungCap.setRowCount(0);
+        List<NhaCungCap> list = nccDAO.layTatCaNhaCungCap();
+        for (NhaCungCap ncc : list) {
+            themDongVaoBang(ncc);
+        }
+    }
+
+    /**
+     * Thêm 1 đối tượng entity vào model bảng
+     */
+    private void themDongVaoBang(NhaCungCap ncc) {
+        modelNhaCungCap.addRow(new Object[]{
+            ncc.getMaNhaCungCap(),
+            ncc.getTenNhaCungCap(),
+            ncc.getSoDienThoai(),
+            ncc.getEmail(),
+            ncc.getDiaChi(),
+            ncc.isHoatDong() ? "Hoạt động" : "Ngừng hoạt động"
+        });
+    }
+
+    /**
+     * Lấy dữ liệu từ form, đóng gói thành Object
+     * Mã NCC được set rỗng ở đây, sẽ được xử lý tùy trường hợp Thêm/Sửa
+     */
+    private NhaCungCap getFromForm() {
+        String ma = txtMaNCC.getText();
+        String ten = txtTenNCC.getText().trim();
+        String sdt = txtSDT.getText().trim();
+        String email = txtEmail.getText().trim();
+        String dc = txtDiaChi.getText().trim();
+        boolean hoatDong = cboTrangThai.getSelectedItem().equals("Hoạt động");
+        
+        NhaCungCap ncc = new NhaCungCap();
+        // Nếu mã không rỗng (đã có trên form) thì set vào, nếu rỗng thì constructor mặc định
+        if(!ma.isEmpty()) ncc.setMaNhaCungCap(ma); 
+        ncc.setTenNhaCungCap(ten);
+        ncc.setSoDienThoai(sdt);
+        ncc.setEmail(email);
+        ncc.setDiaChi(dc);
+        ncc.setHoatDong(hoatDong);
+        return ncc;
+    }
+
+    private void lamMoiForm() {
+        // Tự động gợi ý mã mới
+        txtMaNCC.setText(nccDAO.taoMaTuDong());
+        txtTenNCC.setText("");
+        txtSDT.setText("");
+        txtEmail.setText("");
+        txtDiaChi.setText("");
+        cboTrangThai.setSelectedIndex(0);
+        txtTenNCC.requestFocus();
+        tblNhaCungCap.clearSelection();
+    }
+
+    private void xuLyTimKiem() {
+        String keyword = txtTimKiem.getText().trim();
+        if (keyword.isEmpty() || keyword.equals("Nhập mã hoặc số điện thoại NCC...")) { 
+            loadDataLenBang();
+            return;
+        }
+        
+        // Gọi DAO tìm kiếm
+        NhaCungCap ketQua = nccDAO.timNhaCungCapTheoMaHoacSDT(keyword);
+        
+        modelNhaCungCap.setRowCount(0);
+        if (ketQua != null) {
+            themDongVaoBang(ketQua);
+        } else {
+            JOptionPane.showMessageDialog(this, "Không tìm thấy nhà cung cấp với thông tin: " + keyword);
+            loadDataLenBang(); // Load lại toàn bộ nếu không thấy
+        }
+    }
+
+    private boolean validData() {
+        String ten = txtTenNCC.getText().trim();
+        String sdt = txtSDT.getText().trim();
+        String email = txtEmail.getText().trim();
+        String diaChi = txtDiaChi.getText().trim();
+
+        if (ten.isEmpty()) {
+            showError("Tên nhà cung cấp không được rỗng", txtTenNCC);
+            return false;
+        }
+        if (!sdt.matches("^0\\d{9}$")) {
+            showError("Số điện thoại phải bắt đầu bằng số 0 và có 10 chữ số", txtSDT);
+            return false;
+        }
+        if (!email.isEmpty() && !email.matches("^[\\w._%+-]+@[\\w.-]+\\.[A-Za-z]{2,6}$")) {
+            showError("Email không đúng định dạng", txtEmail);
+            return false;
+        }
+        if (diaChi.isEmpty()) {
+            showError("Địa chỉ không được rỗng", txtDiaChi);
+            return false;
+        }
+        return true;
+    }
+    
+    private void showError(String mess, JTextField txt) {
+        JOptionPane.showMessageDialog(this, mess, "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+        txt.requestFocus();
+        txt.selectAll();
+    }
+
+    // ==========================================================================
+    //                              UI HELPERS & EVENTS
+    // ==========================================================================
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        int row = tblNhaCungCap.getSelectedRow();
+        if (row >= 0) {
+            txtMaNCC.setText(modelNhaCungCap.getValueAt(row, 0).toString());
+            txtTenNCC.setText(modelNhaCungCap.getValueAt(row, 1).toString());
+            txtSDT.setText(modelNhaCungCap.getValueAt(row, 2).toString());
+            txtEmail.setText(modelNhaCungCap.getValueAt(row, 3) != null ? modelNhaCungCap.getValueAt(row, 3).toString() : "");
+            txtDiaChi.setText(modelNhaCungCap.getValueAt(row, 4).toString());
+            
+            String trangThai = modelNhaCungCap.getValueAt(row, 5).toString();
+            cboTrangThai.setSelectedItem(trangThai.equals("Hoạt động") ? "Hoạt động" : "Ngừng hoạt động");
+        }
+    }
+
+    // Các method MouseListener chưa dùng đến
+    @Override public void mousePressed(MouseEvent e) {}
+    @Override public void mouseReleased(MouseEvent e) {}
+    @Override public void mouseEntered(MouseEvent e) {}
+    @Override public void mouseExited(MouseEvent e) {}
+
+    // --- UI Component Creators ---
+    private JLabel createLabel(String text, int x, int y) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(FONT_TEXT);
+        lbl.setBounds(x, y, 100, 35);
+        return lbl;
+    }
+
+    private JTextField createTextField(int x, int y, int w) {
+        JTextField txt = new JTextField();
+        txt.setFont(FONT_TEXT);
+        txt.setBounds(x, y, w, 35);
+        return txt;
+    }
+
+    private PillButton createPillButton(String text, int w, int h) {
+        PillButton btn = new PillButton(text);
+        btn.setFont(FONT_BOLD);
+        btn.setPreferredSize(new Dimension(w, h));
+        btn.addActionListener(this);
+        return btn;
+    }
+
+    private JTable setupTable(DefaultTableModel model) {
+        JTable table = new JTable(model);
+        table.setFont(FONT_TEXT);
+        table.setRowHeight(35);
+        table.setSelectionBackground(new Color(0xC8E6C9));
+        table.setSelectionForeground(Color.BLACK);
+        table.getTableHeader().setFont(FONT_BOLD);
+        table.getTableHeader().setBackground(COLOR_PRIMARY);
+        table.getTableHeader().setForeground(Color.WHITE);
+        
+        // Center align cho các cột (trừ Tên và Địa chỉ)
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(JLabel.CENTER);
+        for(int i=0; i<table.getColumnCount(); i++) {
+            if(i!=1 && i!=4) 
+                table.getColumnModel().getColumn(i).setCellRenderer(center);
+        }
+        return table;
+    }
+
+    private TitledBorder createTitledBorder(String title) {
+        return BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
+            TitledBorder.LEFT, TitledBorder.TOP, FONT_BOLD, Color.DARK_GRAY
+        );
+    }
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Quản lý nhà cung cấp");
-
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+            }
+            JFrame frame = new JFrame("Tra cứu phiếu nhập");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1280, 800);
+            frame.setSize(1400, 800);
             frame.setLocationRelativeTo(null);
             frame.setContentPane(new NhaCungCap_GUI());
             frame.setVisible(true);
         });
     }
-
-	@Override
-	public void mouseClicked(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void mousePressed(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void mouseReleased(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void mouseEntered(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void mouseExited(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	private void moDialogCapNhat() {
-		int viewRow = table.getSelectedRow();
-		if (viewRow < 0) {
-			JOptionPane.showMessageDialog(this, "Vui lòng chọn 1 nhà cung cấp để cập nhật.", "Thông báo",
-					JOptionPane.INFORMATION_MESSAGE);
-			return;
-		}
-		int modelRow = table.convertRowIndexToModel(viewRow);
-
-		String ma = (String) model.getValueAt(modelRow, 0);
-		String ten = (String) model.getValueAt(modelRow, 1);
-		String sdt = (String) model.getValueAt(modelRow, 2);
-		String diaC = (String) model.getValueAt(modelRow, 3);
-
-		// object hiện tại
-		NhaCungCap nccDangChon = new NhaCungCap(ma, ten, sdt, diaC);
-
-		Window owner = SwingUtilities.getWindowAncestor(this);
-		CapNhatNhaCungCap_Dialog dlg = new CapNhatNhaCungCap_Dialog(owner instanceof Frame ? (Frame) owner : null,
-				nccDangChon);
-		dlg.setVisible(true);
-
-		NhaCungCap capNhat = dlg.getNhaCungCapCapNhat();
-		if (capNhat != null) {
-			// Reload toàn bộ để đảm bảo nhất quán
-			loadTableData();
-
-			// tìm lại supplier vừa cập nhật để giữ selection
-			for (int i = 0; i < model.getRowCount(); i++) {
-				if (capNhat.getMaNhaCungCap().equals(model.getValueAt(i, 0))) {
-					int vRow = table.convertRowIndexToView(i);
-					table.getSelectionModel().setSelectionInterval(vRow, vRow);
-					table.scrollRectToVisible(table.getCellRect(vRow, 0, true));
-					break;
-				}
-			}
-		}
-	}
-	
-	private void MoDiaLogThemNCC() {
-		frameThemNCC = (JFrame) SwingUtilities.getWindowAncestor(this);
-        dialogThemNCC = new ThemNhaCungCap_Dialog(frameThemNCC);
-        dialogThemNCC.setVisible(true); 
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e) {
-	    Object src = e.getSource();
-	    if (src == btnThem) {
-	    	MoDiaLogThemNCC();
-	    	loadTableData();
-	    } else if (src == btnSua) {
-	        moDialogCapNhat();
-	    }
-	}
-
-	
-	
 }

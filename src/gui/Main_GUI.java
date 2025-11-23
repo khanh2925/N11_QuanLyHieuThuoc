@@ -33,21 +33,20 @@ public class Main_GUI extends JFrame {
 	private JLabel lblUserTop;
 
 	public Main_GUI(NhanVien nv) {
-		this.nvDangNhap = nv; // GÁN TRƯỚC
-		buildUI(); // rồi mới dựng UI
-		hienThongTinNhanVien();
-	}
-
-	public Main_GUI() {
-		this(null); // ⬅️ constructor mặc định gọi qua constructor chính
-	}
-
-	private void buildUI() { // ⬅️ DI CHUYỂN NỘI DUNG từ constructor mặc định vào đây
+		this.nvDangNhap = nv;
 		setTitle("Hiệu thuốc Hòa An - Hệ thống quản lý");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setSize(1920, 1080);
 		setLocationRelativeTo(null);
+		buildUI();
+		hienThongTinNhanVien();
+	}
 
+	public Main_GUI() {
+		this(null);
+	}
+
+	private void buildUI() { // ⬅️ DI CHUYỂN NỘI DUNG từ constructor mặc định vào đây
 		JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 		split.setDividerLocation(MENU_WIDTH);
 		split.setDividerSize(0);
@@ -56,7 +55,7 @@ public class Main_GUI extends JFrame {
 
 		add(split);
 
-		boolean isQL = nvDangNhap != null && nvDangNhap.isQuanLy(); // ⬅️ CHỐT NULL-SAFE
+		boolean isQL = nvDangNhap != null && nvDangNhap.isQuanLy();
 		if (isQL) { // Thêm các panel chức năng - sau này gắn tên panel vào đây
 			cardPanel.add(new JPanel(new GridBagLayout()) {
 				{
@@ -65,92 +64,231 @@ public class Main_GUI extends JFrame {
 					add(lbl);
 				}
 			}, "tongquan");
-
+			cardPanel.add(new ThongKeDoanhThu_GUI(), "thongke");
+			cardPanel.add(new ThemPhieuNhap_GUI(), "nhaphang");
+			cardPanel.add(new QL_HuyHang_GUI(), "xuathuy");
+			cardPanel.add(new QLTraHang_GUI(), "trahang");
+			cardPanel.add(new NhaCungCap_GUI(), "nhacungcap");
 			cardPanel.add(new KhachHang_NV_GUI(), "khachhang");
 			cardPanel.add(new KhuyenMai_GUI(), "khuyenmai");
 			cardPanel.add(new NhanVien_QL_GUI(), "nhanvien");
-			cardPanel.add(new ThongKeDoanhThu_GUI(), "thongke");
-			cardPanel.add(new TongQuanNV_GUI(), "thongtin");
 			showCard("tongquan");
 		} else {
-			// Thêm các panel chức năng - sau này gắn tên panel vào đây
+			cardPanel.add(new TongQuanNV_GUI(), "tongquan");
 			cardPanel.add(new BanHang_GUI(), "banhang");
 			cardPanel.add(new TraHangNhanVien_GUI(), "trahang");
+			cardPanel.add(new HuyHangNhanVien_GUI(), "xuathuy");
 			cardPanel.add(new KhachHang_NV_GUI(), "khachhang");
-			cardPanel.add(new TongQuanNV_GUI(), "tongquan");
-
 			showCard("banhang");
-
 		}
 	}
-
+	
 	private JPanel createMenu() {
-		JPanel menu = new JPanel();
-		// menu dùng BoxLayout theo trục Y để các nút xếp dọc, chèn submenu
-		menu.setLayout(new BoxLayout(menu, BoxLayout.Y_AXIS));
-		this.menuPanel = menu; // ⬅️ QUAN TRỌNG: giữ tham chiếu để chèn submenu menu.setLayout(new
-								// BoxLayout(menu, BoxLayout.Y_AXIS));
-		menu.setBackground(new Color(199, 234, 239));
+	    // Panel chính bên trái, chia thành 2 phần: cuộn và cố định
+	    JPanel mainPanel = new JPanel(new BorderLayout());
+	    mainPanel.setBackground(new Color(199, 234, 239));
 
-		ImageIcon iconLogo = new ImageIcon(getClass().getResource("/images/Logo.png"));
-		Image scaled = iconLogo.getImage().getScaledInstance(LOGO_WIDTH, LOGO_WIDTH, Image.SCALE_SMOOTH); // chỉnh kích
-																											// logo
-		JLabel logo = new JLabel(new ImageIcon(scaled));
-		logo.setAlignmentX(Component.LEFT_ALIGNMENT);
-		menu.add(logo);
+	    // ===== Header: Logo cố định trên cùng =====
+	    JPanel headerPanel = new JPanel();
+	    headerPanel.setBackground(new Color(199, 234, 239));
+	    headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
+	    headerPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-		boolean isQL = nvDangNhap != null && nvDangNhap.isQuanLy();
-		if (isQL) {
-			addMenuButton(menu, "Tổng quan", "tongquan", "/images/icon_tong_quan.png");
-			addMenuButton(menu, "Đơn hàng", "donhang", "/images/icon_don_hang.png");
-			addSubmenuButton("donhang", "danhsachdonhang", "Đơn hàng", "/images/icon_danh_sach.png", new DonHang_GUI());
-			addSubmenuButton("donhang", "danhsachdontrahang", "Đơn trả hàng", "/images/icon_tra_hang.png",
-					new QLTraHang_GUI());
-			addMenuButton(menu, "Sản phẩm", "sanpham", "/images/icon_san_pham.png");
-			addSubmenuButton("sanpham", "danhsachsanpham", "Danh sách sản phẩm", "/images/icon_danh_sach.png",
-				new SanPham_GUI());
-			addSubmenuButton("sanpham", "donvitinh", "Đơn vị tính", "/images/icon_don_vi_tinh.png",
-					new DonViTinh_QL_GUI());
-			addSubmenuButton("sanpham", "banggia", "Bảng giá", "/images/icon_bang_gia.png",
-					new BangGia_GUI());
-			addSubmenuButton("sanpham", "quycach", "Quy cách đóng gói", "/images/icon_bang_gia.png",
-					new QuyCachDongGoi_GUI());
-			addMenuButton(menu, "Kho", "kho", "/images/icon_kho.png");
-			addSubmenuButton("kho", "nhaphang", "Nhập hàng", "/images/icon_nhap_hang.png", new NhapHang_GUI());
-			addSubmenuButton("kho", "nhacungcap", "Nhà cung cấp", "/images/icon_nha_cung_cap.png",
-					new NhaCungCap_GUI());
-			addSubmenuButton("kho", "xuathuy", "Xuất huỷ", "/images/icon_xuat_huy.png", new HuyHang_GUI());
-			addMenuButton(menu, "Khách hàng", "khachhang", "/images/icon_khach_hang.png");
-			addMenuButton(menu, "Khuyến mãi", "khuyenmai", "/images/icon_khuyen_mai.png");
-			addMenuButton(menu, "Nhân viên", "nhanvien", "/images/icon_nhan_vien.png");
-			addMenuButton(menu, "Thống kê - Báo cáo", "thongke", "/images/icon_thong_ke.png");
-			addMenuButton(menu, "Thông tin cá nhân", "thongtin", "/images/icon_thong_tin.png");
+	    try {
+	        ImageIcon iconLogo = new ImageIcon(getClass().getResource("/images/Logo.png"));
+	        Image scaled = iconLogo.getImage().getScaledInstance(LOGO_WIDTH, LOGO_WIDTH, Image.SCALE_SMOOTH);
+	        JLabel logo = new JLabel(new ImageIcon(scaled));
+	        logo.setAlignmentX(Component.LEFT_ALIGNMENT);
+	        headerPanel.add(logo);
+	    } catch (Exception ex) {
+	        System.err.println("⚠️ Không tìm thấy Logo: " + ex.getMessage());
+	    }
+	    
+	    // Panel chứa các nút menu (cuộn được)
+	    JPanel menuScrollContent = new JPanel();
+	    menuScrollContent.setLayout(new BoxLayout(menuScrollContent, BoxLayout.Y_AXIS));
+	    menuScrollContent.setBackground(new Color(199, 234, 239));
+	    this.menuPanel = menuScrollContent;
 
-			menu.add(Box.createVerticalGlue());
-		} else {
-			addMenuButton(menu, "Tổng quan", "tongquan", "/images/icon_tong_quan.png");
-			addMenuButton(menu, "Bán hàng", "banhang", "/images/icon_ban_hang.png");
-			addMenuButton(menu, "Tra cứu", "tracuu", "/images/icon_tra_cuu.png");
+	    // Thêm menu button
+	    boolean isQL = nvDangNhap != null && nvDangNhap.isQuanLy();
+	    if (isQL) {
+			addMenuButton(menuScrollContent, "Tổng quan", "tongquan", "/images/icon_tong_quan.png");
+			addMenuButton(menuScrollContent, "Thống kê - Báo cáo", "thongke", "/images/icon_thong_ke.png");
+			
+			addMenuButton(menuScrollContent, "Tra cứu", "tracuu", "/images/icon_tra_cuu.png");
+			addSubmenuButton("tracuu", "tracuusanpham", "Sản phẩm", "/images/icon_san_pham.png",
+					new TraCuuSanPham_GUI());
 			addSubmenuButton("tracuu", "tracuudonhang", "Đơn hàng", "/images/icon_don_hang.png",
 					new TraCuuDonHang_GUI());
-			addSubmenuButton("tracuu", "tracuudonhangtra", "Đơn trả hàng", "/images/icon_tra_hang.png",
+			addSubmenuButton("tracuu", "tracuudontrahang", "Đơn trả hàng", "/images/icon_tra_hang.png",
 					new TraCuuDonTraHang_GUI());
-			addSubmenuButton("tracuu", "tracuukesanpham", "Kệ sản phẩm", "/images/icon_ke_sp.png",
-					new TraCuuKeSanPham_GUI());
-			addMenuButton(menu, "Trả hàng", "trahang", "/images/icon_tra_hang.png");
-			addMenuButton(menu, "Khách hàng", "khachhang", "/images/icon_khach_hang.png");
-			addMenuButton(menu, "Thông tin cá nhân", "thongtin", "/images/icon_thong_tin.png");
+			addSubmenuButton("tracuu", "tracuudonhuyhang", "Đơn huỷ hàng", "/images/icon_xuat_huy.png",
+					new TraCuuPhieuHuy_GUI());
+			addSubmenuButton("tracuu", "tracuudonnhaphang", "Đơn nhập hàng", "/images/icon_nhap_hang.png",
+					new TraCuuPhieuNhap_GUI());
+			addSubmenuButton("tracuu", "tracuunhanvien", "Nhân viên", "/images/icon_nhan_vien.png",
+					new TraCuuNhanVien_GUI());
+			addSubmenuButton("tracuu", "tracuukhachhang", "Khách hàng", "/images/icon_khach_hang.png",
+					new TraCuuKhachHang_GUI());
+			addSubmenuButton("tracuu", "tracuunhacungcap", "Nhà cung cấp", "/images/icon_nha_cung_cap.png",
+					new TraCuuNhaCungCap_GUI());
+			addSubmenuButton("tracuu", "tracuukhuyenmai", "Khuyến mãi", "/images/icon_khuyen_mai.png",
+					new TraCuuKhuyenMai_GUI());
+			addSubmenuButton("tracuu", "tracuudonvitinh", "Đơn vị tính", "/images/icon_don_vi_tinh.png",
+					new TraCuuDonViTinh_GUI());
+			addSubmenuButton("tracuu", "tracuubanggia", "Bảng giá", "/images/icon_bang_gia.png",
+					new TraCuuBangGia_GUI());
+			
+			addMenuButton(menuScrollContent, "Quản lý nhập hàng", "nhaphang", "/images/icon_nhap_hang.png");
+			addMenuButton(menuScrollContent, "Quản lý xuất huỷ", "xuathuy", "/images/icon_xuat_huy.png");
+			addMenuButton(menuScrollContent, "Quản lý trả hàng", "trahang", "/images/icon_tra_hang.png");
 
-			menu.add(Box.createVerticalGlue());
+			addMenuButton(menuScrollContent, "Sản phẩm", "sanpham", "/images/icon_san_pham.png");
+			addSubmenuButton("sanpham", "danhsachsanpham", "Danh sách sản phẩm", "/images/icon_danh_sach.png",
+					new QuanLySanPham_GUI());
+			addSubmenuButton("sanpham", "donvitinh", "Đơn vị tính", "/images/icon_don_vi_tinh.png",
+					new DonViTinh_QL_GUI());
+			addSubmenuButton("sanpham", "banggia", "Bảng giá", "/images/icon_bang_gia.png", new BangGia_GUI());
+
+			addMenuButton(menuScrollContent, "Quản lý nhà cung cấp", "nhacungcap", "/images/icon_nha_cung_cap.png");
+			addMenuButton(menuScrollContent, "Quẩn lý khách hàng", "khachhang", "/images/icon_khach_hang.png");
+			addMenuButton(menuScrollContent, "Quản lý khuyến mãi", "khuyenmai", "/images/icon_khuyen_mai.png");
+			addMenuButton(menuScrollContent, "Quản lý nhân viên", "nhanvien", "/images/icon_nhan_vien.png");
+
+			menuScrollContent.add(Box.createVerticalGlue());
+		} else {
+			addMenuButton(menuScrollContent, "Tổng quan", "tongquan", "/images/icon_tong_quan.png");
+			addMenuButton(menuScrollContent, "Bán hàng", "banhang", "/images/icon_ban_hang.png");
+			addMenuButton(menuScrollContent, "Trả hàng", "trahang", "/images/icon_tra_hang.png");
+			addMenuButton(menuScrollContent, "Xuất huỷ", "xuathuy", "/images/icon_xuat_huy.png");
+
+			addMenuButton(menuScrollContent, "Tra cứu", "tracuu", "/images/icon_tra_cuu.png");
+			addSubmenuButton("tracuu", "tracuudonhang", "Đơn hàng", "/images/icon_don_hang.png",
+					new TraCuuDonHang_GUI());
+			addSubmenuButton("tracuu", "tracuudontrahang", "Đơn trả hàng", "/images/icon_tra_hang.png",
+					new TraCuuDonTraHang_GUI());
+			addSubmenuButton("tracuu", "tracuudonhuyhang", "Đơn huỷ hàng", "/images/icon_xuat_huy.png",
+					new TraCuuPhieuHuy_GUI());
+			addSubmenuButton("tracuu", "tracuusanpham", "Sản phẩm", "/images/icon_san_pham.png",
+					new TraCuuSanPham_GUI());
+			addSubmenuButton("tracuu", "tracuukhuyenmai", "Khuyến mãi", "/images/icon_khuyen_mai.png",
+					new TraCuuKhuyenMai_GUI());
+			addSubmenuButton("tracuu", "tracuukhachhang", "Khách hàng", "/images/icon_khach_hang.png",
+					new TraCuuKhachHang_GUI());
+
+			addMenuButton(menuScrollContent, "Quản lý khách hàng", "khachhang", "/images/icon_khach_hang.png");
+
+			menuScrollContent.add(Box.createVerticalGlue());
 		}
-		lblUserTop = new JLabel("Chưa đăng nhập");
-		lblUserTop.setFont(new Font("SansSerif", Font.BOLD, 16));
-		menu.add(lblUserTop);
-		addMenuButton(menu, "Đăng xuất", "logout", "/images/icon_dang_xuat.png");
 
-		return menu;
+	 // ScrollPane cho phần menu chính (cuộn mượt và hiện đại)
+	    JScrollPane scrollPane = new JScrollPane(menuScrollContent,
+	            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+	            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+	    scrollPane.setBorder(null);
+	    scrollPane.getViewport().setBackground(new Color(199, 234, 239));
+
+	    // Tùy chỉnh scrollbar hiện đại
+	    scrollPane.getVerticalScrollBar().setUnitIncrement(20);
+	    scrollPane.getVerticalScrollBar().setOpaque(false);
+	    scrollPane.setOpaque(false);
+
+	    // ==== Tùy biến giao diện thanh cuộn ====
+	    scrollPane.getVerticalScrollBar().setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
+	        private final Dimension d = new Dimension();
+
+	        @Override
+	        protected JButton createDecreaseButton(int orientation) {
+	            return createZeroButton();
+	        }
+
+	        @Override
+	        protected JButton createIncreaseButton(int orientation) {
+	            return createZeroButton();
+	        }
+
+	        private JButton createZeroButton() {
+	            JButton button = new JButton();
+	            button.setPreferredSize(d);
+	            button.setMinimumSize(d);
+	            button.setMaximumSize(d);
+	            return button;
+	        }
+
+	        @Override
+	        protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
+	            // Ẩn phần nền track để thanh cuộn “nổi” hơn
+	            Graphics2D g2 = (Graphics2D) g.create();
+	            g2.setComposite(AlphaComposite.SrcOver.derive(0f)); // hoàn toàn trong suốt
+	            g2.dispose();
+	        }
+
+	        @Override
+	        protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+	            if (!c.isEnabled()) return;
+	            Graphics2D g2 = (Graphics2D) g.create();
+
+	            // Màu thumb: xám trong suốt + bo tròn + hiệu ứng hover
+	            Color base = new Color(80, 80, 80, 80);
+	            Color hover = new Color(80, 80, 80, 130);
+
+	            if (isThumbRollover()) {
+	                g2.setColor(hover);
+	            } else {
+	                g2.setColor(base);
+	            }
+
+	            g2.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, 10, 10);
+	            g2.dispose();
+	        }
+
+	        @Override
+	        protected Dimension getMinimumThumbSize() {
+	            return new Dimension(8, 40); // mảnh hơn mặc định
+	        }
+
+	        @Override
+	        protected Dimension getMaximumThumbSize() {
+	            return new Dimension(8, 9999);
+	        }
+	    });
+
+	    
+	    // Panel dưới cùng (không cuộn)
+	    JPanel bottomPanel = new JPanel();
+	    bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.Y_AXIS));
+	    bottomPanel.setBackground(new Color(199, 234, 239));
+	    bottomPanel.setBorder(new EmptyBorder(10, 8, 10, 8));
+
+	    lblUserTop = new JLabel("Chưa đăng nhập");
+	    lblUserTop.setFont(new Font("SansSerif", Font.BOLD, 14));
+	    lblUserTop.setAlignmentX(Component.LEFT_ALIGNMENT);
+	    bottomPanel.add(lblUserTop);
+	    bottomPanel.add(Box.createVerticalStrut(8));
+
+	    JButton btnLogout = new JButton("Đăng xuất");
+	    btnLogout.setFocusPainted(false);
+	    btnLogout.setHorizontalAlignment(SwingConstants.LEFT);
+	    btnLogout.setFont(new Font("SansSerif", Font.BOLD, 14));
+	    btnLogout.setBackground(new Color(0, 0, 0, 0));
+	    btnLogout.setBorder(null);
+	    ImageIcon logoutIcon = new ImageIcon(getClass().getResource("/images/icon_dang_xuat.png"));
+	    Image scaledLogout = logoutIcon.getImage().getScaledInstance(MENU_ICON_WIDTH, MENU_ICON_WIDTH, Image.SCALE_SMOOTH);
+	    btnLogout.setIcon(new ImageIcon(scaledLogout));
+	    btnLogout.addActionListener(e -> onLogout());
+	    bottomPanel.add(btnLogout);
+
+	    mainPanel.add(headerPanel, BorderLayout.NORTH);
+	    mainPanel.add(scrollPane, BorderLayout.CENTER);
+	    mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+	    // Giữ nguyên kích thước
+	    mainPanel.setPreferredSize(new Dimension(MENU_WIDTH, getHeight()));
+	    return mainPanel;
 	}
 
+	
 	private void addMenuButton(JPanel menu, String text, String key, String iconPath) {
 		JButton btn = new JButton(text);
 		btn.setFocusPainted(false);
@@ -161,7 +299,25 @@ public class Main_GUI extends JFrame {
 		btn.setBorder(null);
 		btn.setFont(new Font("SansSerif", Font.BOLD, 16));
 		// Thêm icon nhỏ phía trước
-		ImageIcon icon = new ImageIcon(getClass().getResource(iconPath));
+//		ImageIcon icon = new ImageIcon(getClass().getResource(iconPath));
+		ImageIcon icon = null;
+		if (iconPath == null || iconPath.trim().isEmpty()) {
+			System.err.println("⚠️ [Main_GUI] Icon path is null or empty for menu: " + text);
+		} else {
+			URL url = getClass().getResource(iconPath);
+			if (url == null) {
+				System.err.println("❌ [Main_GUI] Icon not found for menu: " + text + " | Path: " + iconPath);
+				try {
+					String base = getClass().getProtectionDomain().getCodeSource().getLocation().toExternalForm();
+					System.err.println("🔍 [Main_GUI] Base classpath: " + base);
+				} catch (Exception ex) {
+					System.err.println("⚠️ [Main_GUI] Cannot determine base classpath: " + ex.getMessage());
+				}
+			} else {
+				icon = new ImageIcon(url);
+				System.out.println("✅ [Main_GUI] Loaded icon: " + iconPath + " for menu: " + text);
+			}
+		}
 		// Scale kích thước icon
 		Image scaledIcon = icon.getImage().getScaledInstance(MENU_ICON_WIDTH, MENU_ICON_WIDTH, Image.SCALE_SMOOTH);
 		btn.setIcon(new ImageIcon(scaledIcon));
@@ -182,7 +338,7 @@ public class Main_GUI extends JFrame {
 				JOptionPane.YES_NO_OPTION);
 		if (confirm == JOptionPane.YES_OPTION) {
 			dispose(); // hoặc chuyển về form đăng nhập
-//			new DangNhap_GUI().setVisible(true);
+			new DangNhap_GUI().setVisible(true);
 		}
 	}
 

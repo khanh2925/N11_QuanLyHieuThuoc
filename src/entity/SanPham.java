@@ -3,34 +3,29 @@ package entity;
 import java.util.Objects;
 import enums.DuongDung;
 import enums.LoaiSanPham;
+import entity.ChiTietKhuyenMaiSanPham; // 💡 Bổ sung import
 
-/**
- * @author
- * @version 2.0
- * @since Oct 2025
- *
- * Mô tả:
- *  - Lưu trữ thông tin sản phẩm trong hiệu thuốc.
- *  - Giá bán là thuộc tính DẪN XUẤT CÓ LƯU: tự động tính theo giá nhập nhưng vẫn được lưu DB.
- */
 public class SanPham {
 
-    private String maSanPham;
+    private String maSanPham; // SP-xxxxxx
     private String tenSanPham;
     private LoaiSanPham loaiSanPham;
     private String soDangKy;
     private DuongDung duongDung;
     private double giaNhap;
-    private double giaBan; // ✅ dẫn xuất có lưu
+    private double giaBan; // ✅ dẫn xuất theo bảng giá
     private String hinhAnh;
     private String keBanSanPham;
     private boolean hoatDong;
+
+    private ChiTietBangGia chiTietBangGiaHienTai; // 🔗 bảng giá đang áp dụng
+    private ChiTietKhuyenMaiSanPham khuyenMaiHienTai; // 💡 BỔ SUNG: Khuyến mãi đang áp dụng
 
     // ===== CONSTRUCTORS =====
     public SanPham() {}
 
     public SanPham(String maSanPham) {
-        this.maSanPham = maSanPham;
+        setMaSanPham(maSanPham);
     }
 
     public SanPham(String maSanPham, String tenSanPham, LoaiSanPham loaiSanPham, String soDangKy,
@@ -42,10 +37,10 @@ public class SanPham {
         setSoDangKy(soDangKy);
         setDuongDung(duongDung);
         setGiaNhap(giaNhap);
-        capNhatGiaBanTheoHeSo();
         setHinhAnh(hinhAnh);
         setKeBanSanPham(keBanSanPham);
         setHoatDong(hoatDong);
+        this.giaBan = 0; // chưa có bảng giá → giá bán = 0
     }
 
     public SanPham(SanPham sp) {
@@ -59,19 +54,25 @@ public class SanPham {
         this.hinhAnh = sp.hinhAnh;
         this.keBanSanPham = sp.keBanSanPham;
         this.hoatDong = sp.hoatDong;
+        this.chiTietBangGiaHienTai = sp.chiTietBangGiaHienTai;
+        this.khuyenMaiHienTai = sp.khuyenMaiHienTai; // 💡 Sao chép KM
     }
 
     // ===== GETTERS / SETTERS =====
-
     public String getMaSanPham() {
         return maSanPham;
     }
 
     public void setMaSanPham(String maSanPham) {
         if (maSanPham == null)
-            throw new IllegalArgumentException("Mã sản phẩm không được để trống.");
-        if (!maSanPham.matches("^SP\\d{6}$"))
-            throw new IllegalArgumentException("Mã sản phẩm không hợp lệ (định dạng yêu cầu: SPxxxxxx).");
+            throw new IllegalArgumentException("Mã sản phẩm không được để trống");
+
+        maSanPham = maSanPham.trim();
+
+        if (!maSanPham.matches("^SP-\\d{6}$")) {
+            throw new IllegalArgumentException("Mã sản phẩm không hợp lệ. Định dạng: SP-xxxxxx");
+        }
+
         this.maSanPham = maSanPham;
     }
 
@@ -112,8 +113,6 @@ public class SanPham {
     }
 
     public void setDuongDung(DuongDung duongDung) {
-        if (duongDung == null)
-            throw new IllegalArgumentException("Đường dùng không được null.");
         this.duongDung = duongDung;
     }
 
@@ -125,23 +124,36 @@ public class SanPham {
         if (giaNhap <= 0)
             throw new IllegalArgumentException("Giá nhập phải lớn hơn 0.");
         this.giaNhap = giaNhap;
-        capNhatGiaBanTheoHeSo(); // ✅ tự động cập nhật giá bán mỗi khi đổi giá nhập
+        capNhatGiaBanTheoTiLe();
     }
 
     public double getGiaBan() {
+        if (chiTietBangGiaHienTai == null)
+        	giaBan = 0;
         return giaBan;
     }
 
-    public void capNhatGiaBanTheoHeSo() {
-        if (giaNhap <= 0) return;
+    public ChiTietBangGia getChiTietBangGiaHienTai() {
+        return chiTietBangGiaHienTai;
+    }
 
-        double heSoLoiNhuan;
-        if (giaNhap < 10000) heSoLoiNhuan = 1.5;
-        else if (giaNhap < 50000) heSoLoiNhuan = 1.3;
-        else if (giaNhap < 200000) heSoLoiNhuan = 1.2;
-        else heSoLoiNhuan = 1.1;
+    public void setChiTietBangGiaHienTai(ChiTietBangGia chiTietBangGiaHienTai) {
+        if (chiTietBangGiaHienTai == null)
+            throw new IllegalArgumentException("Sản phẩm phải có bảng giá để xác định giá bán.");
+        this.chiTietBangGiaHienTai = chiTietBangGiaHienTai;
+        capNhatGiaBanTheoTiLe();
+    }
 
-        this.giaBan = Math.round(giaNhap * heSoLoiNhuan);
+    // ✅ Cập nhật giá bán dựa theo tỉ lệ bảng giá
+    public void capNhatGiaBanTheoTiLe() {
+        if (chiTietBangGiaHienTai == null) {
+            this.giaBan = 0;
+            return;
+        }
+        double tiLe = chiTietBangGiaHienTai.getTiLe();
+        if (tiLe <= 0)
+            throw new IllegalArgumentException("Tỉ lệ bảng giá không hợp lệ (phải > 0).");
+        this.giaBan = Math.round(giaNhap * tiLe);
     }
 
     public String getHinhAnh() {
@@ -171,12 +183,30 @@ public class SanPham {
     public void setHoatDong(boolean hoatDong) {
         this.hoatDong = hoatDong;
     }
+    
+    // 💡 GETTER / SETTER BỔ SUNG CHO KHUYẾN MÃI
+    public ChiTietKhuyenMaiSanPham getKhuyenMaiHienTai() {
+        return khuyenMaiHienTai;
+    }
+
+    public void setKhuyenMaiHienTai(ChiTietKhuyenMaiSanPham khuyenMaiHienTai) {
+        this.khuyenMaiHienTai = khuyenMaiHienTai;
+    }
 
     // ===== OVERRIDES =====
     @Override
     public String toString() {
-        return String.format("SanPham{ma='%s', ten='%s', giaNhap=%.0f, giaBan=%.0f, hoatDong=%s}",
-                maSanPham, tenSanPham, giaNhap, giaBan, hoatDong);
+        // Có thể bổ sung hiển thị KM vào đây nếu cần
+        return String.format(
+            "SanPham[%s - %s, loại=%s, giá nhập=%.0f, tỉ lệ=%s, giá bán=%.0f, KM=%s]",
+            maSanPham,
+            tenSanPham,
+            loaiSanPham != null ? loaiSanPham : "N/A",
+            giaNhap,
+            chiTietBangGiaHienTai != null ? chiTietBangGiaHienTai.getTiLe() : "Chưa có bảng giá",
+            giaBan,
+            khuyenMaiHienTai != null ? khuyenMaiHienTai.getKhuyenMai().getMaKM() : "Không"
+        );
     }
 
     @Override

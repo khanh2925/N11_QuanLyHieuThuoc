@@ -1,342 +1,259 @@
 package gui;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Frame;
-import java.awt.event.ItemEvent;
+import java.awt.*;
+import java.awt.event.*;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Date;
 import javax.swing.*;
+
 import com.toedter.calendar.JDateChooser;
+
 import dao.KhuyenMai_DAO;
 import entity.KhuyenMai;
 import enums.HinhThucKM;
 
+@SuppressWarnings("serial")
 public class ThemKhuyenMai_Dialog extends JDialog {
 
-    private JTextField txtTenKM, txtGiaTri, txtSoLuongToiThieu, txtSoLuongTangThem;
-    private JTextField txtDieuKienGiaTri;
-    private JLabel lblDieuKien;
+    private JTextField txtTenKM, txtGiaTri, txtDieuKienGiaTri;
+    private JLabel lblDieuKien, lblGiaTri;
     private JRadioButton radKMHoaDon, radKMSanPham;
     private JCheckBox chkTrangThai;
     private JComboBox<String> cmbHinhThuc;
     private JDateChooser dateBatDau, dateKetThuc;
     private JButton btnThem, btnThoat;
-    private JPanel pnTangThem;
-    private JLabel lblGiaTri;
 
     private KhuyenMai khuyenMaiMoi = null;
 
+    private final KhuyenMai_DAO kmDAO = new KhuyenMai_DAO();
+
     public ThemKhuyenMai_Dialog(Frame owner) {
         super(owner, "Thêm chương trình khuyến mãi", true);
-        initialize();
+        initUI();
     }
 
-    private void initialize() {
-        setSize(800, 650);
+    private void initUI() {
+        setSize(880, 720);
         setLocationRelativeTo(getParent());
+        setLayout(null);
         getContentPane().setBackground(Color.WHITE);
-        getContentPane().setLayout(null);
 
-        // --- Tiêu đề Dialog ---
-        JLabel lblTitle = new JLabel("Thêm chương trình khuyến mãi");
+        JLabel lblTitle = new JLabel("Thêm chương trình khuyến mãi", SwingConstants.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        lblTitle.setBounds(200, 20, 400, 35);
-        getContentPane().add(lblTitle);
+        lblTitle.setBounds(0, 20, 880, 35);
+        add(lblTitle);
 
-        // --- Tên Khuyến mãi ---
+        // Tên KM
         JLabel lblTen = new JLabel("Tên khuyến mãi:");
-        lblTen.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblTen.setBounds(40, 80, 150, 25);
-        getContentPane().add(lblTen);
-        txtTenKM = new JTextField();
-        txtTenKM.setBounds(40, 110, 320, 35);
-        txtTenKM.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        getContentPane().add(txtTenKM);
+        lblTen.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        add(lblTen);
 
-        // --- Loại Khuyến mãi ---
-        JLabel lblLoaiKM = new JLabel("Loại khuyến mãi:");
-        lblLoaiKM.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblLoaiKM.setBounds(410, 80, 150, 25);
-        getContentPane().add(lblLoaiKM);
-        radKMHoaDon = new JRadioButton("Khuyến mãi hóa đơn");
-        radKMHoaDon.setSelected(true);
-        radKMHoaDon.setBounds(410, 110, 170, 35);
-        radKMHoaDon.setBackground(Color.WHITE);
-        radKMHoaDon.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        getContentPane().add(radKMHoaDon);
+        txtTenKM = new JTextField();
+        txtTenKM.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        txtTenKM.setBounds(40, 110, 320, 35);
+        add(txtTenKM);
+
+        // Loại KM
+        JLabel lblLoai = new JLabel("Loại khuyến mãi:");
+        lblLoai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        lblLoai.setBounds(400, 80, 150, 25);
+        add(lblLoai);
+
+        radKMHoaDon = new JRadioButton("Khuyến mãi hóa đơn", true);
         radKMSanPham = new JRadioButton("Khuyến mãi sản phẩm");
-        radKMSanPham.setBounds(590, 110, 180, 35);
+        radKMHoaDon.setBackground(Color.WHITE);
         radKMSanPham.setBackground(Color.WHITE);
+        ButtonGroup bg = new ButtonGroup();
+        bg.add(radKMHoaDon);
+        bg.add(radKMSanPham);
+        radKMHoaDon.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         radKMSanPham.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        getContentPane().add(radKMSanPham);
-        ButtonGroup bgLoaiKM = new ButtonGroup();
-        bgLoaiKM.add(radKMHoaDon);
-        bgLoaiKM.add(radKMSanPham);
-        
-        // --- Ngày bắt đầu & kết thúc ---
-        JLabel lblNgayBatDau = new JLabel("Ngày bắt đầu:");
-        lblNgayBatDau.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblNgayBatDau.setBounds(40, 160, 120, 25);
-        getContentPane().add(lblNgayBatDau);
+        radKMHoaDon.setBounds(400, 110, 180, 35);
+        radKMSanPham.setBounds(590, 110, 180, 35);
+        add(radKMHoaDon);
+        add(radKMSanPham);
+
+        // Ngày
+        JLabel lblNgayBD = new JLabel("Ngày bắt đầu:");
+        lblNgayBD.setBounds(40, 160, 150, 25);
+        lblNgayBD.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        add(lblNgayBD);
+
         dateBatDau = new JDateChooser();
-        dateBatDau.setBounds(40, 190, 320, 35);
         dateBatDau.setDateFormatString("dd-MM-yyyy");
-        dateBatDau.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        getContentPane().add(dateBatDau);
-        
-        JLabel lblNgayKetThuc = new JLabel("Ngày kết thúc:");
-        lblNgayKetThuc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblNgayKetThuc.setBounds(410, 160, 120, 25);
-        getContentPane().add(lblNgayKetThuc);
+        dateBatDau.setBounds(40, 190, 320, 35);
+        add(dateBatDau);
+
+        JLabel lblNgayKT = new JLabel("Ngày kết thúc:");
+        lblNgayKT.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        lblNgayKT.setBounds(400, 160, 150, 25);
+        add(lblNgayKT);
+
         dateKetThuc = new JDateChooser();
-        dateKetThuc.setBounds(410, 190, 320, 35);
         dateKetThuc.setDateFormatString("dd-MM-yyyy");
-        dateKetThuc.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        getContentPane().add(dateKetThuc);
-        
-        // --- Hình thức & Giá trị ---
+        dateKetThuc.setBounds(400, 190, 320, 35);
+        add(dateKetThuc);
+
+        // Hình thức
         JLabel lblHinhThuc = new JLabel("Hình thức:");
         lblHinhThuc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblHinhThuc.setBounds(40, 240, 120, 25);
-        getContentPane().add(lblHinhThuc);
+        lblHinhThuc.setBounds(40, 240, 150, 25);
+        add(lblHinhThuc);
+
         cmbHinhThuc = new JComboBox<>();
-        cmbHinhThuc.setBounds(40, 270, 320, 35);
         cmbHinhThuc.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        getContentPane().add(cmbHinhThuc);
+        cmbHinhThuc.setBounds(40, 270, 320, 35);
+        add(cmbHinhThuc);
 
         lblGiaTri = new JLabel("Giá trị (%):");
         lblGiaTri.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblGiaTri.setBounds(410, 240, 120, 25);
-        getContentPane().add(lblGiaTri);
+        lblGiaTri.setBounds(400, 240, 150, 25);
+        add(lblGiaTri);
+
         txtGiaTri = new JTextField();
-        txtGiaTri.setBounds(410, 270, 320, 35);
         txtGiaTri.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        getContentPane().add(txtGiaTri);
-        
-        // --- Panel cho hình thức "Tặng thêm" ---
-        pnTangThem = new JPanel();
-        pnTangThem.setLayout(null);
-        pnTangThem.setBackground(Color.WHITE);
-        pnTangThem.setBounds(410, 240, 360, 80);
-        pnTangThem.setVisible(false);
-        getContentPane().add(pnTangThem);
+        txtGiaTri.setBounds(400, 270, 320, 35);
+        add(txtGiaTri);
 
-        JLabel lblSoLuongToiThieu = new JLabel("Số lượng tối thiểu (Mua):");
-        lblSoLuongToiThieu.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblSoLuongToiThieu.setBounds(0, 0, 180, 25);
-        pnTangThem.add(lblSoLuongToiThieu);
-        txtSoLuongToiThieu = new JTextField();
-        txtSoLuongToiThieu.setBounds(0, 30, 150, 35);
-        txtSoLuongToiThieu.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        pnTangThem.add(txtSoLuongToiThieu);
-
-        JLabel lblSoLuongTangThem = new JLabel("Số lượng tặng thêm:");
-        lblSoLuongTangThem.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblSoLuongTangThem.setBounds(190, 0, 150, 25);
-        pnTangThem.add(lblSoLuongTangThem);
-        txtSoLuongTangThem = new JTextField();
-        txtSoLuongTangThem.setBounds(190, 30, 150, 35);
-        txtSoLuongTangThem.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        pnTangThem.add(txtSoLuongTangThem);
-
-        // --- Điều kiện áp dụng cho hóa đơn ---
+        // Điều kiện áp dụng
         lblDieuKien = new JLabel("Giá trị HĐ tối thiểu (VND):");
         lblDieuKien.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblDieuKien.setBounds(40, 320, 200, 25);
-        getContentPane().add(lblDieuKien);
-        
+        lblDieuKien.setBounds(40, 320, 250, 25);
+        add(lblDieuKien);
+
         txtDieuKienGiaTri = new JTextField("0");
         txtDieuKienGiaTri.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtDieuKienGiaTri.setBounds(40, 350, 320, 35);
-        getContentPane().add(txtDieuKienGiaTri);
-        
-        // --- Trạng thái ---
-        chkTrangThai = new JCheckBox("Đang áp dụng");
-        chkTrangThai.setSelected(true);
+        add(txtDieuKienGiaTri);
+
+        chkTrangThai = new JCheckBox("Đang áp dụng", true);
         chkTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         chkTrangThai.setBackground(Color.WHITE);
-        chkTrangThai.setBounds(40, 450, 150, 30);
-        getContentPane().add(chkTrangThai);
-        
-        // --- Các nút ---
-        btnThoat = new JButton("Thoát");
-        btnThoat.setBounds(650, 550, 110, 40);
-        btnThoat.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnThoat.setBackground(new Color(0x6B7280));
-        btnThoat.setForeground(Color.WHITE);
-        btnThoat.addActionListener(e -> dispose());
-        getContentPane().add(btnThoat);
+        chkTrangThai.setBounds(40, 400, 180, 30);
+        add(chkTrangThai);
 
+        // Nút thêm / thoát
         btnThem = new JButton("Thêm");
-        btnThem.setBounds(520, 550, 110, 40);
-        btnThem.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnThoat = new JButton("Thoát");
+        btnThem.setBounds(640, 620, 90, 40);
+        btnThoat.setBounds(740, 620, 90, 40);
         btnThem.setBackground(new Color(0x3B82F6));
         btnThem.setForeground(Color.WHITE);
-        btnThem.addActionListener(e -> onThemButtonClick());
-        getContentPane().add(btnThem);
-        
-        // --- SỰ KIỆN ---
+        btnThoat.setBackground(new Color(0x6B7280));
+        btnThoat.setForeground(Color.WHITE);
+        add(btnThem);
+        add(btnThoat);
+
+        // ===== SỰ KIỆN =====
+        radKMHoaDon.addActionListener(e -> updateHinhThuc());
+        radKMSanPham.addActionListener(e -> updateHinhThuc());
         cmbHinhThuc.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {
-                updateUIBasedOnHinhThuc();
+                updateLabelGiaTri();
             }
         });
+        btnThoat.addActionListener(e -> dispose());
+        btnThem.addActionListener(e -> onThem());
 
-        radKMHoaDon.addActionListener(e -> updateHinhThucOptions());
-        radKMSanPham.addActionListener(e -> updateHinhThucOptions());
-        
-        updateHinhThucOptions();
+        updateHinhThuc();
     }
-    
-    private void updateHinhThucOptions() {
+
+    private void updateHinhThuc() {
         cmbHinhThuc.removeAllItems();
-        
+        // Cả KM hóa đơn và KM sản phẩm đều chỉ còn 2 loại này
+        cmbHinhThuc.addItem("Giảm giá phần trăm");
+        cmbHinhThuc.addItem("Giảm giá tiền");
+
         if (radKMHoaDon.isSelected()) {
-            cmbHinhThuc.addItem("Giảm giá phần trăm");
-            cmbHinhThuc.addItem("Giảm giá tiền");
             lblDieuKien.setVisible(true);
             txtDieuKienGiaTri.setVisible(true);
         } else {
-            cmbHinhThuc.addItem("Giảm giá phần trăm");
-            cmbHinhThuc.addItem("Giảm giá tiền");
-            cmbHinhThuc.addItem("Tặng thêm");
             lblDieuKien.setVisible(false);
             txtDieuKienGiaTri.setVisible(false);
         }
-        updateUIBasedOnHinhThuc();
+        updateLabelGiaTri();
     }
-    
-    private void updateUIBasedOnHinhThuc() {
-        Object selectedItem = cmbHinhThuc.getSelectedItem();
-        String selected = (selectedItem != null) ? selectedItem.toString() : "";
 
-        if ("Tặng thêm".equals(selected)) {
-            lblGiaTri.setVisible(false);
-            txtGiaTri.setVisible(false);
-            pnTangThem.setVisible(true);
+    private void updateLabelGiaTri() {
+        String selected = (String) cmbHinhThuc.getSelectedItem();
+        if ("Giảm giá phần trăm".equals(selected)) {
+            lblGiaTri.setText("Giá trị (%):");
         } else {
-            pnTangThem.setVisible(false);
-            lblGiaTri.setVisible(true);
-            txtGiaTri.setVisible(true);
-            if ("Giảm giá phần trăm".equals(selected)) {
-                lblGiaTri.setText("Giá trị (%):");
-            } else {
-                lblGiaTri.setText("Giá trị (VND):");
-            }
+            lblGiaTri.setText("Giá trị (VND):");
         }
     }
 
-    private void onThemButtonClick() {
-        if (!validateForm()) {
-            return;
-        }
-
+    private void onThem() {
         try {
-            KhuyenMai_DAO khuyenMaiDAO = new KhuyenMai_DAO();
-            String maKM = khuyenMaiDAO.taoMaKhuyenMai();
-            
-            String tenKM = txtTenKM.getText().trim();
-            boolean laKMHoaDon = radKMHoaDon.isSelected();
-            LocalDate ngayBatDau = dateBatDau.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            LocalDate ngayKetThuc = dateKetThuc.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            if (!validateForm()) return;
 
-            String selectedHinhThuc = cmbHinhThuc.getSelectedItem().toString();
+            String maKM = kmDAO.taoMaKhuyenMai();
+            String ten = txtTenKM.getText().trim();
+            boolean laHD = radKMHoaDon.isSelected();
+            LocalDate ngayBD = dateBatDau.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            LocalDate ngayKT = dateKetThuc.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            boolean tt = chkTrangThai.isSelected();
+
+            String selected = (String) cmbHinhThuc.getSelectedItem();
             HinhThucKM hinhThuc;
-            double giaTri = 0;
-            int slToiThieu = 0, slTangThem = 0;
+            double giaTri;
 
-            if ("Giảm giá phần trăm".equals(selectedHinhThuc)) {
+            if ("Giảm giá phần trăm".equals(selected)) {
                 hinhThuc = HinhThucKM.GIAM_GIA_PHAN_TRAM;
                 giaTri = Double.parseDouble(txtGiaTri.getText());
-            } else if ("Giảm giá tiền".equals(selectedHinhThuc)) {
+            } else {
                 hinhThuc = HinhThucKM.GIAM_GIA_TIEN;
                 giaTri = Double.parseDouble(txtGiaTri.getText());
-            } else {
-                hinhThuc = HinhThucKM.TANG_THEM;
-                slToiThieu = Integer.parseInt(txtSoLuongToiThieu.getText());
-                slTangThem = Integer.parseInt(txtSoLuongTangThem.getText());
             }
 
             double dieuKien = 0;
-            if(laKMHoaDon) {
+            if (laHD) {
                 dieuKien = Double.parseDouble(txtDieuKienGiaTri.getText());
             }
 
-            boolean trangThai = chkTrangThai.isSelected();
+            KhuyenMai km = new KhuyenMai(
+                    maKM,
+                    ten,
+                    ngayBD,
+                    ngayKT,
+                    tt,
+                    laHD,
+                    hinhThuc,
+                    giaTri,
+                    dieuKien,
+                    0
+            );
 
-            this.khuyenMaiMoi = new KhuyenMai(maKM, tenKM, ngayBatDau, ngayKetThuc, trangThai, laKMHoaDon, hinhThuc,
-                                            giaTri, dieuKien, slToiThieu, slTangThem);
+            // KHÔNG insert DB ở đây, chỉ trả object về cho GUI
+            this.khuyenMaiMoi = km;
             dispose();
 
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Đã xảy ra lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage(), "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private boolean validateForm() {
         if (txtTenKM.getText().trim().isEmpty()) {
-            showError("Tên khuyến mãi không được rỗng.", txtTenKM);
+            JOptionPane.showMessageDialog(this, "Tên khuyến mãi không được để trống!");
             return false;
         }
         if (dateBatDau.getDate() == null || dateKetThuc.getDate() == null) {
-            showError("Ngày bắt đầu và kết thúc không được rỗng.", dateBatDau);
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày bắt đầu và kết thúc!");
             return false;
         }
-        LocalDate ngayBatDau = dateBatDau.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate ngayKetThuc = dateKetThuc.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        if (ngayBatDau.isAfter(ngayKetThuc)) {
-            showError("Ngày bắt đầu không được sau ngày kết thúc.", dateBatDau);
+        LocalDate bd = dateBatDau.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate kt = dateKetThuc.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        if (bd.isAfter(kt)) {
+            JOptionPane.showMessageDialog(this, "Ngày bắt đầu không được sau ngày kết thúc!");
             return false;
         }
-
-        String selectedHinhThuc = cmbHinhThuc.getSelectedItem().toString();
-        try {
-            if ("Giảm giá phần trăm".equals(selectedHinhThuc)) {
-                double giaTri = Double.parseDouble(txtGiaTri.getText());
-                if (giaTri <= 0 || giaTri > 100) {
-                    showError("Giá trị khuyến mãi (%) phải từ 1 đến 100.", txtGiaTri);
-                    return false;
-                }
-            } else if ("Giảm giá tiền".equals(selectedHinhThuc)) {
-                double giaTri = Double.parseDouble(txtGiaTri.getText());
-                if (giaTri <= 0) {
-                    showError("Giá trị khuyến mãi (VND) phải lớn hơn 0.", txtGiaTri);
-                    return false;
-                }
-            } else {
-                int slToiThieu = Integer.parseInt(txtSoLuongToiThieu.getText());
-                int slTangThem = Integer.parseInt(txtSoLuongTangThem.getText());
-                if (slToiThieu <= 0 || slTangThem <= 0) {
-                    showError("Số lượng tối thiểu và tặng thêm phải lớn hơn 0.", txtSoLuongToiThieu);
-                    return false;
-                }
-            }
-        } catch (NumberFormatException e) {
-            showError("Giá trị/Số lượng phải là một con số hợp lệ.", null);
+        if (txtGiaTri.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập giá trị khuyến mãi!");
             return false;
         }
-
-        if (radKMHoaDon.isSelected()) {
-            try {
-                double dieuKien = Double.parseDouble(txtDieuKienGiaTri.getText());
-                if (dieuKien < 0) {
-                    showError("Giá trị hóa đơn tối thiểu phải lớn hơn hoặc bằng 0.", txtDieuKienGiaTri);
-                    return false;
-                }
-            } catch (NumberFormatException e) {
-                showError("Giá trị hóa đơn tối thiểu phải là một con số hợp lệ.", txtDieuKienGiaTri);
-                return false;
-            }
-        }
-        
         return true;
-    }
-    
-    private void showError(String message, JComponent c) {
-        JOptionPane.showMessageDialog(this, message, "Lỗi dữ liệu", JOptionPane.WARNING_MESSAGE);
-        if (c != null) c.requestFocus();
     }
 
     public KhuyenMai getKhuyenMaiMoi() {

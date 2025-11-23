@@ -1,6 +1,12 @@
 package gui;
 
 import java.awt.*;
+import java.awt.event.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
@@ -8,266 +14,417 @@ import javax.swing.table.*;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
+import entity.BangGia; // Giả định bạn có entity này
+import entity.ChiTietBangGia; // Giả định bạn có entity này
 
-public class BangGia_GUI extends JPanel {
+@SuppressWarnings("serial")
+public class BangGia_GUI extends JPanel implements ActionListener {
 
-    private JPanel pnCenter;
-    private JPanel pnHeader;
-    private JPanel pnLeft;
-    private JTextField txtTimThuoc;
-    private JTextField txtTiLe;
-    private JPanel pnLoc;
+    // --- COMPONENTS UI ---
+    private JPanel pnHeader, pnCenter;
+    private JSplitPane splitPane;
+
+    // Form nhập liệu (Master)
+    private JTextField txtMaBG, txtTenBG, txtNgayApDung;
+    private JComboBox<String> cboTrangThai;
+    private JCheckBox chkHoatDong;
+
+    // Panel Nút bấm (Master)
+    private PillButton btnThem, btnSua, btnXoa, btnLamMoi, btnTimKiem;
+    
+    // Header (Tìm kiếm)
+    private JTextField txtTimKiem;
+
+    // Tab 1: Danh sách Bảng Giá
+    private JTable tblBangGia;
+    private DefaultTableModel modelBangGia;
+
+    // Tab 2: Chi tiết Quy tắc giá
+    private JTable tblChiTiet;
+    private DefaultTableModel modelChiTiet;
+    private PillButton btnThemCT, btnXoaCT; // Nút thao tác chi tiết
+    private JTextField txtGiaTu, txtGiaDen, txtTiLe; // Input nhập nhanh chi tiết
+
+    // Tab 3: Mô phỏng giá
+    private JTable tblMoPhong;
+    private DefaultTableModel modelMoPhong;
+
+    // Utils
+    private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 16);
+    private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 16);
+    private final Color COLOR_PRIMARY = new Color(33, 150, 243);
 
     public BangGia_GUI() {
-        this.setPreferredSize(new Dimension(1537, 850));
+        setPreferredSize(new Dimension(1537, 850));
         initialize();
     }
 
     private void initialize() {
         setLayout(new BorderLayout());
-        setPreferredSize(new Dimension(1537, 1168));
+        setBackground(Color.WHITE);
 
-        // ===== HEADER =====
-        pnHeader = new JPanel();
-        pnHeader.setPreferredSize(new Dimension(1073, 88));
-        pnHeader.setBackground(new Color(0xE3F2F5));
-        pnHeader.setLayout(null);
+        // 1. HEADER
+        taoPhanHeader();
         add(pnHeader, BorderLayout.NORTH);
 
-        // --- Ô tìm kiếm ---
-        txtTimThuoc = new JTextField("");
-        txtTimThuoc.setBounds(20, 17, 420, 60);
-        PlaceholderSupport.addPlaceholder(txtTimThuoc, "Tìm kiếm sản phẩm theo mã");
-        txtTimThuoc.setForeground(Color.GRAY);
-        txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        txtTimThuoc.setPreferredSize(new Dimension(420, 44));
-        txtTimThuoc.setBorder(new RoundedBorder(20));
-        pnHeader.add(txtTimThuoc);
+        // 2. CENTER (SplitPane: Form + Tabs)
+        taoPhanCenter();
+        add(pnCenter, BorderLayout.CENTER);
+        
+        // Load data mẫu
+        loadDataSample();
+    }
 
-        // ===== PANEL LỌC VÀ SẮP XẾP =====
-        pnLoc = new JPanel(new GridBagLayout());
-        pnLoc.setBounds(460, 9, 600, 70);
-        pnLoc.setOpaque(false);
-        TitledBorder titledBorder = BorderFactory.createTitledBorder(" Lọc và Sắp xếp ");
-        titledBorder.setTitleFont(new Font("Segoe UI", Font.BOLD, 14));
-        pnLoc.setBorder(titledBorder);
-        pnHeader.add(pnLoc);
+    // ==========================================================================
+    //                              PHẦN HEADER
+    // ==========================================================================
+    private void taoPhanHeader() {
+        pnHeader = new JPanel(null);
+        pnHeader.setPreferredSize(new Dimension(1073, 94));
+        pnHeader.setBackground(new Color(0xE3F2F5));
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.WEST;
+        txtTimKiem = new JTextField();
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã, tên bảng giá...");
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
+        txtTimKiem.setBounds(25, 17, 500, 60);
+        txtTimKiem.setBorder(new RoundedBorder(20));
+        txtTimKiem.setBackground(Color.WHITE);
+        txtTimKiem.setForeground(Color.GRAY);
+        pnHeader.add(txtTimKiem);
 
-        // === Các component trong pnLoc (fix lỗi add nhiều lần) ===
-        GridBagConstraints gbc1 = (GridBagConstraints) gbc.clone();
-        gbc1.gridx = 0; gbc1.gridy = 0;
-        JLabel lblLoaiSP = new JLabel("Loại sản phẩm:");
-        lblLoaiSP.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        pnLoc.add(lblLoaiSP, gbc1);
+        btnTimKiem = new PillButton("Tìm kiếm");
+        btnTimKiem.setBounds(540, 22, 130, 50);
+        btnTimKiem.setFont(FONT_BOLD);
+        btnTimKiem.addActionListener(e -> JOptionPane.showMessageDialog(this, "Chức năng tìm kiếm"));
+        pnHeader.add(btnTimKiem);
+    }
 
-        GridBagConstraints gbc2 = (GridBagConstraints) gbc.clone();
-        gbc2.gridx = 1; gbc2.gridy = 0;
-        gbc2.insets = new Insets(5, 5, 5, 20);
-        String[] dsLoaiSP = {"Tất cả", "Thuốc giảm đau", "Kháng sinh", "Vitamin & Khoáng chất", "Dược mỹ phẩm", "Thiết bị y tế"};
-        JComboBox<String> cbLoaiSP = new JComboBox<>(dsLoaiSP);
-        cbLoaiSP.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        pnLoc.add(cbLoaiSP, gbc2);
-
-        GridBagConstraints gbc3 = (GridBagConstraints) gbc.clone();
-        gbc3.gridx = 2; gbc3.gridy = 0;
-        JLabel lblGiaBan = new JLabel("Giá bán:");
-        lblGiaBan.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        pnLoc.add(lblGiaBan, gbc3);
-
-        GridBagConstraints gbc4 = (GridBagConstraints) gbc.clone();
-        gbc4.gridx = 3; gbc4.gridy = 0;
-        JRadioButton rdbTangDan = new JRadioButton("Tăng dần");
-        rdbTangDan.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        rdbTangDan.setOpaque(false);
-        rdbTangDan.setSelected(true);
-        pnLoc.add(rdbTangDan, gbc4);
-
-        GridBagConstraints gbc5 = (GridBagConstraints) gbc.clone();
-        gbc5.gridx = 4; gbc5.gridy = 0;
-        JRadioButton rdbGiamDan = new JRadioButton("Giảm dần");
-        rdbGiamDan.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        rdbGiamDan.setOpaque(false);
-        pnLoc.add(rdbGiamDan, gbc5);
-
-        ButtonGroup groupGia = new ButtonGroup();
-        groupGia.add(rdbTangDan);
-        groupGia.add(rdbGiamDan);
-
-        // ===== LEFT =====
-        pnLeft = new JPanel(null);
-        pnLeft.setPreferredSize(new Dimension(300, 1080));
-        pnLeft.setBackground(Color.WHITE);
-        pnLeft.setBorder(new EmptyBorder(20, 20, 20, 20));
-        add(pnLeft, BorderLayout.WEST);
-
-        JLabel lblDieuChinhGia = new JLabel("Điều chỉnh giá");
-        lblDieuChinhGia.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        lblDieuChinhGia.setBounds(20, 10, 260, 30);
-        pnLeft.add(lblDieuChinhGia);
-
-        JSeparator line = new JSeparator();
-        line.setBounds(20, 45, 260, 1);
-        pnLeft.add(line);
-
-        JLabel lblCongThuc = new JLabel("Giá bán = Giá nhập + Tỉ lệ (%)");
-        lblCongThuc.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        lblCongThuc.setForeground(Color.RED);
-        lblCongThuc.setBounds(20, 60, 260, 25);
-        pnLeft.add(lblCongThuc);
-
-        JLabel lblTiLe = new JLabel("Tỉ lệ %:");
-        lblTiLe.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblTiLe.setBounds(20, 95, 60, 25);
-        pnLeft.add(lblTiLe);
-
-        txtTiLe = new JTextField();
-        txtTiLe.setBounds(80, 90, 100, 30);
-        txtTiLe.setHorizontalAlignment(SwingConstants.RIGHT);
-        txtTiLe.setForeground(new Color(0, 121, 107));
-        txtTiLe.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        txtTiLe.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(0x00C0E2), 2, true),
-                new EmptyBorder(5, 8, 5, 8)
-        ));
-        txtTiLe.setBackground(new Color(240, 250, 250));
-        pnLeft.add(txtTiLe);
-
-        JLabel lblPhanTram = new JLabel("%");
-        lblPhanTram.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblPhanTram.setBounds(190, 95, 20, 25);
-        pnLeft.add(lblPhanTram);
-
-        JLabel lblKhoang = new JLabel("Khoảng giá nhập:");
-        lblKhoang.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblKhoang.setBounds(20, 135, 200, 25);
-        pnLeft.add(lblKhoang);
-
-        String[] giaTuMau = {"0", "1.000", "5.000", "10.000", "20.000"};
-        String[] giaDenMau = {"10.000", "20.000", "50.000", "100.000", "200.000", "Trở lên"};
-
-        JComboBox<String> cbGiaTu = new JComboBox<>(giaTuMau);
-        cbGiaTu.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        cbGiaTu.setEditable(true);
-        cbGiaTu.setBounds(20, 165, 90, 30);
-        pnLeft.add(cbGiaTu);
-
-        JLabel lblDen = new JLabel("đến");
-        lblDen.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        lblDen.setBounds(115, 170, 30, 20);
-        pnLeft.add(lblDen);
-
-        JComboBox<String> cbGiaDen = new JComboBox<>(giaDenMau);
-        cbGiaDen.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        cbGiaDen.setEditable(true);
-        cbGiaDen.setBounds(150, 165, 100, 30);
-        pnLeft.add(cbGiaDen);
-
-        JButton btnApDung = new PillButton("Áp dụng");
-        btnApDung.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnApDung.setBounds(80, 210, 120, 35);
-        pnLeft.add(btnApDung);
-
-        String[] cols = {"Giá từ", "Giá đến", "Tỉ lệ (%)"};
-        DefaultTableModel modelMoc = new DefaultTableModel(cols, 0);
-        JTable tblMocGia = new JTable(modelMoc);
-        tblMocGia.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        tblMocGia.setRowHeight(24);
-        tblMocGia.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        tblMocGia.getTableHeader().setBackground(new Color(245, 247, 250));
-        tblMocGia.getTableHeader().setForeground(Color.BLACK);
-        tblMocGia.setGridColor(new Color(230, 230, 230));
-        tblMocGia.setShowVerticalLines(false);
-
-        JScrollPane sp = new JScrollPane(tblMocGia);
-        sp.setBounds(20, 260, 260, 200);
-        sp.setBorder(BorderFactory.createLineBorder(new Color(0xE0E0E0)));
-        pnLeft.add(sp);
-
-        // ===== CENTER =====
+    // ==========================================================================
+    //                              PHẦN CENTER (SPLIT PANE)
+    // ==========================================================================
+    private void taoPhanCenter() {
         pnCenter = new JPanel(new BorderLayout());
         pnCenter.setBackground(Color.WHITE);
-        pnCenter.setBorder(new LineBorder(new Color(200, 200, 200)));
-        add(pnCenter, BorderLayout.CENTER);
+        pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        String[] columnNames = {"Mã sản phẩm", "Tên sản phẩm", "Giá nhập (VNĐ)", "Giá bán (VNĐ)"};
-        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+        // --- A. PHẦN TRÊN (TOP): FORM + NÚT ---
+        JPanel pnTopWrapper = new JPanel(new BorderLayout());
+        pnTopWrapper.setBackground(Color.WHITE);
+        pnTopWrapper.setBorder(createTitledBorder("Thông tin bảng giá"));
 
-        Object[][] duLieu = {
-            {"SP-001", "Paracetamol 500mg", 1500, 2500},
-            {"SP-002", "Amoxicillin 500mg", 2500, 4000},
-            {"SP-003", "Vitamin C 500mg", 800, 1500},
-            {"SP-004", "Panadol Extra", 2000, 3500},
-            {"SP-005", "Cefuroxime 250mg", 4500, 7000},
-            {"SP-006", "Aspirin 81mg", 1200, 2000},
-            {"SP-007", "Efferalgan 500mg", 1800, 3000},
-            {"SP-008", "Clarithromycin 500mg", 5000, 8000},
-            {"SP-009", "Azithromycin 250mg", 4200, 7000},
-            {"SP-010", "Omeprazol 20mg", 2000, 3500}
+        // A1. Form Nhập Liệu
+        JPanel pnForm = new JPanel(null);
+        pnForm.setBackground(Color.WHITE);
+        taoFormNhapLieu(pnForm); 
+        pnTopWrapper.add(pnForm, BorderLayout.CENTER);
+
+        // A2. Panel Nút Chức Năng
+        JPanel pnButton = new JPanel();
+        pnButton.setBackground(Color.WHITE);
+        taoPanelNutBam(pnButton); 
+        pnTopWrapper.add(pnButton, BorderLayout.EAST);
+
+        // --- B. PHẦN DƯỚI (BOTTOM): TABBED PANE ---
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(FONT_TEXT);
+
+        // Tab 1: Danh sách Bảng Giá
+        JPanel pnTab1 = new JPanel(new BorderLayout());
+        pnTab1.setBackground(Color.WHITE);
+        taoBangDanhSach(pnTab1);
+        tabbedPane.addTab("Danh sách Bảng Giá", pnTab1);
+
+        // Tab 2: Cấu hình Quy tắc giá
+        JPanel pnTab2 = new JPanel(new BorderLayout());
+        pnTab2.setBackground(Color.WHITE);
+        taoBangChiTiet(pnTab2);
+        tabbedPane.addTab("Cấu hình Quy tắc giá", pnTab2);
+        
+        // Tab 3: Xem thử giá bán (Mô phỏng)
+        JPanel pnTab3 = new JPanel(new BorderLayout());
+        pnTab3.setBackground(Color.WHITE);
+        taoBangMoPhong(pnTab3);
+        tabbedPane.addTab("Xem thử giá bán (Mô phỏng)", pnTab3);
+
+        // --- C. TẠO SPLIT PANE ---
+        splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pnTopWrapper, tabbedPane);
+        splitPane.setDividerLocation(280); // Form bảng giá ngắn hơn form sản phẩm
+        splitPane.setResizeWeight(0.0); 
+        
+        pnCenter.add(splitPane, BorderLayout.CENTER);
+    }
+
+    // --- FORM NHẬP LIỆU ---
+    private void taoFormNhapLieu(JPanel p) {
+        int xStart = 50, yStart = 40;
+        int hText = 35, wLbl = 120, wTxt = 300, gap = 25;
+
+        // =========== CỘT 1 ===========
+        p.add(createLabel("Mã BG:", xStart, yStart));
+        txtMaBG = createTextField(xStart + wLbl, yStart, wTxt);
+        txtMaBG.setEditable(false);
+        p.add(txtMaBG);
+
+        p.add(createLabel("Tên BG:", xStart, yStart + (hText + gap)));
+        txtTenBG = createTextField(xStart + wLbl, yStart + (hText + gap), wTxt);
+        p.add(txtTenBG);
+
+        // Checkbox (trải ngang rộng giống NCC – dòng riêng)
+        p.add(createLabel("Áp dụng:", xStart, yStart + (hText + gap)*2));
+        chkHoatDong = new JCheckBox("Đặt làm bảng giá mặc định");
+        chkHoatDong.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        chkHoatDong.setBackground(Color.WHITE);
+        chkHoatDong.setBounds(xStart + wLbl, yStart + (hText + gap)*2 + 5, wTxt + 150, hText);
+        p.add(chkHoatDong);
+
+
+        // =========== CỘT 2 ===========
+        int xCol2 = xStart + wLbl + wTxt + 50;
+
+        p.add(createLabel("Ngày áp dụng:", xCol2, yStart));
+        txtNgayApDung = createTextField(xCol2 + wLbl, yStart, wTxt);
+        p.add(txtNgayApDung);
+
+        p.add(createLabel("Trạng thái:", xCol2, yStart + (hText + gap)));
+        cboTrangThai = new JComboBox<>(new String[]{
+            "Đang hoạt động",
+            "Ngừng hoạt động",
+            "Chưa áp dụng"
+        });
+        cboTrangThai.setFont(FONT_TEXT);
+        cboTrangThai.setBounds(xCol2 + wLbl, yStart + (hText + gap), wTxt, hText);
+        p.add(cboTrangThai);
+    }
+
+
+    // --- PANEL NÚT BẤM (MASTER) ---
+    private void taoPanelNutBam(JPanel p) {
+        p.setPreferredSize(new Dimension(200, 0));
+        p.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, Color.LIGHT_GRAY));
+        
+        p.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.insets = new Insets(10, 0, 10, 0);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        int btnH = 45;
+        int btnW = 140;
+
+        btnThem = createPillButton("Tạo mới", btnW, btnH);
+        gbc.gridy = 0; p.add(btnThem, gbc);
+
+        btnSua = createPillButton("Cập nhật", btnW, btnH);
+        gbc.gridy = 1; p.add(btnSua, gbc);
+
+        btnXoa = createPillButton("Xóa", btnW, btnH);
+        gbc.gridy = 2; p.add(btnXoa, gbc);
+
+        btnLamMoi = createPillButton("Làm mới", btnW, btnH);
+        gbc.gridy = 3; p.add(btnLamMoi, gbc);
+    }
+
+    // --- TAB 1: BẢNG DANH SÁCH BẢNG GIÁ ---
+    private void taoBangDanhSach(JPanel p) {
+        String[] cols = {"Mã Bảng Giá", "Tên Bảng Giá", "Ngày áp dụng", "Người lập", "Trạng thái"};
+        modelBangGia = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
         };
+        tblBangGia = setupTable(modelBangGia);
 
-        for (Object[] row : duLieu) model.addRow(row);
-
-        JTable table = new JTable(model);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        table.setRowHeight(34);
-        table.setGridColor(new Color(230, 230, 230));
-        table.setShowHorizontalLines(true);
-        table.setShowVerticalLines(false);
-        table.setSelectionBackground(new Color(204, 229, 255));
-        table.setSelectionForeground(Color.BLACK);
-        table.setIntercellSpacing(new Dimension(8, 5));
-        table.setBackground(Color.WHITE);
-        table.setFillsViewportHeight(true);
-
-        JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        header.setBackground(new Color(33, 150, 243));
-        header.setForeground(Color.WHITE);
-        header.setPreferredSize(new Dimension(100, 40));
-        header.setReorderingAllowed(false);
-
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
-        table.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
-        table.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
-
-        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+        // Render Trạng thái
+        tblBangGia.getColumnModel().getColumn(4).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value,
-                    boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                if (!isSelected) {
-                    c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(245, 248, 252));
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                lbl.setHorizontalAlignment(SwingConstants.CENTER);
+                if("Đang hoạt động".equals(value)) {
+                    lbl.setForeground(new Color(0, 128, 0));
+                    lbl.setFont(FONT_BOLD);
+                } else {
+                    lbl.setForeground(Color.GRAY);
                 }
-                return c;
+                return lbl;
             }
         });
 
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        pnCenter.add(scrollPane, BorderLayout.CENTER);
+        // Event click
+        tblBangGia.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // Logic load dữ liệu lên form và load chi tiết xuống Tab 2
+                int row = tblBangGia.getSelectedRow();
+                if(row >= 0) {
+                    txtMaBG.setText(tblBangGia.getValueAt(row, 0).toString());
+                    txtTenBG.setText(tblBangGia.getValueAt(row, 1).toString());
+                    // Load chi tiết (Giả lập)
+                    loadChiTietMau(); 
+                }
+            }
+        });
+
+        JScrollPane scr = new JScrollPane(tblBangGia);
+        scr.setBorder(BorderFactory.createEmptyBorder());
+        p.add(scr, BorderLayout.CENTER);
     }
 
-    private double parseGia(String giaStr) {
-        try {
-            giaStr = giaStr.replaceAll("[^\\d]", "");
-            if (giaStr.isEmpty()) return 0;
-            return Double.parseDouble(giaStr);
-        } catch (Exception e) {
-            return 0;
+    // --- TAB 2: BẢNG CHI TIẾT QUY TẮC ---
+    private void taoBangChiTiet(JPanel p) {
+        // Toolbar nhập liệu nhanh cho chi tiết
+        JPanel pnToolBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
+        pnToolBar.setBackground(Color.WHITE);
+        pnToolBar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY));
+
+        pnToolBar.add(new JLabel("Giá từ:"));
+        txtGiaTu = new JTextField(10); pnToolBar.add(txtGiaTu);
+        
+        pnToolBar.add(new JLabel("Đến:"));
+        txtGiaDen = new JTextField(10); pnToolBar.add(txtGiaDen);
+        
+        pnToolBar.add(new JLabel("Tỉ lệ (VD 1.2):"));
+        txtTiLe = new JTextField(5); pnToolBar.add(txtTiLe);
+
+        btnThemCT = createPillButton("Thêm quy tắc", 130, 35);
+        btnThemCT.setFont(FONT_TEXT);
+        pnToolBar.add(btnThemCT);
+        
+        btnXoaCT = createPillButton("Xóa quy tắc", 130, 35);
+        btnXoaCT.setFont(FONT_TEXT);
+        pnToolBar.add(btnXoaCT);
+        
+        p.add(pnToolBar, BorderLayout.NORTH);
+
+        // Table
+        String[] cols = {"STT", "Giá nhập từ", "Giá nhập đến", "Tỉ lệ định giá", "Lợi nhuận dự kiến"};
+        modelChiTiet = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        tblChiTiet = setupTable(modelChiTiet);
+        
+        JScrollPane scr = new JScrollPane(tblChiTiet);
+        scr.setBorder(BorderFactory.createEmptyBorder());
+        p.add(scr, BorderLayout.CENTER);
+    }
+    
+    // --- TAB 3: BẢNG MÔ PHỎNG ---
+    private void taoBangMoPhong(JPanel p) {
+        // Table
+        String[] cols = {"Mã SP", "Tên thuốc mẫu", "Giá nhập (Vốn)", "Tỉ lệ áp dụng", "Giá bán ra (Tính toán)"};
+        modelMoPhong = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        tblMoPhong = setupTable(modelMoPhong);
+        
+        // Tô đỏ giá bán
+        tblMoPhong.getColumnModel().getColumn(4).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                lbl.setHorizontalAlignment(SwingConstants.RIGHT);
+                lbl.setForeground(Color.RED);
+                lbl.setFont(FONT_BOLD);
+                return lbl;
+            }
+        });
+        
+        JScrollPane scr = new JScrollPane(tblMoPhong);
+        scr.setBorder(BorderFactory.createEmptyBorder());
+        p.add(scr, BorderLayout.CENTER);
+    }
+
+    // ==========================================================================
+    //                              DATA MẪU & HELPERS
+    // ==========================================================================
+    
+    private void loadDataSample() {
+        modelBangGia.addRow(new Object[]{"BG-20250101-001", "Bảng giá chuẩn 2025", "01/01/2025", "Admin", "Đang hoạt động"});
+        modelBangGia.addRow(new Object[]{"BG-20240101-001", "Bảng giá cũ 2024", "01/01/2024", "NV01", "Ngừng hoạt động"});
+    }
+    
+    private void loadChiTietMau() {
+        modelChiTiet.setRowCount(0);
+        modelChiTiet.addRow(new Object[]{"1", "0", "10,000", "1.5", "50%"});
+        modelChiTiet.addRow(new Object[]{"2", "10,001", "100,000", "1.3", "30%"});
+        modelChiTiet.addRow(new Object[]{"3", "100,001", "Trở lên", "1.1", "10%"});
+        
+        modelMoPhong.setRowCount(0);
+        modelMoPhong.addRow(new Object[]{"SP001", "Paracetamol", "5,000", "1.5", "7,500"});
+        modelMoPhong.addRow(new Object[]{"SP002", "Thuốc bổ não", "50,000", "1.3", "65,000"});
+        modelMoPhong.addRow(new Object[]{"SP003", "Máy đo huyết áp", "500,000", "1.1", "550,000"});
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object o = e.getSource();
+        if (o.equals(btnThemCT)) {
+            // Logic thêm dòng vào bảng chi tiết từ ô nhập nhanh
+            if(txtTiLe.getText().isEmpty()) return;
+            modelChiTiet.addRow(new Object[]{
+                modelChiTiet.getRowCount()+1, 
+                txtGiaTu.getText(), 
+                txtGiaDen.getText(), 
+                txtTiLe.getText(), 
+                "Unknown"
+            });
+        } else if (o.equals(btnXoaCT)) {
+            int row = tblChiTiet.getSelectedRow();
+            if(row != -1) modelChiTiet.removeRow(row);
         }
+        // Các nút khác xử lý tương tự Quản lý Sản phẩm
+    }
+
+    // --- UI Helpers ---
+    private JLabel createLabel(String text, int x, int y) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(FONT_TEXT);
+        lbl.setBounds(x, y, 120, 35);
+        return lbl;
+    }
+
+    private JTextField createTextField(int x, int y, int w) {
+        JTextField txt = new JTextField();
+        txt.setFont(FONT_TEXT);
+        txt.setBounds(x, y, w, 35);
+        return txt;
+    }
+
+    private PillButton createPillButton(String text, int w, int h) {
+        PillButton btn = new PillButton(text);
+        btn.setFont(FONT_BOLD);
+        btn.setPreferredSize(new Dimension(w, h));
+        btn.addActionListener(this);
+        return btn;
+    }
+
+    private JTable setupTable(DefaultTableModel model) {
+        JTable table = new JTable(model);
+        table.setFont(FONT_TEXT);
+        table.setRowHeight(35);
+        table.setSelectionBackground(new Color(0xC8E6C9));
+        table.setSelectionForeground(Color.BLACK);
+        table.getTableHeader().setFont(FONT_BOLD);
+        table.getTableHeader().setBackground(COLOR_PRIMARY);
+        table.getTableHeader().setForeground(Color.WHITE);
+        
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(JLabel.CENTER);
+        table.getColumnModel().getColumn(0).setCellRenderer(center);
+        
+        return table;
+    }
+
+    private TitledBorder createTitledBorder(String title) {
+        return BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
+            TitledBorder.LEFT, TitledBorder.TOP, FONT_BOLD, Color.DARK_GRAY
+        );
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Bảng giá");
+            JFrame frame = new JFrame("Quản Lý Bảng Giá");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1280, 800);
+            frame.setSize(1500, 850);
             frame.setLocationRelativeTo(null);
             frame.setContentPane(new BangGia_GUI());
             frame.setVisible(true);

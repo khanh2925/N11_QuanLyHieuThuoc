@@ -11,10 +11,10 @@ public class KhachHang {
     private boolean gioiTinh;
     private String soDienThoai;
     private LocalDate ngaySinh;
+    private boolean hoatDong = true;
+    private List<HoaDon> danhSachHoaDon; // chỉ dùng trong code, DB không lưu
 
-    // Nếu cần tính điểm theo hóa đơn thì sau này có thể thêm DAO xử lý
-    private List<HoaDon> danhSachHoaDon;
-
+    // ===== CONSTRUCTORS =====
     public KhachHang() {
     }
 
@@ -27,24 +27,23 @@ public class KhachHang {
         setNgaySinh(ngaySinh);
     }
 
-    public KhachHang(KhachHang other) {
-        this.maKhachHang = other.maKhachHang;
-        this.tenKhachHang = other.tenKhachHang;
-        this.gioiTinh = other.gioiTinh;
-        this.soDienThoai = other.soDienThoai;
-        this.ngaySinh = other.ngaySinh;
-    }
-
+    // ===== GETTERS / SETTERS =====
     public String getMaKhachHang() {
         return maKhachHang;
     }
 
     public void setMaKhachHang(String maKhachHang) {
-        if (maKhachHang != null && maKhachHang.matches("^KH-\\d{4}$")) {
-            this.maKhachHang = maKhachHang;
-        } else {
-            throw new IllegalArgumentException("Mã khách hàng không hợp lệ. Định dạng yêu cầu: KH-xxxx");
+        if (maKhachHang == null)
+            throw new IllegalArgumentException("Mã khách hàng không được để trống");
+
+        maKhachHang = maKhachHang.trim(); // loại bỏ khoảng trắng đầu/cuối
+
+        // Regex chuẩn: KH-yyyymmdd-xxxx (ví dụ KH-20251104-0001)
+        if (!maKhachHang.matches("^KH-\\d{8}-\\d{4}$")) {
+            throw new IllegalArgumentException("Mã khách hàng không hợp lệ. Định dạng: KH-yyyymmdd-xxxx");
         }
+
+        this.maKhachHang = maKhachHang;
     }
 
     public String getTenKhachHang() {
@@ -52,13 +51,11 @@ public class KhachHang {
     }
 
     public void setTenKhachHang(String tenKhachHang) {
-        if (tenKhachHang == null || tenKhachHang.trim().isEmpty()) {
+        if (tenKhachHang == null || tenKhachHang.trim().isEmpty())
             throw new IllegalArgumentException("Tên khách hàng không được rỗng.");
-        }
-        if (tenKhachHang.length() > 100) {
-            throw new IllegalArgumentException("Tên khách hàng không được vượt quá 100 ký tự.");
-        }
-        this.tenKhachHang = tenKhachHang;
+        if (tenKhachHang.length() > 100)
+            throw new IllegalArgumentException("Tên khách hàng không vượt quá 100 ký tự.");
+        this.tenKhachHang = tenKhachHang.trim();
     }
 
     public boolean isGioiTinh() {
@@ -74,11 +71,8 @@ public class KhachHang {
     }
 
     public void setSoDienThoai(String soDienThoai) {
-        if (soDienThoai != null && !soDienThoai.trim().isEmpty()) {
-            if (!soDienThoai.matches("^0\\d{9}$")) {
-                throw new IllegalArgumentException("Số điện thoại không hợp lệ (phải gồm 10 chữ số và bắt đầu bằng 0).");
-            }
-        }
+        if (soDienThoai == null || !soDienThoai.matches("^0\\d{9}$"))
+            throw new IllegalArgumentException("SĐT không hợp lệ (10 chữ số, bắt đầu bằng 0).");
         this.soDienThoai = soDienThoai;
     }
 
@@ -87,13 +81,19 @@ public class KhachHang {
     }
 
     public void setNgaySinh(LocalDate ngaySinh) {
-        if (ngaySinh == null || ngaySinh.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Ngày sinh không hợp lệ (không được là ngày trong tương lai).");
-        }
-        if (ngaySinh.isAfter(LocalDate.now().minusYears(6))) {
-            throw new IllegalArgumentException("Khách hàng phải từ 6 tuổi trở lên.");
-        }
+        if (ngaySinh == null || ngaySinh.isAfter(LocalDate.now()))
+            throw new IllegalArgumentException("Ngày sinh không hợp lệ.");
+        if (ngaySinh.isAfter(LocalDate.now().minusYears(16)))
+            throw new IllegalArgumentException("Khách hàng phải từ 16 tuổi trở lên.");
         this.ngaySinh = ngaySinh;
+    }
+
+    public boolean isHoatDong() {
+        return hoatDong;
+    }
+
+    public void setHoatDong(boolean hoatDong) {
+        this.hoatDong = hoatDong;
     }
 
     public List<HoaDon> getDanhSachHoaDon() {
@@ -104,21 +104,24 @@ public class KhachHang {
         this.danhSachHoaDon = danhSachHoaDon;
     }
 
+    // ===== OVERRIDES =====
     @Override
     public String toString() {
-        return "KhachHang{" +
-                "maKhachHang='" + maKhachHang + '\'' +
-                ", tenKhachHang='" + tenKhachHang + '\'' +
-                ", gioiTinh=" + (gioiTinh ? "Nam" : "Nữ") +
-                ", soDienThoai='" + soDienThoai + '\'' +
-                ", ngaySinh=" + ngaySinh +
-                '}';
+        return String.format(
+                "KhachHang{ma='%s', ten='%s', sdt='%s', %s}",
+                maKhachHang,
+                tenKhachHang,
+                soDienThoai,
+                hoatDong ? "Hoạt động" : "Ngừng"
+        );
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof KhachHang))
+            return false;
         KhachHang that = (KhachHang) o;
         return Objects.equals(maKhachHang, that.maKhachHang);
     }
