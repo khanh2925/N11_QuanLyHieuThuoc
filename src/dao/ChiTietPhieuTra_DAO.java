@@ -37,10 +37,11 @@ public class ChiTietPhieuTra_DAO {
 				SELECT
 				    ctp.MaHoaDon, ctp.MaLo, ctp.SoLuong, ctp.ThanhTienHoan,
 				    ctp.LyDoChiTiet, ctp.TrangThai,
+				    ctp.MaDonViTinh AS MaDonViTinhCT,
 
 				    -- ChiTietHoaDon
 				    cthd.GiaBan, cthd.SoLuong AS SoLuongHD,
-				    cthd.MaDonViTinh, cthd.MaKM, cthd.ThanhTien AS ThanhTienHD,
+				    cthd.MaDonViTinh AS MaDonViTinhHD, cthd.MaKM, cthd.ThanhTien AS ThanhTienHD,
 
 				    -- LoSanPham
 				    lo.HanSuDung, lo.SoLuongTon,
@@ -53,13 +54,15 @@ public class ChiTietPhieuTra_DAO {
 				    km.TenKM, km.GiaTri, km.HinhThuc
 				FROM ChiTietPhieuTra ctp
 				LEFT JOIN ChiTietHoaDon cthd
-				    ON ctp.MaHoaDon = cthd.MaHoaDon AND ctp.MaLo = cthd.MaLo
+				    ON  ctp.MaHoaDon   = cthd.MaHoaDon
+				    AND ctp.MaLo       = cthd.MaLo
+				    AND ctp.MaDonViTinh = cthd.MaDonViTinh
 				LEFT JOIN LoSanPham lo
 				    ON lo.MaLo = ctp.MaLo
 				LEFT JOIN SanPham sp
 				    ON sp.MaSanPham = lo.MaSanPham
 				LEFT JOIN DonViTinh dvt
-				    ON dvt.MaDonViTinh = cthd.MaDonViTinh
+				    ON dvt.MaDonViTinh = ctp.MaDonViTinh
 				LEFT JOIN KhuyenMai km
 				    ON km.MaKM = cthd.MaKM
 				WHERE ctp.MaPhieuTra = ?
@@ -95,12 +98,11 @@ public class ChiTietPhieuTra_DAO {
 
 					// ========== ĐƠN VỊ TÍNH ==========
 					DonViTinh dvt = null;
-					if (rs.getString("MaDonViTinh") != null) {
+					if (rs.getString("MaDonViTinhCT") != null) {
 						dvt = new DonViTinh();
-						dvt.setMaDonViTinh(rs.getString("MaDonViTinh"));
+						dvt.setMaDonViTinh(rs.getString("MaDonViTinhCT"));
 						dvt.setTenDonViTinh(rs.getString("TenDonViTinh"));
 					}
-
 					// ========== KHUYẾN MÃI ==========
 					KhuyenMai km = null;
 					if (rs.getString("MaKM") != null) {
@@ -112,11 +114,8 @@ public class ChiTietPhieuTra_DAO {
 					}
 
 					// ========== ChiTietHoaDon ==========
-					ChiTietHoaDon cthd = new ChiTietHoaDon(hd, lo, rs.getInt("SoLuongHD"), // null → 0
-							dvt, rs.getDouble("GiaBan"), // null → 0
-							km
-
-					);
+					ChiTietHoaDon cthd = new ChiTietHoaDon(hd, lo, rs.getInt("SoLuongHD"), dvt, rs.getDouble("GiaBan"),
+							km);
 
 					// ========== Phiếu trả ==========
 					PhieuTra pt = new PhieuTra();
@@ -125,7 +124,7 @@ public class ChiTietPhieuTra_DAO {
 					// ========== ChiTietPhieuTra ==========
 					ChiTietPhieuTra ctpt = new ChiTietPhieuTra(pt, cthd, rs.getString("LyDoChiTiet"),
 							rs.getInt("SoLuong"), rs.getInt("TrangThai"));
-
+					ctpt.setDonViTinh(dvt);
 					ds.add(ctpt);
 				}
 			}
@@ -169,11 +168,12 @@ public class ChiTietPhieuTra_DAO {
 	// ============================================================
 	// 🔄 Cập nhật trạng thái của 1 chi tiết phiếu trả
 	// ============================================================
-	public boolean capNhatTrangThaiChiTiet(String maPhieuTra, String maHoaDon, String maLo, int trangThaiMoi) {
+	public boolean capNhatTrangThaiChiTiet(String maPhieuTra, String maHoaDon, String maLo, String maDonViTinh,
+			int trangThaiMoi) {
 		String sql = """
 				    UPDATE ChiTietPhieuTra
 				    SET TrangThai = ?
-				    WHERE MaPhieuTra = ? AND MaHoaDon = ? AND MaLo = ?
+				    WHERE MaPhieuTra = ? AND MaHoaDon = ? AND MaLo = ? AND MaDonViTinh = ?
 				""";
 
 		try (Connection con = connectDB.getConnection(); PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -182,6 +182,7 @@ public class ChiTietPhieuTra_DAO {
 			stmt.setString(2, maPhieuTra);
 			stmt.setString(3, maHoaDon);
 			stmt.setString(4, maLo);
+			stmt.setString(5, maDonViTinh);
 
 			return stmt.executeUpdate() > 0;
 		} catch (SQLException e) {

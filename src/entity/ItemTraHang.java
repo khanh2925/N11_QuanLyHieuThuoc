@@ -22,6 +22,7 @@ public class ItemTraHang {
 	private double donGiaGocTheoVien; // Giá thực tế trên 1 đơn vị gốc (viên)
 
 	private String lyDo;
+	private int soLuongMuaTheoDVT;
 
 	// ===================== CONSTRUCTOR CHUẨN ======================
 	public ItemTraHang(String maLo, String tenSanPham, List<ChiTietHoaDon> dsCthd, List<QuyCachDongGoi> dsQuyCach,
@@ -99,14 +100,8 @@ public class ItemTraHang {
 		// đơn giá theo DVT hiện tại
 		this.donGia = donGiaGocTheoVien * heSo;
 
-		// ===== QUAN TRỌNG: TÍNH SỐ LƯỢNG MUA THEO ĐƠN VỊ ĐANG CHỌN =====
-		if (heSo == 1) {
-			// đơn vị gốc (viên) → giữ nguyên tổng số viên đã mua
-			this.soLuongMua = soLuongMuaGoc;
-		} else {
-			// đơn vị lớn (vỉ/hộp...) → chỉ lấy phần nguyên
-			this.soLuongMua = soLuongMuaGoc / heSo;
-		}
+		this.soLuongMua = 0;
+		this.soLuongMuaTheoDVT = 0;
 
 		// chỉnh giới hạn trả
 		if (soLuongTra > soLuongMua) {
@@ -161,6 +156,10 @@ public class ItemTraHang {
 		this.soLuongTra = soLuongTra;
 	}
 
+	public int getSoLuongTraQuyVeGoc() {
+		return soLuongTra * quyCachDangChon.getHeSoQuyDoi();
+	}
+
 	public String getDonViTinh() {
 		return donViTinh;
 	}
@@ -190,6 +189,38 @@ public class ItemTraHang {
 			return null;
 		}
 		return dsCthd.get(0);
+	}
+
+	public int getSoLuongMuaTheoDVT() {
+		return soLuongMuaTheoDVT;
+	}
+
+	public void setSoLuongMuaTheoDVT(int sl) {
+		this.soLuongMuaTheoDVT = sl;
+	}
+
+	public void setSoLuongMua(int soLuongMua) {
+		this.soLuongMua = soLuongMua;
+	}
+
+	public int getSoLuongMuaGocTheoDVT() {
+		return getSoLuongMuaTheoDVT() * getQuyCachDangChon().getHeSoQuyDoi();
+	}
+
+	@Override
+	public ItemTraHang clone() {
+		ItemTraHang cp = new ItemTraHang(this.maLo, this.tenSanPham, new ArrayList<>(this.dsCthd),
+				new ArrayList<>(this.dsQuyCach), this.quyCachDangChon);
+
+		cp.soLuongTra = this.soLuongTra;
+		cp.lyDo = this.lyDo;
+		cp.soLuongMuaTheoDVT = this.soLuongMuaTheoDVT;
+		cp.soLuongMua = this.soLuongMua;
+		cp.quyCachDangChon = this.quyCachDangChon;
+		cp.donGia = this.donGia;
+		cp.donViTinh = this.donViTinh;
+
+		return cp;
 	}
 
 	// ===================== DEBUG ======================
