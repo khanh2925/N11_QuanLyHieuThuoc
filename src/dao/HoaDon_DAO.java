@@ -1,376 +1,484 @@
-package dao;
+package gui;
 
-import connectDB.connectDB;
-import entity.*;
-
-import java.sql.*;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import java.awt.*;
+import java.awt.event.*;
 import java.util.List;
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.table.*;
 
-public class HoaDon_DAO {
+import customcomponent.PillButton;
+import customcomponent.PlaceholderSupport;
+import customcomponent.RoundedBorder;
+import dao.NhaCungCap_DAO;
+import entity.NhaCungCap;
 
-	private final NhanVien_DAO nhanVienDAO;
-	private final KhachHang_DAO khachHangDAO;
-	private final ChiTietHoaDon_DAO chiTietHoaDonDAO;
-	private final QuyCachDongGoi_DAO quyCachDongGoiDAO;
-	private final KhuyenMai_DAO khuyenMaiDAO;
+@SuppressWarnings("serial")
+public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListener {
 
-	public HoaDon_DAO() {
-		this.nhanVienDAO = new NhanVien_DAO();
-		this.khachHangDAO = new KhachHang_DAO();
-		this.chiTietHoaDonDAO = new ChiTietHoaDon_DAO();
-		this.quyCachDongGoiDAO = new QuyCachDongGoi_DAO();
-		this.khuyenMaiDAO = new KhuyenMai_DAO();
-	}
+    // Components UI
+    private JPanel pnHeader, pnCenter;
+    private JSplitPane splitPane;
 
-	/** 🔍 Tìm hóa đơn theo mã (load đầy đủ chi tiết, nhân viên, khách hàng) */
-	public HoaDon timHoaDonTheoMa(String maHD) {
-		Connection con = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
+    // Form nhập liệu
+    private JTextField txtMaNCC, txtTenNCC, txtSDT, txtEmail, txtDiaChi;
+    private JComboBox<String> cboTrangThai;
 
-		try {
-			connectDB.getInstance();
-			con = connectDB.getConnection();
+    // Search & Table
+    private JTextField txtTimKiem;
+    private JTable tblNhaCungCap;
+    private DefaultTableModel modelNhaCungCap;
 
-			String sql = "SELECT * FROM HoaDon WHERE MaHoaDon = ?";
-			stmt = con.prepareStatement(sql);
-			stmt.setString(1, maHD);
-			rs = stmt.executeQuery();
-			
-			HoaDon hd = new HoaDon();
-			
-			String maNV = "";
-			String maKH = "";
-			LocalDate ngayLap = null;
-			String maKM = "";
-			double tongTien = 0.0;
-			boolean thuocKeDon = false;
-			
-			if (rs.next()) {
-				maNV = rs.getString("MaNhanVien");
-				maKH = rs.getString("MaKhachHang");
-				ngayLap = rs.getDate("NgayLap").toLocalDate();
-				maKM = rs.getString("MaKM");
-				tongTien = rs.getDouble("TongThanhToan");
-				thuocKeDon = rs.getBoolean("ThuocKeDon");
-				
-				// Gán lại tổng tiền (nếu cần đảm bảo trùng DB)
-				try {
-					var setTongTien = HoaDon.class.getDeclaredField("tongTien");
-					setTongTien.setAccessible(true);
-					setTongTien.set(hd, tongTien);
-				} catch (Exception ignore) {
-				}
-				
-			}
-			
-			NhanVien nhanVien = nhanVienDAO.timNhanVienTheoMa(maNV);
-			KhachHang khachHang = khachHangDAO.timKhachHangTheoMa(maKH);
-			KhuyenMai khuyenMai = khuyenMaiDAO.timKhuyenMaiTheoMa(maKM);
-			List<ChiTietHoaDon> dsCT = chiTietHoaDonDAO.layDanhSachChiTietTheoMaHD(maHD);
-			
-			// ✅ Tạo hóa đơn đầy đủ (constructor cũ)
+    // Buttons (Đã xóa btnXoa)
+    private PillButton btnThem, btnSua, btnLamMoi, btnTimKiem;
 
-			hd.setMaHoaDon(maHD);
-			hd.setNhanVien(nhanVien);
-			hd.setKhachHang(khachHang);
-			hd.setNgayLap(ngayLap);
-			hd.setKhuyenMai(khuyenMai);
-			hd.setDanhSachChiTiet(dsCT);
-			hd.setThuocKeDon(thuocKeDon);			
-			
-			return hd;
-		} catch (Exception e) {
-			System.err.println("❌ Lỗi khi tìm hóa đơn theo mã: " + e.getMessage());
-		} finally {
-			try {
-				if (rs != null)
-					rs.close();
-				if (stmt != null)
-					stmt.close();
-			} catch (SQLException ignore) {
-			}
-		}
-		return null;
-	}
+    // DAO
+    private NhaCungCap_DAO nccDAO;
 
-<<<<<<< HEAD
-/** 📜 Lấy toàn bộ hóa đơn (ĐÃ SỬA LỖI CLOSED CONNECTION) */
-	public List<HoaDon> layTatCaHoaDon() {
-		List<HoaDon> dsHD = new ArrayList<>();
-		List<String> listMaHD = new ArrayList<>(); // List tạm để lưu mã
-		
-		connectDB.getInstance();
-		Connection con = connectDB.getConnection();
-		Statement st = null;
-		ResultSet rs = null;
+    // Font & Color
+    private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 16);
+    private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 16);
+    private final Color COLOR_PRIMARY = new Color(33, 150, 243);
 
-		// BƯỚC 1: Chỉ lấy danh sách Mã Hóa Đơn
-		try {
-			String sql = "SELECT MaHoaDon FROM HoaDon ORDER BY NgayLap DESC";
-			st = con.createStatement();
-			rs = st.executeQuery(sql);
+    public NhaCungCap_GUI() {
+        setPreferredSize(new Dimension(1537, 850));
+        
+        // Khởi tạo DAO
+        nccDAO = new NhaCungCap_DAO();
+        
+        initialize();
+    }
 
-			while (rs.next()) {
-				listMaHD.add(rs.getString("MaHoaDon"));
-			}
-		} catch (SQLException e) {
-			System.err.println("❌ Lỗi lấy danh sách mã hóa đơn: " + e.getMessage());
-		} finally {
-			// Đóng ResultSet và Statement ngay lập tức để giải phóng Resource
-			try {
-				if (rs != null) rs.close();
-				if (st != null) st.close();
-			} catch (SQLException ignore) {}
-		}
+    private void initialize() {
+        setLayout(new BorderLayout());
+        setBackground(Color.WHITE);
 
-		// BƯỚC 2: Dùng danh sách Mã để load chi tiết (Lúc này không sợ conflict ResultSet)
-		for (String maHD : listMaHD) {
-			HoaDon hd = timHoaDonTheoMa(maHD);
-			if (hd != null) {
-				dsHD.add(hd);
-=======
-	/** 📜 Lấy toàn bộ hóa đơn */
-	public List<HoaDon> layTatCaHoaDon() {
-		List<HoaDon> dsHD = new ArrayList<>();
-		connectDB.getInstance();
-		Connection con = connectDB.getConnection(); // 👈 KHÔNG đưa vào try-with-resources
+        // 1. HEADER
+        taoPhanHeader();
+        add(pnHeader, BorderLayout.NORTH);
 
-		Statement st = null;
-		ResultSet rs = null;
+        // 2. CENTER (SplitPane)
+        taoPhanCenter();
+        add(pnCenter, BorderLayout.CENTER);
 
-		try {
-			st = con.createStatement();
-			rs = st.executeQuery("SELECT MaHoaDon FROM HoaDon ORDER BY NgayLap DESC");
+        // 3. LOAD DATA TỪ CSDL
+        loadDataLenBang();
+    }
 
-			while (rs.next()) {
-				String maHD = rs.getString("MaHoaDon");
-				HoaDon hd = timHoaDonTheoMa(maHD);
-				if (hd != null)
-					dsHD.add(hd);
-			}
-		} catch (SQLException e) {
-			System.err.println("❌ Lỗi lấy danh sách hóa đơn: " + e.getMessage());
-		} finally {
-			try {
-				if (rs != null)
-					rs.close();
-				if (st != null)
-					st.close();
-				// ❌ KHÔNG được con.close();
-			} catch (SQLException ignore) {
->>>>>>> f710d40c30013c0a0c1e4efa9a3b06756aca52ab
-			}
-		}
+    // ==========================================================================
+    //                              PHẦN HEADER
+    // ==========================================================================
+    private void taoPhanHeader() {
+        pnHeader = new JPanel(null);
+        pnHeader.setPreferredSize(new Dimension(1073, 94));
+        pnHeader.setBackground(new Color(0xE3F2F5));
 
-		return dsHD;
-	}
+        txtTimKiem = new JTextField();
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Nhập mã hoặc số điện thoại NCC...");
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
+        txtTimKiem.setBounds(25, 17, 500, 60);
+        txtTimKiem.setBorder(new RoundedBorder(20));
+        txtTimKiem.setBackground(Color.WHITE);
+        txtTimKiem.setForeground(Color.GRAY);
+        // Sự kiện nhấn Enter để tìm kiếm
+        txtTimKiem.addActionListener(e -> xuLyTimKiem());
+        pnHeader.add(txtTimKiem);
 
-	/** ➕ Thêm hóa đơn mới */
-	public boolean themHoaDon(HoaDon hd) {
-		connectDB.getInstance();
-		Connection con = connectDB.getConnection();
-		PreparedStatement stmtHD = null;
-		PreparedStatement stmtCTHD = null;
-		PreparedStatement stmtUpdateTon = null;
+        btnTimKiem = new PillButton("Tìm kiếm");
+        btnTimKiem.setBounds(540, 22, 130, 50);
+        btnTimKiem.setFont(FONT_BOLD);
+        btnTimKiem.addActionListener(e -> xuLyTimKiem());
+        pnHeader.add(btnTimKiem);
+    }
 
-		try {
-			con.setAutoCommit(false); // bắt đầu transaction
+    // ==========================================================================
+    //                              PHẦN CENTER
+    // ==========================================================================
+    private void taoPhanCenter() {
+        pnCenter = new JPanel(new BorderLayout());
+        pnCenter.setBackground(Color.WHITE);
+        pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-			// 1. Tính lại tổng tiền + KM hóa đơn
-			hd.capNhatDuLieuHoaDon(); // sẽ gọi luôn capNhatTongThanhToan bên trong
+        // --- PHẦN TRÊN (TOP): FORM + NÚT ---
+        JPanel pnTopWrapper = new JPanel(new BorderLayout());
+        pnTopWrapper.setBackground(Color.WHITE);
+        pnTopWrapper.setBorder(createTitledBorder("Thông tin nhà cung cấp"));
 
-			double tongThanhToan = hd.getTongThanhToan();
-			double soTienGiamKM = hd.getSoTienGiamKhuyenMai();
-			KhuyenMai kmHD = hd.getKhuyenMai();
+        // 1. Form Nhập Liệu
+        JPanel pnForm = new JPanel(null);
+        pnForm.setBackground(Color.WHITE);
+        taoFormNhapLieu(pnForm);
+        pnTopWrapper.add(pnForm, BorderLayout.CENTER);
 
-			// 2. Thêm hóa đơn (KHÔNG còn cột TongTien, DiemSuDung)
-			String sqlHD = """
-					INSERT INTO HoaDon (MaHoaDon, NgayLap, MaNhanVien, MaKhachHang,
-					                    TongThanhToan, MaKM, SoTienGiamKhuyenMai, ThuocKeDon)
-					VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-					""";
-			stmtHD = con.prepareStatement(sqlHD);
-			stmtHD.setString(1, hd.getMaHoaDon());
-			stmtHD.setDate(2, Date.valueOf(hd.getNgayLap()));
-			stmtHD.setString(3, hd.getNhanVien().getMaNhanVien());
-			stmtHD.setString(4, hd.getKhachHang().getMaKhachHang());
-			stmtHD.setDouble(5, tongThanhToan);
+        // 2. Panel Nút
+        JPanel pnButton = new JPanel();
+        pnButton.setBackground(Color.WHITE);
+        taoPanelNutBam(pnButton);
+        pnTopWrapper.add(pnButton, BorderLayout.EAST);
 
-			if (kmHD != null) {
-				stmtHD.setString(6, kmHD.getMaKM());
-			} else {
-				stmtHD.setNull(6, Types.CHAR);
-			}
+        // --- PHẦN DƯỚI (BOTTOM): BẢNG ---
+        JPanel pnTable = new JPanel(new BorderLayout());
+        pnTable.setBackground(Color.WHITE);
+        taoBangDanhSach(pnTable);
 
-			stmtHD.setDouble(7, soTienGiamKM);
-			stmtHD.setBoolean(8, hd.isThuocKeDon());
-			stmtHD.executeUpdate();
+        // --- SPLIT PANE ---
+        splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pnTopWrapper, pnTable);
+        splitPane.setDividerLocation(300); 
+        splitPane.setResizeWeight(0.0); 
+        
+        pnCenter.add(splitPane, BorderLayout.CENTER);
+    }
 
-			// 3. Thêm chi tiết hóa đơn
-			String sqlCT = """
-					INSERT INTO ChiTietHoaDon (MaHoaDon, MaLo, MaDonViTinh, SoLuong, GiaBan, ThanhTien, MaKM)
-					VALUES (?, ?, ?, ?, ?, ?, ?)
-					""";
-			stmtCTHD = con.prepareStatement(sqlCT);
+    private void taoFormNhapLieu(JPanel p) {
+        int xStart = 50, yStart = 40, hText = 35, wLbl = 100, wTxt = 300, gap = 25;
+        
+        // Cột 1
+        p.add(createLabel("Mã NCC:", xStart, yStart));
+        txtMaNCC = createTextField(xStart + wLbl, yStart, wTxt);
+        txtMaNCC.setEditable(false); // Mã tự sinh, không cho sửa
+        txtMaNCC.setBackground(new Color(245, 245, 245)); // Màu xám nhẹ
+        p.add(txtMaNCC);
 
-			// 4. Chuẩn bị lệnh update tồn kho (SoLuongTon đang là đơn vị gốc)
-			String sqlUpdateTon = """
-					UPDATE LoSanPham
-					SET SoLuongTon = SoLuongTon - ?
-					WHERE MaLo = ? AND SoLuongTon >= ?
-					""";
-			stmtUpdateTon = con.prepareStatement(sqlUpdateTon);
+        p.add(createLabel("Tên NCC:", xStart, yStart + gap + hText));
+        txtTenNCC = createTextField(xStart + wLbl, yStart + gap + hText, wTxt);
+        p.add(txtTenNCC);
+        
+        p.add(createLabel("SĐT:", xStart, yStart + (gap + hText) * 2));
+        txtSDT = createTextField(xStart + wLbl, yStart + (gap + hText) * 2, wTxt);
+        p.add(txtSDT);
 
-			for (ChiTietHoaDon cthd : hd.getDanhSachChiTiet()) {
-				double soLuongBan = cthd.getSoLuong(); // theo đơn vị bán
-				double giaBanRow = cthd.getGiaBan(); // GIÁ GỐC / 1 đơn vị
-				double thanhTienRow = cthd.getThanhTien(); // ✅ ĐÃ GIẢM KM SẢN PHẨM
+        // Cột 2
+        int xCol2 = xStart + wLbl + wTxt + 50; // Cách cột 1 50px
+        
+        p.add(createLabel("Email:", xCol2, yStart));
+        txtEmail = createTextField(xCol2 + wLbl, yStart, wTxt);
+        p.add(txtEmail);
+        
+        p.add(createLabel("Địa chỉ:", xCol2, yStart + gap + hText));
+        txtDiaChi = createTextField(xCol2 + wLbl, yStart + gap + hText, wTxt);
+        p.add(txtDiaChi);
+        
+        p.add(createLabel("Trạng thái:", xCol2, yStart + (gap + hText) * 2));
+        cboTrangThai = new JComboBox<>(new String[]{"Hoạt động", "Ngừng hoạt động"});
+        cboTrangThai.setBounds(xCol2 + wLbl, yStart + (gap + hText) * 2, wTxt, hText);
+        cboTrangThai.setFont(FONT_TEXT);
+        p.add(cboTrangThai);
+    }
 
-				stmtCTHD.setString(1, hd.getMaHoaDon());
-				stmtCTHD.setString(2, cthd.getLoSanPham().getMaLo());
-				stmtCTHD.setString(3, cthd.getDonViTinh().getMaDonViTinh());
-				stmtCTHD.setDouble(4, soLuongBan);
-				stmtCTHD.setDouble(5, giaBanRow);
-				stmtCTHD.setDouble(6, thanhTienRow);
+    private void taoPanelNutBam(JPanel p) {
+        p.setPreferredSize(new Dimension(200, 0)); 
+        p.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, Color.LIGHT_GRAY)); 
+        
+        p.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.insets = new Insets(10, 0, 10, 0); 
+        gbc.fill = GridBagConstraints.HORIZONTAL; 
 
-				KhuyenMai km = cthd.getKhuyenMai();
-				if (km != null) {
-					stmtCTHD.setString(7, km.getMaKM());
-				} else {
-					stmtCTHD.setNull(7, Types.CHAR);
-				}
+        int btnH = 45;
+        int btnW = 140;
 
-				stmtCTHD.addBatch();
+        btnThem = createPillButton("Thêm", btnW, btnH);
+        gbc.gridy = 0; p.add(btnThem, gbc);
 
-				// ==== TÍNH SỐ LƯỢNG BASE ĐỂ TRỪ TỒN ====
-				String maLo = cthd.getLoSanPham().getMaLo();
-				String maSP = cthd.getLoSanPham().getSanPham().getMaSanPham();
-				String maDVT = cthd.getDonViTinh().getMaDonViTinh();
+        btnSua = createPillButton("Cập nhật", btnW, btnH);
+        gbc.gridy = 1; p.add(btnSua, gbc);
 
-				// Lấy quy cách để biết hệ số quy đổi
-				QuyCachDongGoi qc = quyCachDongGoiDAO.timQuyCachTheoSanPhamVaDonVi(maSP, maDVT);
-				if (qc == null) {
-					throw new SQLException("Không tìm thấy quy cách đóng gói cho SP=" + maSP + ", DVT=" + maDVT);
-				}
+        // Đã xóa nút Xóa ở vị trí này
 
-				int heSo = qc.getHeSoQuyDoi(); // ví dụ: 1 hộp = 100 viên => heSo = 100
-				double soLBan = cthd.getSoLuong(); // bán bao nhiêu hộp/vỉ/...
-				double soLuongBanBase = soLBan * heSo;
+        btnLamMoi = createPillButton("Làm mới", btnW, btnH);
+        gbc.gridy = 2; p.add(btnLamMoi, gbc);
+    }
 
-				// ==== TRỪ TỒN KHO ====
-				stmtUpdateTon.setDouble(1, soLuongBanBase);
-				stmtUpdateTon.setString(2, maLo);
-				stmtUpdateTon.setDouble(3, soLuongBanBase);
+    private void taoBangDanhSach(JPanel p) {
+        String[] cols = {"Mã NCC", "Tên nhà cung cấp", "SĐT", "Email", "Địa chỉ", "Trạng thái"};
+        modelNhaCungCap = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        tblNhaCungCap = setupTable(modelNhaCungCap);
+        
+        // Setup chiều rộng cột
+        tblNhaCungCap.getColumnModel().getColumn(0).setPreferredWidth(150); // Mã
+        tblNhaCungCap.getColumnModel().getColumn(1).setPreferredWidth(250); // Tên
+        tblNhaCungCap.getColumnModel().getColumn(4).setPreferredWidth(300); // Địa chỉ
 
-				int affected = stmtUpdateTon.executeUpdate();
-				if (affected == 0) {
-					// Không đủ hàng hoặc MaLo không hợp lệ -> rollback toàn bộ
-					throw new SQLException(
-							"Tồn kho không đủ cho lô " + maLo + " (cần " + soLuongBanBase + " đơn vị gốc)");
-				}
-			}
+        // Custom Renderer cho cột Trạng thái (Xanh/Đỏ)
+        tblNhaCungCap.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                lbl.setHorizontalAlignment(SwingConstants.CENTER);
+                if ("Hoạt động".equals(value)) {
+                    lbl.setForeground(new Color(0, 128, 0));
+                    lbl.setFont(FONT_BOLD);
+                } else {
+                    lbl.setForeground(Color.RED);
+                    lbl.setFont(FONT_TEXT);
+                }
+                return lbl;
+            }
+        });
 
-			stmtCTHD.executeBatch();
+        // Đăng ký sự kiện click chuột
+        tblNhaCungCap.addMouseListener(this);
 
-			con.commit();
-			return true;
-		} catch (SQLException e) {
-			System.err.println("❌ Lỗi thêm hóa đơn: " + e.getMessage());
-			try {
-				if (con != null)
-					con.rollback();
-			} catch (SQLException ignore) {
-			}
-			return false;
-		} finally {
-			try {
-				if (stmtHD != null)
-					stmtHD.close();
-				if (stmtCTHD != null)
-					stmtCTHD.close();
-				if (stmtUpdateTon != null)
-					stmtUpdateTon.close();
-				if (con != null)
-					con.setAutoCommit(true);
-			} catch (SQLException ignore) {
-			}
-		}
-	}
+        JScrollPane scr = new JScrollPane(tblNhaCungCap);
+        scr.setBorder(createTitledBorder("Danh sách nhà cung cấp"));
+        p.add(scr, BorderLayout.CENTER);
+    }
 
-	/** 🧾 Tạo mã hóa đơn tự động theo ngày */
-	public String taoMaHoaDon() {
-		connectDB.getInstance();
-		Connection con = connectDB.getConnection();
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
+    // ==========================================================================
+    //                              XỬ LÝ LOGIC (DAO)
+    // ==========================================================================
 
-		try {
-			String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-			String prefix = "HD-" + today + "-";
-			String sql = "SELECT COUNT(*) FROM HoaDon WHERE MaHoaDon LIKE ?";
-			stmt = con.prepareStatement(sql);
-			stmt.setString(1, prefix + "%");
-			rs = stmt.executeQuery();
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object o = e.getSource();
 
-			if (rs.next()) {
-				int count = rs.getInt(1);
-				return String.format("%s%04d", prefix, count + 1);
-			}
-		} catch (SQLException e) {
-			System.err.println("❌ Lỗi tạo mã hóa đơn: " + e.getMessage());
-		} finally {
-			try {
-				if (rs != null)
-					rs.close();
-				if (stmt != null)
-					stmt.close();
-			} catch (SQLException ignore) {
-			}
-		}
+        // --- NÚT THÊM ---
+        if (o.equals(btnThem)) {
+            if (validData()) {
+                NhaCungCap ncc = getFromForm();
+                // Sinh mã tự động trước khi thêm
+                String maMoi = nccDAO.taoMaTuDong();
+                ncc.setMaNhaCungCap(maMoi);
+                
+                if (nccDAO.themNhaCungCap(ncc)) {
+                    JOptionPane.showMessageDialog(this, "Thêm nhà cung cấp thành công: " + maMoi);
+                    loadDataLenBang();
+                    lamMoiForm();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Thêm thất bại. Vui lòng kiểm tra lại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } 
+        
+        // --- NÚT SỬA ---
+        else if (o.equals(btnSua)) {
+            int row = tblNhaCungCap.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn nhà cung cấp cần cập nhật!");
+                return;
+            }
+            if (validData()) {
+                NhaCungCap ncc = getFromForm();
+                // Khi sửa, mã NCC lấy từ textfield (đã set từ bảng)
+                if (nccDAO.capNhatNhaCungCap(ncc)) {
+                    JOptionPane.showMessageDialog(this, "Cập nhật thông tin thành công!");
+                    loadDataLenBang();
+                    // Chọn lại dòng vừa sửa
+                    tblNhaCungCap.setRowSelectionInterval(row, row);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+        
+        // --- ĐÃ XÓA LOGIC NÚT XÓA ---
+        
+        // --- NÚT LÀM MỚI ---
+        else if (o.equals(btnLamMoi)) {
+            lamMoiForm();
+            loadDataLenBang(); // Reset bảng nếu đang tìm kiếm
+        }
+    }
 
-		String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-		return "HD-" + today + "-0001";
-	}
+    /**
+     * Tải dữ liệu từ CSDL lên bảng
+     */
+    private void loadDataLenBang() {
+        modelNhaCungCap.setRowCount(0);
+        List<NhaCungCap> list = nccDAO.layTatCaNhaCungCap();
+        for (NhaCungCap ncc : list) {
+            themDongVaoBang(ncc);
+        }
+    }
 
-	/**
-	 * 🔍 Tìm danh sách hóa đơn theo số điện thoại khách hàng (Dùng cho dialog chọn
-	 * hóa đơn, chỉ load danh sách rồi gọi timHoaDonTheoMa)
-	 */
-	public List<HoaDon> timHoaDonTheoSoDienThoai(String soDienThoai) {
-		List<HoaDon> dsHD = new ArrayList<>();
+    /**
+     * Thêm 1 đối tượng entity vào model bảng
+     */
+    private void themDongVaoBang(NhaCungCap ncc) {
+        modelNhaCungCap.addRow(new Object[]{
+            ncc.getMaNhaCungCap(),
+            ncc.getTenNhaCungCap(),
+            ncc.getSoDienThoai(),
+            ncc.getEmail(),
+            ncc.getDiaChi(),
+            ncc.isHoatDong() ? "Hoạt động" : "Ngừng hoạt động"
+        });
+    }
 
-		String sql = """
-				SELECT hd.MaHoaDon, hd.NgayLap
-				FROM HoaDon hd
-				JOIN KhachHang kh ON hd.MaKhachHang = kh.MaKhachHang
-				JOIN NhanVien nv ON hd.MaNhanVien = nv.MaNhanVien
-				WHERE kh.SoDienThoai = ?
-				ORDER BY hd.NgayLap DESC
-				""";
+    /**
+     * Lấy dữ liệu từ form, đóng gói thành Object
+     * Mã NCC được set rỗng ở đây, sẽ được xử lý tùy trường hợp Thêm/Sửa
+     */
+    private NhaCungCap getFromForm() {
+        String ma = txtMaNCC.getText();
+        String ten = txtTenNCC.getText().trim();
+        String sdt = txtSDT.getText().trim();
+        String email = txtEmail.getText().trim();
+        String dc = txtDiaChi.getText().trim();
+        boolean hoatDong = cboTrangThai.getSelectedItem().equals("Hoạt động");
+        
+        NhaCungCap ncc = new NhaCungCap();
+        // Nếu mã không rỗng (đã có trên form) thì set vào, nếu rỗng thì constructor mặc định
+        if(!ma.isEmpty()) ncc.setMaNhaCungCap(ma); 
+        ncc.setTenNhaCungCap(ten);
+        ncc.setSoDienThoai(sdt);
+        ncc.setEmail(email);
+        ncc.setDiaChi(dc);
+        ncc.setHoatDong(hoatDong);
+        return ncc;
+    }
 
-		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+    private void lamMoiForm() {
+        // Tự động gợi ý mã mới
+        txtMaNCC.setText(nccDAO.taoMaTuDong());
+        txtTenNCC.setText("");
+        txtSDT.setText("");
+        txtEmail.setText("");
+        txtDiaChi.setText("");
+        cboTrangThai.setSelectedIndex(0);
+        txtTenNCC.requestFocus();
+        tblNhaCungCap.clearSelection();
+    }
 
-			ps.setString(1, soDienThoai);
+    private void xuLyTimKiem() {
+        String keyword = txtTimKiem.getText().trim();
+        if (keyword.isEmpty() || keyword.equals("Nhập mã hoặc số điện thoại NCC...")) { 
+            loadDataLenBang();
+            return;
+        }
+        
+        // Gọi DAO tìm kiếm
+        NhaCungCap ketQua = nccDAO.timNhaCungCapTheoMaHoacSDT(keyword);
+        
+        modelNhaCungCap.setRowCount(0);
+        if (ketQua != null) {
+            themDongVaoBang(ketQua);
+        } else {
+            JOptionPane.showMessageDialog(this, "Không tìm thấy nhà cung cấp với thông tin: " + keyword);
+            loadDataLenBang(); // Load lại toàn bộ nếu không thấy
+        }
+    }
 
-			try (ResultSet rs = ps.executeQuery()) {
+    private boolean validData() {
+        String ten = txtTenNCC.getText().trim();
+        String sdt = txtSDT.getText().trim();
+        String email = txtEmail.getText().trim();
+        String diaChi = txtDiaChi.getText().trim();
 
-				while (rs.next()) {
-					String maHD = rs.getString("MaHoaDon");
-					HoaDon hd = timHoaDonTheoMa(maHD);
-					if (hd != null)
-						dsHD.add(hd);
-				}
-			}
+        if (ten.isEmpty()) {
+            showError("Tên nhà cung cấp không được rỗng", txtTenNCC);
+            return false;
+        }
+        if (!sdt.matches("^0\\d{9}$")) {
+            showError("Số điện thoại phải bắt đầu bằng số 0 và có 10 chữ số", txtSDT);
+            return false;
+        }
+        if (!email.isEmpty() && !email.matches("^[\\w._%+-]+@[\\w.-]+\\.[A-Za-z]{2,6}$")) {
+            showError("Email không đúng định dạng", txtEmail);
+            return false;
+        }
+        if (diaChi.isEmpty()) {
+            showError("Địa chỉ không được rỗng", txtDiaChi);
+            return false;
+        }
+        return true;
+    }
+    
+    private void showError(String mess, JTextField txt) {
+        JOptionPane.showMessageDialog(this, mess, "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+        txt.requestFocus();
+        txt.selectAll();
+    }
 
-		} catch (SQLException e) {
-			System.err.println("❌ Lỗi khi tìm hóa đơn theo SĐT: " + e.getMessage());
-			e.printStackTrace();
-		}
+    // ==========================================================================
+    //                              UI HELPERS & EVENTS
+    // ==========================================================================
 
-		return dsHD;
-	}
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        int row = tblNhaCungCap.getSelectedRow();
+        if (row >= 0) {
+            txtMaNCC.setText(modelNhaCungCap.getValueAt(row, 0).toString());
+            txtTenNCC.setText(modelNhaCungCap.getValueAt(row, 1).toString());
+            txtSDT.setText(modelNhaCungCap.getValueAt(row, 2).toString());
+            txtEmail.setText(modelNhaCungCap.getValueAt(row, 3) != null ? modelNhaCungCap.getValueAt(row, 3).toString() : "");
+            txtDiaChi.setText(modelNhaCungCap.getValueAt(row, 4).toString());
+            
+            String trangThai = modelNhaCungCap.getValueAt(row, 5).toString();
+            cboTrangThai.setSelectedItem(trangThai.equals("Hoạt động") ? "Hoạt động" : "Ngừng hoạt động");
+        }
+    }
+
+    // Các method MouseListener chưa dùng đến
+    @Override public void mousePressed(MouseEvent e) {}
+    @Override public void mouseReleased(MouseEvent e) {}
+    @Override public void mouseEntered(MouseEvent e) {}
+    @Override public void mouseExited(MouseEvent e) {}
+
+    // --- UI Component Creators ---
+    private JLabel createLabel(String text, int x, int y) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(FONT_TEXT);
+        lbl.setBounds(x, y, 100, 35);
+        return lbl;
+    }
+
+    private JTextField createTextField(int x, int y, int w) {
+        JTextField txt = new JTextField();
+        txt.setFont(FONT_TEXT);
+        txt.setBounds(x, y, w, 35);
+        return txt;
+    }
+
+    private PillButton createPillButton(String text, int w, int h) {
+        PillButton btn = new PillButton(text);
+        btn.setFont(FONT_BOLD);
+        btn.setPreferredSize(new Dimension(w, h));
+        btn.addActionListener(this);
+        return btn;
+    }
+
+    private JTable setupTable(DefaultTableModel model) {
+        JTable table = new JTable(model);
+        table.setFont(FONT_TEXT);
+        table.setRowHeight(35);
+        table.setSelectionBackground(new Color(0xC8E6C9));
+        table.setSelectionForeground(Color.BLACK);
+        table.getTableHeader().setFont(FONT_BOLD);
+        table.getTableHeader().setBackground(COLOR_PRIMARY);
+        table.getTableHeader().setForeground(Color.WHITE);
+        
+        // Center align cho các cột (trừ Tên và Địa chỉ)
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(JLabel.CENTER);
+        for(int i=0; i<table.getColumnCount(); i++) {
+            if(i!=1 && i!=4) 
+                table.getColumnModel().getColumn(i).setCellRenderer(center);
+        }
+        return table;
+    }
+
+    private TitledBorder createTitledBorder(String title) {
+        return BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
+            TitledBorder.LEFT, TitledBorder.TOP, FONT_BOLD, Color.DARK_GRAY
+        );
+    }
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+            }
+            JFrame frame = new JFrame("Tra cứu phiếu nhập");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(1400, 800);
+            frame.setLocationRelativeTo(null);
+            frame.setContentPane(new NhaCungCap_GUI());
+            frame.setVisible(true);
+        });
+    }
 }
