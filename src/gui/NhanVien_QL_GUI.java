@@ -217,7 +217,6 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
         txtDiaChi = createTextField(xStart + wLbl, yStart, wTxt);
         p.add(txtDiaChi);
 
-        // (Nếu sau này bạn muốn hiển thị ảnh ở bên phải, có thể thêm lblHinhAnh ở đây)
     }
 
     private void taoPanelNutBam(JPanel p) {
@@ -332,7 +331,6 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
                 JOptionPane.showMessageDialog(this, "Thêm nhân viên thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         } catch (IllegalArgumentException ex) {
-            // showErrorAndFocus đã hiển thị dialog rồi
         }
     }
 
@@ -356,7 +354,6 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
                 JOptionPane.showMessageDialog(this, "Cập nhật nhân viên thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         } catch (IllegalArgumentException ex) {
-            // showErrorAndFocus đã hiển thị dialog rồi
         }
     }
 
@@ -500,12 +497,14 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
         String ten = txtTenNV.getText().trim();
         if (ten.isEmpty()) {
             showErrorAndFocus(txtTenNV, "Tên nhân viên không được bỏ trống!", JOptionPane.WARNING_MESSAGE);
+            return null;
         }
 
         // 3. Ngày sinh
         String strNgaySinh = txtNgaySinh.getText().trim();
         if (strNgaySinh.isEmpty()) {
             showErrorAndFocus(txtNgaySinh, "Ngày sinh không được bỏ trống!", JOptionPane.WARNING_MESSAGE);
+            return null;
         }
 
         LocalDate ngaySinh;
@@ -513,12 +512,13 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
             ngaySinh = LocalDate.parse(strNgaySinh, dfDate);
         } catch (DateTimeParseException e) {
             showErrorAndFocus(txtNgaySinh, "Ngày sinh không đúng định dạng dd/MM/yyyy!", JOptionPane.ERROR_MESSAGE);
-            return null; // unreachable vì showErrorAndFocus ném exception, nhưng để rõ ràng
+            return null;
         }
 
         int age = Period.between(ngaySinh, LocalDate.now()).getYears();
         if (age < 18) {
             showErrorAndFocus(txtNgaySinh, "Nhân viên phải đủ 18 tuổi!", JOptionPane.WARNING_MESSAGE);
+            return null;
         }
 
         // 4. Giới tính
@@ -528,15 +528,18 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
         String sdt = txtSDT.getText().trim();
         if (sdt.isEmpty()) {
             showErrorAndFocus(txtSDT, "Số điện thoại không được bỏ trống!", JOptionPane.WARNING_MESSAGE);
+            return null;
         }
         if (!sdt.matches("^0\\d{9}$")) {
             showErrorAndFocus(txtSDT, "Số điện thoại phải gồm 10 số và bắt đầu bằng 0!", JOptionPane.WARNING_MESSAGE);
+            return null;
         }
 
         // 6. Địa chỉ
         String diaChi = txtDiaChi.getText().trim();
         if (diaChi.isEmpty()) {
             showErrorAndFocus(txtDiaChi, "Địa chỉ không được bỏ trống!", JOptionPane.WARNING_MESSAGE);
+            return null;
         }
 
         // 7. Chức vụ
@@ -554,7 +557,6 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
         // 9. Trạng thái
         boolean trangThai = "Đang làm".equals(cboTrangThai.getSelectedItem());
 
-        // Tạo entity (entity cũng có validate ở setter)
         return new NhanVien(maNV, ten, gioiTinh, ngaySinh, sdt, diaChi, quanLy, caLam, trangThai);
     }
 
