@@ -359,11 +359,11 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 
 	private JTable setupTable(DefaultTableModel model) {
 		JTable table = new JTable(model);
-		table.setFont(new Font("Segoe UI", Font.PLAIN, 22));
-		table.setRowHeight(35);
+		table.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+		table.setRowHeight(25);
 		table.setSelectionBackground(new Color(0xC8E6C9));
 		table.setSelectionForeground(Color.BLACK);
-		table.getTableHeader().setFont(new Font("Segoe UI", Font.PLAIN, 22));
+		table.getTableHeader().setFont(new Font("Segoe UI", Font.PLAIN, 20));
 		table.getTableHeader().setBackground(COLOR_PRIMARY);
 		table.getTableHeader().setForeground(Color.WHITE);
 		return table;
