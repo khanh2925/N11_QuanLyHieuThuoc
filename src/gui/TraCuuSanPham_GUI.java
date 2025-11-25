@@ -1,14 +1,13 @@
-/**
- * @author Quốc Khánh
- * @version 1.1
- * @since Nov 20, 2025
- *
- * Mô tả: Giao diện tra cứu sản phẩm (Master) kèm Lô hàng & Quy cách (Detail tabs).
- */
 package gui;
 
 import java.awt.*;
+import java.awt.event.*;
 import java.text.DecimalFormat;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
@@ -17,31 +16,70 @@ import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
 
-@SuppressWarnings("serial")
-public class TraCuuSanPham_GUI extends JPanel {
+// Import DAO & Entity & Enum
+import dao.LoSanPham_DAO;
+import dao.QuyCachDongGoi_DAO;
+import dao.SanPham_DAO;
+import entity.LoSanPham;
+import entity.QuyCachDongGoi;
+import entity.SanPham;
+import enums.LoaiSanPham;
 
+/**
+ * @author Quốc Khánh
+ * @version 1.6 (Refactored: Added Main, MouseListener, Organized Layout)
+ */
+@SuppressWarnings("serial")
+public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
+
+    // --- Components UI ---
     private JPanel pnHeader;
     private JPanel pnCenter;
     
-    // Bảng Master
+    // Bảng Master (Sản phẩm)
     private JTable tblSanPham;
     private DefaultTableModel modelSanPham;
     
-    // Tabs Detail
+    // Khu vực Tab chi tiết
     private JTabbedPane tabChiTiet;
     
-    // Bảng Detail 1: Lô
+    // Bảng Lô
     private JTable tblLoSanPham;
     private DefaultTableModel modelLoSanPham;
     
-    // Bảng Detail 2: Quy Cách
+    // Bảng Quy Cách
     private JTable tblQuyCach;
     private DefaultTableModel modelQuyCach;
 
+    // Bộ lọc
+    private JTextField txtTimThuoc;
+    private JComboBox<String> cbLoai;
+    private JComboBox<String> cbKe;
+    private JComboBox<String> cbTrangThai;
+    private PillButton btnTimKiem;
+    private PillButton btnLamMoi;
+
+    // --- Utils & DAO ---
     private final DecimalFormat df = new DecimalFormat("#,### đ");
+    private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    private SanPham_DAO sanPhamDao;
+    private LoSanPham_DAO loSanPhamDao;
+    private QuyCachDongGoi_DAO quyCachDao;
+
+    // Cache Data
+    private List<SanPham> dsSanPhamHienTai;
 
     public TraCuuSanPham_GUI() {
         setPreferredSize(new Dimension(1537, 850));
+        
+        // 1. Khởi tạo DAO
+        sanPhamDao = new SanPham_DAO();
+        loSanPhamDao = new LoSanPham_DAO();
+        quyCachDao = new QuyCachDongGoi_DAO();
+        dsSanPhamHienTai = new ArrayList<>();
+
+        // 2. Dựng giao diện
         initialize();
     }
 
@@ -49,21 +87,23 @@ public class TraCuuSanPham_GUI extends JPanel {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
-        // 1. HEADER
+        // Header
         taoPhanHeader();
         add(pnHeader, BorderLayout.NORTH);
 
-        // 2. CENTER
+        // Center (Bảng + Tabs)
         taoPhanCenter();
         add(pnCenter, BorderLayout.CENTER);
         
-        // 3. DATA
-        loadDuLieuSanPham();
+        // Gán sự kiện (ActionListener & MouseListener)
         addEvents();
+
+        // Load data ban đầu
+        xuLyLamMoi(); 
     }
 
     // ==============================================================================
-    //                              PHẦN HEADER (Giữ nguyên)
+    //                              UI: HEADER
     // ==============================================================================
     private void taoPhanHeader() {
         pnHeader = new JPanel();
@@ -72,78 +112,76 @@ public class TraCuuSanPham_GUI extends JPanel {
         pnHeader.setBackground(new Color(0xE3F2F5));
 
         // --- Ô TÌM KIẾM ---
-        JTextField txtTimThuoc = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimThuoc, "Nhập tên thuốc, mã sản phẩm hoặc số đăng ký...");
-        txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 22));
+        txtTimThuoc = new JTextField();
+        PlaceholderSupport.addPlaceholder(txtTimThuoc, "Nhập tên thuốc, mã SP, số đăng ký...");
+        txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         txtTimThuoc.setBounds(25, 17, 480, 60);
         txtTimThuoc.setBorder(new RoundedBorder(20));
         txtTimThuoc.setBackground(Color.WHITE);
-        txtTimThuoc.setForeground(Color.GRAY);
         pnHeader.add(txtTimThuoc);
 
         // --- BỘ LỌC ---
         // 1. Loại
-        JLabel lblLoai = new JLabel("Loại:");
-        lblLoai.setBounds(530, 28, 50, 35);
-        lblLoai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        pnHeader.add(lblLoai);
-
-        JComboBox<String> cbLoai = new JComboBox<>(new String[]{"Tất cả", "Thuốc", "TPCN", "Dụng cụ y tế"});
-        cbLoai.setBounds(580, 28, 140, 38);
-        cbLoai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        pnHeader.add(cbLoai);
+        addFilterLabel("Loại:", 530, 28, 50, 35);
+        cbLoai = new JComboBox<>();
+        cbLoai.addItem("Tất cả");
+        for (LoaiSanPham loai : LoaiSanPham.values()) {
+            cbLoai.addItem(loai.name()); 
+        }
+        setupComboBox(cbLoai, 580, 28, 140, 38);
 
         // 2. Kệ
-        JLabel lblKe = new JLabel("Kệ:");
-        lblKe.setBounds(735, 28, 40, 35);
-        lblKe.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        pnHeader.add(lblKe);
-
-        JComboBox<String> cbKe = new JComboBox<>(new String[]{"Tất cả", "A1", "A2", "B1", "B2", "C1", "D1"});
-        cbKe.setBounds(770, 28, 100, 38);
-        cbKe.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        pnHeader.add(cbKe);
+        addFilterLabel("Kệ:", 735, 28, 40, 35);
+        cbKe = new JComboBox<>(new String[]{"Tất cả", "A", "B", "C", "D", "Kệ mát", "Kho"});
+        setupComboBox(cbKe, 770, 28, 100, 38);
 
         // 3. Trạng thái
-        JLabel lblTrangThai = new JLabel("Trạng thái:");
-        lblTrangThai.setBounds(885, 28, 80, 35);
-        lblTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        pnHeader.add(lblTrangThai);
-
-        JComboBox<String> cbTrangThai = new JComboBox<>(new String[]{"Tất cả", "Đang bán", "Ngừng bán"});
-        cbTrangThai.setBounds(970, 28, 130, 38);
-        cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        pnHeader.add(cbTrangThai);
+        addFilterLabel("Trạng thái:", 885, 28, 80, 35);
+        cbTrangThai = new JComboBox<>(new String[]{"Tất cả", "Đang bán", "Ngừng kinh doanh"});
+        setupComboBox(cbTrangThai, 970, 28, 130, 38);
 
         // --- NÚT ---
-        PillButton btnTimKiem = new PillButton("Tìm kiếm");
+        btnTimKiem = new PillButton("Tìm kiếm");
         btnTimKiem.setBounds(1120, 22, 130, 50);
-        btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 16));
         pnHeader.add(btnTimKiem);
 
-        PillButton btnLamMoi = new PillButton("Làm mới");
+        btnLamMoi = new PillButton("Làm mới");
         btnLamMoi.setBounds(1265, 22, 130, 50);
-        btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 16));
         pnHeader.add(btnLamMoi);
     }
 
+    // Helper tạo label và combobox nhanh gọn
+    private void addFilterLabel(String text, int x, int y, int w, int h) {
+        JLabel lbl = new JLabel(text);
+        lbl.setBounds(x, y, w, h);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        pnHeader.add(lbl);
+    }
+
+    private void setupComboBox(JComboBox<?> cb, int x, int y, int w, int h) {
+        cb.setBounds(x, y, w, h);
+        cb.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        pnHeader.add(cb);
+    }
+
     // ==============================================================================
-    //                              PHẦN CENTER (Master - Detail Tabs)
+    //                              UI: CENTER
     // ==============================================================================
     private void taoPhanCenter() {
         pnCenter = new JPanel(new BorderLayout());
         pnCenter.setBackground(Color.WHITE);
         pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // SplitPane: Trên là SP, Dưới là Tabs
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        splitPane.setDividerLocation(400);
+        splitPane.setDividerLocation(400); 
         splitPane.setResizeWeight(0.5);
 
         // --- TOP: BẢNG SẢN PHẨM ---
         String[] colSanPham = {
-            "Mã SP", "Tên sản phẩm", "Loại", "Số ĐK", "Hoạt chất", "Nước SX",
-            "Giá vốn", "Kệ", "Trạng thái"
+            "Mã SP", "Tên sản phẩm", "Loại", "Số ĐK", "Đường dùng", 
+            "Giá Bán Gốc", "Vị trí", "Trạng thái"
         };
         modelSanPham = new DefaultTableModel(colSanPham, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -151,29 +189,8 @@ public class TraCuuSanPham_GUI extends JPanel {
         
         tblSanPham = setupTable(modelSanPham);
         
-        // Canh lề
-        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
-        center.setHorizontalAlignment(SwingConstants.CENTER);
-        DefaultTableCellRenderer right = new DefaultTableCellRenderer();
-        right.setHorizontalAlignment(SwingConstants.RIGHT);
-
-        // Cột 1 (Tên) để mặc định (Trái), Giá (6) phải, còn lại giữa
-        for(int i=0; i<tblSanPham.getColumnCount(); i++) {
-            if(i!=1 && i!=4) tblSanPham.getColumnModel().getColumn(i).setCellRenderer(center);
-        }
-        tblSanPham.getColumnModel().getColumn(6).setCellRenderer(right); // Giá vốn
-        
-        // Render Trạng thái (Màu xanh/đỏ)
-        tblSanPham.getColumnModel().getColumn(8).setCellRenderer(new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                lbl.setHorizontalAlignment(SwingConstants.CENTER);
-                if("Đang bán".equals(value)) lbl.setForeground(new Color(0x2E7D32));
-                else lbl.setForeground(Color.RED);
-                return lbl;
-            }
-        });
+        // Cấu hình render cột
+        configureTableRenderers();
 
         JScrollPane scrollSP = new JScrollPane(tblSanPham);
         scrollSP.setBorder(createTitledBorder("Danh sách sản phẩm"));
@@ -181,21 +198,48 @@ public class TraCuuSanPham_GUI extends JPanel {
 
         // --- BOTTOM: TABBED PANE ---
         tabChiTiet = new JTabbedPane();
-        tabChiTiet.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-
-        // Tab 1: Danh sách Lô
-        tabChiTiet.addTab("Danh sách lô hàng", createTabLoHang());
+        tabChiTiet.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         
-        // Tab 2: Quy cách đóng gói (Mới thêm)
-        tabChiTiet.addTab("Quy cách đóng gói", createTabQuyCach());
+        tabChiTiet.addTab("Danh sách lô hàng", createTabLoHang());
+        tabChiTiet.addTab("Quy cách đóng gói & Giá bán", createTabQuyCach());
 
         splitPane.setBottomComponent(tabChiTiet);
         pnCenter.add(splitPane, BorderLayout.CENTER);
     }
 
-    // Tạo Panel cho Tab Lô Hàng
+    private void configureTableRenderers() {
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(SwingConstants.CENTER);
+        DefaultTableCellRenderer right = new DefaultTableCellRenderer();
+        right.setHorizontalAlignment(SwingConstants.RIGHT);
+
+        // Canh giữa các cột (trừ tên SP)
+        for(int i=0; i<tblSanPham.getColumnCount(); i++) {
+            if(i != 1) tblSanPham.getColumnModel().getColumn(i).setCellRenderer(center);
+        }
+        // Giá bán canh phải
+        tblSanPham.getColumnModel().getColumn(5).setCellRenderer(right); 
+        
+        // Render Trạng thái
+        tblSanPham.getColumnModel().getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                lbl.setHorizontalAlignment(SwingConstants.CENTER);
+                if("Đang bán".equals(value)) {
+                    lbl.setForeground(new Color(0x2E7D32));
+                    lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
+                } else {
+                    lbl.setForeground(Color.RED);
+                    lbl.setFont(new Font("Segoe UI", Font.ITALIC, 13));
+                }
+                return lbl;
+            }
+        });
+    }
+
     private JComponent createTabLoHang() {
-        String[] colLo = {"STT", "Mã lô", "Hạn sử dụng", "Số lượng tồn", "Ngày nhập"};
+        String[] colLo = {"STT", "Mã lô", "Hạn sử dụng", "Số lượng tồn"};
         modelLoSanPham = new DefaultTableModel(colLo, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -206,14 +250,11 @@ public class TraCuuSanPham_GUI extends JPanel {
         for (int i = 0; i < tblLoSanPham.getColumnCount(); i++) {
             tblLoSanPham.getColumnModel().getColumn(i).setCellRenderer(center);
         }
-        
         return new JScrollPane(tblLoSanPham);
     }
 
-    // Tạo Panel cho Tab Quy Cách (Theo entity QuyCachDongGoi)
     private JComponent createTabQuyCach() {
-        // Cột: Mã QC, Đơn vị, Quy đổi, Giá bán (đã tính tỉ lệ), Tỉ lệ giảm, Là gốc?
-        String[] colQC = {"STT", "Mã quy cách", "Đơn vị tính", "Quy đổi", "Giá bán", "Tỉ lệ giảm giá", "Loại đơn vị"};
+        String[] colQC = {"STT", "Mã quy cách", "Đơn vị tính", "Quy đổi", "Giá bán (Sau CK)", "Tỉ lệ giảm giá", "Loại đơn vị"};
         modelQuyCach = new DefaultTableModel(colQC, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -224,22 +265,20 @@ public class TraCuuSanPham_GUI extends JPanel {
         DefaultTableCellRenderer right = new DefaultTableCellRenderer();
         right.setHorizontalAlignment(SwingConstants.RIGHT);
         
-        // Canh chỉnh
-        tblQuyCach.getColumnModel().getColumn(0).setCellRenderer(center); // STT
-        tblQuyCach.getColumnModel().getColumn(1).setCellRenderer(center); // Mã
-        tblQuyCach.getColumnModel().getColumn(2).setCellRenderer(center); // Đơn vị
-        tblQuyCach.getColumnModel().getColumn(3).setCellRenderer(center); // Quy đổi
-        tblQuyCach.getColumnModel().getColumn(4).setCellRenderer(right);  // Giá bán
-        tblQuyCach.getColumnModel().getColumn(5).setCellRenderer(center); // Tỉ lệ
+        tblQuyCach.getColumnModel().getColumn(0).setCellRenderer(center);
+        tblQuyCach.getColumnModel().getColumn(1).setCellRenderer(center);
+        tblQuyCach.getColumnModel().getColumn(2).setCellRenderer(center);
+        tblQuyCach.getColumnModel().getColumn(3).setCellRenderer(center);
+        tblQuyCach.getColumnModel().getColumn(4).setCellRenderer(right);
+        tblQuyCach.getColumnModel().getColumn(5).setCellRenderer(center);
         
-        // Render Đơn vị gốc (In đậm, màu xanh)
         tblQuyCach.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
                 if ("Đơn vị gốc".equals(value)) {
-                    lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                    lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
                     lbl.setForeground(new Color(0, 102, 204));
                 } else {
                     lbl.setForeground(Color.GRAY);
@@ -251,18 +290,19 @@ public class TraCuuSanPham_GUI extends JPanel {
         return new JScrollPane(tblQuyCach);
     }
 
-    // Setup chung cho table
     private JTable setupTable(DefaultTableModel model) {
         JTable table = new JTable(model);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         table.setRowHeight(30);
+        table.setGridColor(new Color(230, 230, 230));
         table.setSelectionBackground(new Color(0xC8E6C9));
         table.setSelectionForeground(Color.BLACK);
         
         JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        header.setFont(new Font("Segoe UI", Font.BOLD, 14));
         header.setBackground(new Color(33, 150, 243));
         header.setForeground(Color.WHITE);
+        header.setPreferredSize(new Dimension(100, 35));
         return table;
     }
 
@@ -274,78 +314,202 @@ public class TraCuuSanPham_GUI extends JPanel {
     }
 
     // ==============================================================================
-    //                              DỮ LIỆU & SỰ KIỆN
+    //                              XỬ LÝ SỰ KIỆN
     // ==============================================================================
     private void addEvents() {
-        // Sự kiện click vào bảng Sản Phẩm -> Load dữ liệu cho 2 tab bên dưới
+        // 1. ActionListener cho các nút (this.actionPerformed)
+        btnTimKiem.addActionListener(this);
+        btnLamMoi.addActionListener(this);
+        txtTimThuoc.addActionListener(this);
+
+        // 2. ListSelectionListener (Tốt nhất cho việc chọn dòng để xem chi tiết)
+        // Hỗ trợ cả click chuột và phím mũi tên lên xuống
         tblSanPham.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                int row = tblSanPham.getSelectedRow();
-                if (row >= 0) {
-                    String maSP = tblSanPham.getValueAt(row, 0).toString();
-                    double giaVon = parseMoney(tblSanPham.getValueAt(row, 6).toString()); // Lấy giá vốn để tính giá bán QC
-                    loadChiTietSanPham(maSP, giaVon);
+                loadChiTietTuDongChon();
+            }
+        });
+
+        // 3. MouseListener (Theo yêu cầu của bạn)
+        // Dùng để bắt sự kiện Double Click (Click đúp)
+        tblSanPham.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) { // Nếu click đúp
+                    int row = tblSanPham.getSelectedRow();
+                    if (row != -1) {
+                        String tenSP = tblSanPham.getValueAt(row, 1).toString();
+                        JOptionPane.showMessageDialog(TraCuuSanPham_GUI.this, 
+                                "Bạn vừa click đúp vào sản phẩm: " + tenSP + "\n(Có thể mở form sửa hoặc xem chi tiết tại đây)");
+                    }
                 }
             }
         });
     }
 
-    private void loadDuLieuSanPham() {
-        // Data giả lập
-        Object[][] data = {
-            {"SP001", "Paracetamol 500mg", "Thuốc", "VD-12345", "Paracetamol", "Việt Nam", "2,000 đ", "Kệ A1", "Đang bán"},
-            {"SP002", "Vitamin C 1000mg", "TPCN", "VD-67890", "Ascorbic Acid", "Mỹ", "6,000 đ", "Kệ B2", "Đang bán"},
-            {"SP003", "Băng cá nhân", "Dụng cụ", "VD-11111", "Vải, Keo", "Việt Nam", "10,000 đ", "Kệ C3", "Ngừng bán"},
-            {"SP004", "Panadol Extra", "Thuốc", "VD-22222", "Para + Caffeine", "Úc", "12,000 đ", "Kệ A2", "Đang bán"}
-        };
-        for (Object[] row : data) modelSanPham.addRow(row);
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object o = e.getSource();
+        
+        if (o == btnTimKiem || o == txtTimThuoc) {
+            xuLyTimKiem();
+        } else if (o == btnLamMoi) {
+            xuLyLamMoi();
+        }
     }
 
-    private void loadChiTietSanPham(String maSP, double giaVon) {
+    // ==============================================================================
+    //                              LOGIC NGHIỆP VỤ
+    // ==============================================================================
+
+    /**
+     * Lấy dòng đang chọn và load data xuống 2 tab dưới
+     */
+    private void loadChiTietTuDongChon() {
+        int row = tblSanPham.getSelectedRow();
+        if (row >= 0) {
+            String maSP = tblSanPham.getValueAt(row, 0).toString();
+            
+            SanPham spChon = dsSanPhamHienTai.stream()
+                    .filter(s -> s.getMaSanPham().equals(maSP))
+                    .findFirst()
+                    .orElse(null);
+            
+            if (spChon != null) {
+                loadChiTietSanPham(spChon);
+            }
+        }
+    }
+
+    private void xuLyLamMoi() {
+        txtTimThuoc.setText("");
+        PlaceholderSupport.addPlaceholder(txtTimThuoc, "Nhập tên thuốc, mã SP, số đăng ký...");
+        cbLoai.setSelectedIndex(0);
+        cbKe.setSelectedIndex(0);
+        cbTrangThai.setSelectedIndex(0);
+        
+        dsSanPhamHienTai = sanPhamDao.layTatCaSanPham(); 
+        renderBangSanPham(dsSanPhamHienTai);
+        
         modelLoSanPham.setRowCount(0);
         modelQuyCach.setRowCount(0);
+    }
 
-        // --- DATA GIẢ LẬP CHO TỪNG SẢN PHẨM ---
-        
-        if (maSP.equals("SP001")) { // Paracetamol
-            // 1. Load Lô
-            modelLoSanPham.addRow(new Object[]{"1", "L001", "15/12/2026", "150", "01/01/2024"});
-            modelLoSanPham.addRow(new Object[]{"2", "L002", "20/11/2026", "200", "05/02/2024"});
+    private void xuLyTimKiem() {
+        String tuKhoa = txtTimThuoc.getText().trim();
+        if (tuKhoa.contains("Nhập tên thuốc")) tuKhoa = "";
 
-            // 2. Load Quy Cách (Entity logic: Giá bán = Giá vốn * Quy đổi * (1 - Tỉ lệ giảm))
-            // Đơn vị gốc: Viên (x1)
-            modelQuyCach.addRow(new Object[]{"1", "QC-000001", "Viên", "1", df.format(giaVon * 1.2), "0%", "Đơn vị gốc"}); // Lãi 20%
-            // Quy cách 2: Vỉ (x10)
-            modelQuyCach.addRow(new Object[]{"2", "QC-000002", "Vỉ", "10", df.format((giaVon * 10 * 1.2) * 0.95), "5%", "Quy đổi"}); // Giảm 5%
-            // Quy cách 3: Hộp (x100)
-            modelQuyCach.addRow(new Object[]{"3", "QC-000003", "Hộp", "100", df.format((giaVon * 100 * 1.2) * 0.9), "10%", "Quy đổi"}); // Giảm 10%
-        } 
-        else if (maSP.equals("SP002")) { // Vitamin C
-            modelLoSanPham.addRow(new Object[]{"1", "L003", "10/03/2027", "300", "10/10/2024"});
-            
-            modelQuyCach.addRow(new Object[]{"1", "QC-000004", "Viên", "1", df.format(giaVon * 1.3), "0%", "Đơn vị gốc"});
-            modelQuyCach.addRow(new Object[]{"2", "QC-000005", "Lọ", "30", df.format((giaVon * 30 * 1.3) * 0.92), "8%", "Quy đổi"});
+        List<SanPham> ketQuaTimKiem;
+        if (!tuKhoa.isEmpty()) {
+            ketQuaTimKiem = sanPhamDao.timKiemSanPham(tuKhoa);
+        } else {
+            ketQuaTimKiem = sanPhamDao.layTatCaSanPham();
         }
-        else if (maSP.equals("SP003")) { // Băng cá nhân
-            modelLoSanPham.addRow(new Object[]{"1", "L004", "05/05/2026", "80", "12/12/2023"});
+
+        String loaiChon = (String) cbLoai.getSelectedItem();
+        String keChon = (String) cbKe.getSelectedItem();
+        String trangThaiChon = (String) cbTrangThai.getSelectedItem();
+
+        List<SanPham> ketQuaCuoiCung = ketQuaTimKiem.stream().filter(sp -> {
+            boolean passLoai = "Tất cả".equals(loaiChon) || 
+                               (sp.getLoaiSanPham() != null && sp.getLoaiSanPham().name().equalsIgnoreCase(loaiChon));
             
-            modelQuyCach.addRow(new Object[]{"1", "QC-000006", "Hộp", "1", df.format(giaVon * 1.1), "0%", "Đơn vị gốc"});
-            modelQuyCach.addRow(new Object[]{"2", "QC-000007", "Thùng", "50", df.format((giaVon * 50 * 1.1) * 0.95), "5%", "Quy đổi"});
+            boolean passKe = "Tất cả".equals(keChon) || 
+                             (sp.getKeBanSanPham() != null && sp.getKeBanSanPham().contains(keChon));
+            
+            boolean passTrangThai = "Tất cả".equals(trangThaiChon) || 
+                                    (sp.isHoatDong() == "Đang bán".equals(trangThaiChon));
+            
+            return passLoai && passKe && passTrangThai;
+        }).collect(Collectors.toList());
+
+        dsSanPhamHienTai = ketQuaCuoiCung;
+        renderBangSanPham(dsSanPhamHienTai);
+        
+        modelLoSanPham.setRowCount(0);
+        modelQuyCach.setRowCount(0);
+        
+        if (ketQuaCuoiCung.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không tìm thấy sản phẩm nào phù hợp!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private void renderBangSanPham(List<SanPham> list) {
+        modelSanPham.setRowCount(0);
+        for (SanPham sp : list) {
+            String trangThaiText = sp.isHoatDong() ? "Đang bán" : "Ngừng kinh doanh";
+            String loaiText = sp.getLoaiSanPham() != null ? sp.getLoaiSanPham().name() : "";
+            String duongDungText = sp.getDuongDung() != null ? sp.getDuongDung().name() : ""; 
+            
+            double giaBanGoc = sp.getGiaBan(); 
+
+            modelSanPham.addRow(new Object[] {
+                sp.getMaSanPham(),
+                sp.getTenSanPham(),
+                loaiText,
+                sp.getSoDangKy(),
+                duongDungText,   
+                df.format(giaBanGoc), 
+                sp.getKeBanSanPham(),
+                trangThaiText
+            });
+        }
+    }
+
+    private void loadChiTietSanPham(SanPham sp) {
+        modelLoSanPham.setRowCount(0);
+        modelQuyCach.setRowCount(0);
+        
+        String maSP = sp.getMaSanPham();
+        double giaBanGoc = sp.getGiaBan(); 
+
+        // --- TAB 1: LÔ HÀNG ---
+        List<LoSanPham> listLo = loSanPhamDao.layDanhSachLoTheoMaSanPham(maSP); 
+        int sttLo = 1;
+        if (listLo != null) {
+            for (LoSanPham lo : listLo) {
+                modelLoSanPham.addRow(new Object[]{
+                    sttLo++,
+                    lo.getMaLo(),
+                    dtf.format(lo.getHanSuDung()),
+                    lo.getSoLuongTon()
+                });
+            }
+        }
+
+        // --- TAB 2: QUY CÁCH ---
+        List<QuyCachDongGoi> listQC = quyCachDao.layDanhSachQuyCachTheoSanPham(maSP); 
+        int sttQC = 1;
+        if (listQC != null) {
+            for (QuyCachDongGoi qc : listQC) {
+                String tenDVT = qc.getDonViTinh() != null ? qc.getDonViTinh().getTenDonViTinh() : "N/A";
+                
+                double giaBanQuyCach = giaBanGoc * qc.getHeSoQuyDoi() * (1 - qc.getTiLeGiam());
+                
+                String loaiDVT = qc.isDonViGoc() ? "Đơn vị gốc" : "Quy đổi";
+                String tiLeGiamText = (int)(qc.getTiLeGiam() * 100) + "%";
+
+                modelQuyCach.addRow(new Object[]{
+                    sttQC++,
+                    qc.getMaQuyCach(),
+                    tenDVT,
+                    qc.getHeSoQuyDoi(),
+                    df.format(giaBanQuyCach),
+                    tiLeGiamText,
+                    loaiDVT
+                });
+            }
         }
     }
     
-    private double parseMoney(String money) {
-        try {
-            return Double.parseDouble(money.replaceAll("[^\\d]", ""));
-        } catch (Exception e) { return 0; }
-    }
-
-    // ===== MAIN =====
+    // ==============================================================================
+    //                              MAIN (ĐÃ THÊM LẠI)
+    // ==============================================================================
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Tra cứu sản phẩm");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1450, 850);
+            frame.setSize(1500, 850);
             frame.setLocationRelativeTo(null);
             frame.setContentPane(new TraCuuSanPham_GUI());
             frame.setVisible(true);

@@ -429,6 +429,7 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 				TraHangItemPanel pnl = new TraHangItemPanel(item, stt++, new TraHangItemPanel.Listener() {
 					@Override
 					public void onUpdate(ItemTraHang i) {
+						reallocateSoLuongMua();
 						capNhatTongTienTra();
 					}
 
@@ -438,6 +439,24 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 						pnDanhSachDon.remove(p);
 						pnDanhSachDon.revalidate();
 						pnDanhSachDon.repaint();
+						capNhatTongTienTra();
+						capNhatSTT();
+					}
+
+					@Override
+					public void onClone(ItemTraHang itemMoi) {
+						dsTraHang.add(itemMoi);
+
+						TraHangItemPanel pnlClone = new TraHangItemPanel(itemMoi, pnDanhSachDon.getComponentCount(),
+								this, anh);
+
+						pnDanhSachDon.add(pnlClone);
+						pnDanhSachDon.add(Box.createVerticalStrut(5));
+
+						reallocateSoLuongMua();
+						pnDanhSachDon.revalidate();
+						pnDanhSachDon.repaint();
+
 						capNhatTongTienTra();
 						capNhatSTT();
 					}
@@ -475,6 +494,7 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 			TraHangItemPanel pnl = new TraHangItemPanel(item, stt++, new TraHangItemPanel.Listener() {
 				@Override
 				public void onUpdate(ItemTraHang i) {
+					reallocateSoLuongMua();
 					capNhatTongTienTra();
 				}
 
@@ -485,12 +505,29 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 					pnDanhSachDon.revalidate();
 					pnDanhSachDon.repaint();
 					capNhatTongTienTra();
-					capNhatSTT();
 				}
+
+				@Override
+				public void onClone(ItemTraHang itemMoi) {
+					dsTraHang.add(itemMoi);
+
+					// phân bổ lại số lượng mua sau khi clone
+					reallocateSoLuongMua();
+
+					TraHangItemPanel pnlClone = new TraHangItemPanel(itemMoi, dsTraHang.size(), this, anh);
+					pnDanhSachDon.add(pnlClone);
+					pnDanhSachDon.add(Box.createVerticalStrut(5));
+
+					pnDanhSachDon.revalidate();
+					pnDanhSachDon.repaint();
+					capNhatTongTienTra();
+				}
+
 			}, anh);
 
 			pnDanhSachDon.add(pnl);
 			pnDanhSachDon.add(Box.createVerticalStrut(5));
+			reallocateSoLuongMua();
 		}
 
 		pnDanhSachDon.revalidate();
@@ -504,6 +541,48 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 
 		capNhatTongTienTra();
 		capNhatGhiChuKhuyenMai(dsChon);
+	}
+
+	private void reallocateSoLuongMua() {
+		if (dsTraHang.isEmpty())
+			return;
+
+		// Gom theo lô + SP
+		Map<String, List<TraHangItemPanel>> groups = new HashMap<>();
+
+		for (Component c : pnDanhSachDon.getComponents()) {
+			if (c instanceof TraHangItemPanel p) {
+				String key = p.getItem().getMaLo() + "|" + p.getItem().getTenSanPham();
+				groups.computeIfAbsent(key, k -> new ArrayList<>()).add(p);
+			}
+		}
+
+		// Phân bổ theo từng nhóm
+		for (var entry : groups.entrySet()) {
+			List<TraHangItemPanel> list = entry.getValue();
+
+			// tổng SL gốc của nhóm này
+			int tongGoc = list.get(0).getItem().getSoLuongMuaGoc();
+			int allocated = 0;
+
+			for (TraHangItemPanel p : list) {
+				ItemTraHang it = p.getItem();
+				int heSo = it.getQuyCachDangChon().getHeSoQuyDoi();
+
+				int conLai = tongGoc - allocated;
+				if (conLai < 0)
+					conLai = 0;
+
+				int slTheoDVT = conLai / heSo;
+
+				it.setSoLuongMuaTheoDVT(slTheoDVT);
+				it.setSoLuongMua(slTheoDVT);
+
+				allocated += slTheoDVT * heSo;
+
+				p.updateSoLuongMuaFromOutside();
+			}
+		}
 	}
 
 	private QuyCachDongGoi timQuyCachTheoDVT(List<QuyCachDongGoi> dsQuyCach, String maDonViTinh) {

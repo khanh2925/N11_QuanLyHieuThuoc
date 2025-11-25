@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -66,7 +67,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 	DecimalFormat df = new DecimalFormat("#,###đ");
 
 	// Utils
-	private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 16);
+	private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 22);
 	private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 16);
 	private final Color COLOR_PRIMARY = new Color(33, 150, 243);
 
@@ -124,7 +125,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 
 		// ====== Ô tìm kiếm ======
 		txtSearch = new JTextField();
-		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 22));
 		txtSearch.setPreferredSize(new Dimension(350, 40));
 		txtSearch.setMaximumSize(new Dimension(350, 50));
 		txtSearch.setBorder(new RoundedBorder(20));
@@ -136,7 +137,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 
 		// ====== Các nút ======
 		btnXuatFile = new PillButton("Xuất file");
-		btnXuatFile.setFont(FONT_BOLD);
+		btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 20));
 
 		// ====== Thêm vào header theo thứ tự ======
 		pnHeader.add(txtSearch);
@@ -224,9 +225,9 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		pnCTPH.add(pnBtnCTPH);
 
 		btnHuyHang = new PillButton("Hủy hàng");
-		btnHuyHang.setFont(FONT_BOLD);
+		btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 20));
 		btnTuChoi = new PillButton("Từ chối");
-		btnTuChoi.setFont(FONT_BOLD);
+		btnTuChoi.setFont(new Font("Segoe UI", Font.BOLD, 20));
 
 		pnBtnCTPH.add(btnHuyHang);
 		pnBtnCTPH.add(Box.createRigidArea(new Dimension(10, 0)));
@@ -271,6 +272,9 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		};
 		tblPH = setupTable(modelPH);
 		scrPH = new JScrollPane(tblPH);
+		TitledBorder tbPH = BorderFactory.createTitledBorder("Danh sách phiếu hủy");
+		tbPH.setTitleFont(new Font("Segoe UI", Font.BOLD, 16));
+		scrPH.setBorder(tbPH);
 		loadDataTablePH();
 
 		// Bảng chi tiết phiếu huỷ
@@ -284,6 +288,9 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		};
 		tblCTPH = setupTable(modelCTPH);
 		scrCTPH = new JScrollPane(tblCTPH);
+		TitledBorder tbCTPH = BorderFactory.createTitledBorder("Danh sách chi tiết phiếu hủy");
+		tbCTPH.setTitleFont(new Font("Segoe UI", Font.BOLD, 16));
+		scrCTPH.setBorder(tbCTPH);
 
 		// ===== Format chung (giữ nguyên style cũ của bạn) =====
 		formatTable(tblPH);
@@ -352,22 +359,22 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 
 	private JTable setupTable(DefaultTableModel model) {
 		JTable table = new JTable(model);
-		table.setFont(FONT_TEXT);
-		table.setRowHeight(35);
+		table.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+		table.setRowHeight(25);
 		table.setSelectionBackground(new Color(0xC8E6C9));
 		table.setSelectionForeground(Color.BLACK);
-		table.getTableHeader().setFont(FONT_BOLD);
+		table.getTableHeader().setFont(new Font("Segoe UI", Font.PLAIN, 20));
 		table.getTableHeader().setBackground(COLOR_PRIMARY);
 		table.getTableHeader().setForeground(Color.WHITE);
 		return table;
 	}
 
 	private void formatTable(JTable table) {
-		table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+		table.getTableHeader().setFont(new Font("Segoe UI", Font.PLAIN, 22));
 		table.getTableHeader().setBorder(null);
 
 		table.setRowHeight(28);
-		table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		table.setFont(new Font("Segoe UI", Font.PLAIN, 22));
 		table.setSelectionBackground(new Color(180, 205, 230));
 		table.setShowGrid(false);
 
@@ -564,39 +571,35 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 	}
 
 	/**
-	 * 🔹 Sau khi cập nhật 1 chi tiết, tự động cập nhật trạng thái của Phiếu Hủy nếu đủ điều kiện.
-	 *      - Nếu TẤT CẢ chi tiết đều không còn trạng thái "Chờ duyệt"
-	 *      - Thì cập nhật Phiếu Hủy sang "Đã duyệt"
-	 *      - Và cập nhật lại bảng GUI đúng theo model
+	 * 🔹 Sau khi cập nhật 1 chi tiết, tự động cập nhật trạng thái của Phiếu Hủy nếu
+	 * đủ điều kiện. - Nếu TẤT CẢ chi tiết đều không còn trạng thái "Chờ duyệt" -
+	 * Thì cập nhật Phiếu Hủy sang "Đã duyệt" - Và cập nhật lại bảng GUI đúng theo
+	 * model
 	 */
 	private void capNhatTrangThaiPhieuSauKhiCapNhatCTPH(String maPhieuHuy) {
-	    
-	    boolean duDuLieuDeDuyet = ph_dao.checkTrangThai(maPhieuHuy);
 
-	    if (!duDuLieuDeDuyet) {
-	        return; 
-	    }
+		boolean duDuLieuDeDuyet = ph_dao.checkTrangThai(maPhieuHuy);
 
-	    int rowView = tblPH.getSelectedRow();
-	    if (rowView == -1) {
-	        return; 
-	    }
-	   
-	    int rowModel = tblPH.convertRowIndexToModel(rowView);
-	    
-	    boolean ok = ph_dao.capNhatTrangThaiPhieuHuy(maPhieuHuy);
-	    if (!ok) {
-	        JOptionPane.showMessageDialog(null, "Cập nhật trạng thái phiếu huỷ thất bại!");
-	        return;
-	    }
+		if (!duDuLieuDeDuyet) {
+			return;
+		}
 
-	    
-	    modelPH.setValueAt("Đã duyệt", rowModel, 4); 
+		int rowView = tblPH.getSelectedRow();
+		if (rowView == -1) {
+			return;
+		}
 
+		int rowModel = tblPH.convertRowIndexToModel(rowView);
 
+		boolean ok = ph_dao.capNhatTrangThaiPhieuHuy(maPhieuHuy);
+		if (!ok) {
+			JOptionPane.showMessageDialog(null, "Cập nhật trạng thái phiếu huỷ thất bại!");
+			return;
+		}
+
+		modelPH.setValueAt("Đã duyệt", rowModel, 4);
 
 	}
-
 
 	@Override
 	public void insertUpdate(DocumentEvent e) {
