@@ -27,7 +27,7 @@ import entity.SanPham;
 
 /**
  * @author Quốc Khánh
- * @version 1.2 (Removed Edit/Active actions, Added Main)
+ * @version 1.3 (Standardized UI Layout & Fonts)
  */
 @SuppressWarnings("serial")
 public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
@@ -53,7 +53,7 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
     private JComboBox<String> cbTrangThai;
     private JComboBox<String> cbNam;
     private PillButton btnTimKiem;
-    private PillButton btnLamMoi; // Thêm nút làm mới cho đồng bộ
+    private PillButton btnLamMoi; 
 
     // Utils & DAO
     private final DecimalFormat dfTien = new DecimalFormat("#,### đ");
@@ -65,7 +65,7 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
 
     // Cache Data
     private List<BangGia> dsBangGiaHienTai;
-	private String tuKhoa;
+    private String tuKhoa;
 
     public TraCuuBangGia_GUI() {
         setPreferredSize(new Dimension(1537, 850));
@@ -99,7 +99,7 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
     }
 
     // ==============================================================================
-    //                              UI: HEADER
+    //                                  UI: HEADER
     // ==============================================================================
     private void taoPhanHeader() {
         pnHeader = new JPanel();
@@ -107,32 +107,27 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
         pnHeader.setPreferredSize(new Dimension(1073, 94));
         pnHeader.setBackground(new Color(0xE3F2F5));
 
-        // --- Ô TÌM KIẾM ---
+        // --- Ô TÌM KIẾM (Font 20, Size 480x60 - Chuẩn) ---
         txtTimKiem = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã bảng giá, tên bảng giá...");
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
-        txtTimKiem.setBounds(25, 17, 500, 60);
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20)); 
+        txtTimKiem.setBounds(25, 17, 480, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
         pnHeader.add(txtTimKiem);
 
-        // --- BỘ LỌC ---
-        // Trạng thái
-        JLabel lblTrangThai = new JLabel("Trạng thái:");
-        lblTrangThai.setBounds(550, 28, 80, 35);
-        lblTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        pnHeader.add(lblTrangThai);
-
+        // --- BỘ LỌC (Font 18) ---
+        
+        // 1. Trạng thái (Vị trí tương đương filter đầu tiên)
+        addFilterLabel("Trạng thái:", 530, 28, 100, 35);
+        
         cbTrangThai = new JComboBox<>(new String[]{"Tất cả", "Đang hoạt động", "Ngừng hoạt động"});
-        cbTrangThai.setBounds(640, 28, 150, 38);
-        cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        cbTrangThai.setBounds(630, 28, 190, 38); // Width 190
+        cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         pnHeader.add(cbTrangThai);
 
-        // Năm
-        JLabel lblNam = new JLabel("Năm:");
-        lblNam.setBounds(810, 28, 50, 35);
-        lblNam.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        pnHeader.add(lblNam);
+        // 2. Năm (Vị trí tiếp theo)
+        addFilterLabel("Năm:", 840, 28, 60, 35);
 
         // Tự động sinh năm từ 2023 đến hiện tại + 2
         int namHienTai = java.time.LocalDate.now().getYear();
@@ -141,25 +136,34 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
         for (int i = namHienTai - 2; i <= namHienTai + 2; i++) {
             cbNam.addItem(String.valueOf(i));
         }
-        cbNam.setSelectedItem(String.valueOf(namHienTai)); // Mặc định chọn năm nay
-        cbNam.setBounds(860, 28, 100, 38);
-        cbNam.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        cbNam.setSelectedItem(String.valueOf(namHienTai)); 
+        
+        cbNam.setBounds(900, 28, 150, 38); // Width 150 (nhỏ hơn xíu vì năm ngắn)
+        cbNam.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         pnHeader.add(cbNam);
 
-        // --- NÚT CHỨC NĂNG ---
+        // --- NÚT CHỨC NĂNG (Font 18 Bold - Chuẩn) ---
         btnTimKiem = new PillButton("Tìm kiếm");
-        btnTimKiem.setBounds(1000, 22, 130, 50);
-        btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnTimKiem.setBounds(1120, 22, 130, 50);
+        btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnTimKiem);
 
         btnLamMoi = new PillButton("Làm mới");
-        btnLamMoi.setBounds(1150, 22, 130, 50);
-        btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnLamMoi.setBounds(1265, 22, 130, 50);
+        btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnLamMoi);
+    }
+    
+    // Helper tạo label font 18
+    private void addFilterLabel(String text, int x, int y, int w, int h) {
+        JLabel lbl = new JLabel(text);
+        lbl.setBounds(x, y, w, h);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        pnHeader.add(lbl);
     }
 
     // ==============================================================================
-    //                              UI: CENTER
+    //                                  UI: CENTER
     // ==============================================================================
     private void taoPhanCenter() {
         pnCenter = new JPanel(new BorderLayout());
@@ -177,7 +181,7 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
         };
         tblBangGia = setupTable(modelBangGia);
         
-        // Render Trạng thái
+        // Render Trạng thái (Font to hơn chút)
         tblBangGia.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -185,10 +189,10 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
                 if ("Đang hoạt động".equals(value)) {
                     lbl.setForeground(new Color(0, 153, 51)); // Xanh lá
-                    lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                    lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
                 } else {
                     lbl.setForeground(Color.GRAY);
-                    lbl.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+                    lbl.setFont(new Font("Segoe UI", Font.PLAIN, 15));
                 }
                 return lbl;
             }
@@ -198,9 +202,9 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
         scrollBG.setBorder(createTitledBorder("Danh sách Bảng giá bán hàng"));
         splitPane.setTopComponent(scrollBG);
 
-        // --- BOTTOM: TABBED PANE ---
+        // --- BOTTOM: TABBED PANE (Font 16) ---
         JTabbedPane tabChiTiet = new JTabbedPane();
-        tabChiTiet.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tabChiTiet.setFont(new Font("Segoe UI", Font.PLAIN, 16));
 
         tabChiTiet.addTab("Cấu hình quy tắc giá", createTabQuyTac());
         tabChiTiet.addTab("Xem thử giá bán (Mô phỏng)", createTabMoPhong());
@@ -249,7 +253,7 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 lbl.setHorizontalAlignment(SwingConstants.RIGHT);
                 lbl.setForeground(new Color(220, 0, 0));
-                lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
                 return lbl;
             }
         });
@@ -257,36 +261,39 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
         return new JScrollPane(tblMoPhongGia);
     }
 
+    // Setup Table Chuẩn (Font 16, RowHeight 35)
     private JTable setupTable(DefaultTableModel model) {
         JTable table = new JTable(model);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        table.setRowHeight(30);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        table.setRowHeight(35);
         table.setGridColor(new Color(230, 230, 230));
         table.setSelectionBackground(new Color(0xC8E6C9));
         table.setSelectionForeground(Color.BLACK);
         
         JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        header.setFont(new Font("Segoe UI", Font.BOLD, 16));
         header.setBackground(new Color(33, 150, 243));
         header.setForeground(Color.WHITE);
+        header.setPreferredSize(new Dimension(100, 40)); // Header Height 40
         return table;
     }
 
+    // Border Title Chuẩn (Font 18 Bold)
     private TitledBorder createTitledBorder(String title) {
         return BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
-            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 16), Color.DARK_GRAY
+            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 18), Color.DARK_GRAY
         );
     }
 
     // ==============================================================================
-    //                              SỰ KIỆN & LOGIC
+    //                                  SỰ KIỆN & LOGIC
     // ==============================================================================
     
     private void addEvents() {
         btnTimKiem.addActionListener(this);
         btnLamMoi.addActionListener(this);
-        txtTimKiem.addActionListener(this); // Enter tìm kiếm
+        txtTimKiem.addActionListener(this); 
 
         // Click bảng giá -> Load chi tiết
         tblBangGia.getSelectionModel().addListSelectionListener(e -> {
@@ -325,7 +332,7 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
     private void xuLyTimKiem() {
          tuKhoa = txtTimKiem.getText().trim();
         if (tuKhoa.contains("Tìm theo mã")) {
-        	tuKhoa = "";
+            tuKhoa = "";
         }
         
         // Lọc danh sách trong RAM (vì dữ liệu bảng giá thường ít)
@@ -462,14 +469,16 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
     }
     
     // ==============================================================================
-    //                              MAIN
+    //                                  MAIN
     // ==============================================================================
-    public static void main(String[] args) {          
-            JFrame frame = new JFrame("Tra cứu bảng giá");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1500, 850);
-            frame.setLocationRelativeTo(null);
-            frame.setContentPane(new TraCuuBangGia_GUI());
-            frame.setVisible(true);
+    public static void main(String[] args) {           
+            SwingUtilities.invokeLater(() -> {
+                JFrame frame = new JFrame("Tra cứu bảng giá");
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                frame.setSize(1500, 850);
+                frame.setLocationRelativeTo(null);
+                frame.setContentPane(new TraCuuBangGia_GUI());
+                frame.setVisible(true);
+            });
     }
 }

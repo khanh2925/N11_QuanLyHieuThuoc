@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -28,11 +29,8 @@ import entity.HoaDon;
 
 public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
 
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	private JPanel pnHeader;
+    private static final long serialVersionUID = 1L;
+    private JPanel pnHeader;
     private JPanel pnCenter;
     
     // Bảng Hóa Đơn (Trên)
@@ -87,7 +85,7 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
     }
 
     // ==============================================================================
-    //                              PHẦN HEADER (GIỮ NGUYÊN UI)
+    //                                  PHẦN HEADER
     // ==============================================================================
     private void taoPhanHeader() {
         pnHeader = new JPanel();
@@ -95,61 +93,58 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         pnHeader.setPreferredSize(new Dimension(1073, 94));
         pnHeader.setBackground(new Color(0xE3F2F5));
 
-        // --- 1. Ô TÌM KIẾM TO (Bên trái) ---
+        // --- 1. Ô TÌM KIẾM TO (Bên trái) - KHỚP VỚI BÁN HÀNG/SẢN PHẨM ---
         txtTimKiem = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã hóa đơn, SĐT khách hàng");
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22)); 
-        txtTimKiem.setBounds(25, 17, 450, 60);
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20)); // Font 20
+        // Set width = 480 để bằng với bên TraCuuSanPham
+        txtTimKiem.setBounds(25, 17, 480, 60); 
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
-        txtTimKiem.setForeground(Color.GRAY);
         pnHeader.add(txtTimKiem);
 
-        // --- 2. BỘ LỌC NGÀY (Ở giữa) ---
-        // Từ ngày
+        // --- 2. BỘ LỌC NGÀY (Ở giữa) - KHỚP VỊ TRÍ COMBOX SẢN PHẨM ---
+        
+        // Từ ngày (Vị trí tương đương ComboBox Loại)
         JLabel lblTu = new JLabel("Từ ngày:");
-        lblTu.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblTu.setBounds(500, 28, 70, 35);
+        lblTu.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
+        lblTu.setBounds(530, 28, 80, 35); // x=530 giống label Loại
         pnHeader.add(lblTu);
 
         dateTuNgay = new JDateChooser();
         dateTuNgay.setDateFormatString("dd/MM/yyyy");
-        dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        dateTuNgay.setBounds(570, 28, 140, 38);
-        dateTuNgay.setDate(new Date()); // Mặc định hôm nay
+        dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
+        // x=610 (dịch sang phải xíu vì chữ Từ Ngày dài hơn chữ Loại), Width=180
+        dateTuNgay.setBounds(610, 28, 180, 38); 
         pnHeader.add(dateTuNgay);
 
-        // Đến ngày
+        // Đến ngày (Vị trí tương đương ComboBox Trạng thái)
         JLabel lblDen = new JLabel("Đến:");
-        lblDen.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblDen.setBounds(730, 28, 40, 35);
+        lblDen.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
+        lblDen.setBounds(830, 28, 50, 35); 
         pnHeader.add(lblDen);
 
         dateDenNgay = new JDateChooser();
         dateDenNgay.setDateFormatString("dd/MM/yyyy");
-        dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        dateDenNgay.setBounds(770, 28, 140, 38);
-        
-        // Mặc định ngày mai
-        java.util.Calendar cal = java.util.Calendar.getInstance();
-        cal.add(java.util.Calendar.DATE, 1);
-        dateDenNgay.setDate(cal.getTime());
+        dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
+        // x=890 giống ComboBox Trạng Thái, Width=180
+        dateDenNgay.setBounds(890, 28, 180, 38); 
         pnHeader.add(dateDenNgay);
 
-        // --- 3. CÁC NÚT CHỨC NĂNG (Bên phải) ---
+        // --- 3. CÁC NÚT CHỨC NĂNG (Bên phải) - KHỚP 100% ---
         btnTimKiem = new PillButton("Tìm kiếm");
         btnTimKiem.setBounds(1120, 22, 130, 50);
-        btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18)); 
         pnHeader.add(btnTimKiem);
 
         btnLamMoi = new PillButton("Làm mới");
         btnLamMoi.setBounds(1265, 22, 130, 50);
-        btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18)); 
         pnHeader.add(btnLamMoi);
     }
 
     // ==============================================================================
-    //                              PHẦN CENTER (GIỮ NGUYÊN UI)
+    //                                  PHẦN CENTER
     // ==============================================================================
     private void taoPhanCenter() {
         pnCenter = new JPanel(new BorderLayout());
@@ -217,37 +212,38 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         splitPane.setBottomComponent(scrollChiTiet);
     }
 
-    // Hàm setup Table chung
+    // Hàm setup Table chung (Font 16, RowHeight 35)
     private JTable setupTable(DefaultTableModel model) {
         JTable table = new JTable(model);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        table.setRowHeight(28);
-        table.setSelectionBackground(new Color(0xC8E6C9)); // Màu xanh nhạt khi chọn
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 16)); // Font 16
+        table.setRowHeight(35); // Cao 35
+        table.setSelectionBackground(new Color(0xC8E6C9)); 
+        table.setGridColor(new Color(230, 230, 230));
         
         JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        header.setFont(new Font("Segoe UI", Font.BOLD, 16)); // Header Font 16 Bold
         header.setBackground(new Color(33, 150, 243));
         header.setForeground(Color.WHITE);
+        header.setPreferredSize(new Dimension(100, 40)); // Header Cao 40
         return table;
     }
 
-    // Hàm tạo border tiêu đề chung
+    // Hàm tạo border tiêu đề chung (Font 18 Bold)
     private TitledBorder createTitledBorder(String title) {
         return BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
-            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 16), Color.DARK_GRAY
+            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 18), Color.DARK_GRAY // Font 18
         );
     }
 
     // ==============================================================================
-    //                              SỰ KIỆN & LOGIC (PHẦN MỚI THÊM VÀO)
+    //                                  SỰ KIỆN & LOGIC
     // ==============================================================================
     
     private void addEvents() {
-        // ActionListener cho các nút
         btnTimKiem.addActionListener(this);
         btnLamMoi.addActionListener(this);
-        txtTimKiem.addActionListener(this); // Enter khi tìm kiếm
+        txtTimKiem.addActionListener(this); 
 
         // ListSelectionListener: Click vào bảng hóa đơn -> Load chi tiết
         tblHoaDon.getSelectionModel().addListSelectionListener(e -> {
@@ -256,7 +252,7 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
             }
         });
         
-        // MouseListener: Double click để xem lại hóa đơn (In lại)
+        // MouseListener: Double click để xem lại hóa đơn
         tblHoaDon.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -286,14 +282,23 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         txtTimKiem.setText("");
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã hóa đơn, SĐT khách hàng");
         
-        dateTuNgay.setDate(null);
-        dateDenNgay.setDate(null);
+        // --- CHỌN NGÀY MẶC ĐỊNH ---
+        Calendar cal = Calendar.getInstance();
+        
+        // Đến ngày: Hôm nay
+        Date now = cal.getTime();
+        dateDenNgay.setDate(now);
+        
+        // Từ ngày: Mùng 1 của tháng hiện tại
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        Date firstDayOfMonth = cal.getTime();
+        dateTuNgay.setDate(firstDayOfMonth);
         
         // Lấy tất cả từ DAO
         dsHoaDonHienTai = hoaDonDao.layTatCaHoaDon(); 
         
-        renderBangHoaDon(dsHoaDonHienTai);
-        modelChiTiet.setRowCount(0); // Xóa bảng chi tiết
+        // Render có lọc theo ngày mặc định luôn cho hợp lý
+        xuLyTimKiem();
     }
 
     // --- 2. Tìm kiếm và Lọc ---
@@ -303,7 +308,7 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
 
         List<HoaDon> ketQua = new ArrayList<>();
 
-        // Bước 1: Tìm theo Mã hoặc SĐT (Database)
+        // Bước 1: Tìm theo Mã hoặc SĐT (Database) hoặc lấy hết
         if (!tuKhoa.isEmpty()) {
             if (tuKhoa.toUpperCase().startsWith("HD-")) {
                 HoaDon hd = hoaDonDao.timHoaDonTheoMa(tuKhoa);
@@ -312,7 +317,7 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
                 ketQua = hoaDonDao.timHoaDonTheoSoDienThoai(tuKhoa);
             }
         } else {
-            // Không nhập gì thì lấy hết trong DB
+            // Không nhập gì thì lấy hết (để sau đó lọc ngày)
             ketQua = hoaDonDao.layTatCaHoaDon();
         }
 
@@ -327,6 +332,7 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
             List<HoaDon> ketQuaLocNgay = new ArrayList<>();
             for (HoaDon hd : ketQua) {
                 LocalDate ngayLap = hd.getNgayLap();
+                // So sánh ngày: fromDate <= ngayLap <= toDate
                 if ((ngayLap.isEqual(fromDate) || ngayLap.isAfter(fromDate)) &&
                     (ngayLap.isEqual(toDate) || ngayLap.isBefore(toDate))) {
                     ketQuaLocNgay.add(hd);
@@ -340,7 +346,8 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         renderBangHoaDon(dsHoaDonHienTai);
         modelChiTiet.setRowCount(0);
         
-        if (ketQua.isEmpty()) {
+        // Nếu tìm kiếm cụ thể (có nhập text) mà không thấy thì báo
+        if (ketQua.isEmpty() && !tuKhoa.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Không tìm thấy hóa đơn nào!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         }
     }
@@ -372,7 +379,6 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         if (row >= 0) {
             String maHD = tblHoaDon.getValueAt(row, 1).toString();
             
-            // Tìm trong list hiện tại để đỡ query lại
             HoaDon hdChon = null;
             for (HoaDon h : dsHoaDonHienTai) {
                 if (h.getMaHoaDon().equals(maHD)) {
@@ -380,8 +386,6 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
                     break;
                 }
             }
-            
-            // Nếu không có trong cache thì query lại DB cho chắc
             if (hdChon == null) {
                 hdChon = hoaDonDao.timHoaDonTheoMa(maHD);
             }
@@ -402,27 +406,28 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
                 ct.getSanPham().getTenSanPham(),
                 ct.getDonViTinh().getTenDonViTinh(),
                 ct.getSoLuong(),
-                df.format(ct.getGiaBan()), // Giá gốc
-                df.format(ct.getThanhTien()) // Thành tiền (đã trừ KM)
+                df.format(ct.getGiaBan()), 
+                df.format(ct.getThanhTien()) 
             });
         }
     }
     
-    // --- 5. Xem lại hóa đơn (Tính năng in lại) ---
+    // --- 5. Xem lại hóa đơn ---
     private void xemLaiHoaDon(String maHD) {
         HoaDon hd = hoaDonDao.timHoaDonTheoMa(maHD);
         if (hd != null) {
-             // Gọi dialog in hóa đơn (nếu bạn đã có class HoaDonPreviewDialog)
              new HoaDonPreviewDialog(SwingUtilities.getWindowAncestor(this), hd).setVisible(true);
         }
     }
 
     public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Tra cứu đơn hàng");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1400, 800);
             frame.setLocationRelativeTo(null);
             frame.setContentPane(new TraCuuDonHang_GUI());
             frame.setVisible(true);
+        });
     }
 }
