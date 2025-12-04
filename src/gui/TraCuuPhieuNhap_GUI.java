@@ -72,44 +72,44 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
 
         txtTimKiem = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã PN, tên nhân viên, nhà cung cấp...");
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        txtTimKiem.setBounds(25, 17, 450, 60);
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
+        txtTimKiem.setBounds(25, 17, 480, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
         pnHeader.add(txtTimKiem);
 
         JLabel lblTu = new JLabel("Từ ngày:");
         lblTu.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblTu.setBounds(500, 28, 70, 35);
+        lblTu.setBounds(540, 28, 70, 35);
         pnHeader.add(lblTu);
 
         dateTuNgay = new JDateChooser();
         dateTuNgay.setDateFormatString("dd/MM/yyyy");
         dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        dateTuNgay.setBounds(570, 28, 140, 38);
+        dateTuNgay.setBounds(620, 28, 140, 38);
         dateTuNgay.setDate(java.sql.Date.valueOf(LocalDate.now().minusDays(30)));
         pnHeader.add(dateTuNgay);
 
         JLabel lblDen = new JLabel("Đến:");
         lblDen.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblDen.setBounds(730, 28, 40, 35);
+        lblDen.setBounds(780, 28, 40, 35);
         pnHeader.add(lblDen);
 
         dateDenNgay = new JDateChooser();
         dateDenNgay.setDateFormatString("dd/MM/yyyy");
         dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        dateDenNgay.setBounds(770, 28, 140, 38);
+        dateDenNgay.setBounds(820, 28, 140, 38);
         dateDenNgay.setDate(new Date());
         pnHeader.add(dateDenNgay);
 
         btnTimKiem = new PillButton("Tìm kiếm");
-        btnTimKiem.setBounds(1120, 22, 130, 50);
+        btnTimKiem.setBounds(1020, 22, 130, 50);
         btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnTimKiem.setIcon(new ImageIcon("src/icon/search.png"));
         pnHeader.add(btnTimKiem);
 
         btnLamMoi = new PillButton("Làm mới");
-        btnLamMoi.setBounds(1265, 22, 130, 50);
+        btnLamMoi.setBounds(1165, 22, 130, 50);
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnLamMoi.setIcon(new ImageIcon("src/icon/refresh.png"));
         pnHeader.add(btnLamMoi);

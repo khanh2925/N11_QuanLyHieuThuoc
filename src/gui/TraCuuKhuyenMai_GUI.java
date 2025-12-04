@@ -87,43 +87,43 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
         txtTimKiem = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã KM, tên chương trình...");
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
-        txtTimKiem.setBounds(25, 17, 450, 60);
+        txtTimKiem.setBounds(25, 17, 480, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
         pnHeader.add(txtTimKiem);
 
         JLabel lblLoai = new JLabel("Loại KM:");
-        lblLoai.setBounds(500, 28, 70, 35);
+        lblLoai.setBounds(550, 28, 70, 35);
         lblLoai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(lblLoai);
 
         cbLoaiKM = new JComboBox<>(new String[]{"Tất cả", "Theo hóa đơn", "Theo sản phẩm"});
-        cbLoaiKM.setBounds(570, 28, 140, 38);
+        cbLoaiKM.setBounds(620, 28, 140, 38);
         cbLoaiKM.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(cbLoaiKM);
 
         JLabel lblHinhThuc = new JLabel("Hình thức:");
-        lblHinhThuc.setBounds(730, 28, 80, 35);
+        lblHinhThuc.setBounds(780, 28, 80, 35);
         lblHinhThuc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(lblHinhThuc);
 
         cbHinhThuc = new JComboBox<>(new String[]{"Tất cả", "Giảm tiền", "Giảm %", "Tặng quà"});
-        cbHinhThuc.setBounds(810, 28, 120, 38);
+        cbHinhThuc.setBounds(860, 28, 120, 38);
         cbHinhThuc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(cbHinhThuc);
 
         JLabel lblTrangThai = new JLabel("Trạng thái:");
-        lblTrangThai.setBounds(950, 28, 80, 35);
+        lblTrangThai.setBounds(1000, 28, 80, 35);
         lblTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(lblTrangThai);
 
         cbTrangThai = new JComboBox<>(new String[]{"Tất cả", "Đang chạy", "Sắp chạy", "Đã kết thúc"});
-        cbTrangThai.setBounds(1030, 28, 120, 38);
+        cbTrangThai.setBounds(1080, 28, 120, 38);
         cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(cbTrangThai);
 
         btnTim = new PillButton("Tìm kiếm");
-        btnTim.setBounds(1180, 22, 120, 50);
+        btnTim.setBounds(1230, 22, 120, 50);
         btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnTim);
     }
