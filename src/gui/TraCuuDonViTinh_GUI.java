@@ -328,7 +328,7 @@ public class TraCuuDonViTinh_GUI extends JPanel implements ActionListener, Mouse
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+//                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception e) {
             }
             JFrame frame = new JFrame("Tra cứu phiếu nhập");
