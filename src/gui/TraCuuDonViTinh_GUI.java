@@ -32,7 +32,6 @@ public class TraCuuDonViTinh_GUI extends JPanel implements ActionListener, Mouse
     private DefaultTableModel modelDonViTinh;
 
     // Bảng Detail: Sản phẩm sử dụng đơn vị này
-    private JTabbedPane tabChiTiet;
     private JTable tblSanPhamSuDung;
     private DefaultTableModel modelSanPhamSuDung;
 
@@ -103,7 +102,7 @@ public class TraCuuDonViTinh_GUI extends JPanel implements ActionListener, Mouse
         pnHeader.add(btnLamMoi);
     }
 
-    private void taoPhanGiua() {
+private void taoPhanGiua() {
         pnCenter = new JPanel(new BorderLayout());
         pnCenter.setBackground(Color.WHITE);
         pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -113,7 +112,6 @@ public class TraCuuDonViTinh_GUI extends JPanel implements ActionListener, Mouse
         splitPane.setDividerLocation(400);
         splitPane.setResizeWeight(0.5);
 
-        // --- TOP: BẢNG ĐƠN VỊ TÍNH ---
         String[] colDVT = {"STT", "Mã Đơn Vị", "Tên Đơn Vị Tính", "Số lượng thuốc đang dùng"};
         modelDonViTinh = new DefaultTableModel(colDVT, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -131,13 +129,14 @@ public class TraCuuDonViTinh_GUI extends JPanel implements ActionListener, Mouse
         scrollDVT.setBorder(taoVienTieuDe("Danh mục Đơn vị tính"));
         splitPane.setTopComponent(scrollDVT);
 
-        // --- BOTTOM: TAB CHI TIẾT (Sản phẩm sử dụng) ---
-        tabChiTiet = new JTabbedPane();
-        tabChiTiet.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-
-        tabChiTiet.addTab("Sản phẩm sử dụng đơn vị này", createTabSanPhamSuDung());
+        // --- BOTTOM: SẢN PHẨM SỬ DỤNG (ĐÃ SỬA) ---
+        // Không dùng JTabbedPane nữa, lấy trực tiếp Panel/ScrollPane
+        JComponent pnlChiTiet = createTabSanPhamSuDung();
         
-        splitPane.setBottomComponent(tabChiTiet);
+        // Đặt viền có tiêu đề giống bảng trên
+        pnlChiTiet.setBorder(taoVienTieuDe("Sản phẩm sử dụng đơn vị này"));
+        
+        splitPane.setBottomComponent(pnlChiTiet);
         pnCenter.add(splitPane, BorderLayout.CENTER);
     }
 
