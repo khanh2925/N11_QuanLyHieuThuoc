@@ -27,7 +27,7 @@ import enums.LoaiSanPham;
 
 /**
  * @author Quốc Khánh
- * @version 1.6 (Refactored: Added Main, MouseListener, Organized Layout)
+ * @version 1.8 (Modified: Use getTenLoai() for ComboBox and Table)
  */
 @SuppressWarnings("serial")
 public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
@@ -54,7 +54,7 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
     // Bộ lọc
     private JTextField txtTimThuoc;
     private JComboBox<String> cbLoai;
-    private JComboBox<String> cbKe;
+    // private JComboBox<String> cbKe; // Đã xóa
     private JComboBox<String> cbTrangThai;
     private PillButton btnTimKiem;
     private PillButton btnLamMoi;
@@ -103,7 +103,7 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
     }
 
     // ==============================================================================
-    //                              UI: HEADER
+    //                                  UI: HEADER
     // ==============================================================================
     private void taoPhanHeader() {
         pnHeader = new JPanel();
@@ -111,63 +111,59 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
         pnHeader.setPreferredSize(new Dimension(1073, 94)); 
         pnHeader.setBackground(new Color(0xE3F2F5));
 
-        // --- Ô TÌM KIẾM ---
+        // --- Ô TÌM KIẾM (Font 20) ---
         txtTimThuoc = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimThuoc, "Nhập tên thuốc, mã SP, số đăng ký...");
-        txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 20)); 
         txtTimThuoc.setBounds(25, 17, 480, 60);
         txtTimThuoc.setBorder(new RoundedBorder(20));
         txtTimThuoc.setBackground(Color.WHITE);
         pnHeader.add(txtTimThuoc);
 
-        // --- BỘ LỌC ---
+        // --- BỘ LỌC (Font 18) ---
         // 1. Loại
         addFilterLabel("Loại:", 530, 28, 50, 35);
         cbLoai = new JComboBox<>();
         cbLoai.addItem("Tất cả");
         for (LoaiSanPham loai : LoaiSanPham.values()) {
-            cbLoai.addItem(loai.name()); 
+            // --- SỬA ĐỔI 1: Dùng getTenLoai() thay vì name() ---
+            cbLoai.addItem(loai.getTenLoai()); 
         }
-        setupComboBox(cbLoai, 580, 28, 140, 38);
+        setupComboBox(cbLoai, 580, 28, 180, 38);
 
-        // 2. Kệ
-        addFilterLabel("Kệ:", 735, 28, 40, 35);
-        cbKe = new JComboBox<>(new String[]{"Tất cả", "A", "B", "C", "D", "Kệ mát", "Kho"});
-        setupComboBox(cbKe, 770, 28, 100, 38);
-
-        // 3. Trạng thái
-        addFilterLabel("Trạng thái:", 885, 28, 80, 35);
+        // 2. Trạng thái 
+        addFilterLabel("Trạng thái:", 790, 28, 100, 35);
         cbTrangThai = new JComboBox<>(new String[]{"Tất cả", "Đang bán", "Ngừng kinh doanh"});
-        setupComboBox(cbTrangThai, 970, 28, 130, 38);
+        setupComboBox(cbTrangThai, 890, 28, 180, 38);
 
-        // --- NÚT ---
+        // --- NÚT (Font 18) ---
         btnTimKiem = new PillButton("Tìm kiếm");
         btnTimKiem.setBounds(1120, 22, 130, 50);
-        btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18)); 
         pnHeader.add(btnTimKiem);
 
         btnLamMoi = new PillButton("Làm mới");
         btnLamMoi.setBounds(1265, 22, 130, 50);
-        btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18)); 
         pnHeader.add(btnLamMoi);
     }
 
-    // Helper tạo label và combobox nhanh gọn
+    // Helper tạo label và combobox (Font 18)
     private void addFilterLabel(String text, int x, int y, int w, int h) {
         JLabel lbl = new JLabel(text);
         lbl.setBounds(x, y, w, h);
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
         pnHeader.add(lbl);
     }
 
     private void setupComboBox(JComboBox<?> cb, int x, int y, int w, int h) {
         cb.setBounds(x, y, w, h);
-        cb.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        cb.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
         pnHeader.add(cb);
     }
 
     // ==============================================================================
-    //                              UI: CENTER
+    //                                  UI: CENTER
     // ==============================================================================
     private void taoPhanCenter() {
         pnCenter = new JPanel(new BorderLayout());
@@ -189,7 +185,6 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
         
         tblSanPham = setupTable(modelSanPham);
         
-        // Cấu hình render cột
         configureTableRenderers();
 
         JScrollPane scrollSP = new JScrollPane(tblSanPham);
@@ -198,7 +193,7 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
 
         // --- BOTTOM: TABBED PANE ---
         tabChiTiet = new JTabbedPane();
-        tabChiTiet.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tabChiTiet.setFont(new Font("Segoe UI", Font.PLAIN, 16)); 
         
         tabChiTiet.addTab("Danh sách lô hàng", createTabLoHang());
         tabChiTiet.addTab("Quy cách đóng gói & Giá bán", createTabQuyCach());
@@ -213,14 +208,11 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
         DefaultTableCellRenderer right = new DefaultTableCellRenderer();
         right.setHorizontalAlignment(SwingConstants.RIGHT);
 
-        // Canh giữa các cột (trừ tên SP)
         for(int i=0; i<tblSanPham.getColumnCount(); i++) {
             if(i != 1) tblSanPham.getColumnModel().getColumn(i).setCellRenderer(center);
         }
-        // Giá bán canh phải
         tblSanPham.getColumnModel().getColumn(5).setCellRenderer(right); 
         
-        // Render Trạng thái
         tblSanPham.getColumnModel().getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -228,10 +220,10 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
                 if("Đang bán".equals(value)) {
                     lbl.setForeground(new Color(0x2E7D32));
-                    lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
+                    lbl.setFont(new Font("Segoe UI", Font.BOLD, 15)); 
                 } else {
                     lbl.setForeground(Color.RED);
-                    lbl.setFont(new Font("Segoe UI", Font.ITALIC, 13));
+                    lbl.setFont(new Font("Segoe UI", Font.ITALIC, 15));
                 }
                 return lbl;
             }
@@ -278,7 +270,7 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
                 if ("Đơn vị gốc".equals(value)) {
-                    lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
+                    lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
                     lbl.setForeground(new Color(0, 102, 204));
                 } else {
                     lbl.setForeground(Color.GRAY);
@@ -292,50 +284,45 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
 
     private JTable setupTable(DefaultTableModel model) {
         JTable table = new JTable(model);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        table.setRowHeight(30);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 16)); 
+        table.setRowHeight(35); 
         table.setGridColor(new Color(230, 230, 230));
         table.setSelectionBackground(new Color(0xC8E6C9));
         table.setSelectionForeground(Color.BLACK);
         
         JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        header.setFont(new Font("Segoe UI", Font.BOLD, 16)); 
         header.setBackground(new Color(33, 150, 243));
         header.setForeground(Color.WHITE);
-        header.setPreferredSize(new Dimension(100, 35));
+        header.setPreferredSize(new Dimension(100, 40));
         return table;
     }
 
     private TitledBorder createTitledBorder(String title) {
         return BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
-            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 16), Color.DARK_GRAY
+            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 18), Color.DARK_GRAY
         );
     }
 
     // ==============================================================================
-    //                              XỬ LÝ SỰ KIỆN
+    //                                  XỬ LÝ SỰ KIỆN
     // ==============================================================================
     private void addEvents() {
-        // 1. ActionListener cho các nút (this.actionPerformed)
         btnTimKiem.addActionListener(this);
         btnLamMoi.addActionListener(this);
         txtTimThuoc.addActionListener(this);
 
-        // 2. ListSelectionListener (Tốt nhất cho việc chọn dòng để xem chi tiết)
-        // Hỗ trợ cả click chuột và phím mũi tên lên xuống
         tblSanPham.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 loadChiTietTuDongChon();
             }
         });
 
-        // 3. MouseListener (Theo yêu cầu của bạn)
-        // Dùng để bắt sự kiện Double Click (Click đúp)
         tblSanPham.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) { // Nếu click đúp
+                if (e.getClickCount() == 2) { 
                     int row = tblSanPham.getSelectedRow();
                     if (row != -1) {
                         String tenSP = tblSanPham.getValueAt(row, 1).toString();
@@ -359,12 +346,9 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
     }
 
     // ==============================================================================
-    //                              LOGIC NGHIỆP VỤ
+    //                                  LOGIC NGHIỆP VỤ
     // ==============================================================================
 
-    /**
-     * Lấy dòng đang chọn và load data xuống 2 tab dưới
-     */
     private void loadChiTietTuDongChon() {
         int row = tblSanPham.getSelectedRow();
         if (row >= 0) {
@@ -385,7 +369,6 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
         txtTimThuoc.setText("");
         PlaceholderSupport.addPlaceholder(txtTimThuoc, "Nhập tên thuốc, mã SP, số đăng ký...");
         cbLoai.setSelectedIndex(0);
-        cbKe.setSelectedIndex(0);
         cbTrangThai.setSelectedIndex(0);
         
         dsSanPhamHienTai = sanPhamDao.layTatCaSanPham(); 
@@ -407,20 +390,17 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
         }
 
         String loaiChon = (String) cbLoai.getSelectedItem();
-        String keChon = (String) cbKe.getSelectedItem();
         String trangThaiChon = (String) cbTrangThai.getSelectedItem();
 
         List<SanPham> ketQuaCuoiCung = ketQuaTimKiem.stream().filter(sp -> {
+            // --- SỬA ĐỔI 2: So sánh bằng getTenLoai() thay vì name() ---
             boolean passLoai = "Tất cả".equals(loaiChon) || 
-                               (sp.getLoaiSanPham() != null && sp.getLoaiSanPham().name().equalsIgnoreCase(loaiChon));
-            
-            boolean passKe = "Tất cả".equals(keChon) || 
-                             (sp.getKeBanSanPham() != null && sp.getKeBanSanPham().contains(keChon));
+                               (sp.getLoaiSanPham() != null && sp.getLoaiSanPham().getTenLoai().equals(loaiChon));
             
             boolean passTrangThai = "Tất cả".equals(trangThaiChon) || 
                                     (sp.isHoatDong() == "Đang bán".equals(trangThaiChon));
             
-            return passLoai && passKe && passTrangThai;
+            return passLoai && passTrangThai;
         }).collect(Collectors.toList());
 
         dsSanPhamHienTai = ketQuaCuoiCung;
@@ -438,7 +418,10 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
         modelSanPham.setRowCount(0);
         for (SanPham sp : list) {
             String trangThaiText = sp.isHoatDong() ? "Đang bán" : "Ngừng kinh doanh";
-            String loaiText = sp.getLoaiSanPham() != null ? sp.getLoaiSanPham().name() : "";
+            
+            // --- SỬA ĐỔI 3: Hiển thị getTenLoai() lên bảng ---
+            String loaiText = sp.getLoaiSanPham() != null ? sp.getLoaiSanPham().getTenLoai() : "";
+            
             String duongDungText = sp.getDuongDung() != null ? sp.getDuongDung().name() : ""; 
             
             double giaBanGoc = sp.getGiaBan(); 
@@ -503,7 +486,7 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
     }
     
     // ==============================================================================
-    //                              MAIN (ĐÃ THÊM LẠI)
+    //                                  MAIN
     // ==============================================================================
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
