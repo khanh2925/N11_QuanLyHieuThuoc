@@ -437,6 +437,7 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 	// ==============================================================================
 	private void xuLyLamMoi() {
 		txtTimKiem.setText("");
+		PlaceholderSupport.addPlaceholder(txtTimKiem, PLACEHOLDER_TIM_KIEM);
 		cbKhachHang.setSelectedIndex(0);
 		cbNhanVien.setSelectedIndex(0);
 		cbTrangThai.setSelectedIndex(0);
