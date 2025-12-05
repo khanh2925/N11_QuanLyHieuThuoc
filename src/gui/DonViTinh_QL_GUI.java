@@ -31,10 +31,11 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
     // Buttons
     private PillButton btnThem, btnSua, btnXoa, btnLamMoi, btnTimKiem;
 
-    // DAO & Font
+    // DAO & data
     private final DonViTinh_DAO dvtDAO = new DonViTinh_DAO();
     private List<DonViTinh> dsDonViTinh;
     
+    // Style
     private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 16);
     private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 16);
     private final Color COLOR_PRIMARY = new Color(33, 150, 243);
@@ -60,9 +61,9 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         loadDataLenBang();
     }
 
-    // ==========================================================================
+    // ======================================================================
     //                              PHẦN HEADER
-    // ==========================================================================
+    // ======================================================================
     private void taoPhanHeader() {
         pnHeader = new JPanel(null);
         pnHeader.setPreferredSize(new Dimension(1073, 94));
@@ -86,46 +87,45 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         pnHeader.add(btnTimKiem);
     }
 
-    // ==========================================================================
-    //                              PHẦN CENTER (SPLIT PANE)
-    // ==========================================================================
+    // ======================================================================
+    //                              PHẦN CENTER
+    // ======================================================================
     private void taoPhanCenter() {
         pnCenter = new JPanel(new BorderLayout());
         pnCenter.setBackground(Color.WHITE);
         pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // --- PHẦN TRÊN (TOP): CONTAINER CHỨA FORM VÀ NÚT ---
+        // --- PHẦN TRÊN: FORM + NÚT ---
         JPanel pnTopWrapper = new JPanel(new BorderLayout());
         pnTopWrapper.setBackground(Color.WHITE);
         pnTopWrapper.setBorder(createTitledBorder("Thông tin đơn vị tính"));
 
-        // 1. Panel Form (Nằm giữa - CENTER)
+        // Form
         JPanel pnForm = new JPanel(null);
         pnForm.setBackground(Color.WHITE);
         taoFormNhapLieu(pnForm);
         pnTopWrapper.add(pnForm, BorderLayout.CENTER);
 
-        // 2. Panel Nút (Nằm phải - EAST)
+        // Nút
         JPanel pnButton = new JPanel();
         pnButton.setBackground(Color.WHITE);
         taoPanelNutBam(pnButton);
         pnTopWrapper.add(pnButton, BorderLayout.EAST);
 
-        // --- PHẦN DƯỚI (BOTTOM): DANH SÁCH ---
+        // --- PHẦN DƯỚI: BẢNG ---
         JPanel pnTable = new JPanel(new BorderLayout());
         pnTable.setBackground(Color.WHITE);
         taoBangDanhSach(pnTable);
 
         // --- SPLIT PANE ---
         splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pnTopWrapper, pnTable);
-        splitPane.setDividerLocation(250); // Form này ít trường nên thấp hơn (250px)
-        splitPane.setResizeWeight(0.0); // Cố định form
+        splitPane.setDividerLocation(250);
+        splitPane.setResizeWeight(0.0);
         
         pnCenter.add(splitPane, BorderLayout.CENTER);
     }
 
     private void taoFormNhapLieu(JPanel p) {
-        // Cấu hình kích thước (Căn giữa vì ít trường)
         int xStart = 100;       
         int yStart = 50;
         int hText = 40;         
@@ -135,7 +135,7 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         // Hàng 1: Mã Đơn Vị
         p.add(createLabel("Mã ĐVT:", xStart, yStart));
         txtMaDVT = createTextField(xStart + 100, yStart, wTxt);
-        // txtMaDVT.setEditable(false); // Nếu mã tự sinh thì mở dòng này
+        txtMaDVT.setEditable(false); // Mã tự sinh từ DAO
         p.add(txtMaDVT);
 
         // Hàng 2: Tên Đơn Vị Tính
@@ -143,11 +143,9 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         p.add(createLabel("Tên ĐVT:", xStart, yStart));
         txtTenDVT = createTextField(xStart + 100, yStart, wTxt);
         p.add(txtTenDVT);
-        
-        // Có thể thêm ghi chú hoặc thông tin khác nếu Entity mở rộng sau này
     }
 
-    // --- PANEL RIÊNG CHO NÚT BẤM (BÊN PHẢI) ---
+    // Panel nút bên phải
     private void taoPanelNutBam(JPanel p) {
         p.setPreferredSize(new Dimension(200, 0)); 
         p.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, Color.LIGHT_GRAY)); 
@@ -199,14 +197,12 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         DefaultTableCellRenderer left = new DefaultTableCellRenderer();
         left.setHorizontalAlignment(JLabel.LEFT);
 
-        // Apply render
         tblDonViTinh.getColumnModel().getColumn(0).setCellRenderer(center);
         tblDonViTinh.getColumnModel().getColumn(1).setCellRenderer(left);
         
-        // Set width
         tblDonViTinh.getColumnModel().getColumn(0).setPreferredWidth(200);
         
-        // Event click
+        // Click: đổ dữ liệu lên form
         tblDonViTinh.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -219,57 +215,99 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         p.add(scr, BorderLayout.CENTER);
     }
 
-    // ==========================================================================
-    //                              XỬ LÝ LOGIC
-    // ==========================================================================
+    // Đổ từ bảng lên form
+    private void doToForm(int row) {
+        if (row < 0) return;
+        txtMaDVT.setText(tblDonViTinh.getValueAt(row, 0).toString());
+        txtTenDVT.setText(tblDonViTinh.getValueAt(row, 1).toString());
+        txtMaDVT.setEditable(false);
+    }
 
+    // ======================================================================
+    //                          LÀM VIỆC VỚI DAO
+    // ======================================================================
+    /** Load dữ liệu từ DB lên bảng */
+    private void loadDataLenBang() {
+        modelDonViTinh.setRowCount(0);
+        dsDonViTinh = dvtDAO.layTatCaDonViTinh();
+        for (DonViTinh dvt : dsDonViTinh) {
+            modelDonViTinh.addRow(new Object[]{
+                dvt.getMaDonViTinh(),
+                dvt.getTenDonViTinh()
+            });
+        }
+    }
+
+    /** Tạo entity từ form với mã truyền vào (dùng cho thêm / sửa) */
+    private DonViTinh getFromForm(String maDVT) {
+        String ten = txtTenDVT.getText() != null ? txtTenDVT.getText().trim() : "";
+        try {
+            return new DonViTinh(maDVT, ten);
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+    }
+
+    private void lamMoiForm() {
+        txtMaDVT.setText("");
+        txtTenDVT.setText("");
+        txtTenDVT.requestFocus();
+        tblDonViTinh.clearSelection();
+    }
+
+    private void xuLyTimKiem() {
+        String kw = txtTimKiem.getText().trim();
+        if (kw.isEmpty() || kw.equalsIgnoreCase("Tìm kiếm theo tên đơn vị tính...")) {
+            loadDataLenBang();
+            return;
+        }
+        kw = kw.toLowerCase();
+
+        modelDonViTinh.setRowCount(0);
+        if (dsDonViTinh != null) {
+            for (DonViTinh dvt : dsDonViTinh) {
+                if (dvt.getTenDonViTinh().toLowerCase().contains(kw)) {
+                    modelDonViTinh.addRow(new Object[]{
+                        dvt.getMaDonViTinh(),
+                        dvt.getTenDonViTinh()
+                    });
+                }
+            }
+        }
+    }
+
+    /** Validate dữ liệu form (tên ĐVT) */
+    private boolean validData() {
+        String ten = txtTenDVT.getText() != null ? txtTenDVT.getText().trim() : "";
+        if (ten.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Tên đơn vị tính không được rỗng!");
+            txtTenDVT.requestFocus();
+            return false;
+        }
+        if (ten.length() > 50) {
+            JOptionPane.showMessageDialog(this, "Tên đơn vị tính không được vượt quá 50 ký tự!");
+            txtTenDVT.requestFocus();
+            return false;
+        }
+        return true;
+    }
+
+    // ======================================================================
+    //                              SỰ KIỆN CRUD
+    // ======================================================================
     @Override
     public void actionPerformed(ActionEvent e) {
         Object o = e.getSource();
 
         if (o.equals(btnThem)) {
-            if (validData()) {
-                DonViTinh dvt = getFromForm();
-                if (dvtDAO.themDonViTinh(dvt)) {
-                    JOptionPane.showMessageDialog(this, "Thêm thành công!");
-                    loadDataLenBang();
-                    lamMoiForm();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Thêm thất bại (Trùng mã hoặc lỗi DB)!");
-                }
-            }
+            themDonViTinh();
         } 
         else if (o.equals(btnSua)) {
-            if (tblDonViTinh.getSelectedRow() == -1) {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng cần sửa!");
-                return;
-            }
-            if (validData()) {
-                DonViTinh dvt = getFromForm();
-                if (dvtDAO.capNhatDonViTinh(dvt)) {
-                    JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-                    loadDataLenBang();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Cập nhật thất bại!");
-                }
-            }
+            suaDonViTinh();
         }
         else if (o.equals(btnXoa)) {
-            int row = tblDonViTinh.getSelectedRow();
-            if (row == -1) {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng cần xóa!");
-                return;
-            }
-            String ma = tblDonViTinh.getValueAt(row, 0).toString();
-            if (JOptionPane.showConfirmDialog(this, "Xóa đơn vị tính: " + ma + "?", "Xác nhận", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                if (dvtDAO.xoaDonViTinh(ma)) {
-                    JOptionPane.showMessageDialog(this, "Đã xóa!");
-                    loadDataLenBang();
-                    lamMoiForm();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Xóa thất bại (Có thể đang được sử dụng)!");
-                }
-            }
+            xoaDonViTinh();
         }
         else if (o.equals(btnLamMoi)) {
             lamMoiForm();
@@ -277,64 +315,94 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         }
     }
 
-    private void doToForm(int row) {
-        if (row < 0) return;
-        txtMaDVT.setText(tblDonViTinh.getValueAt(row, 0).toString());
-        txtTenDVT.setText(tblDonViTinh.getValueAt(row, 1).toString());
-        txtMaDVT.setEditable(false); // Khi click vào bảng (sửa) thì khóa mã lại
-    }
-
-    private void loadDataLenBang() {
-        modelDonViTinh.setRowCount(0);
-        dsDonViTinh = dvtDAO.layTatCaDonViTinh();
-        for (DonViTinh dvt : dsDonViTinh) {
-            modelDonViTinh.addRow(new Object[]{dvt.getMaDonViTinh(), dvt.getTenDonViTinh()});
-        }
-    }
-
-    private DonViTinh getFromForm() {
-        String ma = txtMaDVT.getText().trim();
-        String ten = txtTenDVT.getText().trim();
-        return new DonViTinh(ma, ten);
-    }
-
-    private void lamMoiForm() {
-        txtMaDVT.setText("");
-        txtTenDVT.setText("");
-        txtMaDVT.setEditable(true); // Mở khóa mã để nhập mới
-        txtMaDVT.requestFocus();
-        tblDonViTinh.clearSelection();
-    }
-
-    private void xuLyTimKiem() {
-        String kw = txtTimKiem.getText().trim();
-        if(kw.isEmpty() || kw.equals("Tìm kiếm theo tên đơn vị tính...")) {
-            loadDataLenBang();
+    /** Thêm đơn vị tính mới (mã tự sinh như KhachHang_NV_GUI) */
+    private void themDonViTinh() {
+        if (!validData()) {
             return;
         }
-        // Nếu DAO có hàm tìm kiếm thì gọi, không thì filter list
-        // Ví dụ filter đơn giản:
-        modelDonViTinh.setRowCount(0);
-        for (DonViTinh dvt : dsDonViTinh) {
-            if (dvt.getTenDonViTinh().toLowerCase().contains(kw.toLowerCase())) {
-                modelDonViTinh.addRow(new Object[]{dvt.getMaDonViTinh(), dvt.getTenDonViTinh()});
+
+        // Sinh mã mới từ DAO (DVT-xxx)
+        String maMoi = dvtDAO.taoMaTuDong();
+        if (maMoi == null || maMoi.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không sinh được mã đơn vị tính mới", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        DonViTinh dvt = getFromForm(maMoi);
+        if (dvt == null) {
+            return; // getFromForm đã báo lỗi
+        }
+
+        if (dvtDAO.themDonViTinh(dvt)) {
+            JOptionPane.showMessageDialog(this, "Thêm đơn vị tính thành công!");
+            txtMaDVT.setText(maMoi);
+            modelDonViTinh.addRow(new Object[]{
+                    dvt.getMaDonViTinh(),
+                    dvt.getTenDonViTinh()
+                });
+            lamMoiForm();        // nếu muốn giữ lại mã thì bỏ dòng này
+        } else {
+            JOptionPane.showMessageDialog(this, "Thêm thất bại (Trùng mã hoặc lỗi DB)!");
+        }
+    }
+
+    /** Cập nhật tên đơn vị tính */
+    private void suaDonViTinh() {
+        int row = tblDonViTinh.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng cần sửa!");
+            return;
+        }
+
+        String ma = txtMaDVT.getText().trim();
+        if (ma.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Mã đơn vị tính không hợp lệ!");
+            return;
+        }
+
+        if (!validData()) {
+            return;
+        }
+
+        DonViTinh dvt = getFromForm(ma);
+        if (dvt == null) {
+            return;
+        }
+
+        if (dvtDAO.capNhatDonViTinh(dvt)) {
+            JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+            modelDonViTinh.setValueAt(txtTenDVT.getText(), row, 1);
+            lamMoiForm();
+        } else {
+            JOptionPane.showMessageDialog(this, "Cập nhật thất bại!");
+        }
+    }
+
+    /** Xóa đơn vị tính */
+    private void xoaDonViTinh() {
+        int row = tblDonViTinh.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng cần xóa!");
+            return;
+        }
+        String ma = tblDonViTinh.getValueAt(row, 0).toString();
+        if (JOptionPane.showConfirmDialog(this,
+                "Xóa đơn vị tính: " + ma + "?", "Xác nhận", JOptionPane.YES_NO_OPTION)
+                == JOptionPane.YES_OPTION) {
+            if (dvtDAO.xoaDonViTinh(ma)) {
+                JOptionPane.showMessageDialog(this, "Đã xóa!");
+                modelDonViTinh.removeRow(row);
+                lamMoiForm();
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Xóa thất bại (Có thể đang được sử dụng)!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
-    private boolean validData() {
-        if (txtMaDVT.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Mã đơn vị tính không được rỗng");
-            txtMaDVT.requestFocus(); return false;
-        }
-        if (txtTenDVT.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Tên đơn vị tính không được rỗng");
-            txtTenDVT.requestFocus(); return false;
-        }
-        return true;
-    }
-
-    // --- UI Helpers ---
+    // ======================================================================
+    //                              UI Helpers
+    // ======================================================================
     private JLabel createLabel(String text, int x, int y) {
         JLabel lbl = new JLabel(text);
         lbl.setFont(FONT_TEXT);
@@ -367,7 +435,8 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
             TitledBorder.LEFT, TitledBorder.TOP, FONT_BOLD, Color.DARK_GRAY
         );
     }
-
+    
+    // Test riêng màn hình
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Quản Lý Đơn Vị Tính");

@@ -1,14 +1,14 @@
-/**
- * @author Quốc Khánh
- * @version 1.0
- * @since Nov 20, 2025
- *
- * Mô tả: Giao diện quản lý Bảng Giá bán hàng (Theo quy tắc khoảng giá nhập).
- */
 package gui;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
@@ -17,29 +17,65 @@ import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
 
-@SuppressWarnings("serial")
-public class TraCuuBangGia_GUI extends JPanel {
+// Import Entity & DAO
+import dao.BangGia_DAO;
+import dao.ChiTietBangGia_DAO;
+import dao.SanPham_DAO;
+import entity.BangGia;
+import entity.ChiTietBangGia;
+import entity.SanPham;
 
+/**
+ * @author Quốc Khánh
+ * @version 1.3 (Standardized UI Layout & Fonts)
+ */
+@SuppressWarnings("serial")
+public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
+
+    // Components UI
     private JPanel pnHeader;
     private JPanel pnCenter;
 
-    // Bảng Master: Danh sách Bảng giá
+    // Table BangGia
     private JTable tblBangGia;
     private DefaultTableModel modelBangGia;
 
-    // Bảng Detail 1: Chi tiết các quy tắc giá (GiaTu - GiaDen - TiLe)
+    // Table ChiTiet (Quy Tac)
     private JTable tblChiTietQuyTac;
     private DefaultTableModel modelChiTietQuyTac;
 
-    // Bảng Detail 2: Mô phỏng giá bán (Demo áp dụng lên sản phẩm)
+    // Table MoPhong
     private JTable tblMoPhongGia;
     private DefaultTableModel modelMoPhongGia;
 
+    // Filter Components
+    private JTextField txtTimKiem;
+    private JComboBox<String> cbTrangThai;
+    private JComboBox<String> cbNam;
+    private PillButton btnTimKiem;
+    private PillButton btnLamMoi; 
+
+    // Utils & DAO
     private final DecimalFormat dfTien = new DecimalFormat("#,### đ");
-    private final DecimalFormat dfTiLe = new DecimalFormat("#,##0.0 %"); // 1.2 -> 120%
+    private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    private BangGia_DAO bangGiaDAO;
+    private ChiTietBangGia_DAO chiTietBangGiaDAO;
+    private SanPham_DAO sanPhamDAO;
+
+    // Cache Data
+    private List<BangGia> dsBangGiaHienTai;
+    private String tuKhoa;
 
     public TraCuuBangGia_GUI() {
         setPreferredSize(new Dimension(1537, 850));
+        
+        // 1. Init DAO
+        bangGiaDAO = new BangGia_DAO();
+        chiTietBangGiaDAO = new ChiTietBangGia_DAO();
+        sanPhamDAO = new SanPham_DAO();
+        dsBangGiaHienTai = new ArrayList<>();
+
         initialize();
     }
 
@@ -47,21 +83,23 @@ public class TraCuuBangGia_GUI extends JPanel {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
-        // 1. HEADER
+        // Header
         taoPhanHeader();
         add(pnHeader, BorderLayout.NORTH);
 
-        // 2. CENTER
+        // Center
         taoPhanCenter();
         add(pnCenter, BorderLayout.CENTER);
 
-        // 3. DATA
-        loadDuLieuBangGia();
+        // Events
         addEvents();
+        
+        // Load data
+        xuLyLamMoi(); 
     }
 
     // ==============================================================================
-    //                              PHẦN HEADER
+    //                                  UI: HEADER
     // ==============================================================================
     private void taoPhanHeader() {
         pnHeader = new JPanel();
@@ -69,61 +107,63 @@ public class TraCuuBangGia_GUI extends JPanel {
         pnHeader.setPreferredSize(new Dimension(1073, 94));
         pnHeader.setBackground(new Color(0xE3F2F5));
 
-        // --- Ô TÌM KIẾM ---
-        JTextField txtTimKiem = new JTextField();
+        // --- Ô TÌM KIẾM (Font 20, Size 480x60 - Chuẩn) ---
+        txtTimKiem = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã bảng giá, tên bảng giá...");
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
-        txtTimKiem.setBounds(25, 17, 500, 60);
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20)); 
+        txtTimKiem.setBounds(25, 17, 480, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
-        txtTimKiem.setForeground(Color.GRAY);
         pnHeader.add(txtTimKiem);
 
-        // --- BỘ LỌC ---
-        // Lọc theo Trạng thái
-        JLabel lblTrangThai = new JLabel("Trạng thái:");
-        lblTrangThai.setBounds(550, 28, 80, 35);
-        lblTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        pnHeader.add(lblTrangThai);
-
-        JComboBox<String> cbTrangThai = new JComboBox<>(new String[]{"Tất cả", "Đang hoạt động", "Ngừng hoạt động"});
-        cbTrangThai.setBounds(640, 28, 150, 38);
-        cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        // --- BỘ LỌC (Font 18) ---
+        
+        // 1. Trạng thái (Vị trí tương đương filter đầu tiên)
+        addFilterLabel("Trạng thái:", 530, 28, 100, 35);
+        
+        cbTrangThai = new JComboBox<>(new String[]{"Tất cả", "Đang hoạt động", "Ngừng hoạt động"});
+        cbTrangThai.setBounds(630, 28, 190, 38); // Width 190
+        cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         pnHeader.add(cbTrangThai);
 
-        // Lọc theo Năm áp dụng
-        JLabel lblNam = new JLabel("Năm:");
-        lblNam.setBounds(810, 28, 50, 35);
-        lblNam.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        pnHeader.add(lblNam);
+        // 2. Năm (Vị trí tiếp theo)
+        addFilterLabel("Năm:", 840, 28, 60, 35);
 
-        JComboBox<String> cbNam = new JComboBox<>(new String[]{"Tất cả", "2024", "2025", "2026"});
-        cbNam.setBounds(860, 28, 100, 38);
-        cbNam.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        // Tự động sinh năm từ 2023 đến hiện tại + 2
+        int namHienTai = java.time.LocalDate.now().getYear();
+        cbNam = new JComboBox<>();
+        cbNam.addItem("Tất cả");
+        for (int i = namHienTai - 2; i <= namHienTai + 2; i++) {
+            cbNam.addItem(String.valueOf(i));
+        }
+        cbNam.setSelectedItem(String.valueOf(namHienTai)); 
+        
+        cbNam.setBounds(900, 28, 150, 38); // Width 150 (nhỏ hơn xíu vì năm ngắn)
+        cbNam.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         pnHeader.add(cbNam);
 
-        // --- NÚT CHỨC NĂNG ---
-        PillButton btnTim = new PillButton("Tìm kiếm");
-        btnTim.setBounds(1000, 22, 120, 50);
-        btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        pnHeader.add(btnTim);
+        // --- NÚT CHỨC NĂNG (Font 18 Bold - Chuẩn) ---
+        btnTimKiem = new PillButton("Tìm kiếm");
+        btnTimKiem.setBounds(1120, 22, 130, 50);
+        btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        pnHeader.add(btnTimKiem);
 
-        // Nút Tạo Mới
-        PillButton btnThem = new PillButton("Lập bảng giá");
-        btnThem.setBounds(1140, 22, 150, 50);
-        btnThem.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        pnHeader.add(btnThem);
-        
-        // Nút Kích Hoạt (Set Active)
-        PillButton btnKichHoat = new PillButton("Áp dụng ngay");
-        btnKichHoat.setBounds(1310, 22, 150, 50);
-        btnKichHoat.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        // btnKichHoat.setBackground(new Color(46, 125, 50)); // Màu xanh lá đậm nếu muốn
-        pnHeader.add(btnKichHoat);
+        btnLamMoi = new PillButton("Làm mới");
+        btnLamMoi.setBounds(1265, 22, 130, 50);
+        btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        pnHeader.add(btnLamMoi);
+    }
+    
+    // Helper tạo label font 18
+    private void addFilterLabel(String text, int x, int y, int w, int h) {
+        JLabel lbl = new JLabel(text);
+        lbl.setBounds(x, y, w, h);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        pnHeader.add(lbl);
     }
 
     // ==============================================================================
-    //                              PHẦN CENTER
+    //                                  UI: CENTER
     // ==============================================================================
     private void taoPhanCenter() {
         pnCenter = new JPanel(new BorderLayout());
@@ -141,7 +181,7 @@ public class TraCuuBangGia_GUI extends JPanel {
         };
         tblBangGia = setupTable(modelBangGia);
         
-        // Render Trạng thái (Xanh lá vs Xám)
+        // Render Trạng thái (Font to hơn chút)
         tblBangGia.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -149,11 +189,10 @@ public class TraCuuBangGia_GUI extends JPanel {
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
                 if ("Đang hoạt động".equals(value)) {
                     lbl.setForeground(new Color(0, 153, 51)); // Xanh lá
-                    lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
-                    lbl.setIcon(UIManager.getIcon("FileView.floppyDriveIcon")); // Demo icon
+                    lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
                 } else {
                     lbl.setForeground(Color.GRAY);
-                    lbl.setIcon(null);
+                    lbl.setFont(new Font("Segoe UI", Font.PLAIN, 15));
                 }
                 return lbl;
             }
@@ -163,21 +202,17 @@ public class TraCuuBangGia_GUI extends JPanel {
         scrollBG.setBorder(createTitledBorder("Danh sách Bảng giá bán hàng"));
         splitPane.setTopComponent(scrollBG);
 
-        // --- BOTTOM: TABBED PANE ---
+        // --- BOTTOM: TABBED PANE (Font 16) ---
         JTabbedPane tabChiTiet = new JTabbedPane();
         tabChiTiet.setFont(new Font("Segoe UI", Font.PLAIN, 16));
 
-        // Tab 1: Chi tiết quy tắc
         tabChiTiet.addTab("Cấu hình quy tắc giá", createTabQuyTac());
-        
-        // Tab 2: Mô phỏng (Preview)
         tabChiTiet.addTab("Xem thử giá bán (Mô phỏng)", createTabMoPhong());
 
         splitPane.setBottomComponent(tabChiTiet);
         pnCenter.add(splitPane, BorderLayout.CENTER);
     }
 
-    // Tab 1: Bảng Quy Tắc (Khoảng giá -> Tỉ lệ)
     private JComponent createTabQuyTac() {
         String[] cols = {"STT", "Giá nhập từ", "Giá nhập đến", "Tỉ lệ định giá", "Lợi nhuận dự kiến"};
         modelChiTietQuyTac = new DefaultTableModel(cols, 0) {
@@ -193,13 +228,13 @@ public class TraCuuBangGia_GUI extends JPanel {
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
         tblChiTietQuyTac.getColumnModel().getColumn(3).setCellRenderer(center); // Tỉ lệ
+        tblChiTietQuyTac.getColumnModel().getColumn(4).setCellRenderer(center); // Lợi nhuận
 
         return new JScrollPane(tblChiTietQuyTac);
     }
 
-    // Tab 2: Bảng Mô phỏng (Lấy vài SP mẫu ra tính thử)
     private JComponent createTabMoPhong() {
-        String[] cols = {"Mã SP", "Tên thuốc mẫu", "Giá nhập (Vốn)", "Tỉ lệ áp dụng", "Giá bán ra (Tính toán)"};
+        String[] cols = {"Mã SP", "Tên sản phẩm", "Giá nhập (Vốn)", "Tỉ lệ áp dụng", "Giá bán ra (Tính toán)"};
         modelMoPhongGia = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -208,6 +243,7 @@ public class TraCuuBangGia_GUI extends JPanel {
         DefaultTableCellRenderer right = new DefaultTableCellRenderer();
         right.setHorizontalAlignment(SwingConstants.RIGHT);
         tblMoPhongGia.getColumnModel().getColumn(2).setCellRenderer(right); // Giá vốn
+        tblMoPhongGia.getColumnModel().getColumn(3).setCellRenderer(right); // Tỉ lệ
         tblMoPhongGia.getColumnModel().getColumn(4).setCellRenderer(right); // Giá bán
 
         // Giá bán tô màu đỏ
@@ -217,7 +253,7 @@ public class TraCuuBangGia_GUI extends JPanel {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 lbl.setHorizontalAlignment(SwingConstants.RIGHT);
                 lbl.setForeground(new Color(220, 0, 0));
-                lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
                 return lbl;
             }
         });
@@ -225,11 +261,12 @@ public class TraCuuBangGia_GUI extends JPanel {
         return new JScrollPane(tblMoPhongGia);
     }
 
-    // Helper: Setup Table
+    // Setup Table Chuẩn (Font 16, RowHeight 35)
     private JTable setupTable(DefaultTableModel model) {
         JTable table = new JTable(model);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        table.setRowHeight(30);
+        table.setRowHeight(35);
+        table.setGridColor(new Color(230, 230, 230));
         table.setSelectionBackground(new Color(0xC8E6C9));
         table.setSelectionForeground(Color.BLACK);
         
@@ -237,76 +274,211 @@ public class TraCuuBangGia_GUI extends JPanel {
         header.setFont(new Font("Segoe UI", Font.BOLD, 16));
         header.setBackground(new Color(33, 150, 243));
         header.setForeground(Color.WHITE);
-        
-        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
-        center.setHorizontalAlignment(SwingConstants.CENTER);
-        table.getColumnModel().getColumn(0).setCellRenderer(center); // STT
-        
+        header.setPreferredSize(new Dimension(100, 40)); // Header Height 40
         return table;
     }
 
+    // Border Title Chuẩn (Font 18 Bold)
     private TitledBorder createTitledBorder(String title) {
         return BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
-            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 16), Color.DARK_GRAY
+            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 18), Color.DARK_GRAY
         );
     }
 
     // ==============================================================================
-    //                              DATA & EVENTS
+    //                                  SỰ KIỆN & LOGIC
     // ==============================================================================
     
     private void addEvents() {
+        btnTimKiem.addActionListener(this);
+        btnLamMoi.addActionListener(this);
+        txtTimKiem.addActionListener(this); 
+
+        // Click bảng giá -> Load chi tiết
         tblBangGia.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                int row = tblBangGia.getSelectedRow();
-                if (row >= 0) {
-                    String maBG = tblBangGia.getValueAt(row, 1).toString();
-                    loadChiTiet(maBG);
-                }
+                loadChiTietTuDongChon();
             }
         });
     }
 
-    private void loadDuLieuBangGia() {
-        // Data giả lập Entity BangGia
-        Object[][] data = {
-            {"1", "BG-20251101-0001", "Bảng giá tiêu chuẩn 2025", "01/01/2025", "Nguyễn Quản Lý", "Đang hoạt động"},
-            {"2", "BG-20240101-0005", "Bảng giá cũ 2024", "01/01/2024", "Trần Cũ", "Ngừng hoạt động"},
-            {"3", "BG-20250501-0002", "Bảng giá Khuyến mãi Hè", "01/05/2025", "Lê Văn C", "Chưa áp dụng"}
-        };
-        
-        for (Object[] row : data) {
-            modelBangGia.addRow(row);
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object o = e.getSource();
+        if (o == btnTimKiem || o == txtTimKiem) {
+            xuLyTimKiem();
+        } else if (o == btnLamMoi) {
+            xuLyLamMoi();
         }
     }
 
-    private void loadChiTiet(String maBG) {
+    // --- 1. Load Data ---
+    private void xuLyLamMoi() {
+        txtTimKiem.setText("");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã bảng giá, tên bảng giá...");
+        cbTrangThai.setSelectedIndex(0);
+        
+        // Load tất cả từ DB
+        dsBangGiaHienTai = bangGiaDAO.layTatCaBangGia(); 
+        renderBangGia(dsBangGiaHienTai);
+        
+        // Clear chi tiết
         modelChiTietQuyTac.setRowCount(0);
         modelMoPhongGia.setRowCount(0);
+    }
 
-        // Giả lập logic load từ DB theo mã BG
-        if (maBG.equals("BG-20251101-0001")) { // Bảng giá chuẩn
-            // 1. Load quy tắc (ChiTietBangGia)
-            // Quy tắc: Giá thấp thì lời nhiều, giá cao thì lời ít
-            modelChiTietQuyTac.addRow(new Object[]{"1", "0", "10,000", "1.5 (150%)", "50%"});
-            modelChiTietQuyTac.addRow(new Object[]{"2", "10,001", "100,000", "1.3 (130%)", "30%"});
-            modelChiTietQuyTac.addRow(new Object[]{"3", "100,001", "500,000", "1.15 (115%)", "15%"});
-            modelChiTietQuyTac.addRow(new Object[]{"4", "500,001", "Trở lên", "1.05 (105%)", "5%"});
-            
-            // 2. Load Mô phỏng (Lấy vài thuốc điển hình tính thử)
-            // SP1: 5k (Rơi vào khoảng 1: x1.5) -> 7.5k
-            modelMoPhongGia.addRow(new Object[]{"SP001", "Paracetamol vỉ", "5,000", "1.5", "7,500"});
-            // SP2: 50k (Rơi vào khoảng 2: x1.3) -> 65k
-            modelMoPhongGia.addRow(new Object[]{"SP005", "Siro ho", "50,000", "1.3", "65,000"});
-            // SP3: 200k (Rơi vào khoảng 3: x1.15) -> 230k
-            modelMoPhongGia.addRow(new Object[]{"SP009", "Thực phẩm chức năng ABC", "200,000", "1.15", "230,000"});
-        } 
-        else if (maBG.equals("BG-20250501-0002")) { // Bảng giá KM Hè (Lời ít hơn để bán chạy)
-            modelChiTietQuyTac.addRow(new Object[]{"1", "0", "Trở lên", "1.1 (110%)", "10%"}); // Đồng giá lời 10%
-            
-            modelMoPhongGia.addRow(new Object[]{"SP001", "Paracetamol vỉ", "5,000", "1.1", "5,500"});
-            modelMoPhongGia.addRow(new Object[]{"SP005", "Siro ho", "50,000", "1.1", "55,000"});
+    // --- 2. Tìm Kiếm & Lọc ---
+    private void xuLyTimKiem() {
+         tuKhoa = txtTimKiem.getText().trim();
+        if (tuKhoa.contains("Tìm theo mã")) {
+            tuKhoa = "";
         }
+        
+        // Lọc danh sách trong RAM (vì dữ liệu bảng giá thường ít)
+        String trangThaiChon = (String) cbTrangThai.getSelectedItem();
+        String namChon = (String) cbNam.getSelectedItem();
+
+        List<BangGia> ketQua = dsBangGiaHienTai.stream().filter(bg -> {
+            // 1. Lọc từ khóa
+            boolean matchKey = true;
+            if (!tuKhoa.isEmpty()) {
+                matchKey = bg.getMaBangGia().toLowerCase().contains(tuKhoa.toLowerCase()) 
+                        || bg.getTenBangGia().toLowerCase().contains(tuKhoa.toLowerCase());
+            }
+            
+            // 2. Lọc trạng thái
+            boolean matchStatus = true;
+            if (!"Tất cả".equals(trangThaiChon)) {
+                boolean dangHoatDong = "Đang hoạt động".equals(trangThaiChon);
+                matchStatus = (bg.isHoatDong() == dangHoatDong);
+            }
+            
+            // 3. Lọc năm
+            boolean matchYear = true;
+            if (!"Tất cả".equals(namChon)) {
+                int nam = Integer.parseInt(namChon);
+                matchYear = (bg.getNgayApDung().getYear() == nam);
+            }
+            
+            return matchKey && matchStatus && matchYear;
+        }).collect(Collectors.toList());
+        
+        renderBangGia(ketQua);
+        modelChiTietQuyTac.setRowCount(0);
+        modelMoPhongGia.setRowCount(0);
+        
+        if (ketQua.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không tìm thấy bảng giá phù hợp!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private void renderBangGia(List<BangGia> list) {
+        modelBangGia.setRowCount(0);
+        int stt = 1;
+        for (BangGia bg : list) {
+            String tenNV = (bg.getNhanVien() != null) ? bg.getNhanVien().getTenNhanVien() : "Hệ thống";
+            
+            modelBangGia.addRow(new Object[]{
+                stt++,
+                bg.getMaBangGia(),
+                bg.getTenBangGia(),
+                dtf.format(bg.getNgayApDung()),
+                tenNV,
+                bg.isHoatDong() ? "Đang hoạt động" : "Ngừng hoạt động"
+            });
+        }
+    }
+
+    // --- 3. Load Chi Tiết ---
+    private void loadChiTietTuDongChon() {
+        int row = tblBangGia.getSelectedRow();
+        if (row >= 0) {
+            String maBG = tblBangGia.getValueAt(row, 1).toString();
+            
+            // 1. Load Quy Tắc
+            List<ChiTietBangGia> listCT = chiTietBangGiaDAO.layChiTietTheoMaBangGia(maBG);
+            renderBangQuyTac(listCT);
+            
+            // 2. Load Mô Phỏng (Lấy top 20 sản phẩm để tính thử)
+            renderBangMoPhong(listCT);
+        }
+    }
+
+    private void renderBangQuyTac(List<ChiTietBangGia> list) {
+        modelChiTietQuyTac.setRowCount(0);
+        int stt = 1;
+        // Sắp xếp theo Giá Từ tăng dần để dễ nhìn
+        list.sort((a, b) -> Double.compare(a.getGiaTu(), b.getGiaTu()));
+        
+        for (ChiTietBangGia ct : list) {
+            double loiNhuanPhanTram = (ct.getTiLe() - 1) * 100;
+            String loiNhuanStr = String.format("%.0f %%", loiNhuanPhanTram);
+            
+            // Xử lý hiển thị "Trở lên" nếu giá đến là MAX_VALUE hoặc rất lớn
+            String giaDenStr = (ct.getGiaDen() > 999999999) ? "Trở lên" : dfTien.format(ct.getGiaDen());
+
+            modelChiTietQuyTac.addRow(new Object[]{
+                stt++,
+                dfTien.format(ct.getGiaTu()),
+                giaDenStr,
+                ct.getTiLe() + " (" + (int)(ct.getTiLe()*100) + "%)",
+                loiNhuanStr
+            });
+        }
+    }
+
+    /**
+     * Tính toán giá bán mô phỏng cho danh sách sản phẩm dựa trên quy tắc giá
+     */
+    private void renderBangMoPhong(List<ChiTietBangGia> listQuyTac) {
+        modelMoPhongGia.setRowCount(0);
+        
+        // Lấy mẫu 20 sản phẩm từ DB
+        List<SanPham> listSP = sanPhamDAO.layTatCaSanPham(); 
+        int limit = 20;
+        int count = 0;
+
+        for (SanPham sp : listSP) {
+            if (count >= limit) break;
+            
+            double giaNhap = sp.getGiaNhap();
+            
+            // Tìm quy tắc áp dụng cho SP này
+            ChiTietBangGia ruleMatch = null;
+            for (ChiTietBangGia rule : listQuyTac) {
+                if (giaNhap >= rule.getGiaTu() && giaNhap <= rule.getGiaDen()) {
+                    ruleMatch = rule;
+                    break;
+                }
+            }
+            
+            double tiLe = (ruleMatch != null) ? ruleMatch.getTiLe() : 0;
+            double giaBan = (tiLe > 0) ? giaNhap * tiLe : 0;
+            
+            modelMoPhongGia.addRow(new Object[]{
+                sp.getMaSanPham(),
+                sp.getTenSanPham(),
+                dfTien.format(giaNhap),
+                (tiLe > 0) ? tiLe : "Chưa cấu hình",
+                (giaBan > 0) ? dfTien.format(giaBan) : "N/A"
+            });
+            
+            count++;
+        }
+    }
+    
+    // ==============================================================================
+    //                                  MAIN
+    // ==============================================================================
+    public static void main(String[] args) {           
+            SwingUtilities.invokeLater(() -> {
+                JFrame frame = new JFrame("Tra cứu bảng giá");
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                frame.setSize(1500, 850);
+                frame.setLocationRelativeTo(null);
+                frame.setContentPane(new TraCuuBangGia_GUI());
+                frame.setVisible(true);
+            });
     }
 }
