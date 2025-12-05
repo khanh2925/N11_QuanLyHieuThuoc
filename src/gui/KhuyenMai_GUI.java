@@ -5,7 +5,6 @@ import java.awt.event.*;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -236,18 +235,22 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 
 		btnThem = createPillButton("Tạo KM", 140, 45);
+		btnThem.addActionListener(this); // ✅ THÊM
 		gbc.gridy = 0;
 		p.add(btnThem, gbc);
 
 		btnSua = createPillButton("Cập nhật", 140, 45);
+		btnSua.addActionListener(this); // ✅ THÊM
 		gbc.gridy = 1;
 		p.add(btnSua, gbc);
 
 		btnXoa = createPillButton("Xóa", 140, 45);
+		btnXoa.addActionListener(this); // ✅ THÊM
 		gbc.gridy = 2;
 		p.add(btnXoa, gbc);
 
 		btnLamMoi = createPillButton("Làm mới", 140, 45);
+		btnLamMoi.addActionListener(this); // ✅ THÊM
 		gbc.gridy = 3;
 		p.add(btnLamMoi, gbc);
 	}
@@ -278,8 +281,13 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		// Toolbar thêm sản phẩm
 		JPanel pnTool = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		pnTool.setBackground(Color.WHITE);
+
 		btnChonSP = createPillButton("Chọn SP", 120, 35);
+		btnChonSP.addActionListener(this); // ✅ THÊM
+
 		btnXoaSP = createPillButton("Xóa SP", 120, 35);
+		btnXoaSP.addActionListener(this); // ✅ THÊM
+
 		pnTool.add(btnChonSP);
 		pnTool.add(btnXoaSP);
 		p.add(pnTool, BorderLayout.NORTH);
@@ -561,9 +569,22 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 	}
 
 	private void doToForm(int row) {
-		if (row < 0 || row >= dsKhuyenMai.size())
+		if (row < 0 || row >= tblKhuyenMai.getRowCount())
 			return;
-		KhuyenMai km = dsKhuyenMai.get(row);
+
+		String maKM = (String) tblKhuyenMai.getValueAt(row, 0);
+		KhuyenMai km = null;
+
+		// Tìm KM theo mã
+		for (KhuyenMai k : dsKhuyenMai) {
+			if (k.getMaKM().equals(maKM)) {
+				km = k;
+				break;
+			}
+		}
+
+		if (km == null)
+			return;
 
 		txtMaKM.setText(km.getMaKM());
 		txtTenKM.setText(km.getTenKM());
@@ -666,6 +687,17 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		double giaTri = parseDoubleField(txtGiaTri, "Giá trị");
 		if (giaTri <= 0) {
 			showErrorAndFocus(txtGiaTri, "Giá trị khuyến mãi phải lớn hơn 0!", JOptionPane.WARNING_MESSAGE);
+			return null;
+		}
+
+		if (hinhThuc == HinhThucKM.GIAM_GIA_PHAN_TRAM && giaTri > 100) {
+			showErrorAndFocus(txtGiaTri, "Giảm giá phần trăm không được vượt quá 100%!", JOptionPane.WARNING_MESSAGE);
+			return null;
+		}
+
+		if (kmHoaDon && hinhThuc == HinhThucKM.TANG_THEM) {
+			showErrorAndFocus((JTextField) cboHinhThuc.getEditor().getEditorComponent(),
+					"Khuyến mãi hóa đơn không thể có hình thức 'TẶNG THÊM'!", JOptionPane.WARNING_MESSAGE);
 			return null;
 		}
 
@@ -849,7 +881,6 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 			txt.requestFocus();
 			txt.selectAll();
 		});
-		throw new IllegalArgumentException(message);
 	}
 
 	public static void main(String[] args) {
