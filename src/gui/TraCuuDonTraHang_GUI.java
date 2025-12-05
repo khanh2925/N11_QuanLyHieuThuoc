@@ -5,21 +5,20 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.text.NumberFormat;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.text.DecimalFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
-import java.util.Set;
 
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -30,65 +29,46 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
-
-import com.toedter.calendar.JDateChooser;
 
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
 import dao.ChiTietPhieuTra_DAO;
 import dao.PhieuTra_DAO;
-import entity.ChiTietHoaDon;
 import entity.ChiTietPhieuTra;
 import entity.KhachHang;
-import entity.LoSanPham;
 import entity.NhanVien;
 import entity.PhieuTra;
-import entity.SanPham;
-import net.miginfocom.swing.MigLayout;
 
-public class TraCuuDonTraHang_GUI extends JPanel {
+/**
+ * @author Thanh Kha
+ * @version 1.9
+ */
+@SuppressWarnings("serial")
+public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 
-	private static final String PLACEHOLDER_LY_DO_TRA = "Lý do trả...";
-	private static final String PLACEHOLDER_MA_LO = "Mã lô...";
-	private static final String PLACEHOLDER_TEN_SAN_PHAM = "Tên sản phẩm...";
-	private static final String PLACEHOLDER_MA_HOA_DON = "Nhập mã hóa đơn...";
 	private static final String PLACEHOLDER_TIM_KIEM = "Tìm theo mã phiếu, tên KH hoặc SĐT...";
 	// DAO
-	private final PhieuTra_DAO phieuTraDAO = new PhieuTra_DAO();
-	private final ChiTietPhieuTra_DAO chiTietPhieuTraDAO = new ChiTietPhieuTra_DAO();
+	private final PhieuTra_DAO phieuTraDAO;
+	private final ChiTietPhieuTra_DAO chiTietPhieuTraDAO;
 
 	// DATA
 	private List<PhieuTra> allPhieuTra = new ArrayList<>();
 
-	// HEADER - quick filter
 	private JPanel pnHeader;
-	private JPanel pnQuickFilter;
-	private JPanel pnAdvancedFilter;
 
 	private JTextField txtTimKiem;
-	private JDateChooser dateTuNgay;
-	private JDateChooser dateDenNgay;
 
-	// Advanced filter controls
-	private JComboBox<ComboItem> cbKhachHang;
-	private JComboBox<ComboItem> cbNhanVien;
-	private JTextField txtMaHoaDon;
-	private JTextField txtSanPham;
-	private JTextField txtMaLo;
-	private JTextField txtLyDo;
-	private JComboBox<String> cbHuongXuLy;
+	private JComboBox<String> cbKhachHang;
+	private JComboBox<String> cbNhanVien;
+	private JComboBox<String> cbTrangThai;
 
 	private PillButton btnTimKiem;
 	private PillButton btnLamMoi;
-	private JButton btnToggleAdvanced;
 
-	// TABLES
 	private JPanel pnCenter;
 	private JTable tblPhieuTra;
 	private DefaultTableModel modelPhieuTra;
@@ -97,12 +77,14 @@ public class TraCuuDonTraHang_GUI extends JPanel {
 	private DefaultTableModel modelChiTiet;
 
 	// FORMATTERS
-	private final DateTimeFormatter df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-	private final NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
-	private JPanel pnAdvancedWrap;
+	private final DecimalFormat df = new DecimalFormat("#,### đ");
+	private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
 	public TraCuuDonTraHang_GUI() {
 		setPreferredSize(new Dimension(1537, 850));
+
+		phieuTraDAO = new PhieuTra_DAO();
+		chiTietPhieuTraDAO = new ChiTietPhieuTra_DAO();
 		initialize();
 	}
 
@@ -117,8 +99,7 @@ public class TraCuuDonTraHang_GUI extends JPanel {
 		add(pnCenter, BorderLayout.CENTER);
 
 		addEvents();
-		reloadDataFromDAO(); // ✔ load data 1 lần
-		applyFilter(); // ✔ lọc sau khi UI đã có đủ controls
+		initData();
 	}
 
 	// =====================================================================================
@@ -126,111 +107,67 @@ public class TraCuuDonTraHang_GUI extends JPanel {
 	// =====================================================================================
 	private void taoHeader() {
 
-		pnHeader = new JPanel(new MigLayout("ins 10, gapx 10, gapy 6, fillx", "[grow]"));
+		pnHeader = new JPanel();
+		pnHeader.setLayout(null);
+		pnHeader.setPreferredSize(new Dimension(1073, 94));
 		pnHeader.setBackground(new Color(0xE3F2F5));
-		pnHeader.putClientProperty("migLayout.hidemode", 3);
 
-		// ======================= HÀNG 1 (SEARCH + NGÀY) ===========================
-
-		JPanel rowSearch = new JPanel(new MigLayout("ins 0, gapx 10, gapy 0, fillx", "[grow][][grow][][grow][]"));
-		rowSearch.setOpaque(false);
-
+		// --- Ô TÌM KIẾM (Font 20) ---
 		txtTimKiem = new JTextField();
 		PlaceholderSupport.addPlaceholder(txtTimKiem, PLACEHOLDER_TIM_KIEM);
-		txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		txtTimKiem.setBorder(new RoundedBorder(18));
+		txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+		txtTimKiem.setBounds(25, 17, 480, 60);
+		txtTimKiem.setBorder(new RoundedBorder(20));
+		pnHeader.add(txtTimKiem);
 
-		dateTuNgay = new JDateChooser();
-		dateTuNgay.setDateFormatString("dd/MM/yyyy");
-		dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		dateTuNgay.setBorder(new RoundedBorder(18));
+//        dateTuNgay = new JDateChooser();
+//		dateTuNgay.setDateFormatString("dd/MM/yyyy");
+//		dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+//
+//		dateDenNgay = new JDateChooser();
+//		dateDenNgay.setDateFormatString("dd/MM/yyyy");
+//		dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 
-		dateDenNgay = new JDateChooser();
-		dateDenNgay.setDateFormatString("dd/MM/yyyy");
-		dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		dateDenNgay.setBorder(new RoundedBorder(18));
-
-		btnToggleAdvanced = new JButton("Bộ lọc nâng cao \u25BC");
-
-		rowSearch.add(txtTimKiem, "growx");
-		rowSearch.add(new JLabel("Từ:"));
-		rowSearch.add(dateTuNgay, "growx");
-		rowSearch.add(new JLabel("Đến:"));
-		rowSearch.add(dateDenNgay, "growx");
-		rowSearch.add(btnToggleAdvanced);
-
-		pnHeader.add(rowSearch, "growx, wrap");
-
-		// ======================= HÀNG 2–3 (LỌC NÂNG CAO) ===========================
-
-		pnAdvancedFilter = new JPanel(
-				new MigLayout("ins 0, gapx 10, gapy 4, fillx, wrap 8", "[][grow][][grow][][grow][][grow]"));
-		pnAdvancedFilter.setOpaque(false);
-		pnAdvancedFilter.putClientProperty("migLayout.hidemode", 3);
-
-		// Declare controls
+		addFilterLabel("Khách hàng:", 530, 28, 100, 35);
 		cbKhachHang = new JComboBox<>();
-		cbKhachHang.setBorder(new RoundedBorder(18));
+		setupComboBox(cbKhachHang, 630, 28, 180, 38);
+
+		addFilterLabel("Nhân viên:", 820, 28, 100, 35);
 		cbNhanVien = new JComboBox<>();
-		cbNhanVien.setBorder(new RoundedBorder(18));
-		cbHuongXuLy = new JComboBox<>(new String[] { "Tất cả", "Chờ duyệt", "Nhập lại hàng", "Hủy hàng" });
+		setupComboBox(cbNhanVien, 910, 28, 180, 38);
 
-		txtMaHoaDon = new JTextField();
-		txtMaHoaDon.setBorder(new RoundedBorder(18));
-		PlaceholderSupport.addPlaceholder(txtMaHoaDon, PLACEHOLDER_MA_HOA_DON);
+		addFilterLabel("Trạng thái:", 1100, 28, 100, 35);
+		cbTrangThai = new JComboBox<>();
+		setupComboBox(cbTrangThai, 1190, 28, 180, 38);
 
-		txtSanPham = new JTextField();
-		txtSanPham.setBorder(new RoundedBorder(18));
-		PlaceholderSupport.addPlaceholder(txtSanPham, PLACEHOLDER_TEN_SAN_PHAM);
-
-		txtMaLo = new JTextField();
-		txtMaLo.setBorder(new RoundedBorder(18));
-		PlaceholderSupport.addPlaceholder(txtMaLo, PLACEHOLDER_MA_LO);
-
-		txtLyDo = new JTextField();
-		txtLyDo.setBorder(new RoundedBorder(18));
-		PlaceholderSupport.addPlaceholder(txtLyDo, PLACEHOLDER_LY_DO_TRA);
-
+		// --- NÚT (Font 18) ---
 		btnTimKiem = new PillButton("Tìm kiếm");
+		btnTimKiem.setBounds(1380, 22, 130, 50);
+		btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		pnHeader.add(btnTimKiem);
+
 		btnLamMoi = new PillButton("Làm mới");
+		btnLamMoi.setBounds(1515, 22, 130, 50);
+		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		pnHeader.add(btnLamMoi);
+	}
 
-		// ======================= HÀNG 2 ===========================
-		pnAdvancedFilter.add(new JLabel("Khách hàng:"));
-		pnAdvancedFilter.add(cbKhachHang, "growx");
+	// Helper tạo label và combobox (Font 18)
+	private void addFilterLabel(String text, int x, int y, int w, int h) {
+		JLabel lbl = new JLabel(text);
+		lbl.setBounds(x, y, w, h);
+		lbl.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		pnHeader.add(lbl);
+	}
 
-		pnAdvancedFilter.add(new JLabel("Nhân viên:"));
-		pnAdvancedFilter.add(cbNhanVien, "growx");
-
-		pnAdvancedFilter.add(new JLabel("Hướng xử lý:"));
-		pnAdvancedFilter.add(cbHuongXuLy, "growx");
-
-		pnAdvancedFilter.add(new JLabel("Mã hóa đơn:"));
-		pnAdvancedFilter.add(txtMaHoaDon, "growx");
-
-		// ======================= HÀNG 3 ===========================
-		pnAdvancedFilter.add(new JLabel("Sản phẩm:"));
-		pnAdvancedFilter.add(txtSanPham, "growx");
-
-		pnAdvancedFilter.add(new JLabel("Mã lô:"));
-		pnAdvancedFilter.add(txtMaLo, "growx");
-
-		pnAdvancedFilter.add(new JLabel("Lý do trả:"));
-		pnAdvancedFilter.add(txtLyDo, "growx");
-
-		pnAdvancedFilter.add(btnTimKiem, "");
-		pnAdvancedFilter.add(btnLamMoi, "");
-
-		pnAdvancedWrap = new JPanel(new MigLayout("ins 0, gap 0, hidemode 3", "[grow]"));
-		pnAdvancedWrap.setOpaque(false);
-		pnAdvancedWrap.add(pnAdvancedFilter, "growx");
-		pnAdvancedWrap.setVisible(false); // ẩn luôn cả wrap
-
-		pnHeader.add(pnAdvancedWrap, "growx, wrap");
-		pnAdvancedFilter.setVisible(false);
+	private void setupComboBox(JComboBox<?> cb, int x, int y, int w, int h) {
+		cb.setBounds(x, y, w, h);
+		cb.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		pnHeader.add(cb);
 	}
 
 	// =====================================================================================
-	// CENTER - TABLES (JSplitPane)
+	// CENTER
 	// =====================================================================================
 	private void taoCenter() {
 		pnCenter = new JPanel(new BorderLayout());
@@ -238,9 +175,8 @@ public class TraCuuDonTraHang_GUI extends JPanel {
 		pnCenter.setBorder(new EmptyBorder(5, 10, 10, 10));
 
 		JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-		splitPane.setDividerLocation(350);
+		splitPane.setDividerLocation(400);
 		splitPane.setResizeWeight(0.5);
-		pnCenter.add(splitPane, BorderLayout.CENTER);
 
 		// Top table: Danh sách phiếu trả
 		String[] colPhieuTra = { "STT", "Mã phiếu trả", "Khách hàng", "Nhân viên", "Ngày lập", "Tổng tiền hoàn",
@@ -254,6 +190,30 @@ public class TraCuuDonTraHang_GUI extends JPanel {
 
 		tblPhieuTra = setupTable(modelPhieuTra);
 
+		JScrollPane scrollPT = new JScrollPane(tblPhieuTra);
+		scrollPT.setBorder(createTitledBorder("Danh sách phiếu trả hàng"));
+		splitPane.setTopComponent(scrollPT);
+
+		// Bottom table: Chi tiết
+		String[] colChiTiet = { "STT", "Sản phẩm", "Lý do trả", "Số lượng", "Tiền hoàn", "Hướng xử lý" };
+		modelChiTiet = new DefaultTableModel(colChiTiet, 0) {
+			@Override
+			public boolean isCellEditable(int r, int c) {
+				return false;
+			}
+		};
+
+		tblChiTiet = setupTable(modelChiTiet);
+
+		configureTableRenderers();
+
+		JScrollPane scrollChiTiet = new JScrollPane(tblChiTiet);
+		scrollChiTiet.setBorder(createTitledBorder("Chi tiết sản phẩm trả"));
+		splitPane.setBottomComponent(scrollChiTiet);
+		pnCenter.add(splitPane, BorderLayout.CENTER);
+	}
+
+	private void configureTableRenderers() {
 		DefaultTableCellRenderer center = new DefaultTableCellRenderer();
 		center.setHorizontalAlignment(SwingConstants.CENTER);
 		DefaultTableCellRenderer right = new DefaultTableCellRenderer();
@@ -282,434 +242,257 @@ public class TraCuuDonTraHang_GUI extends JPanel {
 			}
 		});
 
-		JScrollPane scrollPT = new JScrollPane(tblPhieuTra);
-		scrollPT.setBorder(createTitledBorder("Danh sách phiếu trả hàng"));
-		splitPane.setTopComponent(scrollPT);
-
-		// Bottom table: Chi tiết
-		String[] colChiTiet = { "STT", "Sản phẩm", "Lý do trả", "Số lượng", "Tiền hoàn", "Hướng xử lý" };
-		modelChiTiet = new DefaultTableModel(colChiTiet, 0) {
-			@Override
-			public boolean isCellEditable(int r, int c) {
-				return false;
-			}
-		};
-
-		tblChiTiet = setupTable(modelChiTiet);
-
 		tblChiTiet.getColumnModel().getColumn(0).setCellRenderer(center);
 		tblChiTiet.getColumnModel().getColumn(3).setCellRenderer(center);
 		tblChiTiet.getColumnModel().getColumn(4).setCellRenderer(right);
 		tblChiTiet.getColumnModel().getColumn(5).setCellRenderer(center);
-
-		JScrollPane scrollChiTiet = new JScrollPane(tblChiTiet);
-		scrollChiTiet.setBorder(createTitledBorder("Chi tiết sản phẩm trả"));
-		splitPane.setBottomComponent(scrollChiTiet);
 	}
 
 	private JTable setupTable(DefaultTableModel model) {
 		JTable table = new JTable(model);
-		table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		table.setRowHeight(28);
+
+		// ====== FONT & STYLE ĐỒNG BỘ VỚI TraCuuSanPham_GUI ======
+		table.setFont(new Font("Segoe UI", Font.PLAIN, 16)); // font lớn hơn
+		table.setRowHeight(35); // cao hơn
+		table.setGridColor(new Color(230, 230, 230)); // giống SP
 		table.setSelectionBackground(new Color(0xC8E6C9));
+		table.setSelectionForeground(Color.BLACK);
+
 		JTableHeader header = table.getTableHeader();
-		header.setFont(new Font("Segoe UI", Font.BOLD, 14));
+		header.setFont(new Font("Segoe UI", Font.BOLD, 16)); // header to hơn
+		header.setPreferredSize(new Dimension(100, 40)); // tăng chiều cao
 		header.setBackground(new Color(33, 150, 243));
 		header.setForeground(Color.WHITE);
+
+		// ========= TOOLTIP TỰ ĐỘNG =========
+		table.setToolTipText("");
+		table.addMouseMotionListener(new MouseAdapter() {
+			@Override
+			public void mouseMoved(MouseEvent e) {
+				int row = table.rowAtPoint(e.getPoint());
+				int col = table.columnAtPoint(e.getPoint());
+
+				if (row > -1 && col > -1) {
+					Object value = table.getValueAt(row, col);
+					if (value != null) {
+						Component comp = table.prepareRenderer(table.getCellRenderer(row, col), row, col);
+
+						int cellWidth = table.getColumnModel().getColumn(col).getWidth();
+						int textWidth = comp.getPreferredSize().width;
+
+						if (textWidth > cellWidth - 5) {
+							table.setToolTipText(value.toString());
+						} else {
+							table.setToolTipText(null);
+						}
+					} else {
+						table.setToolTipText(null);
+					}
+				}
+			}
+		});
+
 		return table;
 	}
 
 	private TitledBorder createTitledBorder(String title) {
 		return BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
-				TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 15), Color.DARK_GRAY);
+				TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 18), Color.DARK_GRAY);
 	}
 
-	// =====================================================================================
-	// DATA LOADING & FILTERING
-	// =====================================================================================
+	// ==============================================================================
+	// EVENTS
+	// ==============================================================================
+	private void addEvents() {
+		btnTimKiem.addActionListener(this);
+		btnLamMoi.addActionListener(this);
+		txtTimKiem.addActionListener(this);
 
-	private void reloadDataFromDAO() {
-		allPhieuTra.clear();
-		allPhieuTra.addAll(phieuTraDAO.layTatCaPhieuTra());
-
-		// setup combos based on data
-		fillComboKhachHangNhanVien();
-
-		// default dates: từ ngày nhỏ nhất đến ngày hiện tại + 1
-		if (!allPhieuTra.isEmpty()) {
-			LocalDate minDate = allPhieuTra.stream().map(PhieuTra::getNgayLap).min(LocalDate::compareTo)
-					.orElse(LocalDate.now());
-			dateTuNgay.setDate(java.util.Date.from(minDate.atStartOfDay(ZoneId.systemDefault()).toInstant()));
-		}
-		dateDenNgay.setDate(
-				java.util.Date.from(LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()));
-	}
-
-	private void fillComboKhachHangNhanVien() {
-		cbKhachHang.removeAllItems();
-		cbNhanVien.removeAllItems();
-		cbKhachHang.addItem(new ComboItem(null, "Tất cả khách hàng"));
-		cbNhanVien.addItem(new ComboItem(null, "Tất cả nhân viên"));
-
-		Set<String> seenKH = new LinkedHashSet<>();
-		Set<String> seenNV = new LinkedHashSet<>();
-
-		for (PhieuTra pt : allPhieuTra) {
-			KhachHang kh = pt.getKhachHang();
-			if (kh != null && seenKH.add(kh.getMaKhachHang())) {
-				cbKhachHang.addItem(
-						new ComboItem(kh.getMaKhachHang(), kh.getMaKhachHang() + " - " + kh.getTenKhachHang()));
+		// --- chọn 1 phiếu → load chi tiết ---
+		tblPhieuTra.getSelectionModel().addListSelectionListener(e -> {
+			if (!e.getValueIsAdjusting()) {
+				loadChiTietTuDongChon();
 			}
+		});
 
-			NhanVien nv = pt.getNhanVien();
-			if (nv != null && seenNV.add(nv.getMaNhanVien())) {
-				cbNhanVien.addItem(new ComboItem(nv.getMaNhanVien(), nv.getMaNhanVien() + " - " + nv.getTenNhanVien()));
-			}
-		}
-	}
-
-	private void applyFilter() {
-
-		modelPhieuTra.setRowCount(0);
-
-		// Lấy dữ liệu từ Quick Filter
-		String text = getRealText(txtTimKiem, PLACEHOLDER_TIM_KIEM, true, false);
-
-		LocalDate tuNgay = getDateOrNull(dateTuNgay);
-		LocalDate denNgay = getDateOrNull(dateDenNgay);
-
-		boolean advancedOn = pnAdvancedFilter.isVisible();
-
-		// Lấy Advanced Filter
-		ComboItem itemKH = (ComboItem) cbKhachHang.getSelectedItem();
-		String maKH = itemKH != null ? itemKH.key : null;
-
-		ComboItem itemNV = (ComboItem) cbNhanVien.getSelectedItem();
-		String maNV = itemNV != null ? itemNV.key : null;
-
-		String maHD = getRealText(txtMaHoaDon, PLACEHOLDER_MA_HOA_DON, false, true);
-		String tenSP = getRealText(txtSanPham, PLACEHOLDER_TEN_SAN_PHAM, true, false);
-		String maLo = getRealText(txtMaLo, PLACEHOLDER_MA_LO, false, true);
-		String lyDo = getRealText(txtLyDo, PLACEHOLDER_LY_DO_TRA, true, false);
-
-		String huongXuLy = (String) cbHuongXuLy.getSelectedItem();
-
-		int stt = 1;
-
-		for (PhieuTra pt : allPhieuTra) {
-
-			// QUICK FILTER
-			if (!matchQuickFilter(pt, text, tuNgay, denNgay))
-				continue;
-
-			// ADVANCED FILTER
-			if (advancedOn) {
-				if (!matchAdvancedFilter(pt, maKH, maNV, maHD, tenSP, maLo, lyDo, huongXuLy))
-					continue;
-			}
-
-			// Add row
-			modelPhieuTra.addRow(new Object[] { stt++, pt.getMaPhieuTra(),
-					pt.getKhachHang() != null ? pt.getKhachHang().getTenKhachHang() : "",
-					pt.getNhanVien() != null ? pt.getNhanVien().getTenNhanVien() : "", df.format(pt.getNgayLap()),
-					nf.format(pt.getTongTienHoan()), pt.isDaDuyet() ? "Đã duyệt" : "Chờ duyệt" });
-		}
-
-		// Auto load chi tiết
-		if (modelPhieuTra.getRowCount() > 0) {
-			tblPhieuTra.setRowSelectionInterval(0, 0);
-			loadChiTietForSelected();
-		} else {
-			modelChiTiet.setRowCount(0);
-		}
-	}
-
-	private boolean matchQuickFilter(PhieuTra pt, String text, LocalDate tuNgay, LocalDate denNgay) {
-
-		// ========================= TEXT SEARCH ==========================
-		if (!text.isEmpty()) {
-			String t = text.toLowerCase();
-
-			// header info
-			String sMaPT = safeLower(pt.getMaPhieuTra());
-			String sTenKH = pt.getKhachHang() != null ? safeLower(pt.getKhachHang().getTenKhachHang()) : "";
-			String sSDT = pt.getKhachHang() != null && pt.getKhachHang().getSoDienThoai() != null
-					? safeLower(pt.getKhachHang().getSoDienThoai())
-					: "";
-
-			boolean matchHeader = sMaPT.contains(t) || sTenKH.contains(t) || sSDT.contains(t);
-
-			// Nếu header không khớp → kiểm tra chi tiết
-			if (!matchHeader) {
-				List<ChiTietPhieuTra> ds = pt.getChiTietPhieuTraList();
-				if (ds != null) {
-					for (ChiTietPhieuTra ct : ds) {
-
-						if (ct == null)
-							continue;
-
-						ChiTietHoaDon cthd = ct.getChiTietHoaDon();
-						LoSanPham lo = cthd != null ? cthd.getLoSanPham() : null;
-						SanPham sp = lo != null ? lo.getSanPham() : null;
-
-						String sMaHD = cthd != null && cthd.getHoaDon() != null
-								? safeLower(cthd.getHoaDon().getMaHoaDon())
-								: "";
-						String sTenSP = sp != null ? safeLower(sp.getTenSanPham()) : "";
-						String sMaLo = lo != null ? safeLower(lo.getMaLo()) : "";
-						String sLyDo = safeLower(ct.getLyDoChiTiet());
-
-						if (sMaHD.contains(t) || sTenSP.contains(t) || sMaLo.contains(t) || sLyDo.contains(t)) {
-							matchHeader = true;
-							break;
-						}
+		// --- double click phiếu trả ---
+		tblPhieuTra.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					int row = tblPhieuTra.getSelectedRow();
+					if (row != -1) {
+						String ma = tblPhieuTra.getValueAt(row, 1).toString();
+						JOptionPane.showMessageDialog(TraCuuDonTraHang_GUI.this,
+								"Bạn vừa mở phiếu trả: " + ma + "\n(Có thể mở form chi tiết hoặc sửa phiếu tại đây)");
 					}
 				}
 			}
-
-			if (!matchHeader)
-				return false;
-		}
-
-		// ========================= DATE FILTER ==========================
-		LocalDate ngayLap = pt.getNgayLap();
-
-		if (tuNgay != null && ngayLap.isBefore(tuNgay))
-			return false;
-
-		if (denNgay != null && ngayLap.isAfter(denNgay))
-			return false;
-
-		return true;
-	}
-
-	private boolean matchAdvancedFilter(PhieuTra pt, String maKH, String maNV, String maHD, String tenSP, String maLo,
-			String lyDo, String huongXuLy) {
-
-		if (maKH != null) {
-			if (pt.getKhachHang() == null || !maKH.equals(pt.getKhachHang().getMaKhachHang()))
-				return false;
-		}
-
-		if (maNV != null) {
-			if (pt.getNhanVien() == null || !maNV.equals(pt.getNhanVien().getMaNhanVien()))
-				return false;
-		}
-
-		boolean needDetailFilter = notEmpty(maHD) || notEmpty(tenSP) || notEmpty(maLo) || notEmpty(lyDo)
-				|| (huongXuLy != null && !"Tất cả".equals(huongXuLy));
-
-		if (!needDetailFilter) {
-			return true;
-		}
-
-		List<ChiTietPhieuTra> dsCT = pt.getChiTietPhieuTraList();
-		if (dsCT == null || dsCT.isEmpty()) {
-			return false;
-		}
-
-		for (ChiTietPhieuTra ct : dsCT) {
-			if (ct == null)
-				continue;
-
-			ChiTietHoaDon cthd = ct.getChiTietHoaDon();
-			LoSanPham lo = cthd != null ? cthd.getLoSanPham() : null;
-			SanPham sp = lo != null ? lo.getSanPham() : null;
-
-			String maHDct = cthd != null && cthd.getHoaDon() != null ? safeUpper(cthd.getHoaDon().getMaHoaDon()) : "";
-			String tenSPct = sp != null ? safeLower(sp.getTenSanPham()) : "";
-			String maLoct = lo != null ? safeUpper(lo.getMaLo()) : "";
-			String lyDoct = safeLower(ct.getLyDoChiTiet());
-			String huongct = ct.getTrangThaiText(); // "Chờ duyệt" / "Nhập lại hàng" / "Huỷ hàng"
-
-			if (notEmpty(maHD) && !maHDct.contains(maHD)) {
-				continue;
-			}
-			if (notEmpty(tenSP) && !tenSPct.contains(tenSP)) {
-				continue;
-			}
-			if (notEmpty(maLo) && !maLoct.contains(maLo)) {
-				continue;
-			}
-			if (notEmpty(lyDo) && !lyDoct.contains(lyDo)) {
-				continue;
-			}
-			if (huongXuLy != null && !"Tất cả".equals(huongXuLy) && !huongXuLy.equals(huongct)) {
-				continue;
-			}
-
-			// Nếu đến đây nghĩa là chi tiết này thỏa mọi điều kiện
-			return true;
-		}
-
-		return false;
-	}
-
-	private void loadChiTietForSelected() {
-		int row = tblPhieuTra.getSelectedRow();
-		if (row < 0) {
-			modelChiTiet.setRowCount(0);
-			return;
-		}
-		String maPT = (String) tblPhieuTra.getValueAt(row, 1);
-		modelChiTiet.setRowCount(0);
-
-		List<ChiTietPhieuTra> dsCT = chiTietPhieuTraDAO.timKiemChiTietBangMaPhieuTra(maPT);
-
-		int stt = 1;
-		for (ChiTietPhieuTra ct : dsCT) {
-			if (ct == null)
-				continue;
-
-			ChiTietHoaDon cthd = ct.getChiTietHoaDon();
-			LoSanPham lo = cthd != null ? cthd.getLoSanPham() : null;
-			SanPham sp = lo != null ? lo.getSanPham() : null;
-
-			String tenSP = sp != null ? sp.getTenSanPham() : "";
-			String lyDo = ct.getLyDoChiTiet();
-			String soLuongText = String.valueOf(ct.getSoLuong());
-			try {
-				if (ct.getDonViTinh() != null && ct.getDonViTinh().getTenDonViTinh() != null) {
-					soLuongText = ct.getSoLuong() + " " + ct.getDonViTinh().getTenDonViTinh();
-				}
-			} catch (Exception ignored) {
-			}
-
-			String tienHoanText = nf.format(ct.getThanhTienHoan());
-			String huong = ct.getTrangThaiText();
-
-			modelChiTiet.addRow(new Object[] { stt++, tenSP, lyDo, soLuongText, tienHoanText, huong });
-		}
-	}
-
-	// =====================================================================================
-	// EVENTS
-	// =====================================================================================
-	private void addEvents() {
-
-		// Toggle bật tắt advanced filter
-		btnToggleAdvanced.addActionListener(e -> {
-			boolean show = !pnAdvancedWrap.isVisible();
-			pnAdvancedWrap.setVisible(show);
-			pnAdvancedFilter.setVisible(show);
-			btnToggleAdvanced.setText(show ? "Bộ lọc nâng cao \u25B2" : "Bộ lọc nâng cao \u25BC");
-			pnHeader.revalidate();
-			pnHeader.repaint();
-		});
-
-		// Enter trong ô tìm kiếm
-		txtTimKiem.addActionListener(e -> applyFilter());
-		txtMaHoaDon.addActionListener(e -> applyFilter());
-		txtSanPham.addActionListener(e -> applyFilter());
-		txtMaLo.addActionListener(e -> applyFilter());
-		txtLyDo.addActionListener(e -> applyFilter());
-
-		// Auto lọc khi đổi ngày
-		dateTuNgay.getDateEditor().addPropertyChangeListener(e -> applyFilter());
-		dateDenNgay.getDateEditor().addPropertyChangeListener(e -> applyFilter());
-
-		// Tìm kiếm
-		btnTimKiem.addActionListener(e -> applyFilter());
-
-		// Làm mới
-		btnLamMoi.addActionListener(e -> lamMoiDuLieu());
-
-		// click chọn phiếu
-		tblPhieuTra.getSelectionModel().addListSelectionListener(e -> {
-			if (!e.getValueIsAdjusting()) {
-				loadChiTietForSelected();
-			}
 		});
 	}
 
-	private void lamMoiDuLieu() {
+	// ==============================================================================
+	// ACTION
+	// ==============================================================================
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		Object o = e.getSource();
 
-		// Reset placeholder
-		resetPlaceholder(txtTimKiem, PLACEHOLDER_TIM_KIEM);
-		resetPlaceholder(txtMaHoaDon, PLACEHOLDER_MA_HOA_DON);
-		resetPlaceholder(txtSanPham, PLACEHOLDER_TEN_SAN_PHAM);
-		resetPlaceholder(txtMaLo, PLACEHOLDER_MA_LO);
-		resetPlaceholder(txtLyDo, PLACEHOLDER_LY_DO_TRA);
+		if (o == btnTimKiem || o == txtTimKiem) {
+			xuLyTimKiem();
+		} else if (o == btnLamMoi) {
+			xuLyLamMoi();
+		}
+	}
 
-		// Reset combobox
+	// ==============================================================================
+	// TẢI DỮ LIỆU BAN ĐẦU
+	// ==============================================================================
+	/** gọi ở constructor (giống TraCuuSanPham): load combobox + load bảng */
+	private void initData() {
+		loadComboKhachHang();
+		loadComboNhanVien();
+		loadComboTrangThai();
+		taiDanhSachPhieuTra();
+		loadTablePhieuTra(allPhieuTra);
+	}
+
+	/** load danh sách PHIẾU TRẢ từ DB */
+	private void taiDanhSachPhieuTra() {
+		allPhieuTra = phieuTraDAO.layTatCaPhieuTra();
+	}
+
+	// ==============================================================================
+	// COMBOBOX
+	// ==============================================================================
+	private void loadComboKhachHang() {
+		cbKhachHang.removeAllItems();
+		cbKhachHang.addItem("Tất cả");
+
+		List<KhachHang> ds = new dao.KhachHang_DAO().layTatCaKhachHang();
+		for (KhachHang kh : ds) {
+			cbKhachHang.addItem(kh.getTenKhachHang());
+		}
+	}
+
+	private void loadComboNhanVien() {
+		cbNhanVien.removeAllItems();
+		cbNhanVien.addItem("Tất cả");
+
+		List<NhanVien> ds = new dao.NhanVien_DAO().layTatCaNhanVien();
+		for (NhanVien nv : ds) {
+			cbNhanVien.addItem(nv.getTenNhanVien());
+		}
+	}
+
+	private void loadComboTrangThai() {
+		cbTrangThai.removeAllItems();
+		cbTrangThai.addItem("Tất cả");
+		cbTrangThai.addItem("Chờ duyệt");
+		cbTrangThai.addItem("Đã duyệt");
+	}
+
+	// ==============================================================================
+	// TÌM KIẾM
+	// ==============================================================================
+	private void xuLyTimKiem() {
+		String keyword = txtTimKiem.getText().trim();
+		String khach = cbKhachHang.getSelectedItem().toString();
+		String nv = cbNhanVien.getSelectedItem().toString();
+		String tt = cbTrangThai.getSelectedItem().toString();
+
+		List<PhieuTra> ds = new ArrayList<>(allPhieuTra);
+
+		// --- keyword ---
+		if (!keyword.isEmpty() && !keyword.equals(PLACEHOLDER_TIM_KIEM)) {
+			String kw = keyword.toLowerCase();
+			ds.removeIf(pt -> !(pt.getMaPhieuTra().toLowerCase().contains(kw)
+					|| pt.getKhachHang().getTenKhachHang().toLowerCase().contains(kw)
+					|| pt.getKhachHang().getSoDienThoai().contains(kw)));
+		}
+
+		// --- khách hàng ---
+		if (!"Tất cả".equals(khach)) {
+			ds.removeIf(pt -> !pt.getKhachHang().getTenKhachHang().equals(khach));
+		}
+
+		// --- nhân viên ---
+		if (!"Tất cả".equals(nv)) {
+			ds.removeIf(pt -> !pt.getNhanVien().getTenNhanVien().equals(nv));
+		}
+
+		// --- trạng thái ---
+		if (!"Tất cả".equals(tt)) {
+			if ("Đã duyệt".equals(tt))
+				ds.removeIf(pt -> !pt.isDaDuyet());
+			else
+				ds.removeIf(pt -> pt.isDaDuyet());
+		}
+
+		loadTablePhieuTra(ds);
+	}
+
+	// ==============================================================================
+	// LÀM MỚI
+	// ==============================================================================
+	private void xuLyLamMoi() {
+		txtTimKiem.setText("");
+		PlaceholderSupport.addPlaceholder(txtTimKiem, PLACEHOLDER_TIM_KIEM);
 		cbKhachHang.setSelectedIndex(0);
 		cbNhanVien.setSelectedIndex(0);
-		cbHuongXuLy.setSelectedIndex(0);
+		cbTrangThai.setSelectedIndex(0);
 
-		// Reset ngày
-		if (!allPhieuTra.isEmpty()) {
-			LocalDate minDate = allPhieuTra.stream().map(PhieuTra::getNgayLap).min(LocalDate::compareTo)
-					.orElse(LocalDate.now());
-
-			dateTuNgay.setDate(java.util.Date.from(minDate.atStartOfDay(ZoneId.systemDefault()).toInstant()));
-		}
-
-		dateDenNgay.setDate(
-				java.util.Date.from(LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()));
-
-		// Trong hàm applyFilter() có load data
-		applyFilter();
+		taiDanhSachPhieuTra();
+		loadTablePhieuTra(allPhieuTra);
+		modelChiTiet.setRowCount(0);
 	}
 
-	// =====================================================================================
-	// HELPERS
-	// =====================================================================================
-	private LocalDate getDateOrNull(JDateChooser chooser) {
-		java.util.Date d = chooser.getDate();
-		if (d == null)
-			return null;
-		return d.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-	}
+	// ==============================================================================
+	// LOAD BẢNG PHIẾU TRẢ
+	// ==============================================================================
+	private void loadTablePhieuTra(List<PhieuTra> ds) {
+		modelPhieuTra.setRowCount(0);
+		int stt = 1;
 
-	private String safeLower(String s) {
-		return s == null ? "" : s.toLowerCase().trim();
-	}
-
-	private String safeUpper(String s) {
-		return s == null ? "" : s.toUpperCase().trim();
-	}
-
-	private boolean notEmpty(String s) {
-		return s != null && !s.trim().isEmpty();
-	}
-
-	// Combo item for combos KH / NV
-	private static class ComboItem {
-		final String key;
-		final String label;
-
-		ComboItem(String key, String label) {
-			this.key = key;
-			this.label = label;
-		}
-
-		@Override
-		public String toString() {
-			return label;
+		for (PhieuTra pt : ds) {
+			modelPhieuTra.addRow(new Object[] { stt++, pt.getMaPhieuTra(), pt.getKhachHang().getTenKhachHang(),
+					pt.getNhanVien().getTenNhanVien(), pt.getNgayLap().format(dtf), df.format(pt.getTongTienHoan()),
+					pt.isDaDuyet() ? "Đã duyệt" : "Chờ duyệt" });
 		}
 	}
 
-	// Kiểm tra xem text trong ô có phải placeholder hay không
-	private boolean isPlaceholder(JTextField txt, String placeholder) {
-		return txt.getForeground().equals(Color.GRAY) && txt.getText().equals(placeholder);
+	// ==============================================================================
+	// LOAD BẢNG CHI TIẾT
+	// ==============================================================================
+	private void loadChiTietTuDongChon() {
+		int row = tblPhieuTra.getSelectedRow();
+		if (row < 0)
+			return;
+
+		String maPT = tblPhieuTra.getValueAt(row, 1).toString();
+
+		List<ChiTietPhieuTra> ds = chiTietPhieuTraDAO.timKiemChiTietBangMaPhieuTra(maPT);
+
+		modelChiTiet.setRowCount(0);
+		int stt = 1;
+
+		for (ChiTietPhieuTra ct : ds) {
+
+			String tenSP = ct.getChiTietHoaDon().getLoSanPham().getSanPham().getTenSanPham();
+
+			modelChiTiet.addRow(new Object[] { stt++, tenSP, ct.getLyDoChiTiet(), ct.getSoLuong(),
+					df.format(ct.getThanhTienHoan()), trangThaiCTText(ct.getTrangThai()) });
+		}
 	}
 
-	// Reset placeholder đúng chuẩn (dùng khi bấm Làm mới)
-	private void resetPlaceholder(JTextField txt, String placeholder) {
-		txt.setForeground(Color.GRAY);
-		txt.setText(placeholder);
-	}
-
-	// Lấy text thực sự (nếu là placeholder thì trả về rỗng)
-	private String getRealText(JTextField txt, String placeholder, boolean toLower, boolean toUpper) {
-		if (isPlaceholder(txt, placeholder))
-			return "";
-		String s = txt.getText().trim();
-		if (toLower)
-			return s.toLowerCase();
-		if (toUpper)
-			return s.toUpperCase();
-		return s;
+	private String trangThaiCTText(int t) {
+		return switch (t) {
+		case 0 -> "Chờ duyệt";
+		case 1 -> "Nhập kho";
+		case 2 -> "Hủy";
+		case 3 -> "Chuyển NCC";
+		default -> "Không xác định";
+		};
 	}
 
 	// =====================================================================================
@@ -729,4 +512,5 @@ public class TraCuuDonTraHang_GUI extends JPanel {
 			frame.setVisible(true);
 		});
 	}
+
 }

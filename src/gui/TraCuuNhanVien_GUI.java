@@ -1,48 +1,51 @@
 package gui;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.text.DecimalFormat;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.border.*;
 import javax.swing.table.*;
-
-import com.toedter.calendar.JDateChooser;
 
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
 import dao.LichSuNhanVien_DAO;
 import dao.NhanVien_DAO;
+import entity.HoaDon;
 import entity.NhanVien;
-import net.miginfocom.swing.MigLayout;
+import entity.PhieuHuy;
+import entity.PhieuTra;
 
+@SuppressWarnings("serial")
 public class TraCuuNhanVien_GUI extends JPanel {
 
-	// DAO
-	private final NhanVien_DAO nvDAO = new NhanVien_DAO();
-	private final LichSuNhanVien_DAO lichSuDAO = new LichSuNhanVien_DAO();
-	private ArrayList<NhanVien> danhSachGoc = new ArrayList<>();
+	private static final String PLACEHOLDER_TIM_KIEM = "Tìm theo mã, tên hoặc SĐT...";
 
 	// HEADER
 	private JPanel pnHeader;
-	private JPanel pnAdvancedWrap;
-	private JPanel pnAdvancedFilter;
-	private JButton btnToggleAdvanced;
 
 	private JTextField txtTimKiem;
 	private JComboBox<String> cbChucVu;
 	private JComboBox<String> cbCaLam;
 	private JComboBox<String> cbTrangThai;
-
-	private JDateChooser dateTuNgay;
-	private JDateChooser dateDenNgay;
-
 	private PillButton btnTim;
-	private PillButton btnMoi;
+	private PillButton btnLamMoi;
 
 	// CENTER
 	private JPanel pnCenter;
@@ -51,18 +54,31 @@ public class TraCuuNhanVien_GUI extends JPanel {
 
 	private JTabbedPane tabChiTiet;
 	private JTable tblLichSuBan;
-//	private JTable tblLichSuTra;
-//	private JTable tblLichSuHuy;
-
 	private DefaultTableModel modelBan;
-//	private DefaultTableModel modelTra;
-//	private DefaultTableModel modelHuy;
 
+	private final NhanVien_DAO nvDAO;
+	private final LichSuNhanVien_DAO lichSuDAO;
+
+	private List<NhanVien> danhSachGoc = new ArrayList<>();
+
+	private DefaultTableModel modelTra;
+
+	private JTable tblLichSuTra;
+
+	private DefaultTableModel modelHuy;
+
+	private JTable tblLichSuHuy;
+	private final DecimalFormat df = new DecimalFormat("#,### đ");
 	private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-	private final DecimalFormat df = new DecimalFormat("#,##0.#'đ'");
 
 	public TraCuuNhanVien_GUI() {
 		setPreferredSize(new Dimension(1537, 850));
+		nvDAO = new NhanVien_DAO();
+		lichSuDAO = new LichSuNhanVien_DAO();
+		initialize();
+	}
+
+	private void initialize() {
 		setLayout(new BorderLayout());
 		setBackground(Color.WHITE);
 
@@ -72,98 +88,79 @@ public class TraCuuNhanVien_GUI extends JPanel {
 		taoCenter();
 		add(pnCenter, BorderLayout.CENTER);
 
-		loadDuLieuNhanVien();
 		addEvents();
-		SwingUtilities.invokeLater(() -> applyFilter());
+		initData();
 	}
 
 	// ================================================================
-	// HEADER – SEARCH + ADV FILTER (MigLayout)
+	// HEADER – GIỐNG TRA CỨU ĐƠN TRẢ HÀNG
 	// ================================================================
 	private void taoHeader() {
 
-		pnHeader = new JPanel(new MigLayout("ins 10, gapx 10, gapy 6, fillx", "[grow]"));
+		pnHeader = new JPanel();
+		pnHeader.setLayout(null);
+		pnHeader.setPreferredSize(new Dimension(1073, 94));
 		pnHeader.setBackground(new Color(0xE3F2F5));
-		pnHeader.putClientProperty("migLayout.hidemode", 3);
 
-		// ---------- HÀNG 1 ----------
-		JPanel row1 = new JPanel(new MigLayout("ins 0, gapx 10, fillx", "[grow][][grow][][grow][]"));
-		row1.setOpaque(false);
-
+		// Ô tìm kiếm
 		txtTimKiem = new JTextField();
-		PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã, tên, SĐT...");
-		txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		txtTimKiem.setBorder(new RoundedBorder(18));
+		PlaceholderSupport.addPlaceholder(txtTimKiem, PLACEHOLDER_TIM_KIEM);
+		txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+		txtTimKiem.setBorder(new RoundedBorder(20));
+		txtTimKiem.setBounds(25, 17, 480, 60);
+		pnHeader.add(txtTimKiem);
 
-		dateTuNgay = new JDateChooser();
-		dateTuNgay.setDateFormatString("dd/MM/yyyy");
-		dateTuNgay.setBorder(new RoundedBorder(18));
-
-		dateDenNgay = new JDateChooser();
-		dateDenNgay.setDateFormatString("dd/MM/yyyy");
-		dateDenNgay.setBorder(new RoundedBorder(18));
-
-		btnToggleAdvanced = new JButton("Bộ lọc nâng cao \u25BC");
-
-		row1.add(txtTimKiem, "growx");
-		row1.add(new JLabel("Từ:"));
-		row1.add(dateTuNgay, "growx");
-		row1.add(new JLabel("Đến:"));
-		row1.add(dateDenNgay, "growx");
-		row1.add(btnToggleAdvanced);
-
-		pnHeader.add(row1, "growx, wrap");
-
-		// ---------- HÀNG 2–3 (ADV FILTER) ----------
-		pnAdvancedFilter = new JPanel(
-				new MigLayout("ins 0, gapx 10, gapy 4, fillx, wrap 6", "[][grow][][grow][][grow]"));
-		pnAdvancedFilter.setOpaque(false);
-
+		addFilterLabel("Chức vụ:", 540, 28, 100, 35);
 		cbChucVu = new JComboBox<>(new String[] { "Tất cả", "Quản lý", "Nhân viên" });
-		cbChucVu.setBorder(new RoundedBorder(18));
+		setupCombo(cbChucVu, 630, 28, 160, 38);
+
+		addFilterLabel("Ca làm:", 800, 28, 100, 35);
 		cbCaLam = new JComboBox<>(new String[] { "Tất cả", "Sáng", "Chiều", "Tối" });
-		cbCaLam.setBorder(new RoundedBorder(18));
+		setupCombo(cbCaLam, 880, 28, 160, 38);
+
+		addFilterLabel("Trạng thái:", 1050, 28, 120, 35);
 		cbTrangThai = new JComboBox<>(new String[] { "Tất cả", "Đang làm", "Đã nghỉ" });
-		cbTrangThai.setBorder(new RoundedBorder(18));
+		setupCombo(cbTrangThai, 1140, 28, 160, 38);
 
+		// Nút Tìm kiếm
 		btnTim = new PillButton("Tìm kiếm");
-		btnMoi = new PillButton("Làm mới");
+		btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnTim.setBounds(1310, 22, 130, 50);
+		pnHeader.add(btnTim);
 
-		pnAdvancedFilter.add(new JLabel("Chức vụ:"));
-		pnAdvancedFilter.add(cbChucVu, "growx");
-		pnAdvancedFilter.add(new JLabel("Ca làm:"));
-		pnAdvancedFilter.add(cbCaLam, "growx");
-		pnAdvancedFilter.add(new JLabel("Trạng thái:"));
-		pnAdvancedFilter.add(cbTrangThai, "growx");
+		// Nút Làm mới
+		btnLamMoi = new PillButton("Làm mới");
+		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnLamMoi.setBounds(1450, 22, 130, 50);
+		pnHeader.add(btnLamMoi);
+	}
 
-		pnAdvancedFilter.add(btnTim);
-		pnAdvancedFilter.add(btnMoi);
+	private void addFilterLabel(String text, int x, int y, int w, int h) {
+		JLabel lbl = new JLabel(text);
+		lbl.setBounds(x, y, w, h);
+		lbl.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		pnHeader.add(lbl);
+	}
 
-		pnAdvancedWrap = new JPanel(new MigLayout("ins 0, gap 0, hidemode 3", "[grow]"));
-		pnAdvancedWrap.setOpaque(false);
-		pnAdvancedWrap.add(pnAdvancedFilter, "growx");
-
-		pnAdvancedWrap.setVisible(false);
-		pnAdvancedFilter.setVisible(false);
-
-		pnHeader.add(pnAdvancedWrap, "growx, wrap");
+	private void setupCombo(JComboBox<?> cb, int x, int y, int w, int h) {
+		cb.setBounds(x, y, w, h);
+		cb.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		pnHeader.add(cb);
 	}
 
 	// ================================================================
-	// CENTER – MASTER (table NV) + DETAIL (3 tabs)
+	// CENTER
 	// ================================================================
 	private void taoCenter() {
-
 		pnCenter = new JPanel(new BorderLayout());
-		pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
 		pnCenter.setBackground(Color.WHITE);
+		pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
 
 		JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-		split.setDividerLocation(380);
+		split.setDividerLocation(400);
 		split.setResizeWeight(0.5);
-		pnCenter.add(split, BorderLayout.CENTER);
 
-		// --- BẢNG NHÂN VIÊN ---
+		// Bảng Nhân viên
 		String[] colNV = { "STT", "Mã NV", "Họ tên", "Giới tính", "Ngày sinh", "SĐT", "Chức vụ", "Ca", "Trạng thái" };
 		modelNhanVien = new DefaultTableModel(colNV, 0) {
 			@Override
@@ -171,222 +168,297 @@ public class TraCuuNhanVien_GUI extends JPanel {
 				return false;
 			}
 		};
+
 		tblNhanVien = setupTable(modelNhanVien);
 
 		JScrollPane scrollNV = new JScrollPane(tblNhanVien);
-		scrollNV.setBorder(createBorder("Danh sách nhân viên"));
+		scrollNV.setBorder(createTitledBorder("Danh sách nhân viên"));
 		split.setTopComponent(scrollNV);
 
-		// --- TABBED PANE ---
+		// Tab chi tiết giữ nguyên
 		tabChiTiet = new JTabbedPane();
 		tabChiTiet.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-
 		split.setBottomComponent(tabChiTiet);
 
 		taoTabsChiTiet();
+		pnCenter.add(split, BorderLayout.CENTER);
 	}
 
 	private void taoTabsChiTiet() {
 
-		// TAB 1 – BÁN HÀNG
 		modelBan = new DefaultTableModel(new String[] { "STT", "Mã hóa đơn", "Ngày lập", "Khách hàng", "Tổng tiền" },
 				0);
+
 		tblLichSuBan = setupTable(modelBan);
-
 		tabChiTiet.add("Lịch sử bán hàng", new JScrollPane(tblLichSuBan));
+		modelTra = new DefaultTableModel(
+				new String[] { "STT", "Mã phiếu trả", "Ngày lập", "Khách hàng", "Tổng tiền", "Trạng thái" }, 0);
 
-//		// TAB 2 – TRẢ HÀNG
-//		modelTra = new DefaultTableModel(new String[] { "STT", "Mã phiếu trả", "Ngày lập", "Khách hàng", "Tiền hoàn" },
-//				0);
-//		tblLichSuTra = setupTable(modelTra);
-//		tabChiTiet.add("Lịch sử duyệt trả", new JScrollPane(tblLichSuTra));
-		tabChiTiet.add("Lịch sử duyệt trả", new JLabel("Đang cập nhật...", JLabel.CENTER));
-//
-//		// TAB 3 – HỦY HÀNG
-//		modelHuy = new DefaultTableModel(new String[] { "STT", "Mã phiếu hủy", "Ngày lập", "Tổng giá trị" },
-//				0);
-//		tblLichSuHuy = setupTable(modelHuy);
-//		tabChiTiet.add("Lịch sử hủy hàng", new JScrollPane(tblLichSuHuy));
-		tabChiTiet.add("Lịch sử hủy hàng", new JLabel("Đang cập nhật...", JLabel.CENTER));
+		tblLichSuTra = setupTable(modelTra);
+
+		tabChiTiet.add("Lịch sử trả hàng", new JScrollPane(tblLichSuTra));
+
+		modelHuy = new DefaultTableModel(
+				new String[] { "STT", "Mã phiếu hủy", "Ngày lập", "Nhân viên lập", "Trạng thái", "Tổng tiền" }, 0);
+
+		tblLichSuHuy = setupTable(modelHuy);
+
+		tabChiTiet.add("Lịch sử hủy hàng", new JScrollPane(tblLichSuHuy));
 	}
 
 	// ================================================================
-	// DATA LOADING
+	// TABLE STYLE – GIỐNG ĐƠN TRẢ HÀNG 100%
 	// ================================================================
-	private void loadDuLieuNhanVien() {
-		danhSachGoc = nvDAO.layTatCaNhanVien();
+	private JTable setupTable(DefaultTableModel model) {
+		JTable table = new JTable(model);
+
+		table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+		table.setRowHeight(35);
+		table.setGridColor(new Color(230, 230, 230));
+		table.setSelectionBackground(new Color(0xC8E6C9));
+		table.setSelectionForeground(Color.BLACK);
+
+		JTableHeader header = table.getTableHeader();
+		header.setFont(new Font("Segoe UI", Font.BOLD, 16));
+		header.setPreferredSize(new Dimension(100, 40));
+		header.setBackground(new Color(33, 150, 243));
+		header.setForeground(Color.WHITE);
+
+		// Tooltip auto
+		table.setToolTipText("");
+		table.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+			public void mouseMoved(java.awt.event.MouseEvent e) {
+				int r = table.rowAtPoint(e.getPoint());
+				int c = table.columnAtPoint(e.getPoint());
+				if (r > -1 && c > -1) {
+					Object v = table.getValueAt(r, c);
+					if (v != null) {
+						Component comp = table.prepareRenderer(table.getCellRenderer(r, c), r, c);
+						int cellW = table.getColumnModel().getColumn(c).getWidth();
+						int textW = comp.getPreferredSize().width;
+						table.setToolTipText(textW > cellW - 5 ? v.toString() : null);
+					}
+				}
+			}
+		});
+
+		return table;
 	}
 
-	// ================================================================
-	// FILTERING
-	// ================================================================
-	private void applyFilter() {
+	private TitledBorder createTitledBorder(String title) {
+		return BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
+				TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 18), Color.DARK_GRAY);
+	}
 
-		if (danhSachGoc == null || danhSachGoc.isEmpty()) {
-			modelNhanVien.setRowCount(0);
-			return;
-		}
+	// =====================================================================
+//  EVENT HANDLER
+//=====================================================================
+	private void addEvents() {
 
-		// FIX PLACEHOLDER
-		String placeholder = "Tìm theo mã, tên, SĐT...";
-		String raw = txtTimKiem.getText().trim();
-		String text = raw.equals(placeholder) ? "" : raw.toLowerCase();
+		btnTim.addActionListener(e -> xuLyTimKiem());
+		txtTimKiem.addActionListener(e -> xuLyTimKiem());
 
-		String cv = cbChucVu.getSelectedItem() + "";
-		String ca = cbCaLam.getSelectedItem() + "";
-		String tt = cbTrangThai.getSelectedItem() + "";
+//		cbChucVu.addActionListener(e -> locTheoBoLoc());
+//		cbCaLam.addActionListener(e -> locTheoBoLoc());
+//		cbTrangThai.addActionListener(e -> locTheoBoLoc());
 
+		btnLamMoi.addActionListener(e -> xuLyLamMoi());
+		// Khi chọn 1 nhân viên → load lịch sử
+		tblNhanVien.getSelectionModel().addListSelectionListener(e -> {
+			if (!e.getValueIsAdjusting()) {
+				taiLichSuBanHang();
+				taiLichSuTraHang();
+				taiLichSuHuyHang();
+			}
+		});
+
+	}
+
+	private void xuLyLamMoi() {
+		txtTimKiem.setText("");
+		PlaceholderSupport.addPlaceholder(txtTimKiem, PLACEHOLDER_TIM_KIEM);
+
+		cbChucVu.setSelectedIndex(0);
+		cbCaLam.setSelectedIndex(0);
+		cbTrangThai.setSelectedIndex(0);
+
+		taiDanhSachNhanVien();
+		loadTableNhanVien(danhSachGoc);
+	}
+
+	// =====================================================================
+//  INIT DATA (giống tra cứu đơn trả hàng)
+//=====================================================================
+	private void initData() {
+		taiDanhSachNhanVien();
+		loadTableNhanVien(danhSachGoc);
+	}
+
+//=====================================================================
+//  TẢI DỮ LIỆU NHÂN VIÊN
+//=====================================================================
+
+	private void taiDanhSachNhanVien() {
+		// convert sang ArrayList để tránh lỗi type mismatch
+		danhSachGoc = new ArrayList<>(nvDAO.layTatCaNhanVien());
+	}
+
+//=====================================================================
+//  LOAD TABLE
+//=====================================================================
+	private void loadTableNhanVien(List<NhanVien> ds) {
 		modelNhanVien.setRowCount(0);
 		int stt = 1;
 
-		for (NhanVien nv : danhSachGoc) {
-
-			// TEXT FILTER
-			if (!text.isEmpty()) {
-				String combined = (nv.getMaNhanVien() + nv.getTenNhanVien() + nv.getSoDienThoai()).toLowerCase();
-				if (!combined.contains(text))
-					continue;
-			}
-
-			// CHỨC VỤ
-			String chucVuNv = nv.isQuanLy() ? "Quản lý" : "Nhân viên";
-			if (!cv.equals("Tất cả") && !cv.equals(chucVuNv))
-				continue;
-
-			// CA
-			String caNv = nv.getCaLam() == 1 ? "Sáng" : nv.getCaLam() == 2 ? "Chiều" : "Tối";
-			if (!ca.equals("Tất cả") && !ca.equals(caNv))
-				continue;
-
-			// TRẠNG THÁI
-			String ttNv = nv.isTrangThai() ? "Đang làm" : "Đã nghỉ";
-			if (!tt.equals("Tất cả") && !tt.equals(ttNv))
-				continue;
-
+		for (NhanVien nv : ds) {
 			modelNhanVien.addRow(new Object[] { stt++, nv.getMaNhanVien(), nv.getTenNhanVien(),
-					nv.isGioiTinh() ? "Nam" : "Nữ", nv.getNgaySinh() != null ? dtf.format(nv.getNgaySinh()) : "",
-					nv.getSoDienThoai(), chucVuNv, caNv, ttNv });
+					nv.isGioiTinh() ? "Nam" : "Nữ", nv.getNgaySinh() != null ? nv.getNgaySinh().format(dtf) : "",
+					nv.getSoDienThoai(), nv.isQuanLy() ? "Quản lý" : "Nhân viên", doiCaLam(nv.getCaLam()),
+					nv.isTrangThai() ? "Đang làm" : "Đã nghỉ" });
+		}
+	}
+
+//=====================================================================
+//  XỬ LÝ TÌM KIẾM (giống đơn trả hàng)
+//=====================================================================
+	private void xuLyTimKiem() {
+
+		String keyword = txtTimKiem.getText().trim();
+		String cv = cbChucVu.getSelectedItem().toString();
+		String ca = cbCaLam.getSelectedItem().toString();
+		String tt = cbTrangThai.getSelectedItem().toString();
+
+		List<NhanVien> ds = new ArrayList<>(danhSachGoc);
+
+		// --- keyword ---
+		if (!keyword.isEmpty() && !keyword.equals(PLACEHOLDER_TIM_KIEM)) {
+			String kw = keyword.toLowerCase();
+			ds.removeIf(nv -> !(nv.getMaNhanVien().toLowerCase().contains(kw)
+					|| nv.getTenNhanVien().toLowerCase().contains(kw) || nv.getSoDienThoai().contains(kw)));
 		}
 
-		if (tblNhanVien.getRowCount() > 0)
-			tblNhanVien.setRowSelectionInterval(0, 0);
+		// --- chức vụ ---
+		if (!"Tất cả".equals(cv)) {
+			ds.removeIf(nv -> (cv.equals("Quản lý") && !nv.isQuanLy()) || (cv.equals("Nhân viên") && nv.isQuanLy()));
+		}
+
+		// --- ca làm ---
+		if (!"Tất cả".equals(ca)) {
+			ds.removeIf(nv -> !doiCaLam(nv.getCaLam()).equals(ca));
+		}
+
+		// --- trạng thái ---
+		if (!"Tất cả".equals(tt)) {
+			boolean isWorking = tt.equals("Đang làm");
+			ds.removeIf(nv -> nv.isTrangThai() != isWorking);
+		}
+
+		loadTableNhanVien(ds);
 	}
 
-	// Trả về LocalDate hoặc null từ JDateChooser
-	private LocalDate getDateOrNull(JDateChooser chooser) {
-		if (chooser.getDate() == null)
+////=====================================================================
+////  LỌC THEO COMBOBOX (giống đơn trả hàng)
+////=====================================================================
+//	private void locTheoBoLoc() {
+//
+//		String cv = cbChucVu.getSelectedItem().toString();
+//		String ca = cbCaLam.getSelectedItem().toString();
+//		String tt = cbTrangThai.getSelectedItem().toString();
+//
+//		List<NhanVien> ds = new ArrayList<>(danhSachGoc);
+//
+//		// --- chức vụ ---
+//		if (!"Tất cả".equals(cv)) {
+//			ds.removeIf(nv -> (cv.equals("Quản lý") && !nv.isQuanLy()) || (cv.equals("Nhân viên") && nv.isQuanLy()));
+//		}
+//
+//		// --- ca ---
+//		if (!"Tất cả".equals(ca)) {
+//			ds.removeIf(nv -> !doiCaLam(nv.getCaLam()).equals(ca));
+//		}
+//
+//		// --- trạng thái ---
+//		if (!"Tất cả".equals(tt)) {
+//			boolean isWorking = tt.equals("Đang làm");
+//			ds.removeIf(nv -> nv.isTrangThai() != isWorking);
+//		}
+//
+//		loadTableNhanVien(ds);
+//	}
+
+	private String doiCaLam(int ca) {
+		return switch (ca) {
+		case 1 -> "Sáng";
+		case 2 -> "Chiều";
+		case 3 -> "Tối";
+		default -> "Không rõ";
+		};
+	}
+
+	private String layMaNhanVienDangChon() {
+		int row = tblNhanVien.getSelectedRow();
+		if (row == -1)
 			return null;
-		return chooser.getDate().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+
+		return tblNhanVien.getValueAt(row, 1).toString(); // cột 1 = Mã NV
 	}
 
-	private void loadChiTietTheoNV() {
+	private void taiLichSuBanHang() {
+		String maNV = layMaNhanVienDangChon();
+		if (maNV == null)
+			return;
+
+		List<HoaDon> ds = lichSuDAO.layLichSuBanTheoNhanVien(maNV, null, null);
+
+		modelBan.setRowCount(0);
+		int stt = 1;
+
+		for (HoaDon hd : ds) {
+			modelBan.addRow(
+					new Object[] { stt++, hd.getMaHoaDon(), hd.getNgayLap() != null ? hd.getNgayLap().format(dtf) : "",
+							hd.getKhachHang() != null ? hd.getKhachHang().getTenKhachHang() : "",
+							df.format(hd.getTongThanhToan()) });
+		}
+	}
+
+	private void taiLichSuTraHang() {
 		int row = tblNhanVien.getSelectedRow();
 		if (row < 0)
 			return;
 
 		String maNV = tblNhanVien.getValueAt(row, 1).toString();
 
-		// Reset 3 bảng
-		modelBan.setRowCount(0);
-//		modelTra.setRowCount(0);
-//		modelHuy.setRowCount(0);
+		List<PhieuTra> ds = lichSuDAO.layLichSuTraTheoNhanVien(maNV, null, null);
 
-		// ================================================================
-		// LOAD CHI TIẾT TỪ DAO THẬT
-		// ================================================================
+		modelTra.setRowCount(0);
 		int stt = 1;
 
-		// ---------------------------------------------
-		// 1) LỊCH SỬ BÁN HÀNG
-		// ---------------------------------------------
-		var dsBan = lichSuDAO.layLichSuBanTheoNhanVien(maNV, getDateOrNull(dateTuNgay), getDateOrNull(dateDenNgay));
-		stt = 1;
-		for (var hd : dsBan) {
-			modelBan.addRow(
-					new Object[] { stt++, hd.getMaHoaDon(), hd.getNgayLap() != null ? dtf.format(hd.getNgayLap()) : "",
-							hd.getKhachHang() != null ? hd.getKhachHang().getTenKhachHang() : "",
-						df.format(hd.getTongThanhToan()) });
+		for (PhieuTra pt : ds) {
+			modelTra.addRow(new Object[] { stt++, pt.getMaPhieuTra(),
+					pt.getNgayLap() != null ? pt.getNgayLap().format(dtf) : "",
+					pt.getKhachHang() != null ? pt.getKhachHang().getTenKhachHang() : "",
+					df.format(pt.getTongTienHoan()), pt.isDaDuyet() ? "Đã duyệt" : "Chờ duyệt" });
 		}
-
 	}
 
-	// ================================================================
-	// EVENTS
-	// ================================================================
-	private void addEvents() {
+	private void taiLichSuHuyHang() {
+		int row = tblNhanVien.getSelectedRow();
+		if (row < 0)
+			return;
 
-		btnToggleAdvanced.addActionListener(e -> {
-			boolean show = !pnAdvancedWrap.isVisible();
-			pnAdvancedWrap.setVisible(show);
-			pnAdvancedFilter.setVisible(show);
-			btnToggleAdvanced.setText(show ? "Bộ lọc nâng cao \u25B2" : "Bộ lọc nâng cao \u25BC");
-			pnHeader.revalidate();
-			pnHeader.repaint();
-		});
+		String maNV = tblNhanVien.getValueAt(row, 1).toString();
 
-		txtTimKiem.addActionListener(e -> applyFilter());
-		dateTuNgay.getDateEditor().addPropertyChangeListener(e -> applyFilter());
-		dateDenNgay.getDateEditor().addPropertyChangeListener(e -> applyFilter());
+		List<PhieuHuy> ds = lichSuDAO.layLichSuHuyTheoNhanVien(maNV, null, null);
 
-		cbChucVu.addActionListener(e -> applyFilter());
-		cbCaLam.addActionListener(e -> applyFilter());
-		cbTrangThai.addActionListener(e -> applyFilter());
+		modelHuy.setRowCount(0);
+		int stt = 1;
 
-		btnTim.addActionListener(e -> applyFilter());
-		btnMoi.addActionListener(e -> lamMoi());
-
-		// Chọn NV -> load 3 bảng
-		tblNhanVien.getSelectionModel().addListSelectionListener(e -> {
-			if (!e.getValueIsAdjusting()) {
-				loadChiTietTheoNV();
-			}
-		});
+		for (PhieuHuy ph : ds) {
+			modelHuy.addRow(new Object[] { stt++, ph.getMaPhieuHuy(),
+					ph.getNgayLapPhieu() != null ? ph.getNgayLapPhieu().format(dtf) : "",
+					ph.getNhanVien() != null ? ph.getNhanVien().getTenNhanVien() : "", ph.getTrangThaiText(),
+					df.format(ph.getTongTien()) });
+		}
 	}
 
-	private void lamMoi() {
-		txtTimKiem.setText("");
-		cbChucVu.setSelectedIndex(0);
-		cbCaLam.setSelectedIndex(0);
-		cbTrangThai.setSelectedIndex(0);
-		dateTuNgay.setDate(null);
-		dateDenNgay.setDate(null);
-
-		applyFilter();
-	}
-
-	// ================================================================
-	// UTILS
-	// ================================================================
-	private JTable setupTable(DefaultTableModel model) {
-		JTable table = new JTable(model);
-		table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		table.setRowHeight(28);
-
-		JTableHeader header = table.getTableHeader();
-		header.setFont(new Font("Segoe UI", Font.BOLD, 14));
-		header.setBackground(new Color(33, 150, 243));
-		header.setForeground(Color.WHITE);
-
-		return table;
-	}
-
-	private TitledBorder createBorder(String title) {
-		return BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
-				TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 15), Color.DARK_GRAY);
-	}
-
-	public static void main(String[] args) {
-		SwingUtilities.invokeLater(() -> {
-			try {
-				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			} catch (Exception ignored) {
-			}
-			JFrame f = new JFrame("Tra cứu nhân viên");
-			f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			f.setSize(1400, 800);
-			f.setLocationRelativeTo(null);
-			f.setContentPane(new TraCuuNhanVien_GUI());
-			f.setVisible(true);
-		});
-	}
 }
