@@ -2,142 +2,175 @@ package gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.SwingConstants;
-import javax.swing.table.DefaultTableCellRenderer;
+import java.util.*;
+import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
 
 import entity.ChiTietHoaDon;
 
 public class ChonSanPhamTraDialog extends JDialog {
 
-	private JTable tbl;
+	private JTable table;
 	private DefaultTableModel model;
-	private List<ChiTietHoaDon> dsCT;
-	private List<ChiTietHoaDon> dsChon = new ArrayList<>();
 
-	public ChonSanPhamTraDialog(List<ChiTietHoaDon> dsCT) {
-		this.dsCT = dsCT;
+	private List<ChiTietHoaDon> dsCTHD; // toàn bộ chi tiết hóa đơn
+	private List<ChiTietHoaDon> dsChon = new ArrayList<>(); // trả về
 
-		setTitle("Chọn sản phẩm cần trả");
-		setSize(700, 500);
+	// Nhóm sản phẩm theo TÊN -> danh sách CTHD (nhiều DVT)
+	private Map<String, List<ChiTietHoaDon>> mapTheoSanPham = new HashMap<>();
+
+	public ChonSanPhamTraDialog(List<ChiTietHoaDon> dsCTHD) {
+		this.dsCTHD = dsCTHD;
+
+		setTitle("Chọn sản phẩm muốn trả");
 		setModal(true);
+		setSize(450, 420);
 		setLocationRelativeTo(null);
-		setLayout(new BorderLayout(8, 8));
+		setLayout(new BorderLayout());
 
-		// ================= MODEL TABLE =================
-		model = new DefaultTableModel(new String[] { "Chọn", "Tên sản phẩm" }, 0) {
+		initUI();
+		loadData();
+	}
+
+	private void initUI() {
+		// ===== TABLE =====
+		model = new DefaultTableModel(new Object[] { "Chọn", "Sản phẩm" }, 0) {
 			@Override
-			public Class<?> getColumnClass(int column) {
-				return column == 0 ? Boolean.class : String.class;
+			public Class<?> getColumnClass(int columnIndex) {
+				if (columnIndex == 0)
+					return Boolean.class;
+				return String.class;
 			}
 
 			@Override
-			public boolean isCellEditable(int row, int column) {
-				return column == 0;
+			public boolean isCellEditable(int r, int c) {
+				return c == 0; // chỉ cho phép tick checkbox
 			}
 		};
 
-		for (ChiTietHoaDon ct : dsCT) {
-			model.addRow(new Object[] { false, ct.getSanPham().getTenSanPham() });
-		}
+		table = new JTable(model);
+		table.setRowHeight(26);
+		table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
 
-		// ================= TABLE =================
-		tbl = new JTable(model);
+		// ===== SET LẠI SIZE CỘT CHECKBOX =====
+		table.getColumnModel().getColumn(0).setMaxWidth(60);
+		table.getColumnModel().getColumn(0).setMinWidth(60);
+		table.getColumnModel().getColumn(0).setPreferredWidth(60);
 
-		// Tăng chiều cao dòng
-		tbl.setRowHeight(40);
+		JScrollPane scr = new JScrollPane(table);
+		scr.setPreferredSize(new Dimension(430, 300));
+		add(scr, BorderLayout.CENTER);
 
-		// Font chữ to hơn
-		tbl.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		tbl.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 18));
-
-		// Cột checkbox nhỏ và fix cứng
-		TableColumn colCheck = tbl.getColumnModel().getColumn(0);
-		colCheck.setMinWidth(60);
-		colCheck.setMaxWidth(60);
-		colCheck.setPreferredWidth(60);
-
-		// Renderer cho tên sản phẩm to hơn & căn trái
-		DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
-		leftRenderer.setHorizontalAlignment(SwingConstants.LEFT);
-		leftRenderer.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		tbl.getColumnModel().getColumn(1).setCellRenderer(leftRenderer);
-
-		JScrollPane scroll = new JScrollPane(tbl);
-		add(scroll, BorderLayout.CENTER);
-
-		// ================= PANEL DƯỚI =================
-		JPanel bottom = new JPanel(new BorderLayout());
-
-		// --------- Nút CHỌN TẤT CẢ (bên trái) ----------
-		JButton btnSelectAll = new JButton("Chọn tất cả");
-		btnSelectAll.setFont(new Font("Segoe UI", Font.BOLD, 16));
-
-		btnSelectAll.addActionListener(e -> {
-			boolean select = btnSelectAll.getText().equals("Chọn tất cả");
-			for (int i = 0; i < model.getRowCount(); i++)
-				model.setValueAt(select, i, 0);
-
-			btnSelectAll.setText(select ? "Bỏ chọn tất cả" : "Chọn tất cả");
-		});
-
-		bottom.add(btnSelectAll, BorderLayout.WEST);
-
-		// --------- Panel chứa 2 nút OK & HỦY (bên phải) ----------
-		JPanel rightButtons = new JPanel();
-
-		JButton btnOK = new JButton("OK");
-		btnOK.setFont(new Font("Segoe UI", Font.BOLD, 16));
-
+		// ===== BOTTOM BUTTONS =====
+		JPanel pnBottom = new JPanel();
+		JButton btnChonAll = new JButton("Chọn tất cả");
+		JButton btnOK = new JButton("Xác nhận");
 		JButton btnCancel = new JButton("Hủy");
-		btnCancel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-		btnCancel.setBackground(new Color(0xE53935)); // Đỏ
-		btnCancel.setForeground(Color.WHITE); // Chữ trắng
-		btnCancel.setOpaque(true);
-		btnCancel.setBorderPainted(false);
 
-		rightButtons.add(btnCancel);
+		pnBottom.add(btnChonAll);
+		pnBottom.add(btnOK);
+		pnBottom.add(btnCancel);
 
-		rightButtons.add(btnOK);
-		rightButtons.add(btnCancel);
+		add(pnBottom, BorderLayout.SOUTH);
 
-		bottom.add(rightButtons, BorderLayout.EAST);
+		// ===== EVENTS =====
+		btnChonAll.addActionListener(e -> {
+			boolean allChecked = true;
 
-		// ================= SỰ KIỆN NÚT =================
-		btnOK.addActionListener(e -> {
-			dsChon.clear();
+			// Kiểm tra xem tất cả đã được chọn chưa
 			for (int i = 0; i < model.getRowCount(); i++) {
-				boolean chon = (boolean) model.getValueAt(i, 0);
-				if (chon)
-					dsChon.add(dsCT.get(i));
+				if (!(boolean) model.getValueAt(i, 0)) {
+					allChecked = false;
+					break;
+				}
 			}
-			if (dsChon.isEmpty() || dsChon == null) {
-				JOptionPane.showMessageDialog(this, "Bạn chưa chọn sản phẩm nào để trả hàng!", "Chưa có sản phẩm",
-						JOptionPane.WARNING_MESSAGE);
+
+			if (!allChecked) {
+				// CHỌN TẤT CẢ
+				for (int i = 0; i < model.getRowCount(); i++) {
+					model.setValueAt(true, i, 0);
+				}
+				btnChonAll.setText("Bỏ chọn tất cả");
 			} else {
-				dispose();
+				// BỎ CHỌN TẤT CẢ
+				for (int i = 0; i < model.getRowCount(); i++) {
+					model.setValueAt(false, i, 0);
+				}
+				btnChonAll.setText("Chọn tất cả");
 			}
 		});
 
 		btnCancel.addActionListener(e -> {
-			dsChon.clear(); 
+			dsChon.clear();
 			dispose();
 		});
 
-		add(bottom, BorderLayout.SOUTH);
+		btnOK.addActionListener(e -> xuLyChonSanPham());
+
+		// ===== AUTO UPDATE NÚT CHỌN TẤT CẢ =====
+		table.getModel().addTableModelListener(e -> {
+			boolean allChecked = true;
+
+			for (int i = 0; i < model.getRowCount(); i++) {
+				if (!(boolean) model.getValueAt(i, 0)) {
+					allChecked = false;
+					break;
+				}
+			}
+
+			// Cập nhật lại text nút
+			if (allChecked) {
+				btnChonAll.setText("Bỏ chọn tất cả");
+			} else {
+				btnChonAll.setText("Chọn tất cả");
+			}
+		});
+
+	}
+
+	/**
+	 * Gom dữ liệu theo TÊN sản phẩm và hiển thị 1 dòng / 1 tên SP
+	 */
+	private void loadData() {
+		model.setRowCount(0);
+		mapTheoSanPham.clear();
+
+		// Gom nhóm: tên -> danh sách CTHD (nhiều DVT)
+		for (ChiTietHoaDon ct : dsCTHD) {
+			String ten = ct.getLoSanPham().getSanPham().getTenSanPham();
+			mapTheoSanPham.computeIfAbsent(ten, k -> new ArrayList<>()).add(ct);
+		}
+
+		// Bảng chỉ hiển thị 1 dòng / tên sản phẩm
+		for (String tenSP : mapTheoSanPham.keySet()) {
+			model.addRow(new Object[] { false, tenSP });
+		}
+	}
+
+	/**
+	 * Xác nhận lựa chọn → trả về tất cả CTHD của SP được tick.
+	 */
+	private void xuLyChonSanPham() {
+		dsChon.clear();
+
+		for (int i = 0; i < model.getRowCount(); i++) {
+			boolean isChecked = (boolean) model.getValueAt(i, 0);
+			if (isChecked) {
+				String tenSP = model.getValueAt(i, 1).toString();
+				List<ChiTietHoaDon> ds = mapTheoSanPham.get(tenSP);
+				dsChon.addAll(ds);
+			}
+		}
+
+		if (dsChon.isEmpty()) {
+			JOptionPane.showMessageDialog(this, "Bạn chưa chọn sản phẩm nào.");
+			return;
+		}
+
+		dispose();
 	}
 
 	public List<ChiTietHoaDon> getDsSanPhamDuocChon() {

@@ -129,7 +129,6 @@ public class DonHangItemPanel extends JPanel {
 
         // ===== THÔNG TIN THUỐC =====
         Box infoBox = Box.createVerticalBox();
-        infoBox.setBorder(new LineBorder(Color.BLACK));
 
         JTextField txtTenThuoc = TaoJtextNhanh.taoTextDonHang(
                 item.getTenSanPham(), new Font("Segoe UI", Font.BOLD, 16), new Color(0x00796B), 300);
@@ -210,7 +209,7 @@ public class DonHangItemPanel extends JPanel {
 
         // ===== ĐƠN GIÁ =====
         txtDonGia = TaoJtextNhanh.taoTextDonHang(
-                formatTien(item.getDonGiaSauKM()), new Font("Segoe UI", Font.PLAIN, 16), Color.BLACK, 100);
+                formatTien(item.getDonGiaGoc()), new Font("Segoe UI", Font.PLAIN, 16), Color.BLACK, 100);
         txtDonGia.setHorizontalAlignment(SwingConstants.RIGHT);
         add(txtDonGia);
         add(Box.createHorizontalStrut(5));
@@ -640,11 +639,11 @@ public class DonHangItemPanel extends JPanel {
     // =====================================================
     // ================== CẬP NHẬT UI ======================
     // =====================================================
-    private void capNhatGiaoDien() {
+    public void capNhatGiaoDien() {
         lblQuyDoi.setText("x" + item.getHeSoQuyCach() + " " + item.getDonViGoc());
         txtTonLocal.setText("Tồn: " + item.getTonKho());
         txtSoLuong.setText(String.valueOf(item.getSoLuongMua()));
-        txtDonGia.setText(formatTien(item.getDonGiaSauKM()));
+        txtDonGia.setText(formatTien(item.getDonGiaGoc()));
         txtThanhTien.setText(formatTien(item.getThanhTienSauKM()));
         txtKM.setText(item.getTextKM());
         txtKM.setToolTipText(item.getTooltipKM());

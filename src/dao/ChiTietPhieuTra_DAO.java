@@ -29,123 +29,112 @@ public class ChiTietPhieuTra_DAO {
 	// ============================================================
 	// 🔍 Lấy danh sách chi tiết phiếu trả theo mã phiếu trả
 	// ============================================================
-    public List<ChiTietPhieuTra> timKiemChiTietBangMaPhieuTra(String maPhieuTra) {
+	public List<ChiTietPhieuTra> timKiemChiTietBangMaPhieuTra(String maPhieuTra) {
 
-        List<ChiTietPhieuTra> ds = new ArrayList<>();
+		List<ChiTietPhieuTra> ds = new ArrayList<>();
 
-        String sql = """
-                SELECT
-                    ctp.MaHoaDon, ctp.MaLo, ctp.SoLuong, ctp.ThanhTienHoan,
-                    ctp.LyDoChiTiet, ctp.TrangThai,
+		String sql = """
+				SELECT
+				    ctp.MaHoaDon, ctp.MaLo, ctp.SoLuong, ctp.ThanhTienHoan,
+				    ctp.LyDoChiTiet, ctp.TrangThai,
+				    ctp.MaDonViTinh AS MaDonViTinhCT,
 
-                    -- ChiTietHoaDon
-                    cthd.GiaBan, cthd.SoLuong AS SoLuongHD,
-                    cthd.MaDonViTinh, cthd.MaKM, cthd.ThanhTien AS ThanhTienHD,
+				    -- ChiTietHoaDon
+				    cthd.GiaBan, cthd.SoLuong AS SoLuongHD,
+				    cthd.MaDonViTinh AS MaDonViTinhHD, cthd.MaKM, cthd.ThanhTien AS ThanhTienHD,
 
-                    -- LoSanPham
-                    lo.HanSuDung, lo.SoLuongTon,
-                    sp.MaSanPham, sp.TenSanPham,
+				    -- LoSanPham
+				    lo.HanSuDung, lo.SoLuongTon,
+				    sp.MaSanPham, sp.TenSanPham,
 
-                    -- DonViTinh
-                    dvt.TenDonViTinh,
+				    -- DonViTinh
+				    dvt.TenDonViTinh,
 
-                    -- KhuyenMai
-                    km.TenKM, km.GiaTri, km.HinhThuc
-                FROM ChiTietPhieuTra ctp
-                LEFT JOIN ChiTietHoaDon cthd
-                    ON ctp.MaHoaDon = cthd.MaHoaDon AND ctp.MaLo = cthd.MaLo
-                LEFT JOIN LoSanPham lo
-                    ON lo.MaLo = ctp.MaLo
-                LEFT JOIN SanPham sp
-                    ON sp.MaSanPham = lo.MaSanPham
-                LEFT JOIN DonViTinh dvt
-                    ON dvt.MaDonViTinh = cthd.MaDonViTinh
-                LEFT JOIN KhuyenMai km
-                    ON km.MaKM = cthd.MaKM
-                WHERE ctp.MaPhieuTra = ?
-                ORDER BY ctp.MaLo
-                """;
+				    -- KhuyenMai
+				    km.TenKM, km.GiaTri, km.HinhThuc
+				FROM ChiTietPhieuTra ctp
+				LEFT JOIN ChiTietHoaDon cthd
+				    ON  ctp.MaHoaDon   = cthd.MaHoaDon
+				    AND ctp.MaLo       = cthd.MaLo
+				    AND ctp.MaDonViTinh = cthd.MaDonViTinh
+				LEFT JOIN LoSanPham lo
+				    ON lo.MaLo = ctp.MaLo
+				LEFT JOIN SanPham sp
+				    ON sp.MaSanPham = lo.MaSanPham
+				LEFT JOIN DonViTinh dvt
+				    ON dvt.MaDonViTinh = ctp.MaDonViTinh
+				LEFT JOIN KhuyenMai km
+				    ON km.MaKM = cthd.MaKM
+				WHERE ctp.MaPhieuTra = ?
+				ORDER BY ctp.MaLo
+				""";
 
-        try (Connection con = connectDB.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setString(1, maPhieuTra);
+			ps.setString(1, maPhieuTra);
 
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
 
-                    // ========== TẠO HÓA ĐƠN ==========
-                    HoaDon hd = new HoaDon();
-                    hd.setMaHoaDon(rs.getString("MaHoaDon"));
+					// ========== TẠO HÓA ĐƠN ==========
+					HoaDon hd = new HoaDon();
+					hd.setMaHoaDon(rs.getString("MaHoaDon"));
 
-                    // ========== TẠO SẢN PHẨM ==========
-                    SanPham sp = null;
-                    if (rs.getString("MaSanPham") != null) {
-                        sp = new SanPham();
-                        sp.setMaSanPham(rs.getString("MaSanPham"));
-                        sp.setTenSanPham(rs.getString("TenSanPham"));
-                    }
+					// ========== TẠO SẢN PHẨM ==========
+					SanPham sp = null;
+					if (rs.getString("MaSanPham") != null) {
+						sp = new SanPham();
+						sp.setMaSanPham(rs.getString("MaSanPham"));
+						sp.setTenSanPham(rs.getString("TenSanPham"));
+					}
 
-                    // ========== TẠO LÔ ==========
-                    LoSanPham lo = new LoSanPham();
-                    lo.setMaLo(rs.getString("MaLo"));
-                    if (rs.getDate("HanSuDung") != null)
-                        lo.setHanSuDung(rs.getDate("HanSuDung").toLocalDate());
-                    lo.setSoLuongTon(rs.getInt("SoLuongTon"));
-                    lo.setSanPham(sp);
+					// ========== TẠO LÔ ==========
+					LoSanPham lo = new LoSanPham();
+					lo.setMaLo(rs.getString("MaLo"));
+					if (rs.getDate("HanSuDung") != null)
+						lo.setHanSuDung(rs.getDate("HanSuDung").toLocalDate());
+					lo.setSoLuongTon(rs.getInt("SoLuongTon"));
+					lo.setSanPham(sp);
 
-                    // ========== ĐƠN VỊ TÍNH ==========
-                    DonViTinh dvt = null;
-                    if (rs.getString("MaDonViTinh") != null) {
-                        dvt = new DonViTinh();
-                        dvt.setMaDonViTinh(rs.getString("MaDonViTinh"));
-                        dvt.setTenDonViTinh(rs.getString("TenDonViTinh"));
-                    }
+					// ========== ĐƠN VỊ TÍNH ==========
+					DonViTinh dvt = null;
+					if (rs.getString("MaDonViTinhCT") != null) {
+						dvt = new DonViTinh();
+						dvt.setMaDonViTinh(rs.getString("MaDonViTinhCT"));
+						dvt.setTenDonViTinh(rs.getString("TenDonViTinh"));
+					}
+					// ========== KHUYẾN MÃI ==========
+					KhuyenMai km = null;
+					if (rs.getString("MaKM") != null) {
+						km = new KhuyenMai();
+						km.setMaKM(rs.getString("MaKM"));
+						km.setTenKM(rs.getString("TenKM"));
+						km.setGiaTri(rs.getDouble("GiaTri"));
+						km.setHinhThuc(HinhThucKM.valueOf(rs.getString("HinhThuc")));
+					}
 
-                    // ========== KHUYẾN MÃI ==========
-                    KhuyenMai km = null;
-                    if (rs.getString("MaKM") != null) {
-                        km = new KhuyenMai();
-                        km.setMaKM(rs.getString("MaKM"));
-                        km.setTenKM(rs.getString("TenKM"));
-                        km.setGiaTri(rs.getDouble("GiaTri"));
-                        km.setHinhThuc(HinhThucKM.valueOf(rs.getString("HinhThuc")));
-                    }
+					// ========== ChiTietHoaDon ==========
+					ChiTietHoaDon cthd = new ChiTietHoaDon(hd, lo, rs.getInt("SoLuongHD"), dvt, rs.getDouble("GiaBan"),
+							km);
 
-                    // ========== ChiTietHoaDon ==========
-                    ChiTietHoaDon cthd = new ChiTietHoaDon(
-                            hd,
-                            lo,
-                            rs.getInt("SoLuongHD"),   // null → 0
-                            dvt,
-                            rs.getDouble("GiaBan"),       // null → 0
-                            km
+					// ========== Phiếu trả ==========
+					PhieuTra pt = new PhieuTra();
+					pt.setMaPhieuTra(maPhieuTra);
 
-                    );
+					// ========== ChiTietPhieuTra ==========
+					ChiTietPhieuTra ctpt = new ChiTietPhieuTra(pt, cthd, rs.getString("LyDoChiTiet"),
+							rs.getInt("SoLuong"), rs.getInt("TrangThai"));
+					ctpt.setDonViTinh(dvt);
+					ds.add(ctpt);
+				}
+			}
 
-                    // ========== Phiếu trả ==========
-                    PhieuTra pt = new PhieuTra();
-                    pt.setMaPhieuTra(maPhieuTra);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
-                    // ========== ChiTietPhieuTra ==========
-                    ChiTietPhieuTra ctpt = new ChiTietPhieuTra(
-                            pt,
-                            cthd,
-                            rs.getString("LyDoChiTiet"),
-                            rs.getInt("SoLuong"),
-                            rs.getInt("TrangThai")
-                    );
-
-                    ds.add(ctpt);
-                }
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return ds;
-    }
+		return ds;
+	}
 
 	// ============================================================
 	// ➕ Thêm mới 1 chi tiết phiếu trả
@@ -153,8 +142,8 @@ public class ChiTietPhieuTra_DAO {
 	public boolean themChiTietPhieuTra(ChiTietPhieuTra ctpt) {
 		String sql = """
 				    INSERT INTO ChiTietPhieuTra
-				    (MaPhieuTra, MaHoaDon, MaLo, LyDoChiTiet, SoLuong, ThanhTienHoan, TrangThai)
-				    VALUES (?, ?, ?, ?, ?, ?, ?)
+				    (MaPhieuTra, MaHoaDon, MaLo, LyDoChiTiet, SoLuong, ThanhTienHoan, TrangThai, MaDonViTinh)
+				    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 				""";
 
 		try (Connection con = connectDB.getConnection(); PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -166,6 +155,8 @@ public class ChiTietPhieuTra_DAO {
 			stmt.setInt(5, ctpt.getSoLuong());
 			stmt.setDouble(6, ctpt.getThanhTienHoan());
 			stmt.setInt(7, ctpt.getTrangThai());
+			stmt.setString(8, ctpt.getDonViTinh() != null ? ctpt.getDonViTinh().getMaDonViTinh()
+					: ctpt.getChiTietHoaDon().getDonViTinh().getMaDonViTinh());
 
 			return stmt.executeUpdate() > 0;
 		} catch (SQLException e) {
@@ -177,11 +168,12 @@ public class ChiTietPhieuTra_DAO {
 	// ============================================================
 	// 🔄 Cập nhật trạng thái của 1 chi tiết phiếu trả
 	// ============================================================
-	public boolean capNhatTrangThaiChiTiet(String maPhieuTra, String maHoaDon, String maLo, int trangThaiMoi) {
+	public boolean capNhatTrangThaiChiTiet(String maPhieuTra, String maHoaDon, String maLo, String maDonViTinh,
+			int trangThaiMoi) {
 		String sql = """
 				    UPDATE ChiTietPhieuTra
 				    SET TrangThai = ?
-				    WHERE MaPhieuTra = ? AND MaHoaDon = ? AND MaLo = ?
+				    WHERE MaPhieuTra = ? AND MaHoaDon = ? AND MaLo = ? AND MaDonViTinh = ?
 				""";
 
 		try (Connection con = connectDB.getConnection(); PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -190,6 +182,7 @@ public class ChiTietPhieuTra_DAO {
 			stmt.setString(2, maPhieuTra);
 			stmt.setString(3, maHoaDon);
 			stmt.setString(4, maLo);
+			stmt.setString(5, maDonViTinh);
 
 			return stmt.executeUpdate() > 0;
 		} catch (SQLException e) {
@@ -201,26 +194,33 @@ public class ChiTietPhieuTra_DAO {
 	// ============================================================
 	// 🔢 Tính tổng số lượng đã trả của 1 sản phẩm theo mã HĐ + mã lô
 	// ============================================================
-	public static double tongSoLuongDaTra(String maHD, String maLo) {
-		double tong = 0;
+	public double tongSoLuongDaTra(String maHD, String maLo) {
 		String sql = """
-				    SELECT SUM(SoLuong)
-				    FROM ChiTietPhieuTra
-				    WHERE MaHoaDon = ? AND MaLo = ? AND TrangThai IN (0,1,2)
+				    SELECT SUM(ct.SoLuong * qc.HeSoQuyDoi) AS TongGoc
+				    FROM ChiTietPhieuTra ct
+				    JOIN LoSanPham lo
+				        ON lo.MaLo = ct.MaLo
+				    JOIN QuyCachDongGoi qc
+				        ON qc.MaDonViTinh = ct.MaDonViTinh
+				       AND qc.MaSanPham   = lo.MaSanPham
+				    WHERE ct.MaHoaDon = ?
+				      AND ct.MaLo     = ?
 				""";
 
 		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
 
 			ps.setString(1, maHD);
 			ps.setString(2, maLo);
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next())
-					tong = rs.getDouble(1);
-			}
 
-		} catch (Exception e) {
+			try (ResultSet rs = ps.executeQuery()) {
+				if (rs.next()) {
+					return rs.getDouble("TongGoc");
+				}
+			}
+		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		return tong;
+		return 0;
 	}
+
 }

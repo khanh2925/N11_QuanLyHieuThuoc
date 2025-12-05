@@ -27,62 +27,58 @@ public class ChiTietHoaDon_DAO {
 	}
 
 	/**
-	 * * Tìm chi tiết hóa đơn theo mã HD và Mã Lô.
+	 * * Tìm chi tiết hóa đơn theo mã HD, mã lô và mã đơn vị tính.
 	 */
-	public ChiTietHoaDon timKiemChiTietHoaDonBangMa(String maHD, String maLo) {
-		Connection con = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
+	public ChiTietHoaDon timKiemChiTietHoaDonBangMa(String maHD, String maLo, String maDVT) {
+	    Connection con = null;
+	    PreparedStatement stmt = null;
+	    ResultSet rs = null;
 
-		try {
-			connectDB.getInstance();
-			con = connectDB.getConnection();
+	    try {
+	        connectDB.getInstance();
+	        con = connectDB.getConnection();
 
-			// ✅ SỬA SQL: Lấy thêm MaDonViTinh
-			String sql = "SELECT MaLo, MaKM, SoLuong, GiaBan, MaDonViTinh FROM ChiTietHoaDon WHERE MaHoaDon = ? AND MaLo = ?";
-			stmt = con.prepareStatement(sql);
-			stmt.setString(1, maHD);
-			stmt.setString(2, maLo);
-			rs = stmt.executeQuery();
+	        String sql = """
+	            SELECT MaLo, MaKM, SoLuong, GiaBan, MaDonViTinh
+	            FROM ChiTietHoaDon
+	            WHERE MaHoaDon = ? AND MaLo = ? AND MaDonViTinh = ?
+	        """;
+	        
+	        stmt = con.prepareStatement(sql);
+	        stmt.setString(1, maHD);
+	        stmt.setString(2, maLo);
+	        stmt.setString(3, maDVT);
 
-			if (rs.next()) {
-				int soLuong = rs.getInt("SoLuong");
-				double giaBan = rs.getDouble("GiaBan");
-				String maKM = rs.getString("MaKM");
-				String maDVT = rs.getString("MaDonViTinh"); // ✅ Lấy MaDonViTinh
+	        rs = stmt.executeQuery();
 
-				HoaDon hd = new HoaDon();
-				hd.setMaHoaDon(maHD);
+	        if (rs.next()) {
+	            int soLuong = rs.getInt("SoLuong");
+	            double giaBan = rs.getDouble("GiaBan");
+	            String maKM = rs.getString("MaKM");
+	            String maDonViTinh = rs.getString("MaDonViTinh");
 
-				LoSanPham lo = loSanPhamDAO.timLoTheoMa(maLo);
-				KhuyenMai km = null;
-				if (maKM != null)
-					km = khuyenMaiDAO.timKhuyenMaiTheoMa(maKM);
+	            HoaDon hd = new HoaDon();
+	            hd.setMaHoaDon(maHD);
 
-				// ✅ Load DonViTinh
-				DonViTinh donViTinh = null;
-				if (maDVT != null)
-					donViTinh = donViTinhDAO.timDonViTinhTheoMa(maDVT);
+	            LoSanPham lo = loSanPhamDAO.timLoTheoMa(maLo);
+	            KhuyenMai km = (maKM != null ? khuyenMaiDAO.timKhuyenMaiTheoMa(maKM) : null);
 
-				if (lo != null) {
-					// ✅ Cập nhật constructor với DonViTinh
-					return new ChiTietHoaDon(hd, lo, soLuong, donViTinh, giaBan, km);
-				}
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if (rs != null)
-					rs.close();
-				if (stmt != null)
-					stmt.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
-		return null;
+	            DonViTinh dvt = (maDonViTinh != null ? donViTinhDAO.timDonViTinhTheoMa(maDonViTinh) : null);
+
+	            if (lo != null) {
+	                return new ChiTietHoaDon(hd, lo, soLuong, dvt, giaBan, km);
+	            }
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    } finally {
+	        try { if (rs != null) rs.close(); } catch (SQLException ignored) {}
+	        try { if (stmt != null) stmt.close(); } catch (SQLException ignored) {}
+	    }
+
+	    return null;
 	}
+
 
 	/**
 	 * * Lấy danh sách chi tiết theo Mã Hóa Đơn.
