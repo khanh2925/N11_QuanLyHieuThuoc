@@ -67,7 +67,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 	DecimalFormat df = new DecimalFormat("#,###đ");
 
 	// Utils
-	private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 22);
+	private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN,16 );
 	private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 16);
 	private final Color COLOR_PRIMARY = new Color(33, 150, 243);
 
@@ -212,27 +212,33 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 	}
 
 	private void TaoPanelCTPH() {
-		// ===== RIGHT =====
-		pnCTPH = new JPanel(new BorderLayout());
-		pnCTPH.setPreferredSize(new Dimension(600, 1080));
-		pnCTPH.setLayout(new BoxLayout(pnCTPH, BoxLayout.Y_AXIS));
+	   
+	    pnCTPH = new JPanel(new BorderLayout());
+	    pnCTPH.setPreferredSize(new Dimension(600, 1080));
 
-		pnBtnCTPH = new JPanel();
-		pnBtnCTPH.setLayout(new BoxLayout(pnBtnCTPH, BoxLayout.X_AXIS));
-		pnBtnCTPH.setAlignmentX(Component.LEFT_ALIGNMENT);
-		// thêm bảng CTPH
-		pnCTPH.add(scrCTPH);
-		pnCTPH.add(pnBtnCTPH);
+	    TitledBorder tbCTPH = BorderFactory.createTitledBorder("Danh sách chi tiết phiếu hủy");
+	    tbCTPH.setTitleFont(new Font("Segoe UI", Font.BOLD, 16));
+	    pnCTPH.setBorder(tbCTPH);
 
-		btnHuyHang = new PillButton("Hủy hàng");
-		btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 20));
-		btnTuChoi = new PillButton("Từ chối");
-		btnTuChoi.setFont(new Font("Segoe UI", Font.BOLD, 20));
+	    // ==== PANEL CHỨA 2 BUTTON 
 
-		pnBtnCTPH.add(btnHuyHang);
-		pnBtnCTPH.add(Box.createRigidArea(new Dimension(10, 0)));
-		pnBtnCTPH.add(btnTuChoi);
+	    pnBtnCTPH = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+
+	    btnHuyHang = new PillButton("Hủy hàng");
+	    btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 18));
+
+	    btnTuChoi = new PillButton("Từ chối");
+	    btnTuChoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+
+	    pnBtnCTPH.add(btnHuyHang);
+	    pnBtnCTPH.add(btnTuChoi);
+
+	    // Thêm panel nút lên trên, bảng CTPH ở giữa
+	    pnCTPH.add(pnBtnCTPH, BorderLayout.NORTH);
+	    pnCTPH.add(scrCTPH, BorderLayout.CENTER);
 	}
+
+
 
 	private void refreshFilters() {
 		if (sorter == null)
@@ -288,9 +294,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		};
 		tblCTPH = setupTable(modelCTPH);
 		scrCTPH = new JScrollPane(tblCTPH);
-		TitledBorder tbCTPH = BorderFactory.createTitledBorder("Danh sách chi tiết phiếu hủy");
-		tbCTPH.setTitleFont(new Font("Segoe UI", Font.BOLD, 16));
-		scrCTPH.setBorder(tbCTPH);
+		
 
 		// ===== Format chung (giữ nguyên style cũ của bạn) =====
 		formatTable(tblPH);
@@ -359,22 +363,22 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 
 	private JTable setupTable(DefaultTableModel model) {
 		JTable table = new JTable(model);
-		table.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+		table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
 		table.setRowHeight(25);
 		table.setSelectionBackground(new Color(0xC8E6C9));
 		table.setSelectionForeground(Color.BLACK);
-		table.getTableHeader().setFont(new Font("Segoe UI", Font.PLAIN, 20));
+		table.getTableHeader().setFont(new Font("Segoe UI", Font.PLAIN, 16));
 		table.getTableHeader().setBackground(COLOR_PRIMARY);
 		table.getTableHeader().setForeground(Color.WHITE);
 		return table;
 	}
 
 	private void formatTable(JTable table) {
-		table.getTableHeader().setFont(new Font("Segoe UI", Font.PLAIN, 22));
+		table.getTableHeader().setFont(new Font("Segoe UI", Font.PLAIN, 16));
 		table.getTableHeader().setBorder(null);
 
 		table.setRowHeight(28);
-		table.setFont(new Font("Segoe UI", Font.PLAIN, 22));
+		table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
 		table.setSelectionBackground(new Color(180, 205, 230));
 		table.setShowGrid(false);
 
