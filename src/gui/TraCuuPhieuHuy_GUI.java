@@ -55,12 +55,11 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener, Docume
 	private JDateChooser dateTuNgay;
 	private JDateChooser dateDenNgay;
 	private JComboBox<String> cbTrangThai;
-	private JComboBox<String> cbLoaiPhieu; // 🟢 Lọc theo 3 loại hủy
 	private PhieuHuy_DAO ph_dao;
 	private ChiTietPhieuHuy_DAO ctph_dao;
 	private List<PhieuHuy> dsPH;
 	private List<ChiTietPhieuHuy> dsCTPH;
-	private PillButton btnLamMoi, btnTimKiem;
+	private PillButton btnLamMoi;
 	private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 16);
 	private final Color COLOR_PRIMARY = new Color(33, 150, 243);
 	DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -92,7 +91,6 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener, Docume
 		loadDuLieuPhieuHuyTheoPH();
 
 		btnLamMoi.addActionListener(this);
-		btnTimKiem.addActionListener(this);
 		txtTimKiem.getDocument().addDocumentListener(this);
 		cbTrangThai.addActionListener(e -> applyFilters());
 	}
@@ -110,7 +108,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener, Docume
 		txtTimKiem = new JTextField();
 		PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã phiếu, tên nhân viên");
 		txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
-		txtTimKiem.setBounds(25, 17, 376, 60); 
+		txtTimKiem.setBounds(25, 17, 450, 60); 
 		txtTimKiem.setBorder(new RoundedBorder(20));
 		txtTimKiem.setBackground(Color.WHITE);
 		txtTimKiem.setForeground(Color.GRAY);
@@ -123,37 +121,37 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener, Docume
 		// Trạng thái (Đã duyệt / Chờ duyệt)
 		JLabel lblTT = new JLabel("Trạng thái:");
 		lblTT.setFont(new Font("Segoe UI", Font.BOLD, 16));
-		lblTT.setBounds(425, 30, 88, 35);
+		lblTT.setBounds(494, 28, 93, 35);
 		pnHeader.add(lblTT);
 
 		cbTrangThai = new JComboBox<>(new String[] { "Tất cả", "Đã duyệt", "Chờ duyệt" });
 		cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		cbTrangThai.setBounds(511, 30, 110, hFilter);
+		cbTrangThai.setBounds(582, 28, 110, hFilter);
 		pnHeader.add(cbTrangThai);
 
 		// Từ ngày
 		JLabel lblTu = new JLabel("Từ:");
 		lblTu.setFont(new Font("Segoe UI", Font.BOLD, 16));
-		lblTu.setBounds(631, 30, 30, 35);
+		lblTu.setBounds(702, 28, 40, 35);
 		pnHeader.add(lblTu);
 
 		dateTuNgay = new JDateChooser();
 		dateTuNgay.setDateFormatString("dd/MM/yyyy");
 		dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		dateTuNgay.setBounds(671, 30, 130, hFilter);
+		dateTuNgay.setBounds(735, 28, 130, hFilter);
 		dateTuNgay.setDate(null);
 		pnHeader.add(dateTuNgay);
 
 		// Đến ngày
 		JLabel lblDen = new JLabel("Đến:");
 		lblDen.setFont(new Font("Segoe UI", Font.BOLD, 16));
-		lblDen.setBounds(811, 30, 40, 35);
+		lblDen.setBounds(875, 28, 40, 35);
 		pnHeader.add(lblDen);
 
 		dateDenNgay = new JDateChooser();
 		dateDenNgay.setDateFormatString("dd/MM/yyyy");
 		dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		dateDenNgay.setBounds(850, 30, 130, hFilter);
+		dateDenNgay.setBounds(921, 28, 130, hFilter);
 		pnHeader.add(dateDenNgay);
 		
 		dateTuNgay.getDateEditor().addPropertyChangeListener("date", evt -> {
@@ -164,17 +162,8 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener, Docume
 		    validateAndApplyDateFilter();
 		});
 
-
-
-		// --- 3. CÁC NÚT CHỨC NĂNG (Bên phải ngoài cùng) ---
-		// Do nhiều bộ lọc nên đẩy nút sang phải hoặc thu nhỏ lại
-		btnTimKiem = new PillButton("Tìm");
-		btnTimKiem.setBounds(1002, 23, 100, 50);
-		btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		pnHeader.add(btnTimKiem);
-
 		btnLamMoi = new PillButton("Mới");
-		btnLamMoi.setBounds(1120, 23, 100, 50);
+		btnLamMoi.setBounds(1076, 22, 120, 50);
 		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		pnHeader.add(btnLamMoi);
 
@@ -292,7 +281,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener, Docume
 
 	private JTable setupTable(DefaultTableModel model) {
 		JTable table = new JTable(model);
-		table.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
 		table.setRowHeight(25);
 		table.setSelectionBackground(new Color(0xC8E6C9));
 		table.setSelectionForeground(Color.BLACK);
@@ -517,9 +506,6 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener, Docume
 			LamMoi();
 			return;
 		}
-		if (src == btnTimKiem) {
-			applyFilters();
-		}
 	}
 
 	@Override
@@ -539,16 +525,10 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener, Docume
 
 	private void LamMoi() {
 		txtTimKiem.setText("");
-
-		// Về "Tất cả"
-		cbTrangThai.setSelectedIndex(0);
-		cbLoaiPhieu.setSelectedIndex(0); // tạm chưa dùng để lọc nhưng vẫn reset
-
-		// Không chọn ngày -> không lọc theo ngày
+		cbTrangThai.setSelectedIndex(0);		
 		dateTuNgay.setDate(null);
 		dateDenNgay.setDate(null);
 
-		// Bỏ toàn bộ filter trên sorter (hiện lại full data đang có)
 		if (sorterPhieuHuy != null) {
 			sorterPhieuHuy.setRowFilter(null);
 		}

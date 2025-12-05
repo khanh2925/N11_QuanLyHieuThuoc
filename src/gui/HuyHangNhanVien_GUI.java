@@ -13,12 +13,14 @@ import customcomponent.RoundedBorder;
 
 import dao.LoSanPham_DAO;
 import dao.PhieuHuy_DAO;
+import dao.QuyCachDongGoi_DAO;
 
 import entity.ChiTietPhieuHuy;
 import entity.ItemHuyHang;
 import entity.LoSanPham;
 import entity.NhanVien;
 import entity.PhieuHuy;
+import entity.QuyCachDongGoi;
 import entity.SanPham;
 import entity.Session;
 import entity.TaiKhoan;
@@ -62,6 +64,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 	// ====== DAO ======
 	private final LoSanPham_DAO loDAO = new LoSanPham_DAO();
 	private final PhieuHuy_DAO phieuHuyDAO = new PhieuHuy_DAO();
+	private final QuyCachDongGoi_DAO quyCachDAO = new QuyCachDongGoi_DAO();
 
 	// ====== NGÀY ======
 	private final LocalDate today = LocalDate.now();
@@ -279,15 +282,97 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		DialogChonLo dialog = new DialogChonLo(keyword, loaiTim);
 		dialog.setVisible(true);
 
-		LoSanPham lo = dialog.getSelectedLo();
-		if (lo != null) {
-			addDongHuy(lo, lo.getSanPham().getGiaNhap());
+		// Kiểm tra nếu chọn tất cả
+		if (dialog.isSelectedAll()) {
+			ArrayList<LoSanPham> danhSachLo = dialog.getDanhSachLoChon();
+			if (danhSachLo != null && !danhSachLo.isEmpty()) {
+				int soLoThem = 0;
+				int soLoTrung = 0;
+				
+				for (LoSanPham lo : danhSachLo) {
+					// Kiểm tra trùng
+					boolean daTonTai = false;
+					for (ItemHuyHang t : dsItem) {
+						if (t.getMaLo().equals(lo.getMaLo())) {
+							daTonTai = true;
+							soLoTrung++;
+							break;
+						}
+					}
+					
+					if (!daTonTai) {
+						addDongHuyVoiLyDo(lo, lo.getSanPham().getGiaNhap(), "Gần hết hạn sử dụng");
+						soLoThem++;
+					}
+				}
+				
+				String thongBao = String.format(
+					"✅ Đã thêm %d lô vào danh sách huỷ!",
+					soLoThem
+				);
+				
+				if (soLoTrung > 0) {
+					thongBao += String.format("\n⚠️ Bỏ qua %d lô đã có trong danh sách.", soLoTrung);
+				}
+				
+				JOptionPane.showMessageDialog(this, thongBao, "Thành công", 
+					JOptionPane.INFORMATION_MESSAGE);
+			}
+		} else {
+			// Chọn 1 lô
+			LoSanPham lo = dialog.getSelectedLo();
+			if (lo != null) {
+				// Nếu chọn từ dialog HSD, tự động gán lý do
+				if ("HSD".equals(loaiTim)) {
+					addDongHuyVoiLyDo(lo, lo.getSanPham().getGiaNhap(), "Gần hết hạn sử dụng");
+				} else {
+					addDongHuy(lo, lo.getSanPham().getGiaNhap());
+				}
+			}
 		}
+	}
+	
+	/** API cho các màn khác muốn đẩy lô vào danh sách huỷ với lý do tự động */
+	private void addDongHuyVoiLyDo(LoSanPham lo, double giaNhap, String lyDo) {
+		// kiểm tra trùng
+		for (ItemHuyHang t : dsItem) {
+			if (t.getMaLo().equals(lo.getMaLo())) {
+				return; // Không hiển thị thông báo khi thêm nhiều
+			}
+		}
+
+		// Lấy số lượng tồn theo đơn vị gốc
+		int slTonGoc = lo.getSoLuongTon();
+
+		ItemHuyHang it = new ItemHuyHang(lo.getMaLo(), lo.getSanPham().getTenSanPham(), slTonGoc, giaNhap);
+		
+		// ✅ Set số lượng huỷ = toàn bộ số lượng tồn (cho chức năng "Huỷ tất cả")
+		it.setSoLuongHuy(slTonGoc);
+
+		// Lấy và set quy cách gốc
+		QuyCachDongGoi qcGoc = quyCachDAO.timQuyCachGocTheoSanPham(lo.getSanPham().getMaSanPham());
+		if (qcGoc != null) {
+			it.setQuyCachGoc(qcGoc);
+			it.setQuyCachHienTai(qcGoc);
+		}
+		
+		// Gán lý do tự động
+		if (lyDo != null && !lyDo.isEmpty()) {
+			it.setLyDo(lyDo);
+		}
+
+		dsItem.add(it);
+		addPanelItem(it);
+
+		// --- cập nhật model cũ ---
+		modelHuy.addRow(new Object[] { it.getMaLo(), it.getTenSanPham(), lo.getHanSuDung().format(fmt),
+				it.getSoLuongTon(), it.getSoLuongHuy(), it.getDonGiaNhap(), it.getThanhTien(), lyDo != null ? lyDo : "" });
+
+		capNhatTongSoLuongVaTien();
 	}
 
 	/** API cho các màn khác muốn đẩy lô vào danh sách huỷ */
 	public void addDongHuy(LoSanPham lo, double giaNhap) {
-
 		// kiểm tra trùng
 		for (ItemHuyHang t : dsItem) {
 			if (t.getMaLo().equals(lo.getMaLo())) {
@@ -297,7 +382,17 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 			}
 		}
 
-		ItemHuyHang it = new ItemHuyHang(lo.getMaLo(), lo.getSanPham().getTenSanPham(), lo.getSoLuongTon(), giaNhap);
+		// Lấy số lượng tồn theo đơn vị gốc
+		int slTonGoc = lo.getSoLuongTon();
+
+		ItemHuyHang it = new ItemHuyHang(lo.getMaLo(), lo.getSanPham().getTenSanPham(), slTonGoc, giaNhap);
+
+		// Lấy và set quy cách gốc
+		QuyCachDongGoi qcGoc = quyCachDAO.timQuyCachGocTheoSanPham(lo.getSanPham().getMaSanPham());
+		if (qcGoc != null) {
+			it.setQuyCachGoc(qcGoc);
+			it.setQuyCachHienTai(qcGoc);
+		}
 
 		dsItem.add(it);
 		addPanelItem(it);
@@ -313,7 +408,9 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		for (int i = 0; i < modelHuy.getRowCount(); i++) {
 			if (modelHuy.getValueAt(i, 0).equals(it.getMaLo())) {
 
+				// Lưu số lượng huỷ theo đơn vị đang hiển thị (UI)
 				modelHuy.setValueAt(it.getSoLuongHuy(), i, 4);
+				// Thành tiền đã tự động tính theo đơn vị gốc
 				modelHuy.setValueAt(it.getThanhTien(), i, 6);
 
 				String lyDo = it.getLyDo();
@@ -417,30 +514,20 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 	}
 
 	private void capNhatTongSoLuongVaTien() {
-		int soDong = modelHuy.getRowCount();
-		int tongSL = 0;
+		int soDong = dsItem.size();
+		int tongSLGoc = 0; // Tổng số lượng theo đơn vị gốc
 		double tongTien = 0;
 
-		for (int i = 0; i < modelHuy.getRowCount(); i++) {
-			int sl = parseIntSafe(String.valueOf(modelHuy.getValueAt(i, 4)), 0);
-			double tien = 0;
-			Object tienObj = modelHuy.getValueAt(i, 6);
-			if (tienObj instanceof Number n) {
-				tien = n.doubleValue();
-			} else {
-				try {
-					tien = Double.parseDouble(tienObj.toString());
-				} catch (Exception ignored) {
-				}
-			}
-			tongSL += sl;
-			tongTien += tien;
+		// Tính từ dsItem thay vì model
+		for (ItemHuyHang it : dsItem) {
+			tongSLGoc += it.getSoLuongHuyTheoGoc();
+			tongTien += it.getThanhTien();
 		}
 
 		tongTienHuy = tongTien;
 
 		lblTongDong.setText(soDong + " dòng");
-		lblTongSoLuong.setText(String.valueOf(tongSL));
+		lblTongSoLuong.setText(String.valueOf(tongSLGoc)); // Hiển thị tổng theo đơn vị gốc
 		lblTongTien.setText(String.format("%,.0f đ", tongTienHuy));
 	}
 
@@ -450,6 +537,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		pnDanhSachLo.repaint();
 
 		modelHuy.setRowCount(0);
+		dsItem.clear(); // Clear danh sách item
 
 		lblTongDong.setText("0 dòng");
 		lblTongSoLuong.setText("0");
@@ -488,53 +576,58 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		}
 		NhanVien nv = tk.getNhanVien();
 
-		// Chuẩn bị chi tiết từ model
+		// Chuẩn bị chi tiết từ dsItem (không dùng model)
 		List<ChiTietPhieuHuy> dsCT = new ArrayList<>();
-		int tongSL = 0;
+		int tongSLGoc = 0; // Tổng số lượng huỷ theo đơn vị gốc
 
-		for (int i = 0; i < modelHuy.getRowCount(); i++) {
-			String maLo = modelHuy.getValueAt(i, 0).toString();
-			int slTon = parseIntSafe(String.valueOf(modelHuy.getValueAt(i, 3)), 0);
-			int slHuy = parseIntSafe(String.valueOf(modelHuy.getValueAt(i, 4)), 0);
-			double donGiaNhap = Double.parseDouble(modelHuy.getValueAt(i, 5).toString());
-			String lyDo = modelHuy.getValueAt(i, 7) != null ? modelHuy.getValueAt(i, 7).toString().trim() : null;
+		// Duyệt qua dsItem thay vì model
+		for (ItemHuyHang it : dsItem) {
+			// Lấy số lượng huỷ theo đơn vị gốc (đã quy đổi)
+			int slHuyGoc = it.getSoLuongHuyTheoGoc();
 
-			if (slHuy <= 0) {
-				JOptionPane.showMessageDialog(this, "Số lượng huỷ ở dòng " + (i + 1) + " phải > 0.",
+			if (slHuyGoc <= 0) {
+				JOptionPane.showMessageDialog(this, "Số lượng huỷ của lô " + it.getMaLo() + " phải > 0.",
 						"Dữ liệu không hợp lệ", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
-			if (slHuy > slTon) {
-				JOptionPane.showMessageDialog(this, "Số lượng huỷ ở dòng " + (i + 1) + " vượt quá tồn.",
+			if (slHuyGoc > it.getSoLuongTon()) {
+				JOptionPane.showMessageDialog(this,
+						"Số lượng huỷ của lô " + it.getMaLo() + " vượt quá tồn (theo đơn vị gốc).",
 						"Dữ liệu không hợp lệ", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
 
-			LoSanPham lo = loDAO.timLoTheoMa(maLo);
+			LoSanPham lo = loDAO.timLoTheoMa(it.getMaLo());
 			if (lo == null) {
-				JOptionPane.showMessageDialog(this, "Không tìm thấy lô trong CSDL: " + maLo, "Lỗi dữ liệu",
+				JOptionPane.showMessageDialog(this, "Không tìm thấy lô trong CSDL: " + it.getMaLo(), "Lỗi dữ liệu",
 						JOptionPane.ERROR_MESSAGE);
 				return;
 			}
 
 			// Tạo chi tiết
 			ChiTietPhieuHuy ct = new ChiTietPhieuHuy();
-			// phieuHuy sẽ gán sau
 			ct.setLoSanPham(lo);
-			ct.setSoLuongHuy(slHuy);
-			ct.setDonGiaNhap(donGiaNhap);
+			ct.setSoLuongHuy(slHuyGoc); // Lưu theo đơn vị gốc
+			ct.setDonGiaNhap(it.getDonGiaNhap());
+			String lyDo = it.getLyDo();
 			ct.setLyDoChiTiet(lyDo == null || lyDo.isEmpty() ? null : lyDo);
+			
+			// ✅ Set đơn vị tính (lấy DonViTinh từ QuyCachGoc)
+			if (it.getQuyCachGoc() != null && it.getQuyCachGoc().getDonViTinh() != null) {
+				ct.setDonViTinh(it.getQuyCachGoc().getDonViTinh());
+			}
+			
 			ct.setTrangThai(ChiTietPhieuHuy.CHO_DUYET); // 1 = Chờ duyệt
 			ct.capNhatThanhTien();
 
 			dsCT.add(ct);
-			tongSL += slHuy;
+			tongSLGoc += slHuyGoc;
 		}
 
 		int confirm = JOptionPane.showConfirmDialog(this,
 				String.format(
-						"Xác nhận tạo phiếu huỷ?\n- Số dòng: %d\n- Tổng SL huỷ: %d\n- Giá trị huỷ (ước tính): %,.0f đ",
-						modelHuy.getRowCount(), tongSL, tongTienHuy),
+						"Xác nhận tạo phiếu huỷ?\n- Số dòng: %d\n- Tổng SL huỷ (đơn vị gốc): %d\n- Giá trị huỷ: %,.0f đ",
+						dsCT.size(), tongSLGoc, tongTienHuy),
 				"Xác nhận", JOptionPane.YES_NO_OPTION);
 
 		if (confirm != JOptionPane.YES_OPTION)
@@ -563,7 +656,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		}
 
 		JOptionPane.showMessageDialog(this,
-				String.format("✔ Tạo phiếu huỷ thành công!\nMã phiếu: %s\nTổng tiền huỷ (ước tính): %,.0f đ",
+				String.format("✔ Tạo phiếu huỷ thành công!\nMã phiếu: %s\nTổng tiền huỷ: %,.0f đ",
 						ph.getMaPhieuHuy(), ph.getTongTien()),
 				"Thành công", JOptionPane.INFORMATION_MESSAGE);
 
