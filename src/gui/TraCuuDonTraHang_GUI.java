@@ -10,8 +10,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -32,6 +36,8 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+
+import com.toedter.calendar.JDateChooser;
 
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
@@ -62,8 +68,8 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 
 	private JTextField txtTimKiem;
 
-	private JComboBox<String> cbKhachHang;
-	private JComboBox<String> cbNhanVien;
+	private JDateChooser dateTuNgay;
+	private JDateChooser dateDenNgay;
 	private JComboBox<String> cbTrangThai;
 
 	private PillButton btnTimKiem;
@@ -112,42 +118,54 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 		pnHeader.setPreferredSize(new Dimension(1073, 94));
 		pnHeader.setBackground(new Color(0xE3F2F5));
 
-		// --- Ô TÌM KIẾM (Font 20) ---
+		// --- 1. Ô TÌM KIẾM TO (Bên trái) ---
 		txtTimKiem = new JTextField();
 		PlaceholderSupport.addPlaceholder(txtTimKiem, PLACEHOLDER_TIM_KIEM);
 		txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20));
 		txtTimKiem.setBounds(25, 17, 480, 60);
 		txtTimKiem.setBorder(new RoundedBorder(20));
+		txtTimKiem.setBackground(Color.WHITE);
 		pnHeader.add(txtTimKiem);
 
-//        dateTuNgay = new JDateChooser();
-//		dateTuNgay.setDateFormatString("dd/MM/yyyy");
-//		dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-//
-//		dateDenNgay = new JDateChooser();
-//		dateDenNgay.setDateFormatString("dd/MM/yyyy");
-//		dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		// --- 2. BỘ LỌC NGÀY (Ở giữa) - KHỚP VỊ TRÍ ---
+		
+		// Từ ngày
+		JLabel lblTu = new JLabel("Từ ngày:");
+		lblTu.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
+		lblTu.setBounds(530, 28, 80, 35);
+		pnHeader.add(lblTu);
 
-		addFilterLabel("Khách hàng:", 530, 28, 100, 35);
-		cbKhachHang = new JComboBox<>();
-		setupComboBox(cbKhachHang, 630, 28, 180, 38);
+		dateTuNgay = new JDateChooser();
+		dateTuNgay.setDateFormatString("dd/MM/yyyy");
+		dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
+		dateTuNgay.setBounds(610, 28, 180, 38);
+		pnHeader.add(dateTuNgay);
 
-		addFilterLabel("Nhân viên:", 820, 28, 100, 35);
-		cbNhanVien = new JComboBox<>();
-		setupComboBox(cbNhanVien, 910, 28, 180, 38);
+		// Đến ngày
+		JLabel lblDen = new JLabel("Đến:");
+		lblDen.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
+		lblDen.setBounds(830, 28, 50, 35);
+		pnHeader.add(lblDen);
 
-		addFilterLabel("Trạng thái:", 1100, 28, 100, 35);
+		dateDenNgay = new JDateChooser();
+		dateDenNgay.setDateFormatString("dd/MM/yyyy");
+		dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
+		dateDenNgay.setBounds(890, 28, 180, 38);
+		pnHeader.add(dateDenNgay);
+
+		// --- 3. TRẠNG THÁI ---
+		addFilterLabel("Trạng thái:", 1090, 28, 90, 35);
 		cbTrangThai = new JComboBox<>();
-		setupComboBox(cbTrangThai, 1190, 28, 180, 38);
+		setupComboBox(cbTrangThai, 1180, 28, 160, 38);
 
-		// --- NÚT (Font 18) ---
+		// --- 4. CÁC NÚT CHỨC NĂNG (Bên phải) ---
 		btnTimKiem = new PillButton("Tìm kiếm");
-		btnTimKiem.setBounds(1380, 22, 130, 50);
+		btnTimKiem.setBounds(1360, 22, 130, 50);
 		btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		pnHeader.add(btnTimKiem);
 
 		btnLamMoi = new PillButton("Làm mới");
-		btnLamMoi.setBounds(1515, 22, 130, 50);
+		btnLamMoi.setBounds(1505, 22, 130, 50);
 		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		pnHeader.add(btnLamMoi);
 	}
@@ -350,11 +368,8 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 	// ==============================================================================
 	/** gọi ở constructor (giống TraCuuSanPham): load combobox + load bảng */
 	private void initData() {
-		loadComboKhachHang();
-		loadComboNhanVien();
 		loadComboTrangThai();
-		taiDanhSachPhieuTra();
-		loadTablePhieuTra(allPhieuTra);
+		xuLyLamMoi(); // Load tất cả với ngày mặc định từ cũ nhất đến nay
 	}
 
 	/** load danh sách PHIẾU TRẢ từ DB */
@@ -365,26 +380,6 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 	// ==============================================================================
 	// COMBOBOX
 	// ==============================================================================
-	private void loadComboKhachHang() {
-		cbKhachHang.removeAllItems();
-		cbKhachHang.addItem("Tất cả");
-
-		List<KhachHang> ds = new dao.KhachHang_DAO().layTatCaKhachHang();
-		for (KhachHang kh : ds) {
-			cbKhachHang.addItem(kh.getTenKhachHang());
-		}
-	}
-
-	private void loadComboNhanVien() {
-		cbNhanVien.removeAllItems();
-		cbNhanVien.addItem("Tất cả");
-
-		List<NhanVien> ds = new dao.NhanVien_DAO().layTatCaNhanVien();
-		for (NhanVien nv : ds) {
-			cbNhanVien.addItem(nv.getTenNhanVien());
-		}
-	}
-
 	private void loadComboTrangThai() {
 		cbTrangThai.removeAllItems();
 		cbTrangThai.addItem("Tất cả");
@@ -397,28 +392,34 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 	// ==============================================================================
 	private void xuLyTimKiem() {
 		String keyword = txtTimKiem.getText().trim();
-		String khach = cbKhachHang.getSelectedItem().toString();
-		String nv = cbNhanVien.getSelectedItem().toString();
+		if (keyword.contains("Tìm theo")) keyword = "";
+		
 		String tt = cbTrangThai.getSelectedItem().toString();
 
 		List<PhieuTra> ds = new ArrayList<>(allPhieuTra);
 
 		// --- keyword ---
-		if (!keyword.isEmpty() && !keyword.equals(PLACEHOLDER_TIM_KIEM)) {
+		if (!keyword.isEmpty()) {
 			String kw = keyword.toLowerCase();
 			ds.removeIf(pt -> !(pt.getMaPhieuTra().toLowerCase().contains(kw)
 					|| pt.getKhachHang().getTenKhachHang().toLowerCase().contains(kw)
 					|| pt.getKhachHang().getSoDienThoai().contains(kw)));
 		}
 
-		// --- khách hàng ---
-		if (!"Tất cả".equals(khach)) {
-			ds.removeIf(pt -> !pt.getKhachHang().getTenKhachHang().equals(khach));
-		}
+		// --- Lọc theo Ngày (Java Filter) ---
+		Date dTu = dateTuNgay.getDate();
+		Date dDen = dateDenNgay.getDate();
 
-		// --- nhân viên ---
-		if (!"Tất cả".equals(nv)) {
-			ds.removeIf(pt -> !pt.getNhanVien().getTenNhanVien().equals(nv));
+		if (dTu != null || dDen != null) {
+			LocalDate fromDate = (dTu != null) ? dTu.toInstant().atZone(ZoneId.systemDefault()).toLocalDate() : LocalDate.MIN;
+			LocalDate toDate = (dDen != null) ? dDen.toInstant().atZone(ZoneId.systemDefault()).toLocalDate() : LocalDate.MAX;
+
+			ds.removeIf(pt -> {
+				LocalDate ngayLap = pt.getNgayLap();
+				// So sánh ngày: fromDate <= ngayLap <= toDate
+				return !((ngayLap.isEqual(fromDate) || ngayLap.isAfter(fromDate)) &&
+						(ngayLap.isEqual(toDate) || ngayLap.isBefore(toDate)));
+			});
 		}
 
 		// --- trạng thái ---
@@ -438,12 +439,30 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 	private void xuLyLamMoi() {
 		txtTimKiem.setText("");
 		PlaceholderSupport.addPlaceholder(txtTimKiem, PLACEHOLDER_TIM_KIEM);
-		cbKhachHang.setSelectedIndex(0);
-		cbNhanVien.setSelectedIndex(0);
+		
+		// --- CHỌN NGÀY MẶC ĐỊNH ---
+		taiDanhSachPhieuTra();
+		
+		// Đến ngày: Hôm nay
+		Date now = new Date();
+		dateDenNgay.setDate(now);
+		
+		// Từ ngày: Ngày cũ nhất của phiếu trả hàng (nếu có)
+		if (!allPhieuTra.isEmpty()) {
+			LocalDate oldestDate = allPhieuTra.stream()
+				.map(PhieuTra::getNgayLap)
+				.min(LocalDate::compareTo)
+				.orElse(LocalDate.now());
+			Date fromDate = Date.from(oldestDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+			dateTuNgay.setDate(fromDate);
+		} else {
+			// Nếu không có phiếu trả nào, đặt từ ngày là hôm nay
+			dateTuNgay.setDate(now);
+		}
+		
 		cbTrangThai.setSelectedIndex(0);
 
-		taiDanhSachPhieuTra();
-		loadTablePhieuTra(allPhieuTra);
+		loadTablePhieuTra(allPhieuTra); // Hiển thị tất cả
 		modelChiTiet.setRowCount(0);
 	}
 
