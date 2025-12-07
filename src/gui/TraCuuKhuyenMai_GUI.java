@@ -1,14 +1,15 @@
-/**
- * @author Quốc Khánh
- * @version 1.0
- * @since Nov 20, 2025
- *
- * Mô tả: Giao diện tra cứu Khuyến Mãi (Master) kèm Sản phẩm áp dụng & Lịch sử đơn hàng (Detail).
- */
 package gui;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
@@ -16,31 +17,49 @@ import javax.swing.table.*;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
+import dao.ChiTietKhuyenMaiSanPham_DAO;
+import dao.HoaDon_DAO;
+import dao.KhuyenMai_DAO;
+import entity.ChiTietHoaDon;
+import entity.ChiTietKhuyenMaiSanPham;
+import entity.HoaDon;
+import entity.KhuyenMai;
+import enums.HinhThucKM;
 
-@SuppressWarnings("serial")
-public class TraCuuKhuyenMai_GUI extends JPanel {
+public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, MouseListener {
 
     private JPanel pnHeader;
     private JPanel pnCenter;
 
-    // Bảng Master: Khuyến Mãi
     private JTable tblKhuyenMai;
     private DefaultTableModel modelKhuyenMai;
 
-    // Tabs Detail
     private JTabbedPane tabChiTiet;
 
-    // Tab 1: Sản phẩm được áp dụng (Chi tiết KM SP)
     private JTable tblSanPhamApDung;
     private DefaultTableModel modelSanPhamApDung;
 
-    // Tab 2: Lịch sử đơn hàng đã dùng KM này
     private JTable tblLichSuApDung;
     private DefaultTableModel modelLichSuApDung;
 
+    private JTextField txtTimKiem;
+    private JComboBox<String> cbLoaiKM;
+    private JComboBox<String> cbHinhThuc;
+    private JComboBox<String> cbTrangThai;
+    private PillButton btnTim;
+
+    private KhuyenMai_DAO khuyenMaiDAO;
+    private ChiTietKhuyenMaiSanPham_DAO ctkmDAO;
+    private HoaDon_DAO hoaDonDAO;
+
     private final DecimalFormat df = new DecimalFormat("#,###");
+    private final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public TraCuuKhuyenMai_GUI() {
+        khuyenMaiDAO = new KhuyenMai_DAO();
+        ctkmDAO = new ChiTietKhuyenMaiSanPham_DAO();
+        hoaDonDAO = new HoaDon_DAO();
+
         setPreferredSize(new Dimension(1537, 850));
         initialize();
     }
@@ -49,84 +68,67 @@ public class TraCuuKhuyenMai_GUI extends JPanel {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
-        // 1. HEADER
-        taoPhanHeader();
+        taoPhanDau();
         add(pnHeader, BorderLayout.NORTH);
 
-        // 2. CENTER
-        taoPhanCenter();
+        taoPhanGiua();
         add(pnCenter, BorderLayout.CENTER);
 
-        // 3. DATA
-        loadDuLieuKhuyenMai();
-        addEvents();
+        taiDuLieuKhuyenMai();
+        dangKySuKien();
     }
 
-    // ==============================================================================
-    //                              PHẦN HEADER
-    // ==============================================================================
-    private void taoPhanHeader() {
+    private void taoPhanDau() {
         pnHeader = new JPanel();
         pnHeader.setLayout(null);
         pnHeader.setPreferredSize(new Dimension(1073, 94));
         pnHeader.setBackground(new Color(0xE3F2F5));
 
-        // --- Ô TÌM KIẾM ---
-        JTextField txtTimKiem = new JTextField();
+        txtTimKiem = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã KM, tên chương trình...");
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
-        txtTimKiem.setBounds(25, 17, 450, 60);
+        txtTimKiem.setBounds(25, 17, 480, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
-        txtTimKiem.setForeground(Color.GRAY);
         pnHeader.add(txtTimKiem);
 
-        // --- BỘ LỌC ---
-        // 1. Loại khuyến mãi (Hóa đơn vs Sản phẩm)
         JLabel lblLoai = new JLabel("Loại KM:");
-        lblLoai.setBounds(500, 28, 70, 35);
+        lblLoai.setBounds(550, 28, 70, 35);
         lblLoai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(lblLoai);
 
-        JComboBox<String> cbLoaiKM = new JComboBox<>(new String[]{"Tất cả", "Theo hóa đơn", "Theo sản phẩm"});
-        cbLoaiKM.setBounds(570, 28, 140, 38);
+        cbLoaiKM = new JComboBox<>(new String[]{"Tất cả", "Theo hóa đơn", "Theo sản phẩm"});
+        cbLoaiKM.setBounds(620, 28, 140, 38);
         cbLoaiKM.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(cbLoaiKM);
 
-        // 2. Hình thức (Tiền/Phần trăm)
         JLabel lblHinhThuc = new JLabel("Hình thức:");
-        lblHinhThuc.setBounds(730, 28, 80, 35);
+        lblHinhThuc.setBounds(780, 28, 80, 35);
         lblHinhThuc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(lblHinhThuc);
 
-        JComboBox<String> cbHinhThuc = new JComboBox<>(new String[]{"Tất cả", "Giảm tiền", "Giảm %", "Tặng quà"});
-        cbHinhThuc.setBounds(810, 28, 120, 38);
+        cbHinhThuc = new JComboBox<>(new String[]{"Tất cả", "Giảm tiền", "Giảm %", "Tặng quà"});
+        cbHinhThuc.setBounds(860, 28, 120, 38);
         cbHinhThuc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(cbHinhThuc);
 
-        // 3. Trạng thái
         JLabel lblTrangThai = new JLabel("Trạng thái:");
-        lblTrangThai.setBounds(950, 28, 80, 35);
+        lblTrangThai.setBounds(1000, 28, 80, 35);
         lblTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(lblTrangThai);
 
-        JComboBox<String> cbTrangThai = new JComboBox<>(new String[]{"Tất cả", "Đang chạy", "Sắp chạy", "Đã kết thúc"});
-        cbTrangThai.setBounds(1030, 28, 120, 38);
+        cbTrangThai = new JComboBox<>(new String[]{"Tất cả", "Đang chạy", "Sắp chạy", "Đã kết thúc"});
+        cbTrangThai.setBounds(1080, 28, 120, 38);
         cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(cbTrangThai);
 
-        // --- NÚT ---
-        PillButton btnTim = new PillButton("Tìm kiếm");
-        btnTim.setBounds(1180, 22, 120, 50);
+        btnTim = new PillButton("Tìm kiếm");
+        btnTim.setBounds(1230, 22, 120, 50);
         btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnTim);
-
     }
 
-    // ==============================================================================
-    //                              PHẦN CENTER
-    // ==============================================================================
-    private void taoPhanCenter() {
+    private void taoPhanGiua() {
         pnCenter = new JPanel(new BorderLayout());
         pnCenter.setBackground(Color.WHITE);
         pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -135,7 +137,6 @@ public class TraCuuKhuyenMai_GUI extends JPanel {
         splitPane.setDividerLocation(400);
         splitPane.setResizeWeight(0.5);
 
-        // --- TOP: BẢNG KHUYẾN MÃI (MASTER) ---
         String[] colKM = {
             "Mã KM", "Tên chương trình", "Loại KM", "Hình thức", 
             "Giá trị", "Ngày bắt đầu", "Ngày kết thúc", "SL còn", "Trạng thái"
@@ -143,28 +144,27 @@ public class TraCuuKhuyenMai_GUI extends JPanel {
         modelKhuyenMai = new DefaultTableModel(colKM, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-        tblKhuyenMai = setupTable(modelKhuyenMai);
+        tblKhuyenMai = thietLapBang(modelKhuyenMai);
 
-        // Render Màu sắc trạng thái & Loại KM
         tblKhuyenMai.getColumnModel().getColumn(8).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
-                if ("Đang áp dụng".equals(value)) {
-                    lbl.setForeground(new Color(0x2E7D32)); // Xanh
+                String status = String.valueOf(value);
+                if ("Đang áp dụng".equals(status)) {
+                    lbl.setForeground(new Color(0x2E7D32));
                     lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
-                } else if ("Ngừng".equals(value) || "Hết hạn".equals(value)) {
+                } else if ("Ngừng hoạt động".equals(status) || "Hết hạn".equals(status) || "Đã kết thúc".equals(status)) {
                     lbl.setForeground(Color.RED);
                     lbl.setFont(new Font("Segoe UI", Font.ITALIC, 14));
                 } else {
-                    lbl.setForeground(new Color(255, 140, 0)); // Cam (Sắp chạy)
+                    lbl.setForeground(new Color(255, 140, 0));
                 }
                 return lbl;
             }
         });
         
-        // Render Loại KM (Đậm)
         tblKhuyenMai.getColumnModel().getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -176,32 +176,26 @@ public class TraCuuKhuyenMai_GUI extends JPanel {
         });
 
         JScrollPane scrollKM = new JScrollPane(tblKhuyenMai);
-        scrollKM.setBorder(createTitledBorder("Danh sách chương trình khuyến mãi"));
+        scrollKM.setBorder(taoVienTieuDe("Danh sách chương trình khuyến mãi"));
         splitPane.setTopComponent(scrollKM);
 
-        // --- BOTTOM: TABBED PANE (DETAIL) ---
         tabChiTiet = new JTabbedPane();
         tabChiTiet.setFont(new Font("Segoe UI", Font.PLAIN, 16));
 
-        // Tab 1: Sản phẩm áp dụng (Dành cho KM Sản Phẩm)
-        tabChiTiet.addTab("Sản phẩm áp dụng", createTabSanPhamApDung());
-
-        // Tab 2: Lịch sử áp dụng (Đơn hàng đã dùng)
-        tabChiTiet.addTab("Lịch sử áp dụng (Đơn hàng)", createTabLichSu());
+        tabChiTiet.addTab("Sản phẩm áp dụng", taoTabSanPhamApDung());
+        tabChiTiet.addTab("Lịch sử áp dụng (Đơn hàng)", taoTabLichSu());
 
         splitPane.setBottomComponent(tabChiTiet);
         pnCenter.add(splitPane, BorderLayout.CENTER);
     }
 
-    // Tab 1: Bảng Sản phẩm (ChiTietKhuyenMaiSanPham)
-    private JComponent createTabSanPhamApDung() {
+    private JComponent taoTabSanPhamApDung() {
         String[] cols = {"STT", "Mã SP", "Tên sản phẩm", "Đơn vị tính", "Giá gốc", "Giá sau giảm"};
         modelSanPhamApDung = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-        tblSanPhamApDung = setupTable(modelSanPhamApDung);
+        tblSanPhamApDung = thietLapBang(modelSanPhamApDung);
         
-        // Căn lề
         DefaultTableCellRenderer right = new DefaultTableCellRenderer();
         right.setHorizontalAlignment(SwingConstants.RIGHT);
         tblSanPhamApDung.getColumnModel().getColumn(4).setCellRenderer(right);
@@ -210,13 +204,12 @@ public class TraCuuKhuyenMai_GUI extends JPanel {
         return new JScrollPane(tblSanPhamApDung);
     }
 
-    // Tab 2: Lịch sử đơn hàng (Hóa đơn)
-    private JComponent createTabLichSu() {
+    private JComponent taoTabLichSu() {
         String[] cols = {"STT", "Mã Hóa Đơn", "Ngày lập", "Khách hàng", "Tổng tiền HĐ", "Số tiền được giảm"};
         modelLichSuApDung = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-        tblLichSuApDung = setupTable(modelLichSuApDung);
+        tblLichSuApDung = thietLapBang(modelLichSuApDung);
         
         DefaultTableCellRenderer right = new DefaultTableCellRenderer();
         right.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -226,8 +219,7 @@ public class TraCuuKhuyenMai_GUI extends JPanel {
         return new JScrollPane(tblLichSuApDung);
     }
 
-    // Helper: Setup Table chung
-    private JTable setupTable(DefaultTableModel model) {
+    private JTable thietLapBang(DefaultTableModel model) {
         JTable table = new JTable(model);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         table.setRowHeight(30);
@@ -239,7 +231,6 @@ public class TraCuuKhuyenMai_GUI extends JPanel {
         header.setBackground(new Color(33, 150, 243));
         header.setForeground(Color.WHITE);
         
-        // Center align mặc định
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
         for(int i=0; i<table.getColumnCount(); i++) {
@@ -249,67 +240,185 @@ public class TraCuuKhuyenMai_GUI extends JPanel {
         return table;
     }
 
-    private TitledBorder createTitledBorder(String title) {
+    private TitledBorder taoVienTieuDe(String title) {
         return BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
             TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 16), Color.DARK_GRAY
         );
     }
 
-    // ==============================================================================
-    //                              DATA & EVENTS
-    // ==============================================================================
-    private void addEvents() {
-        // Click vào KM -> Load chi tiết
-        tblKhuyenMai.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int row = tblKhuyenMai.getSelectedRow();
-                if (row >= 0) {
-                    String maKM = tblKhuyenMai.getValueAt(row, 0).toString();
-                    String loaiKM = tblKhuyenMai.getValueAt(row, 2).toString(); // "Hóa đơn" hoặc "Sản phẩm"
-                    loadChiTietKM(maKM, loaiKM);
-                }
+    private void dangKySuKien() {
+        btnTim.addActionListener(this);
+        tblKhuyenMai.addMouseListener(this);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource().equals(btnTim)) {
+            taiDuLieuKhuyenMai();
+        }
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        if (e.getSource().equals(tblKhuyenMai)) {
+            int row = tblKhuyenMai.getSelectedRow();
+            if (row != -1) {
+                String maKM = tblKhuyenMai.getValueAt(row, 0).toString();
+                String loaiKM = tblKhuyenMai.getValueAt(row, 2).toString();
+                
+                double giaTri = 0;
+                String giaTriStr = tblKhuyenMai.getValueAt(row, 4).toString();
+                String hinhThucStr = tblKhuyenMai.getValueAt(row, 3).toString();
+                
+                try {
+                    giaTriStr = giaTriStr.replace(",", "").replace("%", "").trim();
+                    giaTri = Double.parseDouble(giaTriStr);
+                } catch (Exception ex) {}
+
+                hienThiChiTietKhuyenMai(maKM, loaiKM, hinhThucStr, giaTri);
             }
-        });
+        }
     }
 
-    private void loadDuLieuKhuyenMai() {
-        // Fake data khớp với Entity KhuyenMai
-        Object[][] data = {
-            {"KM-20251101-001", "Mừng khai trương", "Hóa đơn", "Giảm tiền", "50,000", "01/11/2025", "30/11/2025", "90", "Đang áp dụng"},
-            {"KM-20251105-002", "Sale thuốc đau đầu", "Sản phẩm", "Giảm %", "10%", "05/11/2025", "15/11/2025", "0", "Hết hạn"},
-            {"KM-20251201-003", "Chào tháng 12", "Hóa đơn", "Giảm %", "5%", "01/12/2025", "31/12/2025", "100", "Sắp chạy"},
-            {"KM-20251110-004", "Mua Panadol giá sốc", "Sản phẩm", "Giảm tiền", "2,000", "10/11/2025", "20/11/2025", "45", "Đang áp dụng"}
-        };
-        for (Object[] row : data) modelKhuyenMai.addRow(row);
+    @Override public void mousePressed(MouseEvent e) {}
+    @Override public void mouseReleased(MouseEvent e) {}
+    @Override public void mouseEntered(MouseEvent e) {}
+    @Override public void mouseExited(MouseEvent e) {}
+
+    private void taiDuLieuKhuyenMai() {
+        modelKhuyenMai.setRowCount(0);
+        List<KhuyenMai> listKM = khuyenMaiDAO.layTatCaKhuyenMai();
+        
+        String tuKhoa = txtTimKiem.getText().trim().toLowerCase();
+        if (tuKhoa.contains("tìm theo mã")) tuKhoa = "";
+
+        String locLoai = cbLoaiKM.getSelectedItem().toString();
+        String locHinhThuc = cbHinhThuc.getSelectedItem().toString();
+        String locTrangThai = cbTrangThai.getSelectedItem().toString();
+
+        for (KhuyenMai km : listKM) {
+            if (!tuKhoa.isEmpty()) {
+                boolean matchMa = km.getMaKM().toLowerCase().contains(tuKhoa);
+                boolean matchTen = km.getTenKM().toLowerCase().contains(tuKhoa);
+                if (!matchMa && !matchTen) continue;
+            }
+
+            if (locLoai.equals("Theo hóa đơn") && !km.isKhuyenMaiHoaDon()) continue;
+            if (locLoai.equals("Theo sản phẩm") && km.isKhuyenMaiHoaDon()) continue;
+
+            String hinhThucHienThi = "";
+            if (km.getHinhThuc() == HinhThucKM.GIAM_GIA_PHAN_TRAM) hinhThucHienThi = "Giảm %";
+            else if (km.getHinhThuc() == HinhThucKM.GIAM_GIA_TIEN) hinhThucHienThi = "Giảm tiền";
+            else if (km.getHinhThuc() == HinhThucKM.TANG_THEM) hinhThucHienThi = "Tặng quà";
+
+            if (locHinhThuc.equals("Giảm tiền") && km.getHinhThuc() != HinhThucKM.GIAM_GIA_TIEN) continue;
+            if (locHinhThuc.equals("Giảm %") && km.getHinhThuc() != HinhThucKM.GIAM_GIA_PHAN_TRAM) continue;
+            if (locHinhThuc.equals("Tặng quà") && km.getHinhThuc() != HinhThucKM.TANG_THEM) continue;
+
+            LocalDate now = LocalDate.now();
+            String trangThaiHienThi;
+            if (!km.isTrangThai()) {
+                trangThaiHienThi = "Ngừng hoạt động";
+            } else if (km.getSoLuongKhuyenMai() <= 0) {
+                trangThaiHienThi = "Hết số lượng";
+            } else if (now.isBefore(km.getNgayBatDau())) {
+                trangThaiHienThi = "Sắp chạy";
+            } else if (now.isAfter(km.getNgayKetThuc())) {
+                trangThaiHienThi = "Đã kết thúc";
+            } else {
+                trangThaiHienThi = "Đang áp dụng";
+            }
+
+            if (locTrangThai.equals("Đang chạy") && !trangThaiHienThi.equals("Đang áp dụng")) continue;
+            if (locTrangThai.equals("Sắp chạy") && !trangThaiHienThi.equals("Sắp chạy")) continue;
+            if (locTrangThai.equals("Đã kết thúc") && !trangThaiHienThi.equals("Đã kết thúc")) continue;
+
+            String giaTriHienThi = "";
+            if (km.getHinhThuc() == HinhThucKM.GIAM_GIA_PHAN_TRAM) {
+                giaTriHienThi = df.format(km.getGiaTri()) + "%";
+            } else {
+                giaTriHienThi = df.format(km.getGiaTri());
+            }
+
+            modelKhuyenMai.addRow(new Object[]{
+                km.getMaKM(),
+                km.getTenKM(),
+                km.isKhuyenMaiHoaDon() ? "Hóa đơn" : "Sản phẩm",
+                hinhThucHienThi,
+                giaTriHienThi,
+                km.getNgayBatDau().format(fmt),
+                km.getNgayKetThuc().format(fmt),
+                km.getSoLuongKhuyenMai(),
+                trangThaiHienThi
+            });
+        }
     }
 
-    private void loadChiTietKM(String maKM, String loaiKM) {
+    private void hienThiChiTietKhuyenMai(String maKM, String loaiKM, String hinhThuc, double giaTri) {
         modelSanPhamApDung.setRowCount(0);
         modelLichSuApDung.setRowCount(0);
 
-        // 1. LOAD TAB SẢN PHẨM
         if ("Hóa đơn".equals(loaiKM)) {
-            // KM Hóa đơn thì tab sản phẩm trống hoặc hiện thông báo
-            modelSanPhamApDung.addRow(new Object[]{"-", "Toàn bộ cửa hàng", "Áp dụng cho tổng bill", "-", "-", "-"});
+            modelSanPhamApDung.addRow(new Object[]{"-", "Toàn bộ cửa hàng", "Áp dụng trên tổng tiền hóa đơn", "-", "-", "-"});
         } else {
-            // KM Sản phẩm -> Load list từ ChiTietKhuyenMaiSanPham
-            if (maKM.equals("KM-20251105-002")) {
-                modelSanPhamApDung.addRow(new Object[]{"1", "SP001", "Paracetamol 500mg", "Vỉ", "5,000", "4,500"});
-                modelSanPhamApDung.addRow(new Object[]{"2", "SP004", "Panadol Extra", "Viên", "2,000", "1,800"});
-            } else if (maKM.equals("KM-20251110-004")) {
-                modelSanPhamApDung.addRow(new Object[]{"1", "SP004", "Panadol Extra", "Hộp", "50,000", "48,000"});
+            List<ChiTietKhuyenMaiSanPham> listCT = ctkmDAO.layChiTietKhuyenMaiTheoMaCoJoin(maKM);
+            int stt = 1;
+            for (ChiTietKhuyenMaiSanPham ct : listCT) {
+                double giaGoc = ct.getSanPham().getGiaNhap() * 1.3;
+                
+                double giaSauGiam = giaGoc;
+                if (hinhThuc.contains("%")) {
+                    giaSauGiam = giaGoc * (1 - giaTri / 100);
+                } else if (hinhThuc.toLowerCase().contains("tiền")) {
+                    giaSauGiam = giaGoc - giaTri;
+                }
+
+                String donViTinh = "Hộp"; 
+
+                modelSanPhamApDung.addRow(new Object[]{
+                    stt++,
+                    ct.getSanPham().getMaSanPham(),
+                    ct.getSanPham().getTenSanPham(),
+                    donViTinh, 
+                    df.format(giaGoc),
+                    df.format(giaSauGiam)
+                });
             }
         }
 
-        // 2. LOAD TAB LỊCH SỬ (Đơn hàng đã áp dụng)
-        // Cái này thú vị nè: cho biết KM này đã được dùng ở đâu
-        if (maKM.equals("KM-20251101-001")) { // Khai trương (Đang áp dụng)
-            modelLichSuApDung.addRow(new Object[]{"1", "HD-20251119-005", "19/11/2025", "Nguyễn Văn A", "1,200,000", "50,000"});
-            modelLichSuApDung.addRow(new Object[]{"2", "HD-20251119-008", "19/11/2025", "Trần Thị B", "800,000", "50,000"});
-        } 
-        else if (maKM.equals("KM-20251110-004")) { // Panadol
-            modelLichSuApDung.addRow(new Object[]{"1", "HD-20251112-001", "12/11/2025", "Khách vãng lai", "150,000", "2,000"});
+        List<HoaDon> listHD = hoaDonDAO.layTatCaHoaDon();
+        int sttHD = 1;
+        for (HoaDon hd : listHD) {
+            boolean found = false;
+            double tienGiam = 0;
+
+            if ("Hóa đơn".equals(loaiKM)) {
+                if (hd.getKhuyenMai() != null && hd.getKhuyenMai().getMaKM().equals(maKM)) {
+                    found = true;
+                    tienGiam = hd.getSoTienGiamKhuyenMai();
+                }
+            } else {
+                for (ChiTietHoaDon cthd : hd.getDanhSachChiTiet()) {
+                    if (cthd.getKhuyenMai() != null && cthd.getKhuyenMai().getMaKM().equals(maKM)) {
+                        found = true;
+                        double thanhTienGoc = cthd.getSoLuong() * cthd.getGiaBan();
+                        double thanhTienThuc = cthd.getThanhTien();
+                        tienGiam += (thanhTienGoc - thanhTienThuc);
+                    }
+                }
+            }
+
+            if (found) {
+                modelLichSuApDung.addRow(new Object[]{
+                    sttHD++,
+                    hd.getMaHoaDon(),
+                    hd.getNgayLap().format(fmt),
+                    hd.getKhachHang() != null ? hd.getKhachHang().getTenKhachHang() : "Khách vãng lai",
+                    df.format(hd.getTongThanhToan()),
+                    df.format(tienGiam)
+                });
+            }
         }
     }
 

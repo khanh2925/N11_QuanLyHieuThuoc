@@ -2,7 +2,6 @@ package gui;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.*;
@@ -11,10 +10,11 @@ import javax.swing.table.*;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
-import entity.NhaCungCap; // Vẫn dùng entity để hứng dữ liệu
+import dao.NhaCungCap_DAO;
+import entity.NhaCungCap;
 
 @SuppressWarnings("serial")
-public class NhaCungCap_GUI extends JPanel implements ActionListener {
+public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListener {
 
     // Components UI
     private JPanel pnHeader, pnCenter;
@@ -29,11 +29,11 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener {
     private JTable tblNhaCungCap;
     private DefaultTableModel modelNhaCungCap;
 
-    // Buttons
-    private PillButton btnThem, btnSua, btnXoa, btnLamMoi, btnTimKiem;
+    // Buttons (Đã xóa btnXoa)
+    private PillButton btnThem, btnSua, btnLamMoi, btnTimKiem;
 
-    // Dữ liệu giả lập (Thay thế DAO)
-    private List<NhaCungCap> listNCC = new ArrayList<>();
+    // DAO
+    private NhaCungCap_DAO nccDAO;
 
     // Font & Color
     private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 16);
@@ -43,18 +43,10 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener {
     public NhaCungCap_GUI() {
         setPreferredSize(new Dimension(1537, 850));
         
-        // Tạo dữ liệu giả
-        fakeData();
+        // Khởi tạo DAO
+        nccDAO = new NhaCungCap_DAO();
         
         initialize();
-    }
-
-    private void fakeData() {
-        listNCC.add(new NhaCungCap("NCC-20251101-0001", "Công Ty Dược Phẩm A", "0901234567", "123 QL1A, TP.HCM", "contact@duocphama.com"));
-        listNCC.add(new NhaCungCap("NCC-20251101-0002", "Vimedimex Group", "0283838383", "246 Cống Quỳnh, Q.1", "sales@vimedimex.vn"));
-        listNCC.add(new NhaCungCap("NCC-20251101-0003", "Zuellig Pharma", "0999888777", "KCN Tân Tạo, Bình Tân", "info@zuellig.com"));
-        // Set trạng thái giả
-        listNCC.get(2).setHoatDong(false); // Zuellig ngừng
     }
 
     private void initialize() {
@@ -69,7 +61,7 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener {
         taoPhanCenter();
         add(pnCenter, BorderLayout.CENTER);
 
-        // 3. LOAD DATA
+        // 3. LOAD DATA TỪ CSDL
         loadDataLenBang();
     }
 
@@ -82,12 +74,14 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener {
         pnHeader.setBackground(new Color(0xE3F2F5));
 
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã, tên, sđt nhà cung cấp...");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Nhập mã hoặc số điện thoại NCC...");
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
         txtTimKiem.setBounds(25, 17, 500, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
         txtTimKiem.setForeground(Color.GRAY);
+        // Sự kiện nhấn Enter để tìm kiếm
+        txtTimKiem.addActionListener(e -> xuLyTimKiem());
         pnHeader.add(txtTimKiem);
 
         btnTimKiem = new PillButton("Tìm kiếm");
@@ -129,7 +123,7 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener {
 
         // --- SPLIT PANE ---
         splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pnTopWrapper, pnTable);
-        splitPane.setDividerLocation(300); // Form NCC cao hơn ĐVT xíu
+        splitPane.setDividerLocation(300); 
         splitPane.setResizeWeight(0.0); 
         
         pnCenter.add(splitPane, BorderLayout.CENTER);
@@ -141,7 +135,8 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener {
         // Cột 1
         p.add(createLabel("Mã NCC:", xStart, yStart));
         txtMaNCC = createTextField(xStart + wLbl, yStart, wTxt);
-        txtMaNCC.setEditable(false); // Mã tự sinh
+        txtMaNCC.setEditable(false); // Mã tự sinh, không cho sửa
+        txtMaNCC.setBackground(new Color(245, 245, 245)); // Màu xám nhẹ
         p.add(txtMaNCC);
 
         p.add(createLabel("Tên NCC:", xStart, yStart + gap + hText));
@@ -164,7 +159,7 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener {
         p.add(txtDiaChi);
         
         p.add(createLabel("Trạng thái:", xCol2, yStart + (gap + hText) * 2));
-        cboTrangThai = new JComboBox<>(new String[]{"Hoạt động", "Ngừng"});
+        cboTrangThai = new JComboBox<>(new String[]{"Hoạt động", "Ngừng hoạt động"});
         cboTrangThai.setBounds(xCol2 + wLbl, yStart + (gap + hText) * 2, wTxt, hText);
         cboTrangThai.setFont(FONT_TEXT);
         p.add(cboTrangThai);
@@ -189,11 +184,10 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener {
         btnSua = createPillButton("Cập nhật", btnW, btnH);
         gbc.gridy = 1; p.add(btnSua, gbc);
 
-        btnXoa = createPillButton("Xóa", btnW, btnH);
-        gbc.gridy = 2; p.add(btnXoa, gbc);
+        // Đã xóa nút Xóa ở vị trí này
 
         btnLamMoi = createPillButton("Làm mới", btnW, btnH);
-        gbc.gridy = 3; p.add(btnLamMoi, gbc);
+        gbc.gridy = 2; p.add(btnLamMoi, gbc);
     }
 
     private void taoBangDanhSach(JPanel p) {
@@ -203,30 +197,30 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener {
         };
         tblNhaCungCap = setupTable(modelNhaCungCap);
         
-        // Width columns
+        // Setup chiều rộng cột
         tblNhaCungCap.getColumnModel().getColumn(0).setPreferredWidth(150); // Mã
         tblNhaCungCap.getColumnModel().getColumn(1).setPreferredWidth(250); // Tên
         tblNhaCungCap.getColumnModel().getColumn(4).setPreferredWidth(300); // Địa chỉ
 
-        // Render Trạng thái
+        // Custom Renderer cho cột Trạng thái (Xanh/Đỏ)
         tblNhaCungCap.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
-                if ("Hoạt động".equals(value)) lbl.setForeground(new Color(0, 128, 0));
-                else lbl.setForeground(Color.RED);
+                if ("Hoạt động".equals(value)) {
+                    lbl.setForeground(new Color(0, 128, 0));
+                    lbl.setFont(FONT_BOLD);
+                } else {
+                    lbl.setForeground(Color.RED);
+                    lbl.setFont(FONT_TEXT);
+                }
                 return lbl;
             }
         });
 
-        // Click event
-        tblNhaCungCap.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                doToForm(tblNhaCungCap.getSelectedRow());
-            }
-        });
+        // Đăng ký sự kiện click chuột
+        tblNhaCungCap.addMouseListener(this);
 
         JScrollPane scr = new JScrollPane(tblNhaCungCap);
         scr.setBorder(createTitledBorder("Danh sách nhà cung cấp"));
@@ -234,102 +228,112 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener {
     }
 
     // ==========================================================================
-    //                              XỬ LÝ LOGIC (FAKE)
+    //                              XỬ LÝ LOGIC (DAO)
     // ==========================================================================
 
     @Override
     public void actionPerformed(ActionEvent e) {
         Object o = e.getSource();
 
+        // --- NÚT THÊM ---
         if (o.equals(btnThem)) {
             if (validData()) {
                 NhaCungCap ncc = getFromForm();
-                // Giả lập thêm: Sinh mã mới
-                ncc.setMaNhaCungCap("NCC-20251120-" + (listNCC.size() + 1));
-                listNCC.add(ncc);
+                // Sinh mã tự động trước khi thêm
+                String maMoi = nccDAO.taoMaTuDong();
+                ncc.setMaNhaCungCap(maMoi);
                 
-                JOptionPane.showMessageDialog(this, "Thêm thành công!");
-                loadDataLenBang();
-                lamMoiForm();
+                if (nccDAO.themNhaCungCap(ncc)) {
+                    JOptionPane.showMessageDialog(this, "Thêm nhà cung cấp thành công: " + maMoi);
+                    loadDataLenBang();
+                    lamMoiForm();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Thêm thất bại. Vui lòng kiểm tra lại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
             }
         } 
+        
+        // --- NÚT SỬA ---
         else if (o.equals(btnSua)) {
             int row = tblNhaCungCap.getSelectedRow();
             if (row == -1) {
-                JOptionPane.showMessageDialog(this, "Chọn dòng cần sửa!"); return;
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn nhà cung cấp cần cập nhật!");
+                return;
             }
             if (validData()) {
-                NhaCungCap nccMoi = getFromForm();
-                // Cập nhật vào list giả
-                String maCu = listNCC.get(row).getMaNhaCungCap();
-                nccMoi.setMaNhaCungCap(maCu); // Giữ nguyên mã
-                listNCC.set(row, nccMoi);
-                
-                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-                loadDataLenBang();
+                NhaCungCap ncc = getFromForm();
+                // Khi sửa, mã NCC lấy từ textfield (đã set từ bảng)
+                if (nccDAO.capNhatNhaCungCap(ncc)) {
+                    JOptionPane.showMessageDialog(this, "Cập nhật thông tin thành công!");
+                    loadDataLenBang();
+                    // Chọn lại dòng vừa sửa
+                    tblNhaCungCap.setRowSelectionInterval(row, row);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
             }
         }
-        else if (o.equals(btnXoa)) {
-            int row = tblNhaCungCap.getSelectedRow();
-            if (row == -1) {
-                JOptionPane.showMessageDialog(this, "Chọn dòng cần xóa!"); return;
-            }
-            if (JOptionPane.showConfirmDialog(this, "Xóa NCC này?", "Xác nhận", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                listNCC.remove(row);
-                JOptionPane.showMessageDialog(this, "Đã xóa!");
-                loadDataLenBang();
-                lamMoiForm();
-            }
-        }
+        
+        // --- ĐÃ XÓA LOGIC NÚT XÓA ---
+        
+        // --- NÚT LÀM MỚI ---
         else if (o.equals(btnLamMoi)) {
             lamMoiForm();
-            loadDataLenBang(); // Reset lại bảng nếu đang tìm kiếm
-        }
-        else if (o.equals(btnTimKiem)) { // Nút tìm kiếm (nếu bạn click nút thay vì enter)
-             xuLyTimKiem();
+            loadDataLenBang(); // Reset bảng nếu đang tìm kiếm
         }
     }
 
-    private void doToForm(int row) {
-        if (row < 0) return;
-        // Lấy từ list thay vì lấy từ bảng để đảm bảo dữ liệu gốc
-        NhaCungCap ncc = listNCC.get(row); 
-        
-        txtMaNCC.setText(ncc.getMaNhaCungCap());
-        txtTenNCC.setText(ncc.getTenNhaCungCap());
-        txtSDT.setText(ncc.getSoDienThoai());
-        txtEmail.setText(ncc.getEmail());
-        txtDiaChi.setText(ncc.getDiaChi());
-        cboTrangThai.setSelectedItem(ncc.isHoatDong() ? "Hoạt động" : "Ngừng");
-    }
-
+    /**
+     * Tải dữ liệu từ CSDL lên bảng
+     */
     private void loadDataLenBang() {
         modelNhaCungCap.setRowCount(0);
-        for (NhaCungCap ncc : listNCC) {
-            modelNhaCungCap.addRow(new Object[]{
-                ncc.getMaNhaCungCap(),
-                ncc.getTenNhaCungCap(),
-                ncc.getSoDienThoai(),
-                ncc.getEmail(),
-                ncc.getDiaChi(),
-                ncc.isHoatDong() ? "Hoạt động" : "Ngừng"
-            });
+        List<NhaCungCap> list = nccDAO.layTatCaNhaCungCap();
+        for (NhaCungCap ncc : list) {
+            themDongVaoBang(ncc);
         }
     }
 
+    /**
+     * Thêm 1 đối tượng entity vào model bảng
+     */
+    private void themDongVaoBang(NhaCungCap ncc) {
+        modelNhaCungCap.addRow(new Object[]{
+            ncc.getMaNhaCungCap(),
+            ncc.getTenNhaCungCap(),
+            ncc.getSoDienThoai(),
+            ncc.getEmail(),
+            ncc.getDiaChi(),
+            ncc.isHoatDong() ? "Hoạt động" : "Ngừng hoạt động"
+        });
+    }
+
+    /**
+     * Lấy dữ liệu từ form, đóng gói thành Object
+     * Mã NCC được set rỗng ở đây, sẽ được xử lý tùy trường hợp Thêm/Sửa
+     */
     private NhaCungCap getFromForm() {
-        String ten = txtTenNCC.getText();
-        String sdt = txtSDT.getText();
-        String email = txtEmail.getText();
-        String dc = txtDiaChi.getText();
-        // Mã sẽ tự sinh hoặc lấy từ form
-        NhaCungCap ncc = new NhaCungCap("", ten, sdt, dc, email);
-        ncc.setHoatDong(cboTrangThai.getSelectedItem().equals("Hoạt động"));
+        String ma = txtMaNCC.getText();
+        String ten = txtTenNCC.getText().trim();
+        String sdt = txtSDT.getText().trim();
+        String email = txtEmail.getText().trim();
+        String dc = txtDiaChi.getText().trim();
+        boolean hoatDong = cboTrangThai.getSelectedItem().equals("Hoạt động");
+        
+        NhaCungCap ncc = new NhaCungCap();
+        // Nếu mã không rỗng (đã có trên form) thì set vào, nếu rỗng thì constructor mặc định
+        if(!ma.isEmpty()) ncc.setMaNhaCungCap(ma); 
+        ncc.setTenNhaCungCap(ten);
+        ncc.setSoDienThoai(sdt);
+        ncc.setEmail(email);
+        ncc.setDiaChi(dc);
+        ncc.setHoatDong(hoatDong);
         return ncc;
     }
 
     private void lamMoiForm() {
-        txtMaNCC.setText("");
+        // Tự động gợi ý mã mới
+        txtMaNCC.setText(nccDAO.taoMaTuDong());
         txtTenNCC.setText("");
         txtSDT.setText("");
         txtEmail.setText("");
@@ -340,35 +344,81 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener {
     }
 
     private void xuLyTimKiem() {
-        String kw = txtTimKiem.getText().toLowerCase().trim();
-        if (kw.isEmpty() || kw.equals("tìm kiếm...")) { // Check placeholder
+        String keyword = txtTimKiem.getText().trim();
+        if (keyword.isEmpty() || keyword.equals("Nhập mã hoặc số điện thoại NCC...")) { 
             loadDataLenBang();
             return;
         }
         
+        // Gọi DAO tìm kiếm
+        NhaCungCap ketQua = nccDAO.timNhaCungCapTheoMaHoacSDT(keyword);
+        
         modelNhaCungCap.setRowCount(0);
-        for (NhaCungCap ncc : listNCC) {
-            if (ncc.getTenNhaCungCap().toLowerCase().contains(kw) || 
-                ncc.getSoDienThoai().contains(kw)) {
-                modelNhaCungCap.addRow(new Object[]{
-                    ncc.getMaNhaCungCap(), ncc.getTenNhaCungCap(), ncc.getSoDienThoai(),
-                    ncc.getEmail(), ncc.getDiaChi(), ncc.isHoatDong() ? "Hoạt động" : "Ngừng"
-                });
-            }
+        if (ketQua != null) {
+            themDongVaoBang(ketQua);
+        } else {
+            JOptionPane.showMessageDialog(this, "Không tìm thấy nhà cung cấp với thông tin: " + keyword);
+            loadDataLenBang(); // Load lại toàn bộ nếu không thấy
         }
     }
 
     private boolean validData() {
-        if (txtTenNCC.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Tên không được rỗng"); return false;
+        String ten = txtTenNCC.getText().trim();
+        String sdt = txtSDT.getText().trim();
+        String email = txtEmail.getText().trim();
+        String diaChi = txtDiaChi.getText().trim();
+
+        if (ten.isEmpty()) {
+            showError("Tên nhà cung cấp không được rỗng", txtTenNCC);
+            return false;
         }
-        if (!txtSDT.getText().matches("\\d{10}")) {
-            JOptionPane.showMessageDialog(this, "SĐT phải là 10 chữ số"); return false;
+        if (!sdt.matches("^0\\d{9}$")) {
+            showError("Số điện thoại phải bắt đầu bằng số 0 và có 10 chữ số", txtSDT);
+            return false;
+        }
+        if (!email.isEmpty() && !email.matches("^[\\w._%+-]+@[\\w.-]+\\.[A-Za-z]{2,6}$")) {
+            showError("Email không đúng định dạng", txtEmail);
+            return false;
+        }
+        if (diaChi.isEmpty()) {
+            showError("Địa chỉ không được rỗng", txtDiaChi);
+            return false;
         }
         return true;
     }
+    
+    private void showError(String mess, JTextField txt) {
+        JOptionPane.showMessageDialog(this, mess, "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+        txt.requestFocus();
+        txt.selectAll();
+    }
 
-    // --- UI Helpers ---
+    // ==========================================================================
+    //                              UI HELPERS & EVENTS
+    // ==========================================================================
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        int row = tblNhaCungCap.getSelectedRow();
+        if (row >= 0) {
+            txtMaNCC.setText(modelNhaCungCap.getValueAt(row, 0).toString());
+            txtTenNCC.setText(modelNhaCungCap.getValueAt(row, 1).toString());
+            txtSDT.setText(modelNhaCungCap.getValueAt(row, 2).toString());
+            txtEmail.setText(modelNhaCungCap.getValueAt(row, 3) != null ? modelNhaCungCap.getValueAt(row, 3).toString() : "");
+            txtDiaChi.setText(modelNhaCungCap.getValueAt(row, 4).toString());
+            
+            String trangThai = modelNhaCungCap.getValueAt(row, 5).toString();
+            cboTrangThai.setSelectedItem(trangThai.equals("Hoạt động") ? "Hoạt động" : "Ngừng hoạt động");
+        }
+    }
+
+    // Các method MouseListener chưa dùng đến
+    @Override public void mousePressed(MouseEvent e) {}
+    @Override public void mouseReleased(MouseEvent e) {}
+    @Override public void mouseEntered(MouseEvent e) {}
+    @Override public void mouseExited(MouseEvent e) {}
+
+    // --- UI Component Creators ---
     private JLabel createLabel(String text, int x, int y) {
         JLabel lbl = new JLabel(text);
         lbl.setFont(FONT_TEXT);
@@ -401,11 +451,11 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener {
         table.getTableHeader().setBackground(COLOR_PRIMARY);
         table.getTableHeader().setForeground(Color.WHITE);
         
-        // Center align
+        // Center align cho các cột (trừ Tên và Địa chỉ)
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(JLabel.CENTER);
         for(int i=0; i<table.getColumnCount(); i++) {
-            if(i!=1 && i!=4) // Trừ Tên và Địa chỉ
+            if(i!=1 && i!=4) 
                 table.getColumnModel().getColumn(i).setCellRenderer(center);
         }
         return table;
@@ -417,12 +467,15 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener {
             TitledBorder.LEFT, TitledBorder.TOP, FONT_BOLD, Color.DARK_GRAY
         );
     }
-
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Quản Lý Nhà Cung Cấp (Fake Data)");
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+            }
+            JFrame frame = new JFrame("Tra cứu phiếu nhập");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1500, 850);
+            frame.setSize(1400, 800);
             frame.setLocationRelativeTo(null);
             frame.setContentPane(new NhaCungCap_GUI());
             frame.setVisible(true);

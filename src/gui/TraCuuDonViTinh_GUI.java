@@ -1,13 +1,14 @@
-/**
- * @author Quốc Khánh
- * @version 1.0
- * @since Nov 20, 2025
- *
- * Mô tả: Giao diện quản lý & tra cứu Đơn vị tính (Kèm danh sách thuốc sử dụng).
- */
 package gui;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
@@ -15,9 +16,13 @@ import javax.swing.table.*;
 import customcomponent.PillButton;
 import customcomponent.PlaceholderSupport;
 import customcomponent.RoundedBorder;
+import dao.DonViTinh_DAO;
+import dao.QuyCachDongGoi_DAO;
+import entity.DonViTinh;
+import entity.QuyCachDongGoi;
 
 @SuppressWarnings("serial")
-public class TraCuuDonViTinh_GUI extends JPanel {
+public class TraCuuDonViTinh_GUI extends JPanel implements ActionListener, MouseListener {
 
     private JPanel pnHeader;
     private JPanel pnCenter;
@@ -27,11 +32,25 @@ public class TraCuuDonViTinh_GUI extends JPanel {
     private DefaultTableModel modelDonViTinh;
 
     // Bảng Detail: Sản phẩm sử dụng đơn vị này
-    private JTabbedPane tabChiTiet;
     private JTable tblSanPhamSuDung;
     private DefaultTableModel modelSanPhamSuDung;
 
+    private JTextField txtTimKiem;
+    private PillButton btnTim;
+    private PillButton btnLamMoi;
+
+    // DAO
+    private DonViTinh_DAO donViTinhDAO;
+    private QuyCachDongGoi_DAO quyCachDAO;
+
+    // Cache dữ liệu để xử lý nhanh
+    private List<DonViTinh> listDVT;
+    private List<QuyCachDongGoi> listQuyCach;
+
     public TraCuuDonViTinh_GUI() {
+        donViTinhDAO = new DonViTinh_DAO();
+        quyCachDAO = new QuyCachDongGoi_DAO();
+        
         setPreferredSize(new Dimension(1537, 850));
         initialize();
     }
@@ -41,55 +60,49 @@ public class TraCuuDonViTinh_GUI extends JPanel {
         setBackground(Color.WHITE);
 
         // 1. HEADER
-        taoPhanHeader();
+        taoPhanDau();
         add(pnHeader, BorderLayout.NORTH);
 
         // 2. CENTER
-        taoPhanCenter();
+        taoPhanGiua();
         add(pnCenter, BorderLayout.CENTER);
 
         // 3. DATA
-        loadDuLieuDonVi();
-        addEvents();
+        taiDuLieuLenBang();
+        dangKySuKien();
     }
 
     // ==============================================================================
-    //                              PHẦN HEADER
+    //                              PHẦN GIAO DIỆN (VIEW)
     // ==============================================================================
-    private void taoPhanHeader() {
+    private void taoPhanDau() {
         pnHeader = new JPanel();
         pnHeader.setLayout(null);
         pnHeader.setPreferredSize(new Dimension(1073, 94));
         pnHeader.setBackground(new Color(0xE3F2F5));
 
         // --- Ô TÌM KIẾM ---
-        JTextField txtTimKiem = new JTextField();
+        txtTimKiem = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm mã hoặc tên đơn vị tính...");
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
-        txtTimKiem.setBounds(25, 17, 500, 60);
+        txtTimKiem.setBounds(25, 17, 480, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
-        txtTimKiem.setForeground(Color.GRAY);
         pnHeader.add(txtTimKiem);
 
         // --- NÚT CHỨC NĂNG ---
-        // Nút Tìm
-        PillButton btnTim = new PillButton("Tìm kiếm");
+        btnTim = new PillButton("Tìm kiếm");
         btnTim.setBounds(550, 22, 140, 50);
         btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnTim);
         
-        // Nút Làm mới
-        PillButton btnLamMoi = new PillButton("Làm mới");
-        btnLamMoi.setBounds(870, 22, 140, 50);
+        btnLamMoi = new PillButton("Làm mới");
+        btnLamMoi.setBounds(710, 22, 140, 50); // Đã chỉnh lại vị trí cho đẹp
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnLamMoi);
     }
 
-    // ==============================================================================
-    //                              PHẦN CENTER
-    // ==============================================================================
-    private void taoPhanCenter() {
+private void taoPhanGiua() {
         pnCenter = new JPanel(new BorderLayout());
         pnCenter.setBackground(Color.WHITE);
         pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -99,14 +112,13 @@ public class TraCuuDonViTinh_GUI extends JPanel {
         splitPane.setDividerLocation(400);
         splitPane.setResizeWeight(0.5);
 
-        // --- TOP: BẢNG ĐƠN VỊ TÍNH ---
         String[] colDVT = {"STT", "Mã Đơn Vị", "Tên Đơn Vị Tính", "Số lượng thuốc đang dùng"};
         modelDonViTinh = new DefaultTableModel(colDVT, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-        tblDonViTinh = setupTable(modelDonViTinh);
+        tblDonViTinh = thietLapBang(modelDonViTinh);
         
-        // Căn giữa toàn bộ
+        // Căn giữa
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
         for (int i = 0; i < tblDonViTinh.getColumnCount(); i++) {
@@ -114,16 +126,17 @@ public class TraCuuDonViTinh_GUI extends JPanel {
         }
 
         JScrollPane scrollDVT = new JScrollPane(tblDonViTinh);
-        scrollDVT.setBorder(createTitledBorder("Danh mục Đơn vị tính"));
+        scrollDVT.setBorder(taoVienTieuDe("Danh mục Đơn vị tính"));
         splitPane.setTopComponent(scrollDVT);
 
-        // --- BOTTOM: TAB CHI TIẾT (Sản phẩm sử dụng) ---
-        tabChiTiet = new JTabbedPane();
-        tabChiTiet.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-
-        tabChiTiet.addTab("Sản phẩm sử dụng đơn vị này", createTabSanPhamSuDung());
+        // --- BOTTOM: SẢN PHẨM SỬ DỤNG (ĐÃ SỬA) ---
+        // Không dùng JTabbedPane nữa, lấy trực tiếp Panel/ScrollPane
+        JComponent pnlChiTiet = createTabSanPhamSuDung();
         
-        splitPane.setBottomComponent(tabChiTiet);
+        // Đặt viền có tiêu đề giống bảng trên
+        pnlChiTiet.setBorder(taoVienTieuDe("Sản phẩm sử dụng đơn vị này"));
+        
+        splitPane.setBottomComponent(pnlChiTiet);
         pnCenter.add(splitPane, BorderLayout.CENTER);
     }
 
@@ -132,7 +145,7 @@ public class TraCuuDonViTinh_GUI extends JPanel {
         modelSanPhamSuDung = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-        tblSanPhamSuDung = setupTable(modelSanPhamSuDung);
+        tblSanPhamSuDung = thietLapBang(modelSanPhamSuDung);
         
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
@@ -146,8 +159,7 @@ public class TraCuuDonViTinh_GUI extends JPanel {
         return new JScrollPane(tblSanPhamSuDung);
     }
 
-    // Helper: Setup Table
-    private JTable setupTable(DefaultTableModel model) {
+    private JTable thietLapBang(DefaultTableModel model) {
         JTable table = new JTable(model);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         table.setRowHeight(30);
@@ -162,7 +174,7 @@ public class TraCuuDonViTinh_GUI extends JPanel {
         return table;
     }
 
-    private TitledBorder createTitledBorder(String title) {
+    private TitledBorder taoVienTieuDe(String title) {
         return BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
             TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 16), Color.DARK_GRAY
@@ -170,56 +182,160 @@ public class TraCuuDonViTinh_GUI extends JPanel {
     }
 
     // ==============================================================================
-    //                              DATA & EVENTS
+    //                              DATA & LOGIC (CONTROLLER)
     // ==============================================================================
     
-    private void addEvents() {
-        // Sự kiện click vào Đơn vị -> Load danh sách thuốc
-        tblDonViTinh.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int row = tblDonViTinh.getSelectedRow();
-                if (row >= 0) {
-                    String tenDVT = tblDonViTinh.getValueAt(row, 2).toString();
-                    loadSanPhamTheoDonVi(tenDVT);
-                }
-            }
-        });
+    private void dangKySuKien() {
+        btnTim.addActionListener(this);
+        btnLamMoi.addActionListener(this);
+        tblDonViTinh.addMouseListener(this);
     }
 
-    private void loadDuLieuDonVi() {
-        // Data giả lập (Entity DonViTinh)
-        Object[][] data = {
-            {"1", "DVT-001", "Viên", "150"},
-            {"2", "DVT-002", "Vỉ", "45"},
-            {"3", "DVT-003", "Hộp", "200"},
-            {"4", "DVT-004", "Chai", "30"},
-            {"5", "DVT-005", "Gói", "12"},
-            {"6", "DVT-006", "Tuýp", "8"},
-            {"7", "DVT-007", "Thùng", "15"}
-        };
+    /**
+     * Tải dữ liệu mới nhất từ DB và hiển thị lên bảng
+     */
+    private void taiDuLieuLenBang() {
+        modelDonViTinh.setRowCount(0);
         
-        for (Object[] row : data) {
-            modelDonViTinh.addRow(row);
+        // Load dữ liệu từ DAO
+        listDVT = donViTinhDAO.layTatCaDonViTinh();
+        listQuyCach = quyCachDAO.layTatCaQuyCachDongGoi(); // Dùng để đếm số lượng thuốc dùng
+
+        int stt = 1;
+        for (DonViTinh dvt : listDVT) {
+            // Tính số lượng thuốc (sản phẩm) đang sử dụng đơn vị này
+            // Logic: Đếm số lượng QuyCachDongGoi có MaDonViTinh này
+            long soLuongSuDung = listQuyCach.stream()
+                    .filter(qc -> qc.getDonViTinh().getMaDonViTinh().equals(dvt.getMaDonViTinh()))
+                    .map(qc -> qc.getSanPham().getMaSanPham()) // Map sang mã SP để đếm distinct (nếu cần)
+                    .distinct()
+                    .count();
+
+            modelDonViTinh.addRow(new Object[]{
+                stt++,
+                dvt.getMaDonViTinh(),
+                dvt.getTenDonViTinh(),
+                soLuongSuDung
+            });
         }
     }
 
-    private void loadSanPhamTheoDonVi(String tenDVT) {
+    /**
+     * Hiển thị danh sách sản phẩm khi chọn một đơn vị tính
+     */
+    private void hienThiSanPhamTheoDonVi(String maDVT) {
         modelSanPhamSuDung.setRowCount(0);
+        
+        // Lọc danh sách quy cách có mã đơn vị tính tương ứng
+        List<QuyCachDongGoi> listLoc = listQuyCach.stream()
+                .filter(qc -> qc.getDonViTinh().getMaDonViTinh().equals(maDVT))
+                .collect(Collectors.toList());
 
-        // Giả lập logic tìm kiếm trong DB (Bảng QuyCachDongGoi)
-        if (tenDVT.equals("Viên")) {
-            modelSanPhamSuDung.addRow(new Object[]{"1", "SP001", "Paracetamol 500mg", "Đơn vị gốc", "1"});
-            modelSanPhamSuDung.addRow(new Object[]{"2", "SP004", "Panadol Extra", "Đơn vị gốc", "1"});
-            modelSanPhamSuDung.addRow(new Object[]{"3", "SP009", "Vitamin C", "Đơn vị gốc", "1"});
-        } 
-        else if (tenDVT.equals("Hộp")) {
-            modelSanPhamSuDung.addRow(new Object[]{"1", "SP001", "Paracetamol 500mg", "Quy đổi", "100 Viên"});
-            modelSanPhamSuDung.addRow(new Object[]{"2", "SP003", "Băng cá nhân", "Đơn vị gốc", "1"});
-            modelSanPhamSuDung.addRow(new Object[]{"3", "SP008", "Khẩu trang y tế", "Đơn vị gốc", "1"});
+        int stt = 1;
+        for (QuyCachDongGoi qc : listLoc) {
+            String vaiTro = qc.isDonViGoc() ? "Đơn vị gốc" : "Đơn vị quy đổi";
+            String quyDoi = "1";
+
+            if (!qc.isDonViGoc()) {
+                // Nếu là đơn vị quy đổi, tìm đơn vị gốc của sản phẩm đó để hiển thị (VD: 10 Viên)
+                QuyCachDongGoi qcBase = listQuyCach.stream()
+                        .filter(q -> q.getSanPham().getMaSanPham().equals(qc.getSanPham().getMaSanPham()) && q.isDonViGoc())
+                        .findFirst()
+                        .orElse(null);
+                
+                String tenDonViGoc = (qcBase != null) ? qcBase.getDonViTinh().getTenDonViTinh() : "Đơn vị gốc";
+                quyDoi = qc.getHeSoQuyDoi() + " " + tenDonViGoc;
+            }
+
+            modelSanPhamSuDung.addRow(new Object[]{
+                stt++,
+                qc.getSanPham().getMaSanPham(),
+                qc.getSanPham().getTenSanPham(),
+                vaiTro,
+                quyDoi
+            });
         }
-        else if (tenDVT.equals("Chai")) {
-            modelSanPhamSuDung.addRow(new Object[]{"1", "SP005", "Siro ho Prospan", "Đơn vị gốc", "1"});
-            modelSanPhamSuDung.addRow(new Object[]{"2", "SP006", "Nước muối sinh lý", "Đơn vị gốc", "1"});
+    }
+
+    private void xuLyTimKiem() {
+        String tuKhoa = txtTimKiem.getText().trim().toLowerCase();
+        if (tuKhoa.isEmpty() || tuKhoa.contains("tìm kiếm")) {
+            taiDuLieuLenBang();
+            return;
         }
+
+        modelDonViTinh.setRowCount(0);
+        int stt = 1;
+        for (DonViTinh dvt : listDVT) {
+            boolean matchMa = dvt.getMaDonViTinh().toLowerCase().contains(tuKhoa);
+            boolean matchTen = dvt.getTenDonViTinh().toLowerCase().contains(tuKhoa);
+
+            if (matchMa || matchTen) {
+                long soLuongSuDung = listQuyCach.stream()
+                        .filter(qc -> qc.getDonViTinh().getMaDonViTinh().equals(dvt.getMaDonViTinh()))
+                        .map(qc -> qc.getSanPham().getMaSanPham())
+                        .distinct()
+                        .count();
+
+                modelDonViTinh.addRow(new Object[]{
+                    stt++,
+                    dvt.getMaDonViTinh(),
+                    dvt.getTenDonViTinh(),
+                    soLuongSuDung
+                });
+            }
+        }
+    }
+
+    private void xuLyLamMoi() {
+        txtTimKiem.setText("");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm mã hoặc tên đơn vị tính...");
+        taiDuLieuLenBang();
+        modelSanPhamSuDung.setRowCount(0);
+    }
+
+    // ==============================================================================
+    //                              EVENT HANDLERS
+    // ==============================================================================
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object o = e.getSource();
+        if (o.equals(btnTim)) {
+            xuLyTimKiem();
+        } else if (o.equals(btnLamMoi)) {
+            xuLyLamMoi();
+        }
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        if (e.getSource().equals(tblDonViTinh)) {
+            int row = tblDonViTinh.getSelectedRow();
+            if (row != -1) {
+                String maDVT = tblDonViTinh.getValueAt(row, 1).toString();
+                hienThiSanPhamTheoDonVi(maDVT);
+            }
+        }
+    }
+
+    @Override public void mousePressed(MouseEvent e) {}
+    @Override public void mouseReleased(MouseEvent e) {}
+    @Override public void mouseEntered(MouseEvent e) {}
+    @Override public void mouseExited(MouseEvent e) {}
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+//                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+            }
+            JFrame frame = new JFrame("Tra cứu phiếu nhập");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(1400, 800);
+            frame.setLocationRelativeTo(null);
+            frame.setContentPane(new TraCuuDonViTinh_GUI());
+            frame.setVisible(true);
+        });
     }
 }
