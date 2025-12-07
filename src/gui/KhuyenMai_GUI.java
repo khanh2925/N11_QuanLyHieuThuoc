@@ -12,9 +12,9 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
 
-import customcomponent.PillButton;
-import customcomponent.PlaceholderSupport;
-import customcomponent.RoundedBorder;
+import component.button.PillButton;
+import component.input.PlaceholderSupport;
+import component.border.RoundedBorder;
 import dao.ChiTietKhuyenMaiSanPham_DAO;
 import dao.KhuyenMai_DAO;
 import dao.SanPham_DAO;

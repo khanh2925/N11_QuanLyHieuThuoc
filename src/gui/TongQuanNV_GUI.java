@@ -10,8 +10,8 @@ import java.awt.event.MouseListener;
 import java.awt.event.ActionEvent;
 import com.toedter.calendar.JDateChooser;
 
-import customcomponent.PillButton;
-import customcomponent.RoundedBorder;
+import component.button.PillButton;
+import component.border.RoundedBorder;
 
 public class TongQuanNV_GUI extends JPanel implements ActionListener, MouseListener {
 
@@ -76,11 +76,11 @@ public class TongQuanNV_GUI extends JPanel implements ActionListener, MouseListe
                     { 
                         try {
                             
-                            java.net.URL imgURL = getClass().getResource("/images/best-seller.png");
+                            java.net.URL imgURL = getClass().getResource("/resources/images/best-seller.png");
                             if (imgURL != null) {
                                 backgroundImage = new ImageIcon(imgURL).getImage();
                             } else {
-                                System.err.println("Không tìm thấy ảnh: /images/hinhAnhSPBanNhieuNhat.png");
+                                System.err.println("Không tìm thấy ảnh: /resources/images/hinhAnhSPBanNhieuNhat.png");
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -126,7 +126,7 @@ public class TongQuanNV_GUI extends JPanel implements ActionListener, MouseListe
             private Image backgroundImage;
 
             {
-                java.net.URL imgURL = getClass().getResource("/images/soluongdonhangNV.png");
+                java.net.URL imgURL = getClass().getResource("/resources/images/soluongdonhangNV.png");
                 if (imgURL != null) {
                     backgroundImage = new ImageIcon(imgURL).getImage();
                 }
@@ -173,11 +173,11 @@ public class TongQuanNV_GUI extends JPanel implements ActionListener, MouseListe
                     { 
                         try {
                             
-                            java.net.URL imgURL = getClass().getResource("/images/sale-return-icon.png");
+                            java.net.URL imgURL = getClass().getResource("/resources/images/sale-return-icon.png");
                             if (imgURL != null) {
                                 backgroundImage = new ImageIcon(imgURL).getImage();
                             } else {
-                                System.err.println("Không tìm thấy ảnh: /images/hinhAnhBiTra.png");
+                                System.err.println("Không tìm thấy ảnh: /resources/images/hinhAnhBiTra.png");
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -228,11 +228,11 @@ public class TongQuanNV_GUI extends JPanel implements ActionListener, MouseListe
             { 
                 try {
                     
-                    java.net.URL imgURL = getClass().getResource("/images/doanhthuNV.png");
+                    java.net.URL imgURL = getClass().getResource("/resources/images/doanhthuNV.png");
                     if (imgURL != null) {
                         backgroundImage = new ImageIcon(imgURL).getImage();
                     } else {
-                        System.err.println("Không tìm thấy ảnh: /images/hinhAnhDoanhThu.png");
+                        System.err.println("Không tìm thấy ảnh: /resources/images/hinhAnhDoanhThu.png");
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

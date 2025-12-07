@@ -32,11 +32,11 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.toedter.calendar.JDateChooser;
 
-import connectDB.connectDB;
-import customcomponent.PillButton;
-import customcomponent.PlaceholderSupport;
-import customcomponent.RoundedBorder;
-import customcomponent.TaoJtextNhanh;
+import database.connectDB;
+import component.button.PillButton;
+import component.input.PlaceholderSupport;
+import component.border.RoundedBorder;
+import component.input.TaoJtextNhanh;
 import dao.DonViTinh_DAO;
 import dao.LoSanPham_DAO;
 import dao.NhaCungCap_DAO;
@@ -54,6 +54,8 @@ import entity.SanPham;
 import entity.QuyCachDongGoi; 
 import entity.Session;
 import entity.TaiKhoan;
+import gui.dialog.ChonLo_Dialog;
+import gui.dialog.ThemLo_Dialog;
 
 
 public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Serializable {
@@ -1134,7 +1136,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
             lblHinhAnh.setPreferredSize(new Dimension(80, 80));
             lblHinhAnh.setHorizontalAlignment(SwingConstants.CENTER);
             try {
-                String imagePath = "/images/" + sp.getHinhAnh(); 
+                String imagePath = "/resources/images/" + sp.getHinhAnh(); 
                 if (sp.getHinhAnh() != null && !sp.getHinhAnh().isBlank()) {
                     ImageIcon imgIcon = new ImageIcon(getClass().getResource(imagePath));
                     if (imgIcon.getIconWidth() != -1) { 
@@ -1206,7 +1208,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
             gbc.gridx = 7;
             JButton btnXoaSP = new JButton();
             // Lưu ý: Đảm bảo đường dẫn icon đúng
-            ImageIcon icon = new ImageIcon(getClass().getResource("/images/bin.png")); 
+            ImageIcon icon = new ImageIcon(getClass().getResource("/resources/images/bin.png")); 
             btnXoaSP.setIcon(new ImageIcon(icon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH)));
             btnXoaSP.setToolTipText("Xóa sản phẩm này");
             btnXoaSP.setPreferredSize(new Dimension(40, 40));

@@ -22,9 +22,9 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 
-import customcomponent.PillButton;
-import customcomponent.PlaceholderSupport;
-import customcomponent.RoundedBorder;
+import component.button.PillButton;
+import component.input.PlaceholderSupport;
+import component.border.RoundedBorder;
 
 public class NhapHang_GUI extends JPanel {
 

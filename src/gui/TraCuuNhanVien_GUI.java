@@ -22,9 +22,9 @@ import javax.swing.JTextField;
 import javax.swing.border.*;
 import javax.swing.table.*;
 
-import customcomponent.PillButton;
-import customcomponent.PlaceholderSupport;
-import customcomponent.RoundedBorder;
+import component.button.PillButton;
+import component.input.PlaceholderSupport;
+import component.border.RoundedBorder;
 import dao.LichSuNhanVien_DAO;
 import dao.NhanVien_DAO;
 import entity.HoaDon;

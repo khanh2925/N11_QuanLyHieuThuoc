@@ -16,9 +16,9 @@ import java.util.Date;
 import com.toedter.calendar.JDateChooser;
 
 // Import các component riêng của bạn
-import customcomponent.PillButton;
-import customcomponent.PlaceholderSupport;
-import customcomponent.RoundedBorder;
+import component.button.PillButton;
+import component.input.PlaceholderSupport;
+import component.border.RoundedBorder;
 
 public class TraCuuKhachHang_GUI extends JPanel {
 

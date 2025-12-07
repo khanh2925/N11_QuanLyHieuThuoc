@@ -7,9 +7,9 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
 
-import customcomponent.PlaceholderSupport;
-import customcomponent.RoundedBorder;
-import customcomponent.PillButton;
+import component.input.PlaceholderSupport;
+import component.border.RoundedBorder;
+import component.button.PillButton;
 import dao.DonViTinh_DAO;
 import entity.DonViTinh;
 

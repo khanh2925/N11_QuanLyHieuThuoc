@@ -17,7 +17,7 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
-import customcomponent.PlaceholderSupport;
+import component.input.PlaceholderSupport;
 import dao.SanPham_DAO;
 import entity.SanPham;
 import enums.LoaiSanPham;

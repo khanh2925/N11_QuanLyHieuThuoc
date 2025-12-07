@@ -16,9 +16,9 @@ import javax.swing.border.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.*;
 
-import customcomponent.PillButton;
-import customcomponent.PlaceholderSupport;
-import customcomponent.RoundedBorder;
+import component.button.PillButton;
+import component.input.PlaceholderSupport;
+import component.border.RoundedBorder;
 import dao.NhanVien_DAO;
 import dao.TaiKhoan_DAO;
 import entity.NhanVien;
@@ -36,7 +36,7 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 	private JComboBox<String> cboGioiTinh, cboChucVu, cboCaLam, cboTrangThai;
 	private JLabel lblHinhAnh;
 	private JButton btnChonAnh;
-//    private String currentImagePath = "/images/icon_anh_nv_null.png";	
+//    private String currentImagePath = "/resources/images/icon_anh_nv_null.png";	
 
 	// Buttons
 	private PillButton btnThem, btnSua, btnXoa, btnLamMoi, btnTimKiem;
@@ -603,9 +603,9 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 
 	private void setHinhAnh(String name) {
 		try {
-			URL url = getClass().getResource("/images/" + name);
+			URL url = getClass().getResource("/resources/images/" + name);
 			if (url == null)
-				url = getClass().getResource("/images/icon_anh_nv_null.png");
+				url = getClass().getResource("/resources/images/icon_anh_nv_null.png");
 			lblHinhAnh = new JLabel();
 			lblHinhAnh.setIcon(
 					new ImageIcon(new ImageIcon(url).getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH)));

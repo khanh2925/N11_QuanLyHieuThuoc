@@ -12,15 +12,16 @@ import javax.swing.border.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.*;
 
-import customcomponent.PillButton;
-import customcomponent.PlaceholderSupport;
-import customcomponent.RoundedBorder;
+import component.button.PillButton;
+import component.input.PlaceholderSupport;
+import component.border.RoundedBorder;
 import dao.SanPham_DAO;
 import dao.QuyCachDongGoi_DAO;
 import entity.SanPham;
 import entity.QuyCachDongGoi;
 import enums.DuongDung;
 import enums.LoaiSanPham;
+import gui.dialog.QuyCachDongGoi_Dialog;
 
 @SuppressWarnings("serial")
 public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseListener {
@@ -567,7 +568,7 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
     private void datHinhAnh(String pathOrName) {
         if (pathOrName == null || pathOrName.isEmpty()) pathOrName = "icon_anh_sp_null.png";
         
-        URL url = getClass().getResource("/images/" + pathOrName);
+        URL url = getClass().getResource("/resources/images/" + pathOrName);
         
         ImageIcon icon = null;
         if (url != null) {

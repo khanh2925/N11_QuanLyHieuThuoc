@@ -39,9 +39,9 @@ import javax.swing.table.JTableHeader;
 
 import com.toedter.calendar.JDateChooser;
 
-import customcomponent.PillButton;
-import customcomponent.PlaceholderSupport;
-import customcomponent.RoundedBorder;
+import component.button.PillButton;
+import component.input.PlaceholderSupport;
+import component.border.RoundedBorder;
 import dao.ChiTietPhieuTra_DAO;
 import dao.PhieuTra_DAO;
 import entity.ChiTietPhieuTra;

@@ -6,10 +6,10 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
-import connectDB.connectDB;
-import customcomponent.PillButton;
-import customcomponent.PlaceholderSupport;
-import customcomponent.RoundedBorder;
+import database.connectDB;
+import component.button.PillButton;
+import component.input.PlaceholderSupport;
+import component.border.RoundedBorder;
 import dao.DonViTinh_DAO;
 import dao.QuyCachDongGoi_DAO;
 import dao.SanPham_DAO;
@@ -17,6 +17,8 @@ import entity.DonViTinh;
 import entity.QuyCachDongGoi;
 import entity.SanPham;
 import enums.LoaiSanPham;
+import gui.dialog.CapNhatQuyCachDongGoi_Dialog;
+import gui.dialog.ThemQuyCachDongGoi_Dialog;
 
 public class QuyCachDongGoi_GUI extends JPanel {
 

@@ -16,9 +16,9 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.TableRowSorter;
 import javax.swing.RowFilter;
 
-import customcomponent.PillButton;
-import customcomponent.PlaceholderSupport;
-import customcomponent.RoundedBorder;
+import component.button.PillButton;
+import component.input.PlaceholderSupport;
+import component.border.RoundedBorder;
 import dao.KhachHang_DAO;
 import entity.KhachHang; // Vẫn dùng entity để hứng dữ liệu
 

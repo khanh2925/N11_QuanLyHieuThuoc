@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List; // 💡 Bổ sung import List
 
-import connectDB.connectDB;
+import database.connectDB;
 import entity.LoSanPham;
 import entity.SanPham;
 import enums.LoaiSanPham;

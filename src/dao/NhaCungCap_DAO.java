@@ -4,7 +4,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import connectDB.connectDB;
+import database.connectDB;
 import entity.NhaCungCap;
 
 public class NhaCungCap_DAO {

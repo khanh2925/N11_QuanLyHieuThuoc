@@ -95,7 +95,7 @@ public class Main_GUI extends JFrame {
 	    headerPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
 	    try {
-	        ImageIcon iconLogo = new ImageIcon(getClass().getResource("/images/Logo.png"));
+	        ImageIcon iconLogo = new ImageIcon(getClass().getResource("/resources/images/Logo.png"));
 	        Image scaled = iconLogo.getImage().getScaledInstance(LOGO_WIDTH, LOGO_WIDTH, Image.SCALE_SMOOTH);
 	        JLabel logo = new JLabel(new ImageIcon(scaled));
 	        logo.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -113,71 +113,71 @@ public class Main_GUI extends JFrame {
 	    // Thêm menu button
 	    boolean isQL = nvDangNhap != null && nvDangNhap.isQuanLy();
 	    if (isQL) {
-			addMenuButton(menuScrollContent, "Tổng quan", "tongquan", "/images/icon_tong_quan.png");
-			addMenuButton(menuScrollContent, "Thống kê - Báo cáo", "thongke", "/images/icon_thong_ke.png");
+			addMenuButton(menuScrollContent, "Tổng quan", "tongquan", "/resources/images/icon_tong_quan.png");
+			addMenuButton(menuScrollContent, "Thống kê - Báo cáo", "thongke", "/resources/images/icon_thong_ke.png");
 			
-			addMenuButton(menuScrollContent, "Tra cứu", "tracuu", "/images/icon_tra_cuu.png");
-			addSubmenuButton("tracuu", "tracuusanpham", "Sản phẩm", "/images/icon_san_pham.png",
+			addMenuButton(menuScrollContent, "Tra cứu", "tracuu", "/resources/images/icon_tra_cuu.png");
+			addSubmenuButton("tracuu", "tracuusanpham", "Sản phẩm", "/resources/images/icon_san_pham.png",
 					new TraCuuSanPham_GUI());
-			addSubmenuButton("tracuu", "tracuudonhang", "Đơn hàng", "/images/icon_don_hang.png",
+			addSubmenuButton("tracuu", "tracuudonhang", "Đơn hàng", "/resources/images/icon_don_hang.png",
 					new TraCuuDonHang_GUI());
-			addSubmenuButton("tracuu", "tracuudontrahang", "Đơn trả hàng", "/images/icon_tra_hang.png",
+			addSubmenuButton("tracuu", "tracuudontrahang", "Đơn trả hàng", "/resources/images/icon_tra_hang.png",
 					new TraCuuDonTraHang_GUI());
-			addSubmenuButton("tracuu", "tracuudonhuyhang", "Đơn huỷ hàng", "/images/icon_xuat_huy.png",
+			addSubmenuButton("tracuu", "tracuudonhuyhang", "Đơn huỷ hàng", "/resources/images/icon_xuat_huy.png",
 					new TraCuuPhieuHuy_GUI());
-			addSubmenuButton("tracuu", "tracuudonnhaphang", "Đơn nhập hàng", "/images/icon_nhap_hang.png",
+			addSubmenuButton("tracuu", "tracuudonnhaphang", "Đơn nhập hàng", "/resources/images/icon_nhap_hang.png",
 					new TraCuuPhieuNhap_GUI());
-			addSubmenuButton("tracuu", "tracuunhanvien", "Nhân viên", "/images/icon_nhan_vien.png",
+			addSubmenuButton("tracuu", "tracuunhanvien", "Nhân viên", "/resources/images/icon_nhan_vien.png",
 					new TraCuuNhanVien_GUI());
-			addSubmenuButton("tracuu", "tracuukhachhang", "Khách hàng", "/images/icon_khach_hang.png",
+			addSubmenuButton("tracuu", "tracuukhachhang", "Khách hàng", "/resources/images/icon_khach_hang.png",
 					new TraCuuKhachHang_GUI());
-			addSubmenuButton("tracuu", "tracuunhacungcap", "Nhà cung cấp", "/images/icon_nha_cung_cap.png",
+			addSubmenuButton("tracuu", "tracuunhacungcap", "Nhà cung cấp", "/resources/images/icon_nha_cung_cap.png",
 					new TraCuuNhaCungCap_GUI());
-			addSubmenuButton("tracuu", "tracuukhuyenmai", "Khuyến mãi", "/images/icon_khuyen_mai.png",
+			addSubmenuButton("tracuu", "tracuukhuyenmai", "Khuyến mãi", "/resources/images/icon_khuyen_mai.png",
 					new TraCuuKhuyenMai_GUI());
-			addSubmenuButton("tracuu", "tracuudonvitinh", "Đơn vị tính", "/images/icon_don_vi_tinh.png",
+			addSubmenuButton("tracuu", "tracuudonvitinh", "Đơn vị tính", "/resources/images/icon_don_vi_tinh.png",
 					new TraCuuDonViTinh_GUI());
-			addSubmenuButton("tracuu", "tracuubanggia", "Bảng giá", "/images/icon_bang_gia.png",
+			addSubmenuButton("tracuu", "tracuubanggia", "Bảng giá", "/resources/images/icon_bang_gia.png",
 					new TraCuuBangGia_GUI());
 			
-			addMenuButton(menuScrollContent, "Quản lý nhập hàng", "nhaphang", "/images/icon_nhap_hang.png");
-			addMenuButton(menuScrollContent, "Quản lý xuất huỷ", "xuathuy", "/images/icon_xuat_huy.png");
-			addMenuButton(menuScrollContent, "Quản lý trả hàng", "trahang", "/images/icon_tra_hang.png");
+			addMenuButton(menuScrollContent, "Quản lý nhập hàng", "nhaphang", "/resources/images/icon_nhap_hang.png");
+			addMenuButton(menuScrollContent, "Quản lý xuất huỷ", "xuathuy", "/resources/images/icon_xuat_huy.png");
+			addMenuButton(menuScrollContent, "Quản lý trả hàng", "trahang", "/resources/images/icon_tra_hang.png");
 
-			addMenuButton(menuScrollContent, "Sản phẩm", "sanpham", "/images/icon_san_pham.png");
-			addSubmenuButton("sanpham", "danhsachsanpham", "Danh sách sản phẩm", "/images/icon_danh_sach.png",
+			addMenuButton(menuScrollContent, "Sản phẩm", "sanpham", "/resources/images/icon_san_pham.png");
+			addSubmenuButton("sanpham", "danhsachsanpham", "Danh sách sản phẩm", "/resources/images/icon_danh_sach.png",
 					new QuanLySanPham_GUI());
-			addSubmenuButton("sanpham", "donvitinh", "Đơn vị tính", "/images/icon_don_vi_tinh.png",
+			addSubmenuButton("sanpham", "donvitinh", "Đơn vị tính", "/resources/images/icon_don_vi_tinh.png",
 					new DonViTinh_QL_GUI());
-			addSubmenuButton("sanpham", "banggia", "Bảng giá", "/images/icon_bang_gia.png", new BangGia_GUI());
+			addSubmenuButton("sanpham", "banggia", "Bảng giá", "/resources/images/icon_bang_gia.png", new BangGia_GUI());
 
-			addMenuButton(menuScrollContent, "Quản lý nhà cung cấp", "nhacungcap", "/images/icon_nha_cung_cap.png");
-			addMenuButton(menuScrollContent, "Quẩn lý khách hàng", "khachhang", "/images/icon_khach_hang.png");
-			addMenuButton(menuScrollContent, "Quản lý khuyến mãi", "khuyenmai", "/images/icon_khuyen_mai.png");
-			addMenuButton(menuScrollContent, "Quản lý nhân viên", "nhanvien", "/images/icon_nhan_vien.png");
+			addMenuButton(menuScrollContent, "Quản lý nhà cung cấp", "nhacungcap", "/resources/images/icon_nha_cung_cap.png");
+			addMenuButton(menuScrollContent, "Quẩn lý khách hàng", "khachhang", "/resources/images/icon_khach_hang.png");
+			addMenuButton(menuScrollContent, "Quản lý khuyến mãi", "khuyenmai", "/resources/images/icon_khuyen_mai.png");
+			addMenuButton(menuScrollContent, "Quản lý nhân viên", "nhanvien", "/resources/images/icon_nhan_vien.png");
 
 			menuScrollContent.add(Box.createVerticalGlue());
 		} else {
-			addMenuButton(menuScrollContent, "Tổng quan", "tongquan", "/images/icon_tong_quan.png");
-			addMenuButton(menuScrollContent, "Bán hàng", "banhang", "/images/icon_ban_hang.png");
-			addMenuButton(menuScrollContent, "Trả hàng", "trahang", "/images/icon_tra_hang.png");
-			addMenuButton(menuScrollContent, "Xuất huỷ", "xuathuy", "/images/icon_xuat_huy.png");
+			addMenuButton(menuScrollContent, "Tổng quan", "tongquan", "/resources/images/icon_tong_quan.png");
+			addMenuButton(menuScrollContent, "Bán hàng", "banhang", "/resources/images/icon_ban_hang.png");
+			addMenuButton(menuScrollContent, "Trả hàng", "trahang", "/resources/images/icon_tra_hang.png");
+			addMenuButton(menuScrollContent, "Xuất huỷ", "xuathuy", "/resources/images/icon_xuat_huy.png");
 
-			addMenuButton(menuScrollContent, "Tra cứu", "tracuu", "/images/icon_tra_cuu.png");
-			addSubmenuButton("tracuu", "tracuudonhang", "Đơn hàng", "/images/icon_don_hang.png",
+			addMenuButton(menuScrollContent, "Tra cứu", "tracuu", "/resources/images/icon_tra_cuu.png");
+			addSubmenuButton("tracuu", "tracuudonhang", "Đơn hàng", "/resources/images/icon_don_hang.png",
 					new TraCuuDonHang_GUI());
-			addSubmenuButton("tracuu", "tracuudontrahang", "Đơn trả hàng", "/images/icon_tra_hang.png",
+			addSubmenuButton("tracuu", "tracuudontrahang", "Đơn trả hàng", "/resources/images/icon_tra_hang.png",
 					new TraCuuDonTraHang_GUI());
-			addSubmenuButton("tracuu", "tracuudonhuyhang", "Đơn huỷ hàng", "/images/icon_xuat_huy.png",
+			addSubmenuButton("tracuu", "tracuudonhuyhang", "Đơn huỷ hàng", "/resources/images/icon_xuat_huy.png",
 					new TraCuuPhieuHuy_GUI());
-			addSubmenuButton("tracuu", "tracuusanpham", "Sản phẩm", "/images/icon_san_pham.png",
+			addSubmenuButton("tracuu", "tracuusanpham", "Sản phẩm", "/resources/images/icon_san_pham.png",
 					new TraCuuSanPham_GUI());
-			addSubmenuButton("tracuu", "tracuukhuyenmai", "Khuyến mãi", "/images/icon_khuyen_mai.png",
+			addSubmenuButton("tracuu", "tracuukhuyenmai", "Khuyến mãi", "/resources/images/icon_khuyen_mai.png",
 					new TraCuuKhuyenMai_GUI());
-			addSubmenuButton("tracuu", "tracuukhachhang", "Khách hàng", "/images/icon_khach_hang.png",
+			addSubmenuButton("tracuu", "tracuukhachhang", "Khách hàng", "/resources/images/icon_khach_hang.png",
 					new TraCuuKhachHang_GUI());
 
-			addMenuButton(menuScrollContent, "Quản lý khách hàng", "khachhang", "/images/icon_khach_hang.png");
+			addMenuButton(menuScrollContent, "Quản lý khách hàng", "khachhang", "/resources/images/icon_khach_hang.png");
 
 			menuScrollContent.add(Box.createVerticalGlue());
 		}
@@ -273,7 +273,7 @@ public class Main_GUI extends JFrame {
 	    btnLogout.setFont(new Font("SansSerif", Font.BOLD, 14));
 	    btnLogout.setBackground(new Color(0, 0, 0, 0));
 	    btnLogout.setBorder(null);
-	    ImageIcon logoutIcon = new ImageIcon(getClass().getResource("/images/icon_dang_xuat.png"));
+	    ImageIcon logoutIcon = new ImageIcon(getClass().getResource("/resources/images/icon_dang_xuat.png"));
 	    Image scaledLogout = logoutIcon.getImage().getScaledInstance(MENU_ICON_WIDTH, MENU_ICON_WIDTH, Image.SCALE_SMOOTH);
 	    btnLogout.setIcon(new ImageIcon(scaledLogout));
 	    btnLogout.addActionListener(e -> onLogout());

@@ -43,10 +43,10 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblPPr;
 
 import com.toedter.calendar.JDateChooser;
 
-import customcomponent.PillButton;
-import customcomponent.PlaceholderSupport;
-import customcomponent.RoundedBorder;
-import customcomponent.TaoJtextNhanh;
+import component.button.PillButton;
+import component.input.PlaceholderSupport;
+import component.border.RoundedBorder;
+import component.input.TaoJtextNhanh;
 import dao.ChiTietPhieuTra_DAO;
 import dao.LoSanPham_DAO;
 import dao.PhieuTra_DAO;

@@ -15,9 +15,9 @@ import java.util.Map;
 import javax.swing.*;
 import javax.swing.border.*;
 
-import customcomponent.TaoJtextNhanh;
-import customcomponent.TaoLabelNhanh;
-import customcomponent.TaoButtonNhanh;
+import component.input.TaoJtextNhanh;
+import component.label.TaoLabelNhanh;
+import component.button.TaoButtonNhanh;
 
 import dao.ChiTietKhuyenMaiSanPham_DAO;
 import dao.HoaDon_DAO;
@@ -40,6 +40,8 @@ import entity.Session;
 import entity.TaiKhoan;
 import dao.KhuyenMai_DAO;
 import enums.HinhThucKM;
+import gui.panel.DonHangItemPanel;
+import gui.dialog.HoaDonPreviewDialog;
 
 /**
  * Giao diện Bán Hàng
@@ -778,7 +780,7 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 		// ===== Ảnh =====
 		String anhPath = sp.getHinhAnh();
 		if (anhPath == null || anhPath.isEmpty()) {
-			anhPath = "/images/default_medicine.png";
+			anhPath = "/resources/images/default_medicine.png";
 		}
 
 		// Lô gần nhất

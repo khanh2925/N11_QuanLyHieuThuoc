@@ -3,7 +3,7 @@ package dao;
 import java.sql.*;
 import java.util.ArrayList;
 
-import connectDB.connectDB;
+import database.connectDB;
 import entity.QuyCachDongGoi;
 import entity.DonViTinh;
 import entity.SanPham;
