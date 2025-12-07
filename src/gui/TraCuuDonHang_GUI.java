@@ -290,9 +290,9 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         dateDenNgay.setDate(now);
         
         // Từ ngày: Mùng 1 của tháng hiện tại
-        cal.set(Calendar.DAY_OF_MONTH, 1);
-        Date firstDayOfMonth = cal.getTime();
-        dateTuNgay.setDate(firstDayOfMonth);
+        cal.add(Calendar.DAY_OF_MONTH, -30);
+        Date d30 = cal.getTime();
+        dateTuNgay.setDate(d30);
         
         // Lấy tất cả từ DAO
         dsHoaDonHienTai = hoaDonDao.layTatCaHoaDon(); 
