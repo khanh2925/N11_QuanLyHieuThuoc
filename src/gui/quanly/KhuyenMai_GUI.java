@@ -1,4 +1,4 @@
-package gui;
+package gui.quanly;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -22,6 +22,7 @@ import entity.ChiTietKhuyenMaiSanPham;
 import entity.KhuyenMai;
 import entity.SanPham;
 import enums.HinhThucKM;
+import gui.dialog.DialogChonSanPhamApDung;
 
 /**
  * GUI Quản lý khuyến mãi - Giữ nguyên layout cũ - Dùng Entity + DAO thật

@@ -6,7 +6,7 @@
  * Mô tả: Giao diện tra cứu khách hàng và lịch sử giao dịch (Mua, Trả).
  * (Form chuẩn theo TraCuuNhanVien_GUI)
  */
-package gui;
+package gui.tracuu;
 
 import java.awt.*;
 import javax.swing.*;

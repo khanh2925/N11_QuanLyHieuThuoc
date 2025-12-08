@@ -1,4 +1,4 @@
-package gui;
+package gui.quanly;
 
 import java.awt.BorderLayout;
 import java.awt.Color;

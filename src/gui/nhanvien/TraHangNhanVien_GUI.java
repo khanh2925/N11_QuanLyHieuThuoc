@@ -1,4 +1,4 @@
-package gui;
+package gui.nhanvien;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;

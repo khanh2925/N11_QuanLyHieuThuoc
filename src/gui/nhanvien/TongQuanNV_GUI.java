@@ -1,5 +1,5 @@
 
-package gui;
+package gui.nhanvien;
 
 import java.awt.*;
 import javax.swing.*;

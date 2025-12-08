@@ -10,7 +10,7 @@ import dao.QuyCachDongGoi_DAO;
 import entity.DonViTinh;
 import entity.QuyCachDongGoi;
 import entity.SanPham;
-import gui.QuanLySanPham_GUI;
+import gui.quanly.QuanLySanPham_GUI;
 
 public class QuyCachDongGoi_Dialog extends JDialog implements ActionListener {
     

@@ -16,7 +16,7 @@ import entity.ItemDonHang;
 import entity.LoSanPham;
 import entity.QuyCachDongGoi;
 import entity.SanPham;
-import gui.BanHang_GUI;
+import gui.nhanvien.BanHang_GUI;
 
 /**
  * JPanel đại diện 1 dòng sản phẩm trong đơn hàng

@@ -1,4 +1,4 @@
-package gui;
+package gui.dialog;
 
 import dao.LoSanPham_DAO;
 import dao.SanPham_DAO;

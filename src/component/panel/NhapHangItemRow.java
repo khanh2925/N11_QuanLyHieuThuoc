@@ -3,8 +3,6 @@ package component.panel;
 import javax.swing.*;
 import javax.swing.border.*;
 
-import gui.NhapHang_GUI;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.text.DecimalFormat;

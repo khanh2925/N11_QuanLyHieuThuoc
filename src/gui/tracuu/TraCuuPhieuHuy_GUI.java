@@ -5,7 +5,7 @@
  *
  * Mô tả: Giao diện tra cứu phiếu hủy hàng (3 loại: NV tạo, Hệ thống tạo, Duyệt trả hàng).
  */
-package gui;
+package gui.tracuu;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;

@@ -1,4 +1,4 @@
-package gui;
+package gui.nhanvien;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;

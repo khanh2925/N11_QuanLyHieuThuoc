@@ -1,4 +1,4 @@
-package gui;
+package gui.nhanvien;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -23,6 +23,7 @@ import entity.SanPham;
 import entity.Session;
 import entity.TaiKhoan;
 import enums.LoaiSanPham;
+import gui.dialog.DialogChonLo;
 import gui.panel.HuyHangItemPanel;
 
 import java.awt.*;

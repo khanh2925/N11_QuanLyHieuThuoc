@@ -1,4 +1,4 @@
-package gui;
+package gui.tracuu;
 
 import java.awt.*;
 import java.awt.event.*;
