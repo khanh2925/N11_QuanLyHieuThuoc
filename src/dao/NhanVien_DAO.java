@@ -4,7 +4,7 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import connectDB.connectDB;
+import database.connectDB;
 import entity.NhanVien;
 
 public class NhanVien_DAO {

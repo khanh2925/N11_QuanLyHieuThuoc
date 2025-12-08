@@ -22,9 +22,9 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 
-import customcomponent.ImagePanel;
-import customcomponent.PillButton;
-import customcomponent.RoundedBorder;
+import component.panel.ImagePanel;
+import component.button.PillButton;
+import component.border.RoundedBorder;
 import entity.NhanVien;
 import entity.TaiKhoan;
 import dao.TaiKhoan_DAO; // 💡 Dùng DAO
@@ -64,7 +64,7 @@ public class DangNhap_GUI extends JFrame {
 		pnLeft.setBackground(new Color(0xB2EBF2));
 
 		ImagePanel pnlCenterBackground = new ImagePanel(
-				new ImageIcon(getClass().getResource("/images/Login.png")).getImage());
+				new ImageIcon(getClass().getResource("/resources/images/Login.png")).getImage());
 		pnLeft.add(pnlCenterBackground, BorderLayout.CENTER);
 
 		return pnLeft;
@@ -74,7 +74,7 @@ public class DangNhap_GUI extends JFrame {
 		JPanel pnFormDangNhap = new JPanel(null);
 		pnFormDangNhap.setBackground(new Color(0xE0F7FA));
 
-		ImageIcon logoIcon = new ImageIcon(getClass().getResource("/images/Logo.png"));
+		ImageIcon logoIcon = new ImageIcon(getClass().getResource("/resources/images/Logo.png"));
 		Image logoImage = logoIcon.getImage().getScaledInstance(250, 250, Image.SCALE_SMOOTH);
 		JLabel lblLogo = new JLabel(new ImageIcon(logoImage));
 		lblLogo.setBounds(190, 30, 250, 250);
@@ -131,9 +131,9 @@ public class DangNhap_GUI extends JFrame {
 		addPlaceholder(txtMatKhau, "Nhập mật khẩu của bạn");
 
 		// === Icon mắt ===
-		ImageIcon iconOpen = new ImageIcon(new ImageIcon(getClass().getResource("/images/eye_open.png")).getImage()
+		ImageIcon iconOpen = new ImageIcon(new ImageIcon(getClass().getResource("/resources/images/eye_open.png")).getImage()
 				.getScaledInstance(25, 25, Image.SCALE_SMOOTH));
-		ImageIcon iconClose = new ImageIcon(new ImageIcon(getClass().getResource("/images/eye_close.png")).getImage()
+		ImageIcon iconClose = new ImageIcon(new ImageIcon(getClass().getResource("/resources/images/eye_close.png")).getImage()
 				.getScaledInstance(25, 25, Image.SCALE_SMOOTH));
 
 		// === Nút hiện/ẩn mật khẩu ===

@@ -3,7 +3,7 @@ package dao;
 import java.sql.*;
 import java.util.ArrayList;
 
-import connectDB.connectDB;
+import database.connectDB;
 import entity.QuyCachDongGoi;
 import entity.DonViTinh;
 import entity.SanPham;
@@ -233,5 +233,18 @@ public class QuyCachDongGoi_DAO {
 
 		return null;
 	}
+	/** 🔹 Xóa quy cách đóng gói */
+    public boolean xoaQuyCachDongGoi(String maQuyCach) {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+        String sql = "DELETE FROM QuyCachDongGoi WHERE MaQuyCach = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maQuyCach);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 
 }

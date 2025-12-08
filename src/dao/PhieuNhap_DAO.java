@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import connectDB.connectDB;
+import database.connectDB;
 import entity.ChiTietPhieuNhap;
 import entity.LoSanPham;
 import entity.NhaCungCap;
