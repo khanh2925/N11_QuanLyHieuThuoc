@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 import org.apache.poi.ss.formula.functions.Finance;
 
-import connectDB.connectDB;
+import database.connectDB;
 import entity.NhanVien;
 import entity.TaiKhoan;
 

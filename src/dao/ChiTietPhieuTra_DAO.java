@@ -1,6 +1,6 @@
 package dao;
 
-import connectDB.connectDB;
+import database.connectDB;
 import entity.ChiTietHoaDon;
 import entity.ChiTietPhieuTra;
 import entity.DonViTinh;

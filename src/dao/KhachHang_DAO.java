@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.time.format.DateTimeFormatter;
 
-import connectDB.connectDB;
+import database.connectDB;
 import entity.KhachHang;
 
 public class KhachHang_DAO {

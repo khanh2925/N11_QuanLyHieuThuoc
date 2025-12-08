@@ -4,7 +4,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import connectDB.connectDB;
+import database.connectDB;
 import entity.DonViTinh;
 
 public class DonViTinh_DAO {
