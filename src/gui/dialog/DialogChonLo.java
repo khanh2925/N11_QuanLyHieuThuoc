@@ -16,6 +16,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 
 public class DialogChonLo extends JDialog {
@@ -27,6 +28,8 @@ public class DialogChonLo extends JDialog {
 	private JPanel pnTop;
     private LoSanPham selectedLo = null;
     private ArrayList<LoSanPham> dsLoHSD;
+    private ArrayList<LoSanPham> currentDanhSach = new ArrayList<>(); // Lưu danh sách hiện tại
+    private boolean selectedAll = false; // Flag cho chọn tất cả
 
     private final LoSanPham_DAO loDAO = new LoSanPham_DAO();
     private final SanPham_DAO spDAO = new SanPham_DAO();
@@ -81,7 +84,7 @@ public class DialogChonLo extends JDialog {
         add(pnTop, BorderLayout.NORTH);
 
         model = new DefaultTableModel(
-                new String[]{"Mã lô", "Tên sản phẩm", "HSD", "Tồn", "Giá nhập"},
+                new String[]{"Mã lô", "Tên sản phẩm", "HSD", "Còn lại", "Tồn", "Giá nhập"},
                 0
         ) {
             @Override
@@ -90,15 +93,31 @@ public class DialogChonLo extends JDialog {
 
         tblLo = new JTable(model);
         tblLo.setRowHeight(28);
+        tblLo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        
+        // Tùy chỉnh độ rộng cột
+        tblLo.getColumnModel().getColumn(0).setPreferredWidth(100); // Mã lô
+        tblLo.getColumnModel().getColumn(1).setPreferredWidth(250); // Tên SP
+        tblLo.getColumnModel().getColumn(2).setPreferredWidth(100); // HSD
+        tblLo.getColumnModel().getColumn(3).setPreferredWidth(120); // Còn lại
+        tblLo.getColumnModel().getColumn(4).setPreferredWidth(60);  // Tồn
+        tblLo.getColumnModel().getColumn(5).setPreferredWidth(100); // Giá
+        
         add(new JScrollPane(tblLo), BorderLayout.CENTER);
 
         JPanel pnBottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         JButton btnChon = new JButton("Chọn");
+        JButton btnHuyTatCa = new JButton("Huỷ tất cả");
         JButton btnDong = new JButton("Đóng");
 
         btnChon.addActionListener(e -> chonLo());
+        btnHuyTatCa.addActionListener(e -> huyTatCa());
         btnDong.addActionListener(e -> dispose());
-
+        
+        // Chỉ hiển thị nút "Huỷ tất cả" khi đang ở mode HSD
+        if ("HSD".equals(loaiTim)) {
+            pnBottom.add(btnHuyTatCa);
+        }
         pnBottom.add(btnChon);
         pnBottom.add(btnDong);
 
@@ -238,6 +257,49 @@ public class DialogChonLo extends JDialog {
         selectedLo = loDAO.timLoTheoMa(maLo); // Lấy lại bản đầy đủ
         dispose();
     }
+    
+    private void huyTatCa() {
+        if (currentDanhSach == null || currentDanhSach.isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "Không có lô nào trong danh sách!", 
+                "Thông báo", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Tính tổng thống kê
+        int tongSoLo = currentDanhSach.size();
+        int tongSoLuong = 0;
+        double tongGiaTri = 0;
+        
+        for (LoSanPham lo : currentDanhSach) {
+            tongSoLuong += lo.getSoLuongTon();
+            if (lo.getSanPham() != null) {
+                tongGiaTri += lo.getSoLuongTon() * lo.getSanPham().getGiaNhap();
+            }
+        }
+        
+        // Xác nhận
+        int confirm = JOptionPane.showConfirmDialog(this,
+            String.format(
+                "Bạn muốn huỷ TẤT CẢ %d lô được tìm thấy?\n\n" +
+                "📊 Thống kê:\n" +
+                "   • Số lô: %d\n" +
+                "   • Tổng số lượng: %,d\n" +
+                "   • Giá trị ước tính: %,.0f đ\n\n" +
+                "⚠️ Lưu ý: Tất cả các lô sẽ được thêm vào danh sách huỷ!",
+                tongSoLo, tongSoLo, tongSoLuong, tongGiaTri
+            ),
+            "Xác nhận huỷ tất cả",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE
+        );
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            selectedAll = true; // Đánh dấu là chọn tất cả
+            dispose();
+        }
+    }
 
     // =====================================================
     // ==================== HỖ TRỢ =========================
@@ -254,13 +316,28 @@ public class DialogChonLo extends JDialog {
 
     private void fill(ArrayList<LoSanPham> ds) {
         model.setRowCount(0);
+        currentDanhSach = ds; // Lưu danh sách hiện tại
+        LocalDate today = LocalDate.now();
 
         for (LoSanPham lo : ds) {
             SanPham sp = lo.getSanPham();
+            
+            // Tính số ngày còn lại đến HSD
+            long soNgayConLai = ChronoUnit.DAYS.between(today, lo.getHanSuDung());
+            String conLai;
+            if (soNgayConLai > 0) {
+                conLai = soNgayConLai + " ngày";
+            } else if (soNgayConLai == 0) {
+                conLai = "HÔM NAY";
+            } else {
+                conLai = "Quá hạn " + Math.abs(soNgayConLai) + " ngày";
+            }
+            
             model.addRow(new Object[]{
                     lo.getMaLo(),
                     sp != null ? sp.getTenSanPham() : "N/A",
                     lo.getHanSuDung().format(fmt),
+                    conLai, // Cột mới
                     lo.getSoLuongTon(),
                     sp != null ? String.format("%,.0f", sp.getGiaNhap()) : "0"
             });
@@ -284,5 +361,13 @@ public class DialogChonLo extends JDialog {
 
     public LoSanPham getSelectedLo() {
         return selectedLo;
+    }
+    
+    public boolean isSelectedAll() {
+        return selectedAll;
+    }
+    
+    public ArrayList<LoSanPham> getDanhSachLoChon() {
+        return currentDanhSach;
     }
 }

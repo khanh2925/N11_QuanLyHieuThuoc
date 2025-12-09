@@ -286,7 +286,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		loadDataTablePH();
 
 		// Bảng chi tiết phiếu huỷ
-		String[] cTPhieuCols = { "Mã lô", "Tên SP", "SL huỷ", "Lý do", "Trạng thái" };
+		String[] cTPhieuCols = { "Mã lô", "Tên SP", "SL huỷ", "Lý do","Đơn vị tính", "Trạng thái" };
 
 		modelCTPH = new DefaultTableModel(cTPhieuCols, 0) {
 			@Override
@@ -328,8 +328,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		});
 
 		// ---- 2) Trạng thái bảng CHI TIẾT: Đã hủy hàng = xanh, Đã từ chối hủy = đỏ
-		// ----
-		tblCTPH.getColumnModel().getColumn(4).setCellRenderer(new DefaultTableCellRenderer() {
+		// Cột 5 (không phải cột 4) vì đã thêm cột "Đơn vị tính"
+		tblCTPH.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 					boolean hasFocus, int row, int column) {
@@ -450,9 +450,21 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		}
 
 		for (ChiTietPhieuHuy ctph : dsCTPhieuHuy) {
+			// ✅ Xử lý trường hợp DonViTinh = null
+			String tenDonViTinh = "N/A";
+			if (ctph.getDonViTinh() != null) {
+				tenDonViTinh = ctph.getDonViTinh().getTenDonViTinh();
+			}
+			
 			modelCTPH.addRow(
-					new Object[] { ctph.getLoSanPham().getMaLo(), ctph.getLoSanPham().getSanPham().getTenSanPham(),
-							ctph.getSoLuongHuy(), ctph.getLyDoChiTiet(), ctph.getTrangThaiText() });
+					new Object[] { 
+						ctph.getLoSanPham().getMaLo(), 
+						ctph.getLoSanPham().getSanPham().getTenSanPham(),
+						ctph.getSoLuongHuy(), 
+						ctph.getLyDoChiTiet(),
+						tenDonViTinh, // ✅ Cột 4: Đơn vị tính
+						ctph.getTrangThaiText() // ✅ Cột 5: Trạng thái
+					});
 		}
 
 	}
@@ -522,7 +534,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 			JOptionPane.showMessageDialog(null, "Vui lòng chọn chi tiết phiếu hủy để cập nhật trạng thái!!");
 			return;
 		}
-		String trangThai = modelCTPH.getValueAt(selectRowCT, 4).toString();
+		// ✅ Đọc cột 5 (Trạng thái), không phải cột 4 (Đơn vị tính)
+		String trangThai = modelCTPH.getValueAt(selectRowCT, 5).toString();
 		if (trangThai.trim().equals("Đã từ chối")) {
 			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy này đã ở trạng thái từ chối hủy");
 			return;
@@ -537,7 +550,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		String maLo = modelCTPH.getValueAt(selectRowCT, 0).toString();
 
 		if (ctph_dao.capNhatTrangThaiChiTiet(maPH, maLo, 3)) {
-			modelCTPH.setValueAt("Đã từ chối hủy", selectRowCT, 4);
+			// ✅ Update cột 5 (Trạng thái)
+			modelCTPH.setValueAt("Đã từ chối hủy", selectRowCT, 5);
 			JOptionPane.showMessageDialog(null, "Đã từ chối hủy hàng!");
 
 			capNhatTrangThaiPhieuSauKhiCapNhatCTPH(maPH);
@@ -556,7 +570,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 			JOptionPane.showMessageDialog(null, "Vui lòng chọn chi tiết phiếu hủy để cập nhật trạng thái!!");
 			return;
 		}
-		String trangThai = modelCTPH.getValueAt(selectRowCT, 4).toString();
+		// ✅ Đọc cột 5 (Trạng thái), không phải cột 4 (Đơn vị tính)
+		String trangThai = modelCTPH.getValueAt(selectRowCT, 5).toString();
 
 		if (trangThai.trim().equals("Đã hủy hàng")) {
 			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy đã ở trạng thái đã hủy!!");
@@ -566,7 +581,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		String maLo = modelCTPH.getValueAt(selectRowCT, 0).toString();
 
 		if (ctph_dao.capNhatTrangThaiChiTiet(maPH, maLo, 2)) {
-			modelCTPH.setValueAt("Đã hủy hàng", selectRowCT, 4);
+			// ✅ Update cột 5 (Trạng thái)
+			modelCTPH.setValueAt("Đã hủy hàng", selectRowCT, 5);
 			JOptionPane.showMessageDialog(null, "Hủy hàng thành công!");
 
 			capNhatTrangThaiPhieuSauKhiCapNhatCTPH(maPH);
