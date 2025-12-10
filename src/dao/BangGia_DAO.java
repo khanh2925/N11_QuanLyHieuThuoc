@@ -233,7 +233,7 @@ public class BangGia_DAO {
             ps.setString(1, prefix + "%");
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next() && rs.getString("MaCuoi") != null) {
-                    String last = rs.getString("MaCuoi");
+                	String last = rs.getString("MaCuoi").trim();
                     int num = Integer.parseInt(last.substring(last.lastIndexOf("-") + 1));
                     return prefix + String.format("%04d", num + 1);
                 }
