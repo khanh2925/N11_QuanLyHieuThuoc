@@ -1,8 +1,6 @@
 /**
- * @author Thanh Kha
- * @version 1.1
- * @since Oct 27, 2025
- *
+ * @author Anh Khoi
+ * @version 1.5
  */
 
 package gui.quanly;
@@ -16,7 +14,6 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -26,6 +23,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
 
@@ -42,6 +40,7 @@ import entity.PhieuHuy;
 
 public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListener, DocumentListener {
 
+	private static final long serialVersionUID = 1L;
 	private JPanel pnPhieuHuy;
 	private JPanel pnHeader;
 	private JPanel pnCTPH;
@@ -59,19 +58,16 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 	private ChiTietPhieuHuy_DAO ctph_dao;
 	private PillButton btnTuChoi;
 	private PillButton btnHuyHang;
-	private JCheckBox chckbxDaDuyet;
-	private JCheckBox chckbxChoDuyet;
+	private JComboBox<String> cbTrangThai;
+	private JDateChooser dateTuNgay;
+	private JDateChooser dateDenNgay;
+	private PillButton btnLamMoi;
 	private TableRowSorter<DefaultTableModel> sorter;
-	private JPanel pnLoc, pnBtnCTPH;
+	private JPanel pnBtnCTPH;
 	private JSplitPane pnCenter;
 
 	DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 	DecimalFormat df = new DecimalFormat("#,###đ");
-
-	// Utils
-	private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN,16 );
-	private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 16);
-	private final Color COLOR_PRIMARY = new Color(33, 150, 243);
 
 	public QL_HuyHang_GUI() {
 		this.setPreferredSize(new Dimension(1537, 850));
@@ -80,13 +76,12 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 
 	private void initialize() {
 
-		// kết nối database
 		try {
 			connectDB.getInstance().connect();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		// tao các dao
+
 		ph_dao = new PhieuHuy_DAO();
 		ctph_dao = new ChiTietPhieuHuy_DAO();
 
@@ -97,18 +92,11 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		initTable();// tạo bảng và load dữ liệu từ database lên bảng
 		TaoPanelCenter();
 
-		// Chỉ cho phép chọn 1 trong 2
-		ActionListener filterTrangThaiListener = e -> {
-			if (e.getSource() == chckbxDaDuyet && chckbxDaDuyet.isSelected()) {
-				chckbxChoDuyet.setSelected(false);
-			} else if (e.getSource() == chckbxChoDuyet && chckbxChoDuyet.isSelected()) {
-				chckbxDaDuyet.setSelected(false);
-			}
-			refreshFilters();
-		};
-
-		chckbxDaDuyet.addActionListener(filterTrangThaiListener);
-		chckbxChoDuyet.addActionListener(filterTrangThaiListener);
+		// Event listeners
+		cbTrangThai.addActionListener(e -> refreshFilters());
+		dateTuNgay.addPropertyChangeListener("date", e -> refreshFilters());
+		dateDenNgay.addPropertyChangeListener("date", e -> refreshFilters());
+		btnLamMoi.addActionListener(this);
 		btnHuyHang.addActionListener(this);
 		btnTuChoi.addActionListener(this);
 		btnXuatFile.addActionListener(this);
@@ -120,80 +108,62 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 
 	private void TaoHeader() {
 		pnHeader = new JPanel();
-		pnHeader.setLayout(new BoxLayout(pnHeader, BoxLayout.X_AXIS));
-		pnHeader.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15)); // padding 2 bên
-		pnHeader.setBackground(Color.WHITE);
+		pnHeader.setLayout(null);
+		pnHeader.setPreferredSize(new Dimension(0, 94));
+		pnHeader.setBackground(new Color(0xE3F2F5));
 		add(pnHeader, BorderLayout.NORTH);
 
-		// ====== Ô tìm kiếm ======
+		// --- Ô TÌM KIẾM (Font 20) ---
 		txtSearch = new JTextField();
-		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 22));
-		txtSearch.setPreferredSize(new Dimension(350, 40));
-		txtSearch.setMaximumSize(new Dimension(350, 50));
+		PlaceholderSupport.addPlaceholder(txtSearch, "Nhập mã phiếu hủy, mã sản phẩm, tên sản phẩm...");
+		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+		txtSearch.setBounds(25, 17, 500, 60);
 		txtSearch.setBorder(new RoundedBorder(20));
 		txtSearch.setBackground(Color.WHITE);
-		PlaceholderSupport.addPlaceholder(txtSearch, "Tìm theo mã phiếu/ tên");
-
-		// tạo panel lọc
-		TaoPanelLoc();
-
-		// ====== Các nút ======
-		btnXuatFile = new PillButton("Xuất file");
-		btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 20));
-
-		// ====== Thêm vào header theo thứ tự ======
 		pnHeader.add(txtSearch);
-		pnHeader.add(Box.createRigidArea(new Dimension(15, 0)));
-		pnHeader.add(pnLoc);
-		pnHeader.add(Box.createRigidArea(new Dimension(15, 0)));
-		pnHeader.add(btnXuatFile);
 
-		// co giãn khi resize cửa sổ
-		pnHeader.add(Box.createHorizontalGlue());
+		// --- BỘ LỌC (Font 18) ---
+		// 1. Trạng thái ComboBox
+		addFilterLabel("Trạng thái:", 530, 28, 90, 35);
+		cbTrangThai = new JComboBox<>(new String[] { "Tất cả", "Đã duyệt", "Chờ duyệt" });
+		cbTrangThai.setBounds(620, 28, 150, 38);
+		cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		pnHeader.add(cbTrangThai);
+
+		// 2. Từ ngày
+		addFilterLabel("Từ ngày:", 790, 28, 80, 35);
+		dateTuNgay = new JDateChooser();
+		dateTuNgay.setDateFormatString("dd/MM/yyyy");
+		dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		dateTuNgay.setBounds(870, 28, 180, 38);
+		pnHeader.add(dateTuNgay);
+
+		// 3. Đến ngày
+		addFilterLabel("Đến:", 1070, 28, 50, 35);
+		dateDenNgay = new JDateChooser();
+		dateDenNgay.setDateFormatString("dd/MM/yyyy");
+		dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		dateDenNgay.setBounds(1120, 28, 180, 38);
+		pnHeader.add(dateDenNgay);
+
+		// --- NÚT (Font 18) ---
+		btnLamMoi = new PillButton("Làm mới");
+		btnLamMoi.setBounds(1320, 22, 130, 50);
+		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		pnHeader.add(btnLamMoi);
+
+		btnXuatFile = new PillButton("Xuất file");
+		btnXuatFile.setBounds(1465, 22, 130, 50);
+		btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		pnHeader.add(btnXuatFile);
 	}
 
-	private void TaoPanelLoc() {
-		// ====== Panel lọc trạng thái ======
-		pnLoc = new JPanel();
-		pnLoc.setLayout(new BoxLayout(pnLoc, BoxLayout.X_AXIS));
-		pnLoc.setBorder(new RoundedBorder(20));
-		pnLoc.setBackground(new Color(240, 255, 255));
-		// tăng chiều cao để không bị cắt "Chờ duyệt"
-		pnLoc.setPreferredSize(new Dimension(250, 70));
-		pnLoc.setMaximumSize(new Dimension(250, 70));
-		pnLoc.setMinimumSize(new Dimension(250, 70));
-		pnLoc.setAlignmentY(Component.CENTER_ALIGNMENT);
-
-		// --- Label bên trái ---
-		JLabel lblTrangThai = new JLabel("Trạng thái:");
-		lblTrangThai.setFont(new Font("Tahoma", Font.PLAIN, 16));
-		lblTrangThai.setAlignmentY(Component.TOP_ALIGNMENT);
-		lblTrangThai.setBorder(BorderFactory.createEmptyBorder(4, 10, 0, 5));
-
-		// --- Panel chứa 2 checkbox (dọc) ---
-		JPanel pnCheckBox = new JPanel();
-		pnCheckBox.setLayout(new BoxLayout(pnCheckBox, BoxLayout.Y_AXIS));
-		pnCheckBox.setBackground(new Color(240, 255, 255));
-		pnCheckBox.setAlignmentY(Component.TOP_ALIGNMENT);
-		pnCheckBox.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-
-		chckbxDaDuyet = new JCheckBox("Đã duyệt");
-		chckbxDaDuyet.setFont(new Font("Tahoma", Font.BOLD, 14));
-		chckbxDaDuyet.setBackground(new Color(240, 255, 255));
-
-		chckbxChoDuyet = new JCheckBox("Chờ duyệt");
-		chckbxChoDuyet.setFont(new Font("Tahoma", Font.BOLD, 14));
-		chckbxChoDuyet.setBackground(new Color(240, 255, 255));
-
-		// Thêm khoảng cách dọc nhỏ giữa hai checkbox
-		pnCheckBox.add(chckbxDaDuyet);
-		pnCheckBox.add(Box.createVerticalStrut(4));
-		pnCheckBox.add(chckbxChoDuyet);
-
-		// --- Thêm vào panel lọc chính ---
-		pnLoc.add(lblTrangThai);
-		pnLoc.add(Box.createHorizontalStrut(6));
-		pnLoc.add(pnCheckBox);
+	// Helper tạo label (Font 18)
+	private void addFilterLabel(String text, int x, int y, int w, int h) {
+		JLabel lbl = new JLabel(text);
+		lbl.setBounds(x, y, w, h);
+		lbl.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		pnHeader.add(lbl);
 	}
 
 	private void TaoPanelCenter() {
@@ -214,33 +184,32 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 	}
 
 	private void TaoPanelCTPH() {
-	   
-	    pnCTPH = new JPanel(new BorderLayout());
-	    pnCTPH.setPreferredSize(new Dimension(600, 1080));
 
-	    TitledBorder tbCTPH = BorderFactory.createTitledBorder("Danh sách chi tiết phiếu hủy");
-	    tbCTPH.setTitleFont(new Font("Segoe UI", Font.BOLD, 16));
-	    pnCTPH.setBorder(tbCTPH);
+		pnCTPH = new JPanel(new BorderLayout());
+		pnCTPH.setPreferredSize(new Dimension(600, 1080));
 
-	    // ==== PANEL CHỨA 2 BUTTON 
+		TitledBorder tbCTPH = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY),
+				"Danh sách chi tiết phiếu hủy", TitledBorder.LEFT, TitledBorder.TOP,
+				new Font("Segoe UI", Font.BOLD, 18), Color.DARK_GRAY);
+		pnCTPH.setBorder(tbCTPH);
 
-	    pnBtnCTPH = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+		// ==== PANEL CHỨA 2 BUTTON
 
-	    btnHuyHang = new PillButton("Hủy hàng");
-	    btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		pnBtnCTPH = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
 
-	    btnTuChoi = new PillButton("Từ chối");
-	    btnTuChoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnHuyHang = new PillButton("Hủy hàng");
+		btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 18));
 
-	    pnBtnCTPH.add(btnHuyHang);
-	    pnBtnCTPH.add(btnTuChoi);
+		btnTuChoi = new PillButton("Từ chối");
+		btnTuChoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
 
-	    // Thêm panel nút lên trên, bảng CTPH ở giữa
-	    pnCTPH.add(pnBtnCTPH, BorderLayout.NORTH);
-	    pnCTPH.add(scrCTPH, BorderLayout.CENTER);
+		pnBtnCTPH.add(btnHuyHang);
+		pnBtnCTPH.add(btnTuChoi);
+
+		// Thêm panel nút lên trên, bảng CTPH ở giữa
+		pnCTPH.add(pnBtnCTPH, BorderLayout.NORTH);
+		pnCTPH.add(scrCTPH, BorderLayout.CENTER);
 	}
-
-
 
 	private void refreshFilters() {
 		if (sorter == null)
@@ -254,11 +223,44 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 			filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(text), 0, 2));
 		}
 
-		// --- Lọc theo trạng thái: cột 4 (chỉ 1 trong 2)
-		if (chckbxDaDuyet.isSelected()) {
-			filters.add(RowFilter.regexFilter("(?i)Đã duyệt", 4));
-		} else if (chckbxChoDuyet.isSelected()) {
-			filters.add(RowFilter.regexFilter("(?i)Chờ duyệt", 4));
+		// --- Lọc theo trạng thái ComboBox: cột 4
+		String trangThai = (String) cbTrangThai.getSelectedItem();
+		if (trangThai != null && !trangThai.equals("Tất cả")) {
+			filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(trangThai), 4));
+		}
+
+		// --- Lọc theo ngày: cột 3 (Ngày lập)
+		java.util.Date tuNgay = dateTuNgay.getDate();
+		java.util.Date denNgay = dateDenNgay.getDate();
+
+		if (tuNgay != null || denNgay != null) {
+			filters.add(new RowFilter<Object, Object>() {
+				@Override
+				public boolean include(Entry<? extends Object, ? extends Object> entry) {
+					try {
+						String ngayStr = entry.getStringValue(3); // Cột Ngày lập
+						LocalDate ngay = LocalDate.parse(ngayStr, fmt);
+
+						LocalDate tu = tuNgay != null
+								? tuNgay.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+								: null;
+						LocalDate den = denNgay != null
+								? denNgay.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+								: null;
+
+						if (tu != null && den != null) {
+							return !ngay.isBefore(tu) && !ngay.isAfter(den);
+						} else if (tu != null) {
+							return !ngay.isBefore(tu);
+						} else if (den != null) {
+							return !ngay.isAfter(den);
+						}
+						return true;
+					} catch (Exception e) {
+						return true;
+					}
+				}
+			});
 		}
 
 		// --- Áp filter
@@ -280,13 +282,14 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		};
 		tblPH = setupTable(modelPH);
 		scrPH = new JScrollPane(tblPH);
-		TitledBorder tbPH = BorderFactory.createTitledBorder("Danh sách phiếu hủy");
-		tbPH.setTitleFont(new Font("Segoe UI", Font.BOLD, 16));
+		TitledBorder tbPH = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY),
+				"Danh sách phiếu hủy", TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 18),
+				Color.DARK_GRAY);
 		scrPH.setBorder(tbPH);
 		loadDataTablePH();
 
 		// Bảng chi tiết phiếu huỷ
-		String[] cTPhieuCols = { "Mã lô", "Tên SP", "SL huỷ", "Lý do","Đơn vị tính", "Trạng thái" };
+		String[] cTPhieuCols = { "Mã lô", "Tên SP", "SL huỷ", "Lý do", "Đơn vị tính", "Trạng thái" };
 
 		modelCTPH = new DefaultTableModel(cTPhieuCols, 0) {
 			@Override
@@ -296,7 +299,6 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		};
 		tblCTPH = setupTable(modelCTPH);
 		scrCTPH = new JScrollPane(tblCTPH);
-		
 
 		// ===== Format chung (giữ nguyên style cũ của bạn) =====
 		formatTable(tblPH);
@@ -365,13 +367,18 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 
 	private JTable setupTable(DefaultTableModel model) {
 		JTable table = new JTable(model);
-		table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		table.setRowHeight(25);
+		table.setFont(new Font("Segoe UI", Font.PLAIN, 16)); // Font 16
+		table.setRowHeight(35); // Cao 35
 		table.setSelectionBackground(new Color(0xC8E6C9));
-		table.setSelectionForeground(Color.BLACK);
-		table.getTableHeader().setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		table.getTableHeader().setBackground(COLOR_PRIMARY);
-		table.getTableHeader().setForeground(Color.WHITE);
+		table.setGridColor(new Color(230, 230, 230));
+
+		JTableHeader header = table.getTableHeader();
+		header.setFont(new Font("Segoe UI", Font.BOLD, 16)); // Header Font 16 Bold
+		header.setOpaque(true);
+		header.setBackground(new Color(33, 150, 243));
+		header.setForeground(Color.WHITE);
+		header.setPreferredSize(new Dimension(100, 40)); // Header Cao 40
+		header.setReorderingAllowed(false);
 		return table;
 	}
 
@@ -455,15 +462,11 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 			if (ctph.getDonViTinh() != null) {
 				tenDonViTinh = ctph.getDonViTinh().getTenDonViTinh();
 			}
-			
+
 			modelCTPH.addRow(
-					new Object[] { 
-						ctph.getLoSanPham().getMaLo(), 
-						ctph.getLoSanPham().getSanPham().getTenSanPham(),
-						ctph.getSoLuongHuy(), 
-						ctph.getLyDoChiTiet(),
-						tenDonViTinh, // ✅ Cột 4: Đơn vị tính
-						ctph.getTrangThaiText() // ✅ Cột 5: Trạng thái
+					new Object[] { ctph.getLoSanPham().getMaLo(), ctph.getLoSanPham().getSanPham().getTenSanPham(),
+							ctph.getSoLuongHuy(), ctph.getLyDoChiTiet(), tenDonViTinh, // ✅ Cột 4: Đơn vị tính
+							ctph.getTrangThaiText() // ✅ Cột 5: Trạng thái
 					});
 		}
 
@@ -514,6 +517,15 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 	public void actionPerformed(ActionEvent e) {
 		Object src = e.getSource();
 
+		if (src == btnLamMoi) {
+			txtSearch.setText("");
+			cbTrangThai.setSelectedIndex(0);
+			dateTuNgay.setDate(null);
+			dateDenNgay.setDate(null);
+			loadDataTablePH();
+			modelCTPH.setRowCount(0);
+			return;
+		}
 		if (src == btnHuyHang) {
 			HuyHang();
 			return;

@@ -23,7 +23,7 @@ import dao.KhachHang_DAO;
 import entity.KhachHang; // Vẫn dùng entity để hứng dữ liệu
 
 @SuppressWarnings("serial")
-public class KhachHang_NV_GUI extends JPanel implements ActionListener, DocumentListener {
+public class KhachHang_NV_GUI extends JPanel implements ActionListener, DocumentListener, KeyListener {
 
     // --- COMPONENTS UI ---
     private JPanel pnHeader, pnCenter;
@@ -148,6 +148,8 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
         p.add(createLabel("Tên KH:", xStart, yStart + gap + hText));
         txtTenKH = createTextField(xStart + wLbl, yStart + gap + hText, wTxt);
         p.add(txtTenKH);
+        // hỗ trợ người dùng nhập tên
+        txtTenKH.addKeyListener(this);
 
         p.add(createLabel("Giới tính:", xStart, yStart + (gap + hText) * 2));
         cboGioiTinh = new JComboBox<>(new String[]{"Nam", "Nữ"});
@@ -190,21 +192,22 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
         gbc.gridy = 3; p.add(btnLamMoi, gbc);
     }
 
-    // --- UI Helpers ---
+    // tạo lable
     private JLabel createLabel(String text, int x, int y) {
         JLabel lbl = new JLabel(text);
         lbl.setFont(FONT_TEXT);
         lbl.setBounds(x, y, 100, 35);
         return lbl;
     }
-
+    
+    // tạo textfield
     private JTextField createTextField(int x, int y, int w) {
         JTextField txt = new JTextField();
         txt.setFont(FONT_TEXT);
         txt.setBounds(x, y, w, 35);
         return txt;
     }
-
+    // tạo button và gán sự kiện
     private PillButton createPillButton(String text, int w, int h) {
         PillButton btn = new PillButton(text);
         btn.setFont(FONT_BOLD);
@@ -212,7 +215,8 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
         btn.addActionListener(this);
         return btn;
     }
-
+    
+    // tạo table
     private JTable setupTable(DefaultTableModel model) {
         JTable table = new JTable(model);
         table.setFont(FONT_TEXT);
@@ -232,7 +236,9 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
         );
     }
 
-    // --- BẢNG ---
+    // =====================================================================
+    //                          Tạo bảng
+    // =====================================================================
     private void taoBangDanhSach(JPanel p) {
         String[] cols = {"STT", "Mã khách hàng", "Tên khách hàng", "Giới tính", "Số điện thoại", "Ngày sinh"};
         modelKhachHang = new DefaultTableModel(cols, 0) {
@@ -313,64 +319,31 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
             loadDataLenBang();
         }
     }
-
-    private void lamMoiForm() {
-        txtMaKH.setText("");
-        txtTenKH.setText("");
-        txtSDT.setText("");
-        txtNgaySinh.setText("");
-        cboGioiTinh.setSelectedIndex(0);
-        txtTenKH.requestFocus();
-        tblKhachHang.clearSelection();
-        if (txtTimKiem != null) txtTimKiem.setText("");
-    }
-
-    // =====================================================================
-    //                          TÌM KIẾM (DocumentListener)
-    // =====================================================================
-    private void refreshFilters() {
-        if (sorter == null) return;
-
-        String text = txtTimKiem.getText().trim();
-
-        // Trống hoặc placeholder → bỏ filter
-        if (text.isEmpty() || txtTimKiem.getForeground().equals(Color.GRAY)) {
-            sorter.setRowFilter(null);
-            return;
-        }
-
-        // Lọc theo: Mã KH, Tên KH, SĐT (cột 1, 2, 4)
-        sorter.setRowFilter(RowFilter.regexFilter("(?i)" + Pattern.quote(text), 1, 2, 4));
-    }
-
-    @Override
-    public void insertUpdate(DocumentEvent e) {
-        refreshFilters();
-    }
-
-    @Override
-    public void removeUpdate(DocumentEvent e) {
-        refreshFilters();
-    }
-
-    @Override
-    public void changedUpdate(DocumentEvent e) {
-        refreshFilters();
-    }
-
+    
     // =====================================================================
     //                          VALIDATE + ENTITY
     // =====================================================================
     private boolean validData() {
-        String ten = txtTenKH.getText() != null ? txtTenKH.getText().trim() : "";
-        if (ten.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Tên khách hàng không được rỗng!!");
-            return false;
-        }
-        if (ten.length() > 100) {
-            JOptionPane.showMessageDialog(this, "Tên khách hàng không được vượt quá 100 ký tự");
-            return false;
-        }
+    	String ten = txtTenKH.getText() != null ? txtTenKH.getText().trim() : "";
+
+    	if (ten.isEmpty()) {
+    	    JOptionPane.showMessageDialog(this, "Tên khách hàng không được rỗng!!");
+    	    return false;
+    	}
+
+    	//  Không quá 100 ký tự
+    	if (ten.length() > 100) {
+    	    JOptionPane.showMessageDialog(this, "Tên khách hàng không được vượt quá 100 ký tự");
+    	    return false;
+    	}
+
+    	//  Kiểm tra đúng định dạng (viết chữ cái, có dấu, không chứa số hoặc ký tự đặc biệt)
+    	String nameRegex = "([A-ZÀ-Ỵ][a-zà-ỹ]+)(\\s[A-ZÀ-Ỵ][a-zà-ỹ]+)*$";
+    	if (!ten.matches(nameRegex)) {
+    	    JOptionPane.showMessageDialog(this,
+    	        "Tên khách hàng phải viết hoa chữ cái đầu mỗi từ và không chứa số hoặc ký tự đặc biệt.");
+    	    return false;
+    	}
 
         String sdt = txtSDT.getText() != null ? txtSDT.getText().trim() : "";
         if (!sdt.matches("^0\\d{9}$")) {
@@ -380,13 +353,13 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
 
         String ngaySinhStr = txtNgaySinh.getText().trim();
         try {
-            LocalDate ngaySinh = LocalDate.parse(ngaySinhStr);
-            if (ngaySinh.isAfter(LocalDate.now().minusYears(10))) {
-                JOptionPane.showMessageDialog(this, "Khách hàng phải ít nhất 10 tuổi");
+            LocalDate ngaySinh = LocalDate.parse(ngaySinhStr,dtf);
+            if (ngaySinh.isAfter(LocalDate.now().minusYears(16))) {
+                JOptionPane.showMessageDialog(this, "Khách hàng phải ít nhất 16 tuổi");
                 return false;
             }
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Ngày sinh không hợp lệ (định dạng yyyy-MM-dd)");
+            JOptionPane.showMessageDialog(this, "Ngày sinh không hợp lệ (định dạng dd/mm/yyyy)");
             return false;
         }
 
@@ -397,7 +370,7 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
         String ten = txtTenKH.getText().trim();
         boolean gioiTinh = "Nam".equals(cboGioiTinh.getSelectedItem());
         String sdt = txtSDT.getText().trim();
-        LocalDate ngaySinh = LocalDate.parse(txtNgaySinh.getText().trim());
+        LocalDate ngaySinh = LocalDate.parse(txtNgaySinh.getText().trim(),dtf);
         return new KhachHang(maKH, ten, gioiTinh, sdt, ngaySinh);
     }
 
@@ -445,6 +418,108 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
             JOptionPane.showMessageDialog(this, "Thêm khách hàng thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
+    
+
+    private void lamMoiForm() {
+        txtMaKH.setText("");
+        txtTenKH.setText("");
+        txtSDT.setText("");
+        txtNgaySinh.setText("");
+        cboGioiTinh.setSelectedIndex(0);
+        txtTenKH.requestFocus();
+        tblKhachHang.clearSelection();
+        if (txtTimKiem != null) txtTimKiem.setText("");
+    }
+
+    // =====================================================================
+    //                          TÌM KIẾM (DocumentListener)
+    // =====================================================================
+    private void refreshFilters() {
+        if (sorter == null) return;
+
+        String text = txtTimKiem.getText().trim();
+
+        // Trống hoặc placeholder → bỏ filter
+        if (text.isEmpty() || txtTimKiem.getForeground().equals(Color.GRAY)) {
+            sorter.setRowFilter(null);
+            return;
+        }
+
+        // Lọc theo: Mã KH, Tên KH, SĐT (cột 1, 2, 4)
+        sorter.setRowFilter(RowFilter.regexFilter("(?i)" + Pattern.quote(text), 1, 2, 4));
+    }
+
+    @Override
+    public void insertUpdate(DocumentEvent e) {
+        refreshFilters();
+    }
+
+    @Override
+    public void removeUpdate(DocumentEvent e) {
+        refreshFilters();
+    }
+
+    @Override
+    public void changedUpdate(DocumentEvent e) {
+        refreshFilters();
+    }
+
+   
+    
+    
+    // =====================================================================
+    //                 hỗ trợ nhập tên         
+    // =====================================================================
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+	    if (e.getSource() == txtTenKH) {
+	        xuLyNhapTen();
+	    }
+	}
+	private void xuLyNhapTen() {
+	    String text = txtTenKH.getText();
+	    if (text == null || text.isEmpty()) return;
+
+	    int caret = txtTenKH.getCaretPosition(); // lưu vị trí con trỏ để không bị nhảy
+
+
+	    // 🔹 B2: viết hoa chữ cái đầu mỗi từ
+	    StringBuilder sb = new StringBuilder();
+	    boolean vietHoa = true;
+
+	    for (int i = 0; i < text.length(); i++) {
+	        char c = text.charAt(i);
+
+	        if (vietHoa && Character.isLetter(c)) {
+	            sb.append(Character.toUpperCase(c));
+	            vietHoa = false;
+	        } else {
+	            sb.append(Character.toLowerCase(c));
+	        }
+
+	        if (c == ' ') vietHoa = true;
+	    }
+
+	    String ketQua = sb.toString();
+
+	    // 🔹 cập nhật text và giữ caret không nhảy lung tung
+	    txtTenKH.setText(ketQua);
+
+	    if (caret > ketQua.length()) caret = ketQua.length();
+	    txtTenKH.setCaretPosition(caret);
+	}
 
     // Test riêng
     public static void main(String[] args) {
@@ -457,4 +532,6 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
             frame.setVisible(true);
         });
     }
+
+
 }
