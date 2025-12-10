@@ -5,11 +5,22 @@
 
 package gui.quanly;
 
-import java.awt.*;
+import database.connectDB;
+import component.button.PillButton;
+import component.input.PlaceholderSupport;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -17,21 +28,43 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.RowFilter;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
 
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
 import com.toedter.calendar.JDateChooser;
 
-import database.connectDB;
-import component.button.PillButton;
-import component.input.PlaceholderSupport;
 import component.border.RoundedBorder;
 import dao.ChiTietPhieuTra_DAO;
 import dao.PhieuTra_DAO;
@@ -606,6 +639,10 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			HuyHang();
 			return;
 		}
+		if (src == btnXuatFile) {
+			xuatExcel();
+			return;
+		}
 	}
 
 	// sự kiện hủy hàng
@@ -791,6 +828,162 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
+		}
+	}
+
+	/**
+	 * Xuất danh sách phiếu trả ra file Excel
+	 */
+	private void xuatExcel() {
+		if (modelPT.getRowCount() == 0) {
+			JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+			return;
+		}
+
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle("Chọn nơi lưu file Excel");
+		fileChooser.setSelectedFile(new File("DanhSachPhieuTra_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".xlsx"));
+		fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
+
+		int userSelection = fileChooser.showSaveDialog(this);
+		if (userSelection != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+
+		File fileToSave = fileChooser.getSelectedFile();
+		if (!fileToSave.getName().endsWith(".xlsx")) {
+			fileToSave = new File(fileToSave.getAbsolutePath() + ".xlsx");
+		}
+
+		try (Workbook workbook = new XSSFWorkbook()) {
+			// ===== SHEET 1: DANH SÁCH PHIẾU TRẢ =====
+			Sheet sheetPT = workbook.createSheet("Danh sách phiếu trả");
+
+			// Style cho tiêu đề
+			CellStyle headerStyle = workbook.createCellStyle();
+			org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
+			headerFont.setBold(true);
+			headerFont.setFontHeightInPoints((short) 12);
+			headerFont.setColor(IndexedColors.WHITE.getIndex());
+			headerStyle.setFont(headerFont);
+			headerStyle.setFillForegroundColor(IndexedColors.DARK_TEAL.getIndex());
+			headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+			headerStyle.setAlignment(HorizontalAlignment.CENTER);
+			headerStyle.setBorderBottom(BorderStyle.THIN);
+			headerStyle.setBorderTop(BorderStyle.THIN);
+			headerStyle.setBorderLeft(BorderStyle.THIN);
+			headerStyle.setBorderRight(BorderStyle.THIN);
+
+			// Style cho dữ liệu
+			CellStyle dataStyle = workbook.createCellStyle();
+			dataStyle.setBorderBottom(BorderStyle.THIN);
+			dataStyle.setBorderTop(BorderStyle.THIN);
+			dataStyle.setBorderLeft(BorderStyle.THIN);
+			dataStyle.setBorderRight(BorderStyle.THIN);
+
+			// Style cho số tiền
+			CellStyle moneyStyle = workbook.createCellStyle();
+			moneyStyle.cloneStyleFrom(dataStyle);
+			moneyStyle.setAlignment(HorizontalAlignment.RIGHT);
+
+			// Tạo header
+			Row headerRow = sheetPT.createRow(0);
+			String[] headers = {"Mã PT", "Khách hàng", "Ngày lập", "Người trả", "Trạng thái", "Tổng tiền hoàn"};
+			for (int i = 0; i < headers.length; i++) {
+				Cell cell = headerRow.createCell(i);
+				cell.setCellValue(headers[i]);
+				cell.setCellStyle(headerStyle);
+			}
+
+			// Điền dữ liệu từ bảng (bỏ cột SĐT ẩn)
+			for (int row = 0; row < modelPT.getRowCount(); row++) {
+				Row dataRow = sheetPT.createRow(row + 1);
+				
+				// Cột 0: Mã PT
+				Cell cell0 = dataRow.createCell(0);
+				cell0.setCellValue(modelPT.getValueAt(row, 0).toString());
+				cell0.setCellStyle(dataStyle);
+
+				// Cột 1: Khách hàng
+				Cell cell1 = dataRow.createCell(1);
+				cell1.setCellValue(modelPT.getValueAt(row, 1).toString());
+				cell1.setCellStyle(dataStyle);
+
+				// Cột 2: Ngày lập (bỏ qua cột 2 - SĐT ẩn, lấy cột 3)
+				Cell cell2 = dataRow.createCell(2);
+				cell2.setCellValue(modelPT.getValueAt(row, 3).toString());
+				cell2.setCellStyle(dataStyle);
+
+				// Cột 3: Người trả (cột 4)
+				Cell cell3 = dataRow.createCell(3);
+				cell3.setCellValue(modelPT.getValueAt(row, 4).toString());
+				cell3.setCellStyle(dataStyle);
+
+				// Cột 4: Trạng thái (cột 5)
+				Cell cell4 = dataRow.createCell(4);
+				cell4.setCellValue(modelPT.getValueAt(row, 5).toString());
+				cell4.setCellStyle(dataStyle);
+
+				// Cột 5: Tổng tiền hoàn (cột 6)
+				Cell cell5 = dataRow.createCell(5);
+				cell5.setCellValue(modelPT.getValueAt(row, 6).toString());
+				cell5.setCellStyle(moneyStyle);
+			}
+
+			// Auto-size columns
+			for (int i = 0; i < headers.length; i++) {
+				sheetPT.autoSizeColumn(i);
+			}
+
+			// ===== SHEET 2: CHI TIẾT PHIẾU TRẢ (nếu có dòng được chọn) =====
+			if (modelCTPT.getRowCount() > 0) {
+				Sheet sheetCTPT = workbook.createSheet("Chi tiết phiếu trả");
+
+				// Header chi tiết
+				Row headerRowCT = sheetCTPT.createRow(0);
+				String[] headersCT = {"Mã hóa đơn", "Mã lô", "Tên SP", "Hạn dùng", "SL trả", "Lý do", "Đơn vị tính", "Trạng thái"};
+				for (int i = 0; i < headersCT.length; i++) {
+					Cell cell = headerRowCT.createCell(i);
+					cell.setCellValue(headersCT[i]);
+					cell.setCellStyle(headerStyle);
+				}
+
+				// Điền dữ liệu chi tiết
+				for (int row = 0; row < modelCTPT.getRowCount(); row++) {
+					Row dataRow = sheetCTPT.createRow(row + 1);
+					for (int col = 0; col < modelCTPT.getColumnCount(); col++) {
+						Cell cell = dataRow.createCell(col);
+						Object value = modelCTPT.getValueAt(row, col);
+						cell.setCellValue(value != null ? value.toString() : "");
+						cell.setCellStyle(dataStyle);
+					}
+				}
+
+				// Auto-size columns
+				for (int i = 0; i < headersCT.length; i++) {
+					sheetCTPT.autoSizeColumn(i);
+				}
+			}
+
+			// Ghi file
+			try (FileOutputStream fos = new FileOutputStream(fileToSave)) {
+				workbook.write(fos);
+			}
+
+			JOptionPane.showMessageDialog(this, 
+				"Xuất Excel thành công!\nFile: " + fileToSave.getAbsolutePath(), 
+				"Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+			// Mở file sau khi xuất
+			if (java.awt.Desktop.isDesktopSupported()) {
+				java.awt.Desktop.getDesktop().open(fileToSave);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(this, 
+				"Lỗi khi xuất file Excel:\n" + e.getMessage(), 
+				"Lỗi", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
