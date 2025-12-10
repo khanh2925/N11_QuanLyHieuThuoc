@@ -48,31 +48,28 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.*;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 
+	private static final long serialVersionUID = 1L;
 	private static final int MAX_RETURN_DAYS = 7;
-
 	private static final String PLACEHOLDER_TIM_HOA_DON = "Tìm hoá đơn theo mã";
 	private static final String PLACEHOLDER_TIM_KH = "Tìm hoá đơn theo số điện thoại khách hàng";
-
 	private static final String REGEX_MA_HOA_DON = "^HD-\\d{8}-\\d{4}$";
-
-	private JTextField txtTimHoaDon;
-	private JTextField txtTimKH;
+	private LocalDate today = LocalDate.now();
+	private double tienTra = 0;
 
 	private JPanel pnDanhSachDon;
+	private JTextField txtTimHoaDon;
+	private JTextField txtTimKH;
 	private JTextField txtTienTra;
 	private JTextField txtTenKhachHang;
 	private JTextField txtNguoiBan;
 	private JTextField txtMaHoaDon;
-
-	private double tienTra = 0;
-
-	private LocalDate today = LocalDate.now();
-	private DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+	private JTextArea txtGhiChuGiamGia;
+	private PillButton btnTraHang;
+	private PillButton btnHuy;
 
 	private final HoaDon_DAO hoaDonDAO;
 	private final ChiTietHoaDon_DAO cthdDAO;
@@ -80,11 +77,6 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 	private final ChiTietPhieuTra_DAO ctptDAO;
 	private final QuyCachDongGoi_DAO qcdgDAO;
 
-	private JTextArea txtGhiChuGiamGia;
-
-	private PillButton btnTraHang;
-
-	private PillButton btnHuy;
 	private List<ItemTraHang> dsTraHang = new ArrayList<>();
 
 	public TraHangNhanVien_GUI() {
@@ -379,7 +371,7 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 			return;
 		}
 
-		long days = ChronoUnit.DAYS.between(hd.getNgayLap(), LocalDate.now());
+		long days = ChronoUnit.DAYS.between(hd.getNgayLap(), today);
 		if (days > MAX_RETURN_DAYS) {
 			JOptionPane.showMessageDialog(this, "Hoá đơn đã quá " + MAX_RETURN_DAYS + " ngày - không thể trả!");
 			return;
@@ -628,36 +620,11 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 		return dsQuyCach.get(0);
 	}
 
-	/**
-	 * Kiểm tra số lượng trả hợp lệ dựa trên số lượng đã trả trước đó. Trả về: true
-	 * = hợp lệ, false = vượt số lượng cho phép.
-	 */
-	private boolean kiemTraSoLuongHopLe(String maHD, ItemTraHang it) {
-
-		String maLo = it.getMaLo();
-
-		// Giả định: ctptDAO.tongSoLuongDaTra(maHD, maLo) đã quy về đơn vị gốc
-		double daTraGoc = ctptDAO.tongSoLuongDaTra(maHD, maLo);
-		int daMuaGoc = it.getSoLuongMuaGoc();
-		double conLaiGoc = daMuaGoc - daTraGoc;
-
-//		int slTraGoc = it.getSoLuongTraQuyVeGoc();
-		int slTraGoc = it.getSoLuongTra() * it.getQuyCachDangChon().getHeSoQuyDoi();
-
-		if (slTraGoc > conLaiGoc) {
-			JOptionPane.showMessageDialog(this,
-					"Lô " + maLo + " chỉ còn được trả tối đa: " + (int) conLaiGoc + " (quy về đơn vị gốc).",
-					"Vượt số lượng còn lại", JOptionPane.WARNING_MESSAGE);
-			return false;
-		}
-
-		return true;
-	}
-
 	private void xuLyTraHang(ActionEvent e) {
 
 		if (dsTraHang.isEmpty()) {
 			JOptionPane.showMessageDialog(this, "Không có sản phẩm để trả!");
+			txtTimHoaDon.requestFocus();
 			return;
 		}
 
@@ -665,70 +632,99 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 		if (hd == null)
 			return;
 
+		String maHD = txtMaHoaDon.getText().trim();
+
+		// ===== GOM NHÓM THEO LÔ TRƯỚC KHI KIỂM TRA =====
+		Map<String, List<ItemTraHang>> mapTheoLo = new HashMap<>();
+		for (ItemTraHang it : dsTraHang) {
+			String key = it.getMaLo(); // chỉ cần theo lô
+			mapTheoLo.computeIfAbsent(key, k -> new ArrayList<>()).add(it);
+		}
+
+		// ===== KIỂM TRA TỔNG SỐ LƯỢNG TRẢ CHO TỪNG LÔ =====
+		for (Map.Entry<String, List<ItemTraHang>> entry : mapTheoLo.entrySet()) {
+			String maLo = entry.getKey();
+			List<ItemTraHang> dsTheoLo = entry.getValue();
+
+			if (dsTheoLo.isEmpty())
+				continue;
+
+			// 1) Tổng số lượng trả lần này (quy về gốc) - GOM TẤT CẢ DÒNG CÙNG LÔ
+			int tongTraGoc = 0;
+			for (ItemTraHang it : dsTheoLo) {
+				tongTraGoc += it.getSoLuongTra() * it.getQuyCachDangChon().getHeSoQuyDoi();
+			}
+
+			// 2) Lấy số lượng đã mua (lấy từ item đầu tiên vì cùng lô thì cùng số lượng)
+			int daMuaGoc = dsTheoLo.get(0).getSoLuongMuaGoc();
+
+			// 3) Lấy tổng đã trả trước đó (quy về gốc)
+			double daTraGoc = ctptDAO.tongSoLuongDaTra(maHD, maLo);
+
+			// 4) Kiểm tra vượt số lượng cho phép
+			if (daTraGoc + tongTraGoc > daMuaGoc) {
+				String tenSP = dsTheoLo.get(0).getTenSanPham();
+				
+				// Hiển thị chi tiết từng dòng để user dễ hiểu
+				StringBuilder chiTiet = new StringBuilder();
+				chiTiet.append("Chi tiết trả:\n");
+				for (ItemTraHang it : dsTheoLo) {
+					int slGoc = it.getSoLuongTra() * it.getQuyCachDangChon().getHeSoQuyDoi();
+					chiTiet.append(String.format("  • %d %s = %d (gốc)\n", 
+						it.getSoLuongTra(), 
+						it.getQuyCachDangChon().getDonViTinh().getTenDonViTinh(),
+						slGoc));
+				}
+				
+				JOptionPane.showMessageDialog(this,
+					"Sản phẩm: " + tenSP + "\n" +
+					"Lô: " + maLo + "\n\n" +
+					"Đã mua: " + daMuaGoc + " (gốc)\n" +
+					"Đã trả trước đó: " + (int)daTraGoc + " (gốc)\n\n" +
+					chiTiet.toString() +
+					"Tổng muốn trả: " + tongTraGoc + " (gốc)\n\n" +
+					"❌ Tổng vượt mức cho phép!\n" +
+					"Số lượng còn có thể trả: " + (daMuaGoc - (int)daTraGoc) + " (gốc)",
+					"Vượt số lượng", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+
+			// 5) Kiểm tra nếu đã trả hết mà vẫn trả tiếp
+			if (daTraGoc >= daMuaGoc) {
+				String tenSP = dsTheoLo.get(0).getTenSanPham();
+				JOptionPane.showMessageDialog(this,
+					"Sản phẩm " + tenSP + " (Lô: " + maLo + ") đã được trả đủ.\nKhông thể trả thêm!",
+					"Đã trả hết", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+		}
+
+		// ===== TẠO PHIẾU TRẢ SAU KHI KIỂM TRA HỢP LỆ =====
 		String maPhieu = ptDAO.taoMaPhieuTra();
 
 		PhieuTra pt = new PhieuTra();
 		pt.setMaPhieuTra(maPhieu);
 		pt.setKhachHang(hd.getKhachHang());
 		pt.setNhanVien(Session.getInstance().getTaiKhoanDangNhap().getNhanVien());
-		pt.setNgayLap(LocalDate.now());
+		pt.setNgayLap(today);
 		pt.setDaDuyet(false);
 
 		List<ChiTietPhieuTra> dsCT = new ArrayList<>();
 
 		for (ItemTraHang it : dsTraHang) {
-
-			String maHD = txtMaHoaDon.getText().trim();
-			String maLo = it.getMaLo();
-
-			// 1) Lấy tổng đã trả trước đó (quy về gốc)
-			double daTraGoc = ctptDAO.tongSoLuongDaTra(maHD, maLo);
-
-			// 2) Tổng số lượng đã mua của sản phẩm (quy về gốc)
-			int daMuaGoc = it.getSoLuongMuaGoc();
-
-			// 3) Số lượng muốn trả lần này (quy về gốc)
-			int slTraGoc = it.getSoLuongTra() * it.getQuyCachDangChon().getHeSoQuyDoi();
-
-			// 4) Kiểm tra vượt số lượng cho phép
-			if (daTraGoc + slTraGoc > daMuaGoc) {
-				JOptionPane.showMessageDialog(this,
-						"Sản phẩm: " + it.getTenSanPham() + "\n" + "Đã mua: " + daMuaGoc + " (gốc)\n"
-								+ "Đã trả trước đó: " + (int) daTraGoc + " (gốc)\n" + "Muốn trả thêm: " + slTraGoc
-								+ " (gốc)\n\n" + "❌ Tổng vượt mức cho phép!",
-						"Vượt số lượng", JOptionPane.ERROR_MESSAGE);
-				return;
-			}
-
-			// 5) Kiểm tra nếu đã trả hết mà vẫn trả tiếp
-			if (daTraGoc >= daMuaGoc) {
-				JOptionPane.showMessageDialog(this,
-						"Sản phẩm " + it.getTenSanPham() + " đã được trả đủ.\nKhông thể trả thêm!", "Đã trả hết",
-						JOptionPane.WARNING_MESSAGE);
-				return;
-			}
-
-			// 6) Tạo chi tiết phiếu trả
 			ChiTietPhieuTra ct = new ChiTietPhieuTra();
 
-			// hóa đơn gốc để biết mã HĐ, lô, KM... (dùng cho log + đơn giá tham khảo)
 			ct.setChiTietHoaDon(it.getChiTietHoaDonGoc());
-
-			// số lượng trả theo đơn vị đang chọn
 			ct.setSoLuong(it.getSoLuongTra());
 
-			// đơn vị tính ĐANG CHỌN trong combobox (vỉ / hộp / viên)
 			if (it.getQuyCachDangChon() != null) {
 				ct.setDonViTinh(it.getQuyCachDangChon().getDonViTinh());
 			}
 
-			// tiền hoàn: dùng đúng đơn giá & số lượng mà UI đang hiển thị
 			ct.setThanhTienHoan(it.getThanhTien());
-
 			ct.setLyDoChiTiet(it.getLyDo());
 			ct.setTrangThai(0);
 			dsCT.add(ct);
-
 		}
 
 		pt.setChiTietPhieuTraList(dsCT);

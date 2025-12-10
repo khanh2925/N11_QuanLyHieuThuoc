@@ -20,6 +20,9 @@ public class TraHangItemPanel extends JPanel {
 
 	private ItemTraHang item;
 	private String anhPath;
+	
+	// Flag để tránh xử lý trùng lặp khi nhấn Enter
+	private boolean isDangXuLy = false;
 
 	// UI
 	private JLabel lblSTT;
@@ -255,11 +258,22 @@ public class TraHangItemPanel extends JPanel {
 		});
 
 		// ===== NHẬP TAY =====
-		txtSoLuongTra.addActionListener(e -> nhapSL());
+		txtSoLuongTra.addActionListener(e -> {
+			if (!isDangXuLy) {
+				isDangXuLy = true;
+				nhapSL();
+				isDangXuLy = false;
+			}
+		});
+		
 		txtSoLuongTra.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent e) {
-				nhapSL();
+				if (!isDangXuLy) {
+					isDangXuLy = true;
+					nhapSL();
+					isDangXuLy = false;
+				}
 			}
 		});
 
@@ -333,8 +347,29 @@ public class TraHangItemPanel extends JPanel {
 		// ===== LÝ DO =====
 		txtLyDo.addFocusListener(new FocusAdapter() {
 			@Override
+			public void focusGained(FocusEvent e) {
+				// Xóa placeholder khi focus vào
+				if (txtLyDo.getText().equals("Lý do trả (không bắt buộc)") 
+					&& txtLyDo.getForeground().equals(Color.GRAY)) {
+					txtLyDo.setText("");
+					txtLyDo.setForeground(Color.BLACK);
+					txtLyDo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+				}
+			}
+			
+			@Override
 			public void focusLost(FocusEvent e) {
-				item.setLyDo(txtLyDo.getText().trim());
+				String text = txtLyDo.getText().trim();
+				
+				// Hiển thị lại placeholder nếu rỗng
+				if (text.isEmpty()) {
+					txtLyDo.setText("Lý do trả (không bắt buộc)");
+					txtLyDo.setForeground(Color.GRAY);
+					txtLyDo.setFont(new Font("Segoe UI", Font.ITALIC, 12));
+					item.setLyDo(""); // lưu chuỗi rỗng vào item
+				} else {
+					item.setLyDo(text);
+				}
 			}
 		});
 
@@ -412,8 +447,6 @@ public class TraHangItemPanel extends JPanel {
 		int muaGoc = item.getSoLuongMuaGoc();
 
 		if (tongTraGoc > muaGoc) {
-//			JOptionPane.showMessageDialog(this, "Không thể trả vượt tổng số lượng đã mua!\n" + "Đã mua (gốc): " + muaGoc
-//					+ "\nBạn đang trả: " + tongTraGoc + " (gốc)", "Vượt số lượng", JOptionPane.WARNING_MESSAGE);
 			return false;
 		}
 
@@ -425,7 +458,12 @@ public class TraHangItemPanel extends JPanel {
 		try {
 			int slMoi = Integer.parseInt(txtSoLuongTra.getText().trim());
 			if (slMoi <= 0)
-				slMoi = 1;
+			{
+				JOptionPane.showMessageDialog(null, "Số lượng trả phải lớn hơn 0!", "Số lượng không hợp lệ",
+						JOptionPane.WARNING_MESSAGE);
+				txtSoLuongTra.setText(String.valueOf(slCu));
+				return;
+			}
 
 			item.setSoLuongTra(slMoi);
 
