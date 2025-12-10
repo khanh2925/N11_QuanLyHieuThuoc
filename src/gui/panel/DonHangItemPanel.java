@@ -13,6 +13,7 @@ import component.input.TaoJtextNhanh;
 import dao.LoSanPham_DAO;
 import dao.QuyCachDongGoi_DAO;
 import entity.ItemDonHang;
+import entity.KhuyenMai;
 import entity.LoSanPham;
 import entity.QuyCachDongGoi;
 import entity.SanPham;
@@ -204,7 +205,6 @@ public class DonHangItemPanel extends JPanel {
         txtKM.setToolTipText(item.getTooltipKM());
         txtKM.setMaximumSize(new Dimension(90, 30));
         txtKM.setPreferredSize(new Dimension(90, 30));
-        txtKM.setBorder(new LineBorder(Color.black));
         add(txtKM);
         add(Box.createHorizontalStrut(5));
 
@@ -665,6 +665,32 @@ public class DonHangItemPanel extends JPanel {
                     formatTien(giaGoc), sl, formatTien(thanhTien));
         }
         txtThanhTien.setToolTipText(tooltip);
+     // ==========================================================
+        // LOGIC CẬP NHẬT TOOLTIP CHI TIẾT (Yêu cầu mới)
+        // ==========================================================
+        if (item.getKhuyenMai() != null) {
+            KhuyenMai km = item.getKhuyenMai().getKhuyenMai();
+            
+            // 1. Định dạng giá trị giảm giá
+            String giaTriKMFormatted = (km.getHinhThuc() == enums.HinhThucKM.GIAM_GIA_PHAN_TRAM)
+                ? (DF.format(km.getGiaTri()) + " %")
+                : (DF.format(km.getGiaTri()) + " VNĐ");
+                
+            // 2. Tạo chuỗi HTML chi tiết cho Tooltip
+            String chiTietTooltip = "<html>"
+                    + "<b>Thông tin Khuyến Mãi:</b> <font color='red'><b>" + km.getTenKM() + "</b></font><br>"
+                    + "<b>Giảm Giá:</b> <font color='red'><b>" + giaTriKMFormatted + "</b></font><br>"
+                    + "<b>Hình thức:</b> " + (km.getHinhThuc() == enums.HinhThucKM.GIAM_GIA_PHAN_TRAM ? "Giảm theo phần trăm" : "Giảm theo tiền mặt") + "<br>"
+                    + "<b>Áp dụng cho:</b> " + item.getSanPham().getTenSanPham() + "<br>"
+                    + "<b>Thời hạn:</b> " + km.getNgayBatDau() + " - " + km.getNgayKetThuc()
+                    + "</html>";
+                    
+            // 3. Set Tooltip
+            txtKM.setToolTipText(chiTietTooltip);
+        } else {
+            // Nếu không có KM, hiển thị tooltip đơn giản
+            txtKM.setToolTipText(item.getTooltipKM()); 
+        }
     }
 
     private void thongBaoCapNhat() {
