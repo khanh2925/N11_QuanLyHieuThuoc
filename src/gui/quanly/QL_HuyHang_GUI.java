@@ -8,14 +8,15 @@ package gui.quanly;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import javax.swing.RowFilter;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -29,6 +30,18 @@ import javax.swing.table.TableRowSorter;
 
 import com.toedter.calendar.JDateChooser;
 
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
+
+import java.io.File;
+import java.io.FileOutputStream;
+
 import database.connectDB;
 import component.button.PillButton;
 import component.input.PlaceholderSupport;
@@ -38,7 +51,7 @@ import dao.PhieuHuy_DAO;
 import entity.ChiTietPhieuHuy;
 import entity.PhieuHuy;
 
-public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListener, DocumentListener {
+public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentListener {
 
 	private static final long serialVersionUID = 1L;
 	private JPanel pnPhieuHuy;
@@ -65,6 +78,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 	private TableRowSorter<DefaultTableModel> sorter;
 	private JPanel pnBtnCTPH;
 	private JSplitPane pnCenter;
+
+	private static final String TEN_NHA_THUOC = "NHÀ THUỐC HÒA AN"; // đổi tên theo nhà thuốc của bạn
 
 	DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 	DecimalFormat df = new DecimalFormat("#,###đ");
@@ -100,8 +115,6 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		btnHuyHang.addActionListener(this);
 		btnTuChoi.addActionListener(this);
 		btnXuatFile.addActionListener(this);
-		tblCTPH.addMouseListener(this);
-		tblPH.addMouseListener(this);
 		txtSearch.getDocument().addDocumentListener(this);
 
 	}
@@ -238,7 +251,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 				@Override
 				public boolean include(Entry<? extends Object, ? extends Object> entry) {
 					try {
-						String ngayStr = entry.getStringValue(3); // Cột Ngày lập
+						String ngayStr = entry.getStringValue(1); // Cột Ngày lập
 						LocalDate ngay = LocalDate.parse(ngayStr, fmt);
 
 						LocalDate tu = tuNgay != null
@@ -289,7 +302,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		loadDataTablePH();
 
 		// Bảng chi tiết phiếu huỷ
-		String[] cTPhieuCols = { "Mã lô", "Tên SP", "SL huỷ", "Lý do", "Đơn vị tính", "Trạng thái" };
+		String[] cTPhieuCols = { "Mã lô", "Tên SP", "SL huỷ", "Lý do", "Đơn vị tính", "Thành tiền", "Trạng thái" };
 
 		modelCTPH = new DefaultTableModel(cTPhieuCols, 0) {
 			@Override
@@ -331,7 +344,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 
 		// ---- 2) Trạng thái bảng CHI TIẾT: Đã hủy hàng = xanh, Đã từ chối hủy = đỏ
 		// Cột 5 (không phải cột 4) vì đã thêm cột "Đơn vị tính"
-		tblCTPH.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
+		tblCTPH.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 					boolean hasFocus, int row, int column) {
@@ -431,8 +444,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		}
 
 		for (PhieuHuy ph : dsPhieuHuy) {
-			modelPH.addRow(new Object[] { ph.getMaPhieuHuy(), ph.getNgayLapPhieu(), ph.getNhanVien().getTenNhanVien(),
-					df.format(ph.getTongTien()), ph.getTrangThaiText() });
+			modelPH.addRow(new Object[] { ph.getMaPhieuHuy(), ph.getNgayLapPhieu().format(fmt),
+					ph.getNhanVien().getTenNhanVien(), df.format(ph.getTongTien()), ph.getTrangThaiText() });
 		}
 
 	}
@@ -465,51 +478,12 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 
 			modelCTPH.addRow(
 					new Object[] { ctph.getLoSanPham().getMaLo(), ctph.getLoSanPham().getSanPham().getTenSanPham(),
-							ctph.getSoLuongHuy(), ctph.getLyDoChiTiet(), tenDonViTinh, // ✅ Cột 4: Đơn vị tính
+							ctph.getSoLuongHuy(), ctph.getLyDoChiTiet(), tenDonViTinh, ctph.getThanhTien(), // ✅ Cột 4:
+																											// Đơn vị
+																											// tính
 							ctph.getTrangThaiText() // ✅ Cột 5: Trạng thái
 					});
 		}
-
-	}
-
-	public static void main(String[] args) {
-		SwingUtilities.invokeLater(() -> {
-			JFrame frame = new JFrame("Quản lý phiếu hủy hàng");
-			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			frame.setSize(1280, 800);
-			frame.setLocationRelativeTo(null);
-			frame.setContentPane(new QL_HuyHang_GUI());
-			frame.setVisible(true);
-		});
-	}
-
-	@Override
-	public void mouseClicked(MouseEvent e) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void mousePressed(MouseEvent e) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void mouseReleased(MouseEvent e) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void mouseEntered(MouseEvent e) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void mouseExited(MouseEvent e) {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -534,6 +508,10 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 			TuChoiHuy();
 			return;
 		}
+		if (src == btnXuatFile) {
+			xuatPDFPhieuHuyDangChon();
+			return;
+		}
 
 	}
 
@@ -546,8 +524,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 			JOptionPane.showMessageDialog(null, "Vui lòng chọn chi tiết phiếu hủy để cập nhật trạng thái!!");
 			return;
 		}
-		// ✅ Đọc cột 5 (Trạng thái), không phải cột 4 (Đơn vị tính)
-		String trangThai = modelCTPH.getValueAt(selectRowCT, 5).toString();
+		// ✅ Đọc cột 6 (Trạng thái)
+		String trangThai = modelCTPH.getValueAt(selectRowCT, 6).toString();
 		if (trangThai.trim().equals("Đã từ chối")) {
 			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy này đã ở trạng thái từ chối hủy");
 			return;
@@ -562,8 +540,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		String maLo = modelCTPH.getValueAt(selectRowCT, 0).toString();
 
 		if (ctph_dao.capNhatTrangThaiChiTiet(maPH, maLo, 3)) {
-			// ✅ Update cột 5 (Trạng thái)
-			modelCTPH.setValueAt("Đã từ chối hủy", selectRowCT, 5);
+			// ✅ Update cột 6 (Trạng thái)
+			modelCTPH.setValueAt("Đã từ chối hủy", selectRowCT, 6);
 			JOptionPane.showMessageDialog(null, "Đã từ chối hủy hàng!");
 
 			capNhatTrangThaiPhieuSauKhiCapNhatCTPH(maPH);
@@ -583,7 +561,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 			return;
 		}
 		// ✅ Đọc cột 5 (Trạng thái), không phải cột 4 (Đơn vị tính)
-		String trangThai = modelCTPH.getValueAt(selectRowCT, 5).toString();
+		String trangThai = modelCTPH.getValueAt(selectRowCT, 6).toString();
 
 		if (trangThai.trim().equals("Đã hủy hàng")) {
 			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy đã ở trạng thái đã hủy!!");
@@ -593,8 +571,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		String maLo = modelCTPH.getValueAt(selectRowCT, 0).toString();
 
 		if (ctph_dao.capNhatTrangThaiChiTiet(maPH, maLo, 2)) {
-			// ✅ Update cột 5 (Trạng thái)
-			modelCTPH.setValueAt("Đã hủy hàng", selectRowCT, 5);
+			// ✅ Update cột 6 (Trạng thái)
+			modelCTPH.setValueAt("Đã hủy hàng", selectRowCT, 6);
 			JOptionPane.showMessageDialog(null, "Hủy hàng thành công!");
 
 			capNhatTrangThaiPhieuSauKhiCapNhatCTPH(maPH);
@@ -635,6 +613,130 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 
 	}
 
+	// sự kiện xuất file
+	private void xuatPDFPhieuHuyDangChon() {
+		// 1. Kiểm tra đã chọn phiếu chưa
+		int rowView = tblPH.getSelectedRow();
+		if (rowView == -1) {
+			JOptionPane.showMessageDialog(this, "Vui lòng chọn một phiếu hủy trước khi xuất file!");
+			return;
+		}
+
+		int rowModel = tblPH.convertRowIndexToModel(rowView);
+
+		// 2. Lấy thông tin phiếu hủy đang chọn
+		String maPH = modelPH.getValueAt(rowModel, 0).toString(); // Mã PH
+		String ngayLap = modelPH.getValueAt(rowModel, 1).toString(); // Ngày lập phiếu
+		String nhanVien = modelPH.getValueAt(rowModel, 2).toString(); // Nhân viên
+		String tongTien = modelPH.getValueAt(rowModel, 3).toString(); // Tổng tiền (đã format)
+		String trangThai = modelPH.getValueAt(rowModel, 4).toString(); // Trạng thái
+
+		// 3. Chọn nơi lưu file
+		JFileChooser chooser = new JFileChooser();
+		chooser.setDialogTitle("Lưu phiếu hủy PDF");
+		chooser.setSelectedFile(new File("PhieuHuy_" + maPH + ".pdf"));
+
+		int result = chooser.showSaveDialog(this);
+		if (result != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+
+		File file = chooser.getSelectedFile();
+
+		// 4. Tạo PDF
+		Document doc = new Document();
+		try {
+			PdfWriter.getInstance(doc, new FileOutputStream(file));
+			doc.open();
+			
+			
+			String fontPath = "lib/times.ttf"; // đúng vị trí file bro đang để
+
+			com.itextpdf.text.pdf.BaseFont bf =
+			    com.itextpdf.text.pdf.BaseFont.createFont(
+			        fontPath,
+			        com.itextpdf.text.pdf.BaseFont.IDENTITY_H,
+			        com.itextpdf.text.pdf.BaseFont.EMBEDDED
+			    );
+			
+			// FONT cho PDF 
+			com.itextpdf.text.Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
+
+			com.itextpdf.text.Font fontSubTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
+
+			com.itextpdf.text.Font fontNormal = FontFactory.getFont(FontFactory.HELVETICA, 11);
+
+			// 4.1 Tên nhà thuốc (trên cùng bên trái)
+			Paragraph tenNT = new Paragraph(TEN_NHA_THUOC + "\n\n", fontSubTitle);
+			tenNT.setAlignment(Element.ALIGN_LEFT);
+			doc.add(tenNT);
+
+			// 4.2 Tiêu đề phiếu
+			Paragraph title = new Paragraph("PHIẾU HỦY HÀNG\n\n", fontTitle);
+			title.setAlignment(Element.ALIGN_CENTER);
+			doc.add(title);
+
+			// 4.3 Thông tin chung của phiếu (bảng 2 cột)
+			PdfPTable infoTable = new PdfPTable(2);
+			infoTable.setWidthPercentage(100);
+			infoTable.setSpacingBefore(5);
+			infoTable.setSpacingAfter(10);
+
+			addInfoRow(infoTable, "Mã phiếu hủy:", maPH, fontSubTitle, fontNormal);
+			addInfoRow(infoTable, "Ngày lập:", ngayLap, fontSubTitle, fontNormal);
+			addInfoRow(infoTable, "Nhân viên lập:", nhanVien, fontSubTitle, fontNormal);
+			addInfoRow(infoTable, "Trạng thái:", trangThai, fontSubTitle, fontNormal);
+			addInfoRow(infoTable, "Tổng tiền:", tongTien, fontSubTitle, fontNormal);
+
+			doc.add(infoTable);
+
+			// 4.4 Bảng chi tiết phiếu hủy (lấy từ tblCTPH)
+			Paragraph ctTitle = new Paragraph("Chi tiết phiếu hủy\n\n", fontSubTitle);
+			ctTitle.setAlignment(Element.ALIGN_LEFT);
+			doc.add(ctTitle);
+
+			PdfPTable detailTable = new PdfPTable(tblCTPH.getColumnCount());
+			detailTable.setWidthPercentage(100);
+
+			// Header chi tiết
+			for (int c = 0; c < tblCTPH.getColumnCount(); c++) {
+				PdfPCell cell = new PdfPCell(new Paragraph(tblCTPH.getColumnName(c), fontSubTitle));
+				cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+				detailTable.addCell(cell);
+			}
+
+			// Dòng dữ liệu chi tiết
+			for (int r = 0; r < tblCTPH.getRowCount(); r++) {
+				for (int c = 0; c < tblCTPH.getColumnCount(); c++) {
+					Object val = tblCTPH.getValueAt(r, c);
+					PdfPCell cell = new PdfPCell(new Paragraph(val == null ? "" : val.toString(), fontNormal));
+					cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+					detailTable.addCell(cell);
+				}
+			}
+
+			doc.add(detailTable);
+
+			JOptionPane.showMessageDialog(this, "Xuất PDF phiếu hủy thành công!");
+
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			JOptionPane.showMessageDialog(this, "Xuất PDF thất bại!");
+		} finally {
+			doc.close();
+		}
+	}
+
+	private void addInfoRow(PdfPTable table, String label, String value, com.itextpdf.text.Font labelFont,
+			com.itextpdf.text.Font valueFont) {
+		PdfPCell c1 = new PdfPCell(new Paragraph(label, labelFont));
+		PdfPCell c2 = new PdfPCell(new Paragraph(value, valueFont));
+		c1.setBorder(PdfPCell.NO_BORDER);
+		c2.setBorder(PdfPCell.NO_BORDER);
+		table.addCell(c1);
+		table.addCell(c2);
+	}
+
 	@Override
 	public void insertUpdate(DocumentEvent e) {
 		refreshFilters();
@@ -650,4 +752,16 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 		refreshFilters();
 	}
 
+
+
+	public static void main(String[] args) {
+		SwingUtilities.invokeLater(() -> {
+			JFrame frame = new JFrame("Quản lý phiếu hủy hàng");
+			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			frame.setSize(1280, 800);
+			frame.setLocationRelativeTo(null);
+			frame.setContentPane(new QL_HuyHang_GUI());
+			frame.setVisible(true);
+		});
+	}
 }
