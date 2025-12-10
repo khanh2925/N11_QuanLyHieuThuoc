@@ -245,5 +245,37 @@ public class TaiKhoan_DAO {
 		}
 		return prefix + "0001";
 	}
+	/** * 🔹 Tìm Mã Tài Khoản dựa trên thông tin xác thực nhân viên (Quên mật khẩu)
+     * Trả về MaTaiKhoan nếu thông tin khớp, ngược lại trả về null
+     */
+    public String timTaiKhoanQuenMK(String maNV, String tenNV, String sdt, LocalDate ngaySinh) {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+        String sql = """
+            SELECT tk.MaTaiKhoan 
+            FROM TaiKhoan tk
+            JOIN NhanVien nv ON tk.MaNhanVien = nv.MaNhanVien
+            WHERE nv.MaNhanVien = ? 
+              AND nv.TenNhanVien = ? 
+              AND nv.SoDienThoai = ? 
+              AND nv.NgaySinh = ?
+        """;
+        
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, maNV);
+            stmt.setString(2, tenNV);
+            stmt.setString(3, sdt);
+            stmt.setDate(4, java.sql.Date.valueOf(ngaySinh));
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("MaTaiKhoan");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi tìm tài khoản quên MK: " + e.getMessage());
+        }
+        return null; // Không tìm thấy hoặc lỗi
+    }
 
 }

@@ -719,24 +719,34 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
     /**
      * Xử lý nghiệp vụ tìm nhà cung cấp
      */
-    private void xuLyTimNhaCungCap() {
-         String keyword = txtTimNCC.getText().trim();
-         if(keyword.isEmpty()) {
-              datLaiThongTinNCC(); // <-- ĐÃ VIỆT HÓA
-              return;
-         }
+private void xuLyTimNhaCungCap() {
+        String keyword = txtTimNCC.getText().trim();
+        if (keyword.isEmpty()) {
+            datLaiThongTinNCC(); 
+            return;
+        }
+        NhaCungCap ncc = nhaCungCapDAO.timNhaCungCapTheoMaHoacSDT(keyword);
 
-         NhaCungCap ncc = nhaCungCapDAO.timNhaCungCapTheoMaHoacSDT(keyword);
+        if (ncc != null) {
+            if (!ncc.isHoatDong()) {
+                JOptionPane.showMessageDialog(this, 
+                    "Nhà cung cấp '" + ncc.getTenNhaCungCap() + "' đã ngừng hợp tác.\nVui lòng chọn nhà cung cấp khác!", 
+                    "Cảnh báo", 
+                    JOptionPane.WARNING_MESSAGE);
+                
 
-         if (ncc != null) {
-             capNhatThongTinNCC(ncc);
+                datLaiThongTinNCC();
+                
+                txtTimNCC.selectAll();
+                txtTimNCC.requestFocus();
+            } else {
+                capNhatThongTinNCC(ncc);
+            }
         } else {
-             datLaiThongTinNCC(); 
-             // Sửa dòng dưới đây
-             txtTenNCC.setText("Không tìm thấy nhà cung cấp");
-             txtTenNCC.setForeground(Color.RED);
-             
-             txtTimNCC.setForeground(Color.RED);
+            datLaiThongTinNCC();
+            txtTenNCC.setText("Không tìm thấy nhà cung cấp");
+            txtTenNCC.setForeground(Color.RED);
+            txtTimNCC.setForeground(Color.RED);
         }
     }
 

@@ -27,6 +27,7 @@ import component.button.PillButton;
 import component.border.RoundedBorder;
 import entity.NhanVien;
 import entity.TaiKhoan;
+import gui.dialog.QuenMatKhau_Dialog;
 import dao.TaiKhoan_DAO; // 💡 Dùng DAO
 import entity.Session; // 💡 Dùng Session
 
@@ -130,42 +131,52 @@ public class DangNhap_GUI extends JFrame {
 		pnFormDangNhap.add(txtMatKhau);
 		addPlaceholder(txtMatKhau, "Nhập mật khẩu của bạn");
 
-		// === Icon mắt ===
+		// === 1. Khởi tạo Icon ===
 		ImageIcon iconOpen = new ImageIcon(new ImageIcon(getClass().getResource("/resources/images/eye_open.png")).getImage()
-				.getScaledInstance(25, 25, Image.SCALE_SMOOTH));
+		        .getScaledInstance(25, 25, Image.SCALE_SMOOTH));
 		ImageIcon iconClose = new ImageIcon(new ImageIcon(getClass().getResource("/resources/images/eye_close.png")).getImage()
-				.getScaledInstance(25, 25, Image.SCALE_SMOOTH));
+		        .getScaledInstance(25, 25, Image.SCALE_SMOOTH));
 
-		// === Nút hiện/ẩn mật khẩu ===
-		JButton btnTogglePassword = new JButton(iconOpen); // mặc định ẩn mật khẩu → hiện icon "mắt mở"
-		btnTogglePassword.setBounds(50 + inputWidth - 45, 558 + 5, 30, 40); // Căn chỉnh lại vị trí nút mắt
+		// === 2. Tạo nút toggle và cấu hình giao diện ===
+		JButton btnTogglePassword = new JButton(iconOpen); 
+		btnTogglePassword.setBounds(50 + inputWidth - 45, 558 + 5, 30, 40); 
 		btnTogglePassword.setFocusPainted(false);
 		btnTogglePassword.setBorderPainted(false);
 		btnTogglePassword.setContentAreaFilled(false);
 		btnTogglePassword.setCursor(new Cursor(Cursor.HAND_CURSOR));
-		btnTogglePassword.setFocusable(false);
+		btnTogglePassword.setFocusable(false); // Quan trọng: Không cho nút chiếm focus khi click
+
 		pnFormDangNhap.add(btnTogglePassword);
 
-		// Trạng thái mặc định: ẩn mật khẩu
-		final boolean[] isHidden = { true };
-		// Đặt EchoChar mặc định trong addPlaceholder, nếu text không phải là placeholder
+		// 🔥 CỰC KỲ QUAN TRỌNG: Đưa nút lên lớp trên cùng (Layer 0) để chắc chắn nhận được click
+		pnFormDangNhap.setComponentZOrder(btnTogglePassword, 0);
+
+		// Đảm bảo trạng thái ban đầu của txtMatKhau (nếu đã có text thì che đi)
 		if (!txtMatKhau.getText().equals("Nhập mật khẩu của bạn")) {
 		    txtMatKhau.setEchoChar('●');
 		}
 
-
-		// Sự kiện click vào nút mắt
+		// === 3. Xử lý sự kiện click (Logic mới: Không dùng biến phụ) ===
 		btnTogglePassword.addActionListener(e -> {
-			if (isHidden[0]) {
-				// Hiện mật khẩu
-				txtMatKhau.setEchoChar((char) 0);
-				btnTogglePassword.setIcon(iconClose); // đổi sang icon mắt đóng
-			} else {
-				// Ẩn mật khẩu
-				txtMatKhau.setEchoChar('●');
-				btnTogglePassword.setIcon(iconOpen);
-			}
-			isHidden[0] = !isHidden[0];
+		    // Debug: In ra console để biết chắc chắn nút đã được bấm
+		    System.out.println("Sự kiện click mắt đã chạy!");
+
+		    String currentPass = new String(txtMatKhau.getPassword());
+		    // Nếu là placeholder hoặc rỗng thì bỏ qua
+		    if (currentPass.equals("Nhập mật khẩu của bạn") || currentPass.isEmpty()) {
+		        return;
+		    }
+
+		    // Kiểm tra trực tiếp trạng thái của ô mật khẩu thay vì dùng biến isHidden
+		    if (txtMatKhau.getEchoChar() != (char) 0) {
+		        // Đang có ký tự che (ẩn) -> Chuyển sang HIỆN
+		        txtMatKhau.setEchoChar((char) 0);
+		        btnTogglePassword.setIcon(iconClose); 
+		    } else {
+		        // Đang không che (hiện) -> Chuyển sang ẨN
+		        txtMatKhau.setEchoChar('●');
+		        btnTogglePassword.setIcon(iconOpen);
+		    }
 		});
 
 		JButton btnDangNhap = new PillButton("ĐĂNG NHẬP");
@@ -187,24 +198,27 @@ public class DangNhap_GUI extends JFrame {
 		// 💡 THAY THẾ LOGIC CŨ BẰNG HÀM XỬ LÝ ĐĂNG NHẬP
 		btnDangNhap.addActionListener(e -> xuLyDangNhap());
 
+		// === Thay thế toàn bộ đoạn xử lý btnQuenMK cũ bằng đoạn này ===
+
+		// Thêm sự kiện Hover chuột cho đẹp (giữ lại hiệu ứng cũ)
 		btnQuenMK.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseEntered(MouseEvent e) {
-				btnQuenMK.setForeground(new Color(0xB71C1C));
-				btnQuenMK.setFont(new Font("Arial", Font.ITALIC | Font.BOLD, 16));
-			}
+		    @Override
+		    public void mouseEntered(MouseEvent e) {
+		        btnQuenMK.setForeground(new Color(0xB71C1C));
+		        btnQuenMK.setFont(new Font("Arial", Font.ITALIC | Font.BOLD, 16));
+		    }
 
-			@Override
-			public void mouseExited(MouseEvent e) {
-				btnQuenMK.setForeground(new Color(0xD32F2F));
-				btnQuenMK.setText("Quên mật khẩu?");
-			}
+		    @Override
+		    public void mouseExited(MouseEvent e) {
+		        btnQuenMK.setForeground(new Color(0xD32F2F));
+		        btnQuenMK.setFont(new Font("Arial", Font.ITALIC, 16));
+		    }
+		});
 
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				JOptionPane.showMessageDialog(null, "Tính năng khôi phục mật khẩu đang được phát triển!", "Thông báo",
-						JOptionPane.INFORMATION_MESSAGE);
-			}
+		// Thêm sự kiện Click để mở Dialog Quên Mật Khẩu
+		btnQuenMK.addActionListener(e -> {
+		    // Mở Dialog QuenMatKhau, truyền 'this' làm cha để dialog hiện ở giữa cửa sổ đăng nhập
+		    new QuenMatKhau_Dialog(this).setVisible(true);
 		});
 
 		pnFormDangNhap.add(btnQuenMK);
