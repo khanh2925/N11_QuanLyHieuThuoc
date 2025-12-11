@@ -154,28 +154,33 @@ public class ThongKe_DAO {
 
     /**
      * Tính tổng doanh thu trong khoảng thời gian
+     * Doanh thu thực = Tổng bán hàng - Tổng tiền hoàn trả
      * 
      * @param tuNgay  Ngày bắt đầu
      * @param denNgay Ngày kết thúc
-     * @return Tổng doanh thu
+     * @return Tổng doanh thu (đã trừ hoàn trả)
      */
     public double tinhTongDoanhThuTheoKhoangNgay(java.time.LocalDate tuNgay, java.time.LocalDate denNgay) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
 
+        // Doanh thu = Tổng thanh toán hóa đơn - Tổng tiền hoàn trả (phiếu trả đã duyệt)
         String sql = """
-                SELECT COALESCE(SUM(TongThanhToan), 0) AS TongDoanhThu
-                FROM HoaDon
-                WHERE NgayLap BETWEEN ? AND ?
+                SELECT
+                    COALESCE((SELECT SUM(TongThanhToan) FROM HoaDon WHERE NgayLap BETWEEN ? AND ?), 0)
+                    - COALESCE((SELECT SUM(TongTienHoan) FROM PhieuTra WHERE NgayLap BETWEEN ? AND ? AND DaDuyet = 1), 0)
+                AS DoanhThuThuc
                 """;
 
         try (PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setDate(1, java.sql.Date.valueOf(tuNgay));
             stmt.setDate(2, java.sql.Date.valueOf(denNgay));
+            stmt.setDate(3, java.sql.Date.valueOf(tuNgay));
+            stmt.setDate(4, java.sql.Date.valueOf(denNgay));
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getDouble("TongDoanhThu");
+                    return rs.getDouble("DoanhThuThuc");
                 }
             }
         } catch (SQLException e) {
@@ -231,5 +236,204 @@ public class ThongKe_DAO {
      */
     public double tinhTongDoanhThuKyTruoc(java.time.LocalDate tuNgay, java.time.LocalDate denNgay) {
         return tinhTongDoanhThuTheoKhoangNgay(tuNgay, denNgay);
+    }
+
+    // ============================================================
+    // 📦 THỐNG KÊ TỒN KHO THẤP
+    // ============================================================
+
+    /**
+     * Lấy danh sách sản phẩm có tồn kho thấp dưới ngưỡng
+     * 
+     * @param nguongTonKho Ngưỡng tồn kho tối thiểu
+     * @param loaiSanPham  Loại sản phẩm (null = tất cả)
+     * @return List chứa Object[]: {MaSP, TenSP, LoaiSP, TongTonKho, GiaNhap, MaNCC,
+     *         TenNCC}
+     */
+    public java.util.List<Object[]> laySanPhamTonKhoThap(int nguongTonKho, String loaiSanPham) {
+        java.util.List<Object[]> result = new java.util.ArrayList<>();
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        // Query: Group by sản phẩm, tính tổng tồn kho từ các lô còn hạn, join NCC từ
+        // phiếu nhập gần nhất
+        String sql = """
+                SELECT
+                    sp.MaSanPham,
+                    sp.TenSanPham,
+                    sp.LoaiSanPham,
+                    COALESCE(SUM(lo.SoLuongTon), 0) AS TongTonKho,
+                    sp.GiaNhap,
+                    ncc.MaNhaCungCap,
+                    ncc.TenNhaCungCap
+                FROM SanPham sp
+                LEFT JOIN LoSanPham lo ON sp.MaSanPham = lo.MaSanPham
+                    AND lo.HanSuDung >= GETDATE() AND lo.SoLuongTon > 0
+                LEFT JOIN (
+                    SELECT lo_pn.MaSanPham, pn.MaNhaCungCap,
+                           ROW_NUMBER() OVER (PARTITION BY lo_pn.MaSanPham ORDER BY pn.NgayNhap DESC) AS rn
+                    FROM ChiTietPhieuNhap ctpn
+                    INNER JOIN LoSanPham lo_pn ON ctpn.MaLo = lo_pn.MaLo
+                    INNER JOIN PhieuNhap pn ON ctpn.MaPhieuNhap = pn.MaPhieuNhap
+                ) AS pn_latest ON sp.MaSanPham = pn_latest.MaSanPham AND pn_latest.rn = 1
+                LEFT JOIN NhaCungCap ncc ON pn_latest.MaNhaCungCap = ncc.MaNhaCungCap
+                WHERE sp.HoatDong = 1
+                """;
+
+        if (loaiSanPham != null && !loaiSanPham.isEmpty() && !loaiSanPham.equals("Tất cả")) {
+            sql += " AND sp.LoaiSanPham = ? ";
+        }
+
+        sql += """
+                GROUP BY sp.MaSanPham, sp.TenSanPham, sp.LoaiSanPham, sp.GiaNhap,
+                         ncc.MaNhaCungCap, ncc.TenNhaCungCap
+                HAVING COALESCE(SUM(lo.SoLuongTon), 0) <= ?
+                ORDER BY TongTonKho ASC
+                """;
+
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            int idx = 1;
+            if (loaiSanPham != null && !loaiSanPham.isEmpty() && !loaiSanPham.equals("Tất cả")) {
+                stmt.setString(idx++, loaiSanPham);
+            }
+            stmt.setInt(idx, nguongTonKho);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Object[] row = new Object[7];
+                    row[0] = rs.getString("MaSanPham");
+                    row[1] = rs.getString("TenSanPham");
+                    row[2] = rs.getString("LoaiSanPham");
+                    row[3] = rs.getInt("TongTonKho");
+                    row[4] = rs.getDouble("GiaNhap");
+                    row[5] = rs.getString("MaNhaCungCap");
+                    row[6] = rs.getString("TenNhaCungCap");
+                    result.add(row);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi lấy sản phẩm tồn kho thấp: " + e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
+     * Tính trung bình số lượng bán/ngày của một sản phẩm trong N ngày gần nhất
+     * 
+     * @param maSanPham Mã sản phẩm
+     * @param soNgay    Số ngày để tính trung bình (ví dụ: 30 ngày)
+     * @return Trung bình số lượng bán/ngày
+     */
+    public double tinhTrungBinhBanNgay(String maSanPham, int soNgay) {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        String sql = """
+                SELECT COALESCE(SUM(cthd.SoLuong * qc.HeSoQuyDoi), 0) / ? AS TrungBinhBanNgay
+                FROM ChiTietHoaDon cthd
+                INNER JOIN HoaDon hd ON cthd.MaHoaDon = hd.MaHoaDon
+                INNER JOIN LoSanPham lo ON cthd.MaLo = lo.MaLo
+                INNER JOIN QuyCachDongGoi qc ON cthd.MaDonViTinh = qc.MaDonViTinh
+                    AND lo.MaSanPham = qc.MaSanPham
+                WHERE lo.MaSanPham = ?
+                    AND hd.NgayLap >= DATEADD(DAY, -?, GETDATE())
+                """;
+
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setDouble(1, soNgay);
+            stmt.setString(2, maSanPham);
+            stmt.setInt(3, soNgay);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("TrungBinhBanNgay");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi tính trung bình bán/ngày: " + e.getMessage());
+        }
+        return 0;
+    }
+
+    /**
+     * Đếm số nhà cung cấp xuất hiện nhiều nhất trong danh sách sản phẩm cần nhập
+     * 
+     * @param nguongTonKho Ngưỡng tồn kho
+     * @return Object[]: {TenNCC, SoLuongSP} - NCC gợi ý và số SP cần nhập từ NCC đó
+     */
+    public Object[] timNhaCungCapGoiY(int nguongTonKho) {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        // Query: group by NCC, count số SP tồn thấp thuộc NCC đó
+        String sql2 = """
+                WITH SP_TonThap AS (
+                    SELECT
+                        sp.MaSanPham,
+                        COALESCE(SUM(lo.SoLuongTon), 0) AS TongTon,
+                        pn_latest.MaNhaCungCap
+                    FROM SanPham sp
+                    LEFT JOIN LoSanPham lo ON sp.MaSanPham = lo.MaSanPham
+                        AND lo.HanSuDung >= GETDATE() AND lo.SoLuongTon > 0
+                    LEFT JOIN (
+                        SELECT lo_pn.MaSanPham, pn.MaNhaCungCap,
+                               ROW_NUMBER() OVER (PARTITION BY lo_pn.MaSanPham ORDER BY pn.NgayNhap DESC) AS rn
+                        FROM ChiTietPhieuNhap ctpn
+                        INNER JOIN LoSanPham lo_pn ON ctpn.MaLo = lo_pn.MaLo
+                        INNER JOIN PhieuNhap pn ON ctpn.MaPhieuNhap = pn.MaPhieuNhap
+                    ) AS pn_latest ON sp.MaSanPham = pn_latest.MaSanPham AND pn_latest.rn = 1
+                    WHERE sp.HoatDong = 1
+                    GROUP BY sp.MaSanPham, pn_latest.MaNhaCungCap
+                    HAVING COALESCE(SUM(lo.SoLuongTon), 0) <= ?
+                )
+                SELECT TOP 1 ncc.TenNhaCungCap, COUNT(*) AS SoLuongSP
+                FROM SP_TonThap stt
+                INNER JOIN NhaCungCap ncc ON stt.MaNhaCungCap = ncc.MaNhaCungCap
+                GROUP BY ncc.MaNhaCungCap, ncc.TenNhaCungCap
+                ORDER BY SoLuongSP DESC
+                """;
+
+        try (PreparedStatement stmt = con.prepareStatement(sql2)) {
+            stmt.setInt(1, nguongTonKho);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return new Object[] {
+                            rs.getString("TenNhaCungCap"),
+                            rs.getInt("SoLuongSP")
+                    };
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi tìm NCC gợi ý: " + e.getMessage());
+        }
+        return new Object[] { "Không có dữ liệu", 0 };
+    }
+
+    /**
+     * Lấy loại sản phẩm (enum values) để hiển thị trong dropdown
+     * 
+     * @return Danh sách tên loại sản phẩm
+     */
+    public java.util.List<String> layDanhSachLoaiSanPham() {
+        java.util.List<String> result = new java.util.ArrayList<>();
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        String sql = "SELECT DISTINCT LoaiSanPham FROM SanPham WHERE HoatDong = 1 ORDER BY LoaiSanPham";
+
+        try (Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                String loai = rs.getString("LoaiSanPham");
+                if (loai != null && !loai.isEmpty()) {
+                    result.add(loai);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi lấy danh sách loại sản phẩm: " + e.getMessage());
+        }
+        return result;
     }
 }
