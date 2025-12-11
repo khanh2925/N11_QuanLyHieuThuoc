@@ -23,7 +23,7 @@ public class BieuDoTronJFreeChart extends JPanel {
 
     // Enum để xác định loại biểu đồ
     public static enum KieuBieuDo {
-        MAC_DINH,       // Biểu đồ tròn thông thường
+        MAC_DINH, // Biểu đồ tròn thông thường
         HINH_VANH_KHUYEN // Biểu đồ Donut
     }
 
@@ -40,13 +40,13 @@ public class BieuDoTronJFreeChart extends JPanel {
         bieuDo = taoBieuDo(tapDuLieu);
         khungBieuDo = new ChartPanel(bieuDo);
         khungBieuDo.setMouseWheelEnabled(true);
-        
+
         setLayout(new BorderLayout());
         add(khungBieuDo, BorderLayout.CENTER);
-        
+
         themSuKienChuot();
     }
-    
+
     private JFreeChart taoBieuDo(DefaultPieDataset dataset) {
         JFreeChart bieuDoMoi;
 
@@ -65,15 +65,15 @@ public class BieuDoTronJFreeChart extends JPanel {
         vungVe.setLabelShadowPaint(null);
         vungVe.setLabelPaint(Color.WHITE);
         vungVe.setLabelFont(new Font("SansSerif", Font.BOLD, 12));
-        
+
         vungVe.setSimpleLabels(true);
         vungVe.setLabelGenerator(new StandardPieSectionLabelGenerator(
-            "{2}", new DecimalFormat("0"), new DecimalFormat("0.0%")));
+                "{2}", new DecimalFormat("0"), new DecimalFormat("0.0%")));
         vungVe.setToolTipGenerator(new StandardPieToolTipGenerator(
-            "{0}: {1} ({2})", new DecimalFormat("#,##0.#"), new DecimalFormat("0.0%")));
+                "{0}: {1} ({2})", new DecimalFormat("#,##0.#"), new DecimalFormat("0.0%")));
 
         bieuDoMoi.setBackgroundPaint(this.getBackground());
-        
+
         return bieuDoMoi;
     }
 
@@ -105,7 +105,7 @@ public class BieuDoTronJFreeChart extends JPanel {
                 if (doiTuong instanceof PieSectionEntity) {
                     PieSectionEntity doiTuongLatCat = (PieSectionEntity) doiTuong;
                     int chiSo = doiTuongLatCat.getSectionIndex();
-                    
+
                     if (chiSo == chiSoDaChon) {
                         chiSoDaChon = -1;
                     } else {
@@ -114,8 +114,10 @@ public class BieuDoTronJFreeChart extends JPanel {
                     capNhatBieuDo();
                 }
             }
+
             @Override
-            public void chartMouseMoved(ChartMouseEvent event) {}
+            public void chartMouseMoved(ChartMouseEvent event) {
+            }
         });
     }
 

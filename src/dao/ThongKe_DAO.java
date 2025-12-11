@@ -583,4 +583,130 @@ public class ThongKe_DAO {
         }
         return 0.1;
     }
+
+    // ============================================================
+    // 📊 THỐNG KÊ THEO LOẠI SẢN PHẨM
+    // ============================================================
+
+    /**
+     * Lấy thống kê doanh thu, chi phí, lợi nhuận theo loại sản phẩm trong năm
+     * 
+     * @param nam Năm cần thống kê
+     * @return List chứa Object[]: {LoaiSP, SoLuongSP, DoanhThu, ChiPhi}
+     */
+    public java.util.List<Object[]> layThongKeTheoLoaiSanPham(int nam) {
+        java.util.List<Object[]> result = new java.util.ArrayList<>();
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        // Query: INNER JOIN để chỉ lấy sản phẩm có bán trong năm, WHERE để lọc năm
+        String sql = """
+                SELECT
+                    sp.LoaiSanPham,
+                    COUNT(DISTINCT sp.MaSanPham) AS SoLuongSP,
+                    SUM(cthd.ThanhTien) AS TongDoanhThu,
+                    SUM(cthd.SoLuong * qc.HeSoQuyDoi * sp.GiaNhap) AS TongChiPhi
+                FROM ChiTietHoaDon cthd
+                INNER JOIN HoaDon hd ON cthd.MaHoaDon = hd.MaHoaDon
+                INNER JOIN LoSanPham lo ON cthd.MaLo = lo.MaLo
+                INNER JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+                INNER JOIN QuyCachDongGoi qc ON cthd.MaDonViTinh = qc.MaDonViTinh
+                    AND sp.MaSanPham = qc.MaSanPham
+                WHERE YEAR(hd.NgayLap) = ?
+                    AND sp.HoatDong = 1
+                GROUP BY sp.LoaiSanPham
+                ORDER BY TongDoanhThu DESC
+                """;
+
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setInt(1, nam);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Object[] row = new Object[4];
+                    row[0] = rs.getString("LoaiSanPham");
+                    row[1] = rs.getInt("SoLuongSP");
+                    row[2] = rs.getDouble("TongDoanhThu");
+                    row[3] = rs.getDouble("TongChiPhi");
+                    result.add(row);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi lấy thống kê theo loại SP: " + e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
+     * Lấy thống kê theo loại sản phẩm cho năm trước để so sánh
+     * 
+     * @param nam Năm hiện tại (sẽ trả về dữ liệu năm trước = nam - 1)
+     * @return Map: LoaiSP -> DoanhThu năm trước
+     */
+    public java.util.Map<String, Double> layDoanhThuNamTruocTheoLoai(int nam) {
+        java.util.Map<String, Double> result = new java.util.HashMap<>();
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        // Query: INNER JOIN để chỉ lấy doanh thu thực tế của năm trước
+        String sql = """
+                SELECT
+                    sp.LoaiSanPham,
+                    SUM(cthd.ThanhTien) AS TongDoanhThu
+                FROM ChiTietHoaDon cthd
+                INNER JOIN HoaDon hd ON cthd.MaHoaDon = hd.MaHoaDon
+                INNER JOIN LoSanPham lo ON cthd.MaLo = lo.MaLo
+                INNER JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+                WHERE YEAR(hd.NgayLap) = ?
+                    AND sp.HoatDong = 1
+                GROUP BY sp.LoaiSanPham
+                """;
+
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setInt(1, nam - 1); // Năm trước
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String loai = rs.getString("LoaiSanPham");
+                    double doanhThu = rs.getDouble("TongDoanhThu");
+                    result.put(loai, doanhThu);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi lấy doanh thu năm trước theo loại: " + e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
+     * Tính tổng doanh thu theo năm
+     * 
+     * @param nam Năm cần tính
+     * @return Tổng doanh thu trong năm
+     */
+    public double tinhTongDoanhThuTheoNam(int nam) {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        String sql = """
+                SELECT COALESCE(SUM(TongThanhToan), 0) AS TongDoanhThu
+                FROM HoaDon
+                WHERE YEAR(NgayLap) = ?
+                """;
+
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setInt(1, nam);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("TongDoanhThu");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi tính tổng doanh thu theo năm: " + e.getMessage());
+        }
+        return 0;
+    }
 }
