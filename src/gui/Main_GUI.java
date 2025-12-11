@@ -64,6 +64,7 @@ public class Main_GUI extends JFrame {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setSize(1920, 1080);
 		setLocationRelativeTo(null);
+		setUndecorated(true); // Ẩn thanh tiêu đề mặc định);
 		buildUI();
 		hienThongTinNhanVien();
 	}

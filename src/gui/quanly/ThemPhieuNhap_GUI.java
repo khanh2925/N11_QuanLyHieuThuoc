@@ -206,14 +206,14 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
         pnHeaderButtons.setOpaque(false);
 
         btnThemLo = new PillButton("Thêm lô");
-        btnThemLo.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnThemLo.setPreferredSize(new Dimension(120, 40));
+        btnThemLo.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnThemLo.setPreferredSize(new Dimension(120, 50));
         btnThemLo.addActionListener(this);
         pnHeaderButtons.add(btnThemLo);
 
         btnNhapFile = new PillButton("Nhập từ file");
-        btnNhapFile.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnNhapFile.setPreferredSize(new Dimension(150, 40));
+        btnNhapFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnNhapFile.setPreferredSize(new Dimension(150, 50));
         btnNhapFile.addActionListener(this);
         pnHeaderButtons.add(btnNhapFile);
 

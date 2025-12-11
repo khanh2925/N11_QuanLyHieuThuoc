@@ -1,190 +1,217 @@
 package gui.panel;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridLayout;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.text.NumberFormat;
 import java.time.Year;
-
-import javax.swing.BorderFactory;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
-
-
-import component.chart.BieuDoCotJFreeChart;
-import component.chart.DuLieuBieuDoCot;
+import java.util.List;
+import java.util.Locale;
+import javax.swing.*;
+import javax.swing.border.*;
+import component.chart.*;
+import dao.ThongKe_DAO;
+import dao.ThongKe_DAO.BanGhiThongKe;
+import enums.LoaiSanPham;
 
 public class ThongKeTheoNam_Panel extends JPanel {
 
-    private JComboBox<Integer> cmbNamBatDau;
-    private JComboBox<Integer> cmbNamKetThuc;
-    
+    private JComboBox<Integer> cmbNamBatDau, cmbNamKetThuc;
+    private JComboBox<String> cmbLoaiSP, cmbKhuyenMai;
     private BieuDoCotJFreeChart bieuDoDoanhThu;
+    private JLabel lblTongDoanhThu, lblCaoNhat, lblThapNhat, lblTrungBinh, lblSoGiaoDich;
+    private ThongKe_DAO thongKeDAO;
+
+    // Màu sắc chủ đạo
+    private final Color COLOR_PRIMARY = new Color(0, 153, 102); 
+    private final Color COLOR_BG = Color.WHITE;
+    private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 14);
+    private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 14);
 
     public ThongKeTheoNam_Panel() {
+        thongKeDAO = new ThongKe_DAO();
         setLayout(new BorderLayout());
-        setBackground(Color.WHITE);
+        setBackground(COLOR_BG);
 
-        // --- Bắt đầu xây dựng giao diện ---
-        JPanel pnMain = new JPanel(new BorderLayout(0, 10));
-        pnMain.setBackground(Color.WHITE);
-        pnMain.setBorder(new EmptyBorder(10, 10, 10, 10));
-        add(pnMain, BorderLayout.CENTER);
+        // --- 1. FILTER PANEL ---
+        JPanel pnFilter = new JPanel(new GridLayout(1, 5, 20, 0));
+        pnFilter.setBackground(COLOR_BG);
+        pnFilter.setBorder(new CompoundBorder(
+            new TitledBorder(new LineBorder(new Color(200, 200, 200)), "Bộ lọc tùy chọn", TitledBorder.LEADING, TitledBorder.TOP, FONT_BOLD, new Color(100, 100, 100)),
+            new EmptyBorder(10, 20, 15, 20)
+        ));
+        pnFilter.setPreferredSize(new Dimension(0, 100));
 
-        // -- Panel chứa các tiêu chí lọc --
-        JPanel pnTieuChiLoc = new JPanel();
-        pnTieuChiLoc.setBackground(new Color(0xE3F2F5));
-        pnTieuChiLoc.setBorder(BorderFactory.createTitledBorder("Tiêu chí lọc"));
-        pnTieuChiLoc.setPreferredSize(new Dimension(0, 120));
-        pnTieuChiLoc.setLayout(null);
+        int cur = Year.now().getValue();
+        Integer[] years = new Integer[15]; for (int i=0; i<15; i++) years[i] = cur - i;
 
+        cmbNamBatDau = new JComboBox<>(years); cmbNamBatDau.setSelectedItem(cur - 4);
+        pnFilter.add(createFilterItem("Năm bắt đầu", cmbNamBatDau));
+
+        cmbNamKetThuc = new JComboBox<>(years); cmbNamKetThuc.setSelectedItem(cur);
+        pnFilter.add(createFilterItem("Năm kết thúc", cmbNamKetThuc));
+
+        cmbLoaiSP = new JComboBox<>(); cmbLoaiSP.addItem("Tất cả sản phẩm");
+        for (LoaiSanPham l : LoaiSanPham.values()) cmbLoaiSP.addItem(l.getTenLoai());
+        pnFilter.add(createFilterItem("Loại sản phẩm", cmbLoaiSP));
+
+        cmbKhuyenMai = new JComboBox<>(); cmbKhuyenMai.addItem("Tất cả khuyến mãi");
+        for (String[] km : thongKeDAO.getDanhSachKhuyenMai()) cmbKhuyenMai.addItem(km[0]);
+        pnFilter.add(createFilterItem("Khuyến mãi", cmbKhuyenMai));
+
+        // Nút Xem
+        JPanel pnButton = new JPanel(new BorderLayout());
+        pnButton.setOpaque(false);
+        JButton btnXem = new JButton("Áp dụng");
+        btnXem.setFocusPainted(false);
+        btnXem.setBackground(COLOR_PRIMARY);
+        btnXem.setForeground(Color.WHITE);
+        btnXem.setFont(FONT_BOLD);
+        btnXem.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnXem.setPreferredSize(new Dimension(100, 36));
         
-        JLabel lblNamBatDau = new JLabel("Năm bắt đầu");
-        lblNamBatDau.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblNamBatDau.setBounds(20, 27, 114, 20);
-        pnTieuChiLoc.add(lblNamBatDau);
-
-        // Tạo dữ liệu 10 năm gần nhất
-        int namHienTai = Year.now().getValue();
-        Integer[] namData = new Integer[10];
-        for (int i = 0; i < 10; i++) {
-            namData[i] = namHienTai - i;
-        }
-
-        cmbNamBatDau = new JComboBox<>(namData);
-        cmbNamBatDau.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cmbNamBatDau.setBounds(20, 63, 200, 30);
-        ((JLabel) cmbNamBatDau.getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
-        pnTieuChiLoc.add(cmbNamBatDau);
-
-        JLabel lblNamKetThuc = new JLabel("Năm kết thúc");
-        lblNamKetThuc.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblNamKetThuc.setBounds(299, 27, 122, 20);
-        pnTieuChiLoc.add(lblNamKetThuc);
-
-        cmbNamKetThuc = new JComboBox<>(namData);
-        cmbNamKetThuc.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cmbNamKetThuc.setBounds(299, 63, 200, 30);
-        ((JLabel) cmbNamKetThuc.getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
-        pnTieuChiLoc.add(cmbNamKetThuc);
-
+        btnXem.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { btnXem.setBackground(new Color(0, 180, 120)); }
+            public void mouseExited(MouseEvent e) { btnXem.setBackground(COLOR_PRIMARY); }
+        });
         
-        JLabel lblLoaiSanPham = new JLabel("Loại sản phẩm");
-        lblLoaiSanPham.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblLoaiSanPham.setBounds(580, 27, 122, 20);
-        pnTieuChiLoc.add(lblLoaiSanPham);
+        JPanel pnBtnContainer = new JPanel(new GridBagLayout());
+        pnBtnContainer.setOpaque(false);
+        pnBtnContainer.add(btnXem);
+        
+        JPanel pnWrapBtn = new JPanel(new BorderLayout());
+        pnWrapBtn.setOpaque(false);
+        pnWrapBtn.add(new JLabel(" "), BorderLayout.NORTH); 
+        pnWrapBtn.add(pnBtnContainer, BorderLayout.CENTER);
+        pnFilter.add(pnWrapBtn);
 
-        String[] loaiSanPhamData = {"Tất cả sản phẩm", "Thuốc kê đơn", "Thuốc không kê đơn", "Thực phẩm chức năng", "Dụng cụ y tế"};
-        JComboBox<String> cmbLoaiSanPham = new JComboBox<>(loaiSanPhamData);
-        ((JLabel) cmbLoaiSanPham.getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
-        cmbLoaiSanPham.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cmbLoaiSanPham.setBounds(580, 63, 200, 30);
-        pnTieuChiLoc.add(cmbLoaiSanPham);
+        add(pnFilter, BorderLayout.NORTH);
 
-        JLabel lblKhuyenMai = new JLabel("Khuyến mãi");
-        lblKhuyenMai.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblKhuyenMai.setBounds(860, 27, 122, 20);
-        pnTieuChiLoc.add(lblKhuyenMai);
+        // --- 2. CONTENT (KPI + CHART) ---
+        JPanel pnContent = new JPanel(new BorderLayout(0, 15));
+        pnContent.setBackground(COLOR_BG);
+        pnContent.setBorder(new EmptyBorder(10, 15, 10, 15));
 
-        String[] khuyenMaiData = {"Tất cả khuyến mãi", "Giảm giá 10%", "Mua 1 tặng 1", "Không áp dụng"};
-        JComboBox<String> cmbKhuyenMai = new JComboBox<>(khuyenMaiData);
-        ((JLabel) cmbKhuyenMai.getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
-        cmbKhuyenMai.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cmbKhuyenMai.setBounds(860, 63, 200, 30);
-        pnTieuChiLoc.add(cmbKhuyenMai);
+        // KPI Section
+        JPanel pnKPI = new JPanel(new GridLayout(1, 5, 15, 0));
+        pnKPI.setBackground(COLOR_BG);
+        pnKPI.setPreferredSize(new Dimension(0, 90));
 
-        pnMain.add(pnTieuChiLoc, BorderLayout.NORTH);
+        lblTongDoanhThu = createModernKPICard(pnKPI, "Tổng Doanh Thu", new Color(0, 123, 255)); // Blue
+        lblCaoNhat = createModernKPICard(pnKPI, "Năm Cao Nhất", new Color(40, 167, 69)); // Green
+        lblThapNhat = createModernKPICard(pnKPI, "Năm Thấp Nhất", new Color(220, 53, 69)); // Red
+        lblTrungBinh = createModernKPICard(pnKPI, "Trung Bình / Năm", new Color(255, 193, 7)); // Yellow
+        lblSoGiaoDich = createModernKPICard(pnKPI, "Tổng Giao Dịch", new Color(108, 117, 125)); // Grey
 
-        // Panel bao bọc biểu đồ và thống kê
-        JPanel pnMainContent = new JPanel(new BorderLayout(0, 10));
-        pnMainContent.setBackground(Color.WHITE);
+        pnContent.add(pnKPI, BorderLayout.NORTH);
 
-        // ===== PANEL BIỂU ĐỒ =====
-        JPanel pnBieuDo = new JPanel();
-        pnBieuDo.setBorder(BorderFactory.createTitledBorder("Biểu đồ doanh thu"));
-        pnBieuDo.setBackground(Color.WHITE);
-        pnBieuDo.setLayout(new BorderLayout(0, 0));
-
+        // Chart Section
+        JPanel pnChart = new JPanel(new BorderLayout());
+        pnChart.setBackground(COLOR_BG);
+        pnChart.setBorder(BorderFactory.createTitledBorder(
+            new LineBorder(new Color(220, 220, 220)), "Biểu đồ chi tiết", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, FONT_BOLD, new Color(80, 80, 80)
+        ));
+        
         bieuDoDoanhThu = new BieuDoCotJFreeChart();
-        bieuDoDoanhThu.setBuocNhayTrucY(50000000);
         bieuDoDoanhThu.setTieuDeTrucX("Năm");
         bieuDoDoanhThu.setTieuDeTrucY("Doanh thu (VNĐ)");
-        pnBieuDo.add(bieuDoDoanhThu, BorderLayout.CENTER);
-        JPanel pnThongKe = new JPanel();
-        pnThongKe.setBackground(new Color(0xE3F2F5));
-        pnThongKe.setBorder(new CompoundBorder(
-                BorderFactory.createTitledBorder("Tổng quan"),
-                new EmptyBorder(10, 20, 10, 20)
-        ));
-        pnThongKe.setPreferredSize(new Dimension(0, 140));
-        pnThongKe.setLayout(new GridLayout(2, 4, 20, 10));
+        pnChart.add(bieuDoDoanhThu, BorderLayout.CENTER);
+        pnContent.add(pnChart, BorderLayout.CENTER);
 
-        Font labelFont = new Font("Tahoma", Font.PLAIN, 16);
-        Font valueFont = new Font("Tahoma", Font.BOLD, 18);
-        Color valueColor = new Color(0x005a9e);
+        add(pnContent, BorderLayout.CENTER);
 
-        JLabel lblTongDoanhThu = new JLabel("Tổng doanh thu:", SwingConstants.LEFT);
-        lblTongDoanhThu.setFont(labelFont);
-        JLabel lblGiaTriTongDoanhThu = new JLabel("0 VNĐ");
-        lblGiaTriTongDoanhThu.setFont(valueFont);
-        lblGiaTriTongDoanhThu.setForeground(valueColor);
-
-        JLabel lblDoanhThuCaoNhat = new JLabel("Năm doanh thu cao nhất:", SwingConstants.LEFT);
-        lblDoanhThuCaoNhat.setFont(labelFont);
-        JLabel lblGiaTriCaoNhat = new JLabel("0 VNĐ (YYYY)");
-        lblGiaTriCaoNhat.setFont(valueFont);
-        lblGiaTriCaoNhat.setForeground(valueColor);
-
-        JLabel lblTongGiaoDich = new JLabel("Tổng số giao dịch:", SwingConstants.LEFT);
-        lblTongGiaoDich.setFont(labelFont);
-        JLabel lblGiaTriTongGiaoDich = new JLabel("0");
-        lblGiaTriTongGiaoDich.setFont(valueFont);
-        lblGiaTriTongGiaoDich.setForeground(valueColor);
-
-        JLabel lblDoanhThuTrungBinh = new JLabel("Doanh thu trung bình/năm:", SwingConstants.LEFT);
-        lblDoanhThuTrungBinh.setFont(labelFont);
-        JLabel lblGiaTriTrungBinh = new JLabel("0 VNĐ");
-        lblGiaTriTrungBinh.setFont(valueFont);
-        lblGiaTriTrungBinh.setForeground(valueColor);
-
-        pnThongKe.add(lblTongDoanhThu);
-        pnThongKe.add(lblGiaTriTongDoanhThu);
-        pnThongKe.add(lblDoanhThuCaoNhat);
-        pnThongKe.add(lblGiaTriCaoNhat);
-        pnThongKe.add(lblTongGiaoDich);
-        pnThongKe.add(lblGiaTriTongGiaoDich);
-        pnThongKe.add(lblDoanhThuTrungBinh);
-        pnThongKe.add(lblGiaTriTrungBinh);
-
-        pnMainContent.add(pnBieuDo, BorderLayout.CENTER);
-        pnMainContent.add(pnThongKe, BorderLayout.SOUTH);
-        pnMain.add(pnMainContent, BorderLayout.CENTER);
-
-        // Vẽ biểu đồ với dữ liệu mẫu theo năm
-        veBieuDoVoiDuLieuMau();
+        btnXem.addActionListener(e -> {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            loadDuLieu();
+            setCursor(Cursor.getDefaultCursor());
+        });
+        
+        loadDuLieu();
     }
 
-    /**
-     * Nạp dữ liệu mẫu vào biểu đồ (Dữ liệu theo năm).
-     */
-    private void veBieuDoVoiDuLieuMau() {
+    private JPanel createFilterItem(String title, JComponent component) {
+        JPanel p = new JPanel(new BorderLayout(5, 5));
+        p.setOpaque(false);
+        JLabel lbl = new JLabel(title);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lbl.setForeground(new Color(100, 100, 100));
+        p.add(lbl, BorderLayout.NORTH);
+        
+        component.setFont(FONT_TEXT);
+        component.setPreferredSize(new Dimension(component.getPreferredSize().width, 36));
+        p.add(component, BorderLayout.CENTER);
+        return p;
+    }
+
+    private JLabel createModernKPICard(JPanel parent, String title, Color accentColor) {
+        JPanel p = new JPanel(new BorderLayout(10, 5));
+        p.setBackground(new Color(250, 250, 250));
+        p.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 3, 0, accentColor), 
+            new EmptyBorder(10, 15, 10, 15)
+        ));
+        
+        JLabel lblTitle = new JLabel(title);
+        lblTitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblTitle.setForeground(new Color(100, 100, 100));
+        
+        JLabel lblValue = new JLabel("0");
+        lblValue.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblValue.setForeground(new Color(50, 50, 50));
+        
+        p.add(lblTitle, BorderLayout.NORTH);
+        p.add(lblValue, BorderLayout.CENTER);
+        
+        JPanel shadowWrap = new JPanel(new BorderLayout());
+        shadowWrap.setBorder(new LineBorder(new Color(230, 230, 230), 1));
+        shadowWrap.add(p);
+        
+        parent.add(shadowWrap);
+        return lblValue;
+    }
+
+    private void loadDuLieu() {
+        int namS = (Integer) cmbNamBatDau.getSelectedItem();
+        int namE = (Integer) cmbNamKetThuc.getSelectedItem();
+        
+        if (namS > namE) {
+            JOptionPane.showMessageDialog(this, "Năm bắt đầu không được lớn hơn năm kết thúc!", "Lỗi bộ lọc", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        String tenLoai = (String) cmbLoaiSP.getSelectedItem();
+        String maLoaiSP = "Tất cả";
+        if (!"Tất cả sản phẩm".equals(tenLoai)) { for (LoaiSanPham l : LoaiSanPham.values()) if (l.getTenLoai().equals(tenLoai)) { maLoaiSP = l.name(); break; } }
+        String maKM = (String) cmbKhuyenMai.getSelectedItem();
+        if ("Tất cả khuyến mãi".equals(maKM)) maKM = "Tất cả";
+
+        List<BanGhiThongKe> ds = thongKeDAO.getDoanhThuTheoNam(namS, namE, maLoaiSP, maKM);
+        
         bieuDoDoanhThu.xoaToanBoDuLieu();
-        bieuDoDoanhThu.setTieuDeBieuDo("Thống Kê Doanh Thu Theo Năm");
-
-        Color mauCot = new Color(219, 100, 100);
-        String tenNhom = "Doanh thu";
-
-        // Thêm dữ liệu mẫu cho 5 năm
-        int namHienTai = Year.now().getValue();
-        bieuDoDoanhThu.themDuLieu(new DuLieuBieuDoCot(Integer.toString(namHienTai - 4), tenNhom, 150000000, mauCot));
-        bieuDoDoanhThu.themDuLieu(new DuLieuBieuDoCot(Integer.toString(namHienTai - 3), tenNhom, 210000000, mauCot));
-        bieuDoDoanhThu.themDuLieu(new DuLieuBieuDoCot(Integer.toString(namHienTai - 2), tenNhom, 185000000, mauCot));
-        bieuDoDoanhThu.themDuLieu(new DuLieuBieuDoCot(Integer.toString(namHienTai - 1), tenNhom, 320000000, mauCot));
-        bieuDoDoanhThu.themDuLieu(new DuLieuBieuDoCot(Integer.toString(namHienTai), tenNhom, 410000000, mauCot));
+        bieuDoDoanhThu.setTieuDeBieuDo("Doanh Thu " + namS + " - " + namE);
+        Color col = new Color(220, 53, 69); // Đỏ nhạt
+        
+        double tong = 0, max = Double.MIN_VALUE, min = Double.MAX_VALUE; int don = 0; String nMax = "", nMin = "";
+        
+        for (BanGhiThongKe item : ds) {
+            bieuDoDoanhThu.themDuLieu(new DuLieuBieuDoCot(item.thoiGian, "Doanh thu", item.doanhThu, col));
+            tong += item.doanhThu; don += item.soLuongDon;
+            if (item.doanhThu > max) { max = item.doanhThu; nMax = item.thoiGian; }
+            if (item.doanhThu < min) { min = item.doanhThu; nMin = item.thoiGian; }
+        }
+        
+        if (ds.isEmpty()) { max = 0; min = 0; }
+        
+        NumberFormat vn = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+        lblTongDoanhThu.setText(vn.format(tong));
+        lblSoGiaoDich.setText(String.valueOf(don));
+        lblCaoNhat.setText(max > 0 ? "<html>" + vn.format(max) + "<br><span style='font-size:10px;color:gray'>(" + nMax + ")</span></html>" : "0 đ");
+        lblThapNhat.setText(min < Double.MAX_VALUE ? "<html>" + vn.format(min) + "<br><span style='font-size:10px;color:gray'>(" + nMin + ")</span></html>" : "0 đ");
+        
+        double trungBinh = ds.isEmpty() ? 0 : tong / ds.size();
+        lblTrungBinh.setText(vn.format(trungBinh));
+        
+        // === VẼ ĐƯỜNG TRUNG BÌNH ===
+        bieuDoDoanhThu.veDuongTrungBinh(trungBinh);
     }
 }
