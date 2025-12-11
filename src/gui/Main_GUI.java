@@ -26,7 +26,6 @@ import gui.quanly.QL_HuyHang_GUI;
 import gui.quanly.QuanLySanPham_GUI;
 import gui.quanly.ThemPhieuNhap_GUI;
 import gui.quanly.ThongKeDoanhThu_GUI;
-import gui.quanly.ThongKeSanPham_GUI;
 import gui.tracuu.TraCuuBangGia_GUI;
 import gui.tracuu.TraCuuDonHang_GUI;
 import gui.tracuu.TraCuuDonTraHang_GUI;
@@ -59,6 +58,10 @@ public class Main_GUI extends JFrame {
 	private NhanVien nvDangNhap;
 	private JLabel lblUserTop;
 
+	// Reference đến Dashboard để có thể refresh khi cần
+	private gui.quanly.TongQuanQuanLy_GUI dashboardQL;
+	private gui.nhanvien.TongQuanNV_GUI dashboardNV;
+
 	public Main_GUI(NhanVien nv) {
 		this.nvDangNhap = nv;
 		setTitle("Hiệu thuốc Hòa An - Hệ thống quản lý");
@@ -84,13 +87,9 @@ public class Main_GUI extends JFrame {
 
 		boolean isQL = nvDangNhap != null && nvDangNhap.isQuanLy();
 		if (isQL) { // Thêm các panel chức năng - sau này gắn tên panel vào đây
-			cardPanel.add(new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình tổng quan");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			}, "tongquan");
+			dashboardQL = new gui.quanly.TongQuanQuanLy_GUI(this);
+			cardPanel.add(dashboardQL, "tongquan");
+			cardPanel.add(new ThongKeDoanhThu_GUI(), "thongke");
 			cardPanel.add(new ThemPhieuNhap_GUI(), "nhaphang");
 			cardPanel.add(new QL_HuyHang_GUI(), "xuathuy");
 			cardPanel.add(new QLTraHang_GUI(), "trahang");
@@ -100,7 +99,8 @@ public class Main_GUI extends JFrame {
 			cardPanel.add(new NhanVien_QL_GUI(), "nhanvien");
 			showCard("tongquan");
 		} else {
-			cardPanel.add(new TongQuanNV_GUI(), "tongquan");
+			dashboardNV = new TongQuanNV_GUI();
+			cardPanel.add(dashboardNV, "tongquan");
 			cardPanel.add(new BanHang_GUI(), "banhang");
 			cardPanel.add(new TraHangNhanVien_GUI(), "trahang");
 			cardPanel.add(new HuyHangNhanVien_GUI(), "xuathuy");
@@ -141,10 +141,6 @@ public class Main_GUI extends JFrame {
 		if (isQL) {
 			addMenuButton(menuScrollContent, "Tổng quan", "tongquan", "/resources/images/icon_tong_quan.png");
 			addMenuButton(menuScrollContent, "Thống kê - Báo cáo", "thongke", "/resources/images/icon_thong_ke.png");
-			addSubmenuButton("thongke", "thongkedoanhthu", "Thống kê doanh thu", "/resources/images/icon_thong_ke.png",
-					new ThongKeDoanhThu_GUI());
-			addSubmenuButton("thongke", "thongkesanpham", "Thống kê sản phẩm", "/resources/images/icon_san_pham.png",
-					new ThongKeSanPham_GUI());
 
 			addMenuButton(menuScrollContent, "Tra cứu", "tracuu", "/resources/images/icon_tra_cuu.png");
 			addSubmenuButton("tracuu", "tracuusanpham", "Sản phẩm", "/resources/images/icon_san_pham.png",
@@ -218,7 +214,8 @@ public class Main_GUI extends JFrame {
 		}
 
 		// ScrollPane cho phần menu chính (cuộn mượt và hiện đại)
-		JScrollPane scrollPane = new JScrollPane(menuScrollContent, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+		JScrollPane scrollPane = new JScrollPane(menuScrollContent,
+				JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		scrollPane.setBorder(null);
 		scrollPane.getViewport().setBackground(new Color(199, 234, 239));
@@ -377,6 +374,17 @@ public class Main_GUI extends JFrame {
 	}
 
 	private void showCard(String key) {
+		// Refresh dashboard nếu đang chuyển đến tổng quan
+		if ("tongquan".equals(key)) {
+			if (dashboardQL != null) {
+				dashboardQL.refreshDashboard();
+			}
+			if (dashboardNV != null) {
+				// Nếu có method refresh cho dashboard nhân viên thì gọi ở đây
+				// dashboardNV.refreshDashboard();
+			}
+		}
+
 		((CardLayout) cardPanel.getLayout()).show(cardPanel, key);
 
 		// Reset màu tất cả
@@ -385,6 +393,79 @@ public class Main_GUI extends JFrame {
 			b.setForeground(Color.BLACK);
 			b.setOpaque(false);
 		});
+
+		// Tô màu cho button đang active
+		JButton activeBtn = menuContainers.get(key);
+		if (activeBtn == null)
+			return;
+
+		// Kiểm tra xem có phải là submenu
+		boolean isSubmenu = submenuContainers.values().stream()
+				.anyMatch(panel -> Arrays.asList(panel.getComponents()).contains(activeBtn));
+
+		if (isSubmenu) {
+			// submenu active
+			activeBtn.setBackground(new Color(0x0E736A));
+			activeBtn.setForeground(Color.WHITE);
+			activeBtn.setOpaque(true);
+
+			// tô màu cha + chỉ giữ mở submenu của cha, ẩn các submenu khác
+			final String[] parentKeyHolder = { null };
+			submenuContainers.forEach((parentKey, panel) -> {
+				if (Arrays.asList(panel.getComponents()).contains(activeBtn)) {
+					JButton parentBtn = menuContainers.get(parentKey);
+					if (parentBtn != null) {
+						parentBtn.setBackground(new Color(0x1E9086));
+						parentBtn.setForeground(Color.WHITE);
+						parentBtn.setOpaque(true);
+					}
+					parentKeyHolder[0] = parentKey;
+				}
+			});
+			// Ẩn mọi submenu KHÁC, chỉ giữ mở của cha hiện tại
+			final String keepKey = parentKeyHolder[0];
+			submenuContainers.forEach((k2, p) -> p.setVisible(k2.equals(keepKey)));
+		} else {
+			// Là menu cha — tô màu và mở submenu nếu có
+			activeBtn.setBackground(new Color(0x1E9086));
+			activeBtn.setForeground(Color.WHITE);
+			activeBtn.setOpaque(true);
+
+			JPanel sub = submenuContainers.get(key);
+			if (sub != null && sub.getComponentCount() > 0 && sub.getComponent(0) instanceof JButton) {
+				JButton firstSub = (JButton) sub.getComponent(0);
+				String firstSubKey = menuContainers.entrySet().stream().filter(entry -> entry.getValue() == firstSub)
+						.map(Map.Entry::getKey).findFirst().orElse(null);
+				if (firstSubKey != null) {
+					((CardLayout) cardPanel.getLayout()).show(cardPanel, firstSubKey);
+					firstSub.setBackground(new Color(0x0E736A));
+					firstSub.setForeground(Color.WHITE);
+					firstSub.setOpaque(true);
+				}
+			}
+			// Khi click sang menu cha khác: Ẩn toàn bộ submenu KHÔNG thuộc menu này
+			submenuContainers.forEach((k2, p) -> {
+				if (!k2.equals(key))
+					p.setVisible(false);
+			});
+		}
+	}
+
+	/**
+	 * Method public để chuyển card từ bên ngoài (ví dụ: từ Dashboard)
+	 * 
+	 * @param key Tên card cần chuyển đến
+	 */
+	public void chuyenDenCard(String key) {
+		// Refresh dashboard nếu đang chuyển đến tổng quan
+		if ("tongquan".equals(key)) {
+			if (dashboardQL != null) {
+				dashboardQL.refreshDashboard();
+			}
+			// Nếu cần cũng có thể thêm cho dashboardNV
+		}
+
+		showCard(key);
 
 		JButton activeBtn = menuContainers.get(key);
 		if (activeBtn == null)
