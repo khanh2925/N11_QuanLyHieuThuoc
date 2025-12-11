@@ -26,6 +26,7 @@ import gui.quanly.QL_HuyHang_GUI;
 import gui.quanly.QuanLySanPham_GUI;
 import gui.quanly.ThemPhieuNhap_GUI;
 import gui.quanly.ThongKeDoanhThu_GUI;
+import gui.quanly.ThongKeSanPham_GUI;
 import gui.tracuu.TraCuuBangGia_GUI;
 import gui.tracuu.TraCuuDonHang_GUI;
 import gui.tracuu.TraCuuDonTraHang_GUI;
@@ -89,7 +90,6 @@ public class Main_GUI extends JFrame {
 		if (isQL) { // Thêm các panel chức năng - sau này gắn tên panel vào đây
 			dashboardQL = new gui.quanly.TongQuanQuanLy_GUI(this);
 			cardPanel.add(dashboardQL, "tongquan");
-			cardPanel.add(new ThongKeDoanhThu_GUI(), "thongke");
 			cardPanel.add(new ThemPhieuNhap_GUI(), "nhaphang");
 			cardPanel.add(new QL_HuyHang_GUI(), "xuathuy");
 			cardPanel.add(new QLTraHang_GUI(), "trahang");
@@ -141,6 +141,10 @@ public class Main_GUI extends JFrame {
 		if (isQL) {
 			addMenuButton(menuScrollContent, "Tổng quan", "tongquan", "/resources/images/icon_tong_quan.png");
 			addMenuButton(menuScrollContent, "Thống kê - Báo cáo", "thongke", "/resources/images/icon_thong_ke.png");
+			addSubmenuButton("thongke", "thongkedoanhthu", "Thống kê doanh thu", "/resources/images/icon_thong_ke.png",
+					new ThongKeDoanhThu_GUI());
+			addSubmenuButton("thongke", "thongkesanpham", "Thống kê sản phẩm", "/resources/images/icon_san_pham.png",
+					new ThongKeSanPham_GUI());
 
 			addMenuButton(menuScrollContent, "Tra cứu", "tracuu", "/resources/images/icon_tra_cuu.png");
 			addSubmenuButton("tracuu", "tracuusanpham", "Sản phẩm", "/resources/images/icon_san_pham.png",
