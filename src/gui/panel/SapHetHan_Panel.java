@@ -92,11 +92,11 @@ public class SapHetHan_Panel extends JPanel {
         pnTieuChiLoc.add(cmbLoaiSP);
         loadLoaiSanPham();
 
-        JButton btnLoc = new PillButton("🔍 Lọc");
+        JButton btnLoc = new PillButton("Lọc");
         btnLoc.setBounds(650, 25, 100, 35);
         pnTieuChiLoc.add(btnLoc);
 
-        JButton btnXuatExcel = new PillButton("📥 Xuất Excel");
+        JButton btnXuatExcel = new PillButton("Xuất Excel");
         btnXuatExcel.setBounds(770, 25, 120, 35);
         pnTieuChiLoc.add(btnXuatExcel);
 
@@ -113,8 +113,8 @@ public class SapHetHan_Panel extends JPanel {
                 new EmptyBorder(10, 15, 10, 15)));
         pnTongQuan.setPreferredSize(new Dimension(0, 50));
 
-        JLabel lblIcon = new JLabel("⏰");
-        lblIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
+        JLabel lblIcon = new JLabel("!");
+        lblIcon.setFont(new Font("Tahoma", Font.BOLD, 20));
         pnTongQuan.add(lblIcon);
 
         lblTongQuan = new JLabel("Đang tải dữ liệu...");
@@ -339,19 +339,19 @@ public class SapHetHan_Panel extends JPanel {
         pnInsights.setPreferredSize(new Dimension(0, 80));
 
         // Card 1: Tổng lô sắp hết hạn
-        JPanel card1 = createInsightCard("📦 TỔNG LÔ SẮP HẾT HẠN", "0 lô", new Color(0xDC3545));
+        JPanel card1 = createInsightCard("TỔNG LÔ SẮP HẾT HẠN", "0 lô", new Color(0xDC3545));
         lblTongLo = (JLabel) ((JPanel) card1.getComponent(0)).getComponent(1);
 
         // Card 2: Giá trị thiệt hại
-        JPanel card2 = createInsightCard("💸 GIÁ TRỊ THIỆT HẠI", "0 VNĐ", new Color(0xDC3545));
+        JPanel card2 = createInsightCard("GIÁ TRỊ THIỆT HẠI", "0 VNĐ", new Color(0xDC3545));
         lblGiaTriThietHai = (JLabel) ((JPanel) card2.getComponent(0)).getComponent(1);
 
         // Card 3: Cần xử lý gấp
-        JPanel card3 = createInsightCard("🚨 KHÔNG KỊP BÁN", "0 lô", new Color(0xFD7E14));
+        JPanel card3 = createInsightCard("KHÔNG KỊP BÁN", "0 lô", new Color(0xFD7E14));
         lblCanXuLyGap = (JLabel) ((JPanel) card3.getComponent(0)).getComponent(1);
 
         // Card 4: Đề xuất
-        JPanel card4 = createInsightCard("💡 ĐỀ XUẤT GIẢM GIÁ", "0 lô", new Color(0x28A745));
+        JPanel card4 = createInsightCard("ĐỀ XUẤT GIẢM GIÁ", "0 lô", new Color(0x28A745));
         lblDeXuatHanhDong = (JLabel) ((JPanel) card4.getComponent(0)).getComponent(1);
 
         pnInsights.add(card1);
@@ -440,23 +440,23 @@ public class SapHetHan_Panel extends JPanel {
                 slKhongBanDuoc = 0;
 
             if (coTheBan >= slTon) {
-                kipBan = "✅ Kịp";
+                kipBan = "Kịp";
                 deXuat = "Bán bình thường";
             } else if (coTheBan >= slTon * 0.7) {
                 // Có thể bán 70-100% → Khuyến nghị giảm giá nhẹ
-                kipBan = "⚠️ Khó";
+                kipBan = "Khó";
                 deXuat = "Giảm 10-20%";
                 countCanGiam++;
                 tongThietHai += (long) (slKhongBanDuoc * giaBan * 0.20); // Ước tính thiệt hại 20%
             } else if (coTheBan >= slTon * 0.5) {
                 // Có thể bán 50-70% → Khuyến nghị giảm giá mạnh
-                kipBan = "⚠️ Khó";
+                kipBan = "Khó";
                 deXuat = "Giảm 30-50%";
                 countCanGiam++;
                 tongThietHai += (long) (slKhongBanDuoc * giaBan * 0.40); // Ước tính thiệt hại 40%
             } else {
                 // Có thể bán < 50% → Không kịp bán, chỉ hủy
-                kipBan = "❌ Không";
+                kipBan = "Không";
                 deXuat = "Hủy";
                 countKhongKip++;
                 tongThietHai += (long) (slKhongBanDuoc * giaBan); // Thiệt hại 100% phần không bán được
@@ -486,7 +486,7 @@ public class SapHetHan_Panel extends JPanel {
 
         // Cập nhật tổng quan
         if (danhSachLo.isEmpty()) {
-            lblTongQuan.setText("✅ Không có lô sản phẩm nào sắp hết hạn trong " + soNgay + " ngày tới.");
+            lblTongQuan.setText("Không có lô sản phẩm nào sắp hết hạn trong " + soNgay + " ngày tới.");
         } else {
             lblTongQuan.setText(String.format("Có %d lô sản phẩm sắp hết hạn. %d lô không kịp bán cần xử lý gấp!",
                     danhSachLo.size(), countKhongKip));
@@ -595,7 +595,7 @@ public class SapHetHan_Panel extends JPanel {
                         }
                         // Cột Kịp bán - bỏ emoji
                         else if (j == 7) {
-                            cell.setCellValue(strValue.replaceAll("[✅⚠️❌]", "").trim());
+                            cell.setCellValue(strValue);
                             if (strValue.contains("Không")) {
                                 cell.setCellStyle(warningStyle);
                             } else {

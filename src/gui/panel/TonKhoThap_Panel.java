@@ -89,11 +89,11 @@ public class TonKhoThap_Panel extends JPanel {
         pnTieuChiLoc.add(cmbLoaiSP);
         loadLoaiSanPham();
 
-        JButton btnLoc = new PillButton("🔍 Lọc");
+        JButton btnLoc = new PillButton("Lọc");
         btnLoc.setBounds(660, 25, 100, 35);
         pnTieuChiLoc.add(btnLoc);
 
-        JButton btnXuatExcel = new PillButton("📥 Xuất Excel");
+        JButton btnXuatExcel = new PillButton("Xuất Excel");
         btnXuatExcel.setBounds(780, 25, 120, 35);
         pnTieuChiLoc.add(btnXuatExcel);
 
@@ -110,8 +110,8 @@ public class TonKhoThap_Panel extends JPanel {
                 new EmptyBorder(10, 15, 10, 15)));
         pnTongQuan.setPreferredSize(new Dimension(0, 50));
 
-        JLabel lblIcon = new JLabel("⚠️");
-        lblIcon.setFont(new java.awt.Font("Segoe UI Emoji", java.awt.Font.PLAIN, 20));
+        JLabel lblIcon = new JLabel("!");
+        lblIcon.setFont(new java.awt.Font("Tahoma", java.awt.Font.BOLD, 20));
         pnTongQuan.add(lblIcon);
 
         lblTongQuan = new JLabel("Đang tải dữ liệu...");
@@ -323,19 +323,19 @@ public class TonKhoThap_Panel extends JPanel {
         pnInsights.setPreferredSize(new Dimension(0, 80));
 
         // Card 1: Tổng SP cần nhập
-        JPanel card1 = createInsightCard("📦 TỔNG SP CẦN NHẬP", "0 sản phẩm", new Color(0xDC3545));
+        JPanel card1 = createInsightCard("TỔNG SP CẦN NHẬP", "0 sản phẩm", new Color(0xDC3545));
         lblTongSP = (JLabel) ((JPanel) card1.getComponent(0)).getComponent(1);
 
         // Card 2: Chi phí nhập ước tính
-        JPanel card2 = createInsightCard("💵 CHI PHÍ ƯỚC TÍNH", "0 VNĐ", new Color(0xFD7E14));
+        JPanel card2 = createInsightCard("CHI PHÍ ƯỚC TÍNH", "0 VNĐ", new Color(0xFD7E14));
         lblChiPhiNhap = (JLabel) ((JPanel) card2.getComponent(0)).getComponent(1);
 
         // Card 3: Cần nhập gấp
-        JPanel card3 = createInsightCard("🚨 CẦN NHẬP GẤP", "0 SP", new Color(0xDC3545));
+        JPanel card3 = createInsightCard("CẦN NHẬP GẤP", "0 SP", new Color(0xDC3545));
         lblCanNhapGap = (JLabel) ((JPanel) card3.getComponent(0)).getComponent(1);
 
         // Card 4: NCC gợi ý
-        JPanel card4 = createInsightCard("🏢 NCC GỢI Ý", "Đang tải...", new Color(0x0077B6));
+        JPanel card4 = createInsightCard("NCC GỢI Ý", "Đang tải...", new Color(0x0077B6));
         lblNCCGoiY = (JLabel) ((JPanel) card4.getComponent(0)).getComponent(1);
 
         pnInsights.add(card1);
@@ -436,10 +436,10 @@ public class TonKhoThap_Panel extends JPanel {
             // Trạng thái
             String trangThai;
             if (duBaoHet <= 3) {
-                trangThai = "🔴 Cần nhập gấp";
+                trangThai = "Cần nhập gấp";
                 countUrgent++;
             } else {
-                trangThai = "🟡 Cần nhập";
+                trangThai = "Cần nhập";
             }
 
             tableModel.addRow(new Object[] {
@@ -473,7 +473,7 @@ public class TonKhoThap_Panel extends JPanel {
 
         // Cập nhật tổng quan
         if (danhSachSP.isEmpty()) {
-            lblTongQuan.setText("✅ Không có sản phẩm nào tồn kho thấp dưới ngưỡng " + nguong);
+            lblTongQuan.setText("Không có sản phẩm nào tồn kho thấp dưới ngưỡng " + nguong);
         } else {
             lblTongQuan.setText(String.format("Có %d sản phẩm tồn kho thấp. Ưu tiên nhập %d SP cần gấp trước!",
                     danhSachSP.size(), countUrgent));
@@ -582,7 +582,7 @@ public class TonKhoThap_Panel extends JPanel {
                         }
                         // Cột trạng thái
                         else if (j == 9) {
-                            cell.setCellValue(strValue.replaceAll("[🔴🟡]", "").trim());
+                            cell.setCellValue(strValue);
                             if (strValue.contains("Cần nhập gấp")) {
                                 cell.setCellStyle(warningStyle);
                             } else {

@@ -61,22 +61,22 @@ public class ThongKeSanPham_GUI extends JPanel {
         pnHeader.setLayout(null);
 
         // --- NÚT TOP BÁN CHẠY ---
-        btnTopBanChay = new PillButton("🏆 Top Bán Chạy");
+        btnTopBanChay = new PillButton("Top Bán Chạy");
         btnTopBanChay.setBounds(10, 5, 150, 40);
         pnHeader.add(btnTopBanChay);
 
         // --- NÚT TỒN KHO THẤP ---
-        btnTonKhoThap = new PillButton("📦 Tồn Kho Thấp");
+        btnTonKhoThap = new PillButton("Tồn Kho Thấp");
         btnTonKhoThap.setBounds(180, 5, 150, 40);
         pnHeader.add(btnTonKhoThap);
 
         // --- NÚT SẮP HẾT HẠN ---
-        btnSapHetHan = new PillButton("⏰ Sắp Hết Hạn");
+        btnSapHetHan = new PillButton("Sắp Hết Hạn");
         btnSapHetHan.setBounds(350, 5, 150, 40);
         pnHeader.add(btnSapHetHan);
 
         // --- NÚT THEO LOẠI ---
-        btnTheoLoai = new PillButton("📊 Theo Loại");
+        btnTheoLoai = new PillButton("Theo Loại");
         btnTheoLoai.setBounds(520, 5, 150, 40);
         pnHeader.add(btnTheoLoai);
 

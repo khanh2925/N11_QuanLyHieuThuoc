@@ -106,12 +106,12 @@ public class ThongKeTheoLoai_Panel extends JPanel {
         cmbNam.setBounds(100, 28, 100, 30);
         pnTieuChiLoc.add(cmbNam);
 
-        JButton btnThongKe = new PillButton("📊 Thống Kê");
+        JButton btnThongKe = new PillButton("Thống Kê");
         btnThongKe.setBounds(230, 25, 120, 35);
         btnThongKe.addActionListener(e -> loadDuLieu());
         pnTieuChiLoc.add(btnThongKe);
 
-        JButton btnXuatExcel = new PillButton("📥 Xuất Excel");
+        JButton btnXuatExcel = new PillButton("Xuất Excel");
         btnXuatExcel.setBounds(370, 25, 120, 35);
         btnXuatExcel.addActionListener(e -> xuatExcel());
         pnTieuChiLoc.add(btnXuatExcel);
@@ -239,36 +239,36 @@ public class ThongKeTheoLoai_Panel extends JPanel {
         Color valueColor = new Color(0x0077B6);
 
         // Row 1
-        JPanel item1 = createSummaryItem("💰 Tổng doanh thu:", "0 VNĐ", labelFont, valueFont, valueColor);
+        JPanel item1 = createSummaryItem("Tổng doanh thu:", "0 VNĐ", labelFont, valueFont, valueColor);
         lblSumDoanhThu = (JLabel) item1.getComponent(1);
         pnTongQuan.add(item1);
 
-        JPanel item2 = createSummaryItem("💵 Tổng chi phí:", "0 VNĐ", labelFont, valueFont, new Color(0xDC3545));
+        JPanel item2 = createSummaryItem("Tổng chi phí:", "0 VNĐ", labelFont, valueFont, new Color(0xDC3545));
         lblSumChiPhi = (JLabel) item2.getComponent(1);
         pnTongQuan.add(item2);
 
-        JPanel item3 = createSummaryItem("📈 Tổng lợi nhuận:", "0 VNĐ", labelFont, valueFont, new Color(0x28A745));
+        JPanel item3 = createSummaryItem("Tổng lợi nhuận:", "0 VNĐ", labelFont, valueFont, new Color(0x28A745));
         lblSumLoiNhuan = (JLabel) item3.getComponent(1);
         pnTongQuan.add(item3);
 
-        JPanel item4 = createSummaryItem("📊 Tỷ lệ LN trung bình:", "0%", labelFont, valueFont, new Color(0x28A745));
+        JPanel item4 = createSummaryItem("Tỷ lệ LN trung bình:", "0%", labelFont, valueFont, new Color(0x28A745));
         lblSumTyLeLN = (JLabel) item4.getComponent(1);
         pnTongQuan.add(item4);
 
         // Row 2
-        JPanel item5 = createSummaryItem("📦 Tổng số sản phẩm:", "0 sản phẩm", labelFont, valueFont, valueColor);
+        JPanel item5 = createSummaryItem("Tổng số sản phẩm:", "0 sản phẩm", labelFont, valueFont, valueColor);
         lblSumSoLuongSP = (JLabel) item5.getComponent(1);
         pnTongQuan.add(item5);
 
-        JPanel item6 = createSummaryItem("🏆 Loại LN cao nhất:", "N/A", labelFont, valueFont, new Color(0x28A745));
+        JPanel item6 = createSummaryItem("Loại LN cao nhất:", "N/A", labelFont, valueFont, new Color(0x28A745));
         lblSumLoaiCaoNhat = (JLabel) item6.getComponent(1);
         pnTongQuan.add(item6);
 
-        JPanel item7 = createSummaryItem("📉 Loại LN thấp nhất:", "N/A", labelFont, valueFont, new Color(0xDC3545));
+        JPanel item7 = createSummaryItem("Loại LN thấp nhất:", "N/A", labelFont, valueFont, new Color(0xDC3545));
         lblSumLoaiThapNhat = (JLabel) item7.getComponent(1);
         pnTongQuan.add(item7);
 
-        JPanel item8 = createSummaryItem("🔄 So với năm trước:", "N/A", labelFont, valueFont, new Color(0x28A745));
+        JPanel item8 = createSummaryItem("So với năm trước:", "N/A", labelFont, valueFont, new Color(0x28A745));
         lblSumSoSanh = (JLabel) item8.getComponent(1);
         pnTongQuan.add(item8);
 
@@ -305,19 +305,19 @@ public class ThongKeTheoLoai_Panel extends JPanel {
         pnInsights.setPreferredSize(new Dimension(0, 80));
 
         // Card 1: Tổng doanh thu
-        JPanel card1 = createInsightCard("💰 TỔNG DOANH THU", "0 VNĐ", new Color(0x0077B6));
+        JPanel card1 = createInsightCard("TỔNG DOANH THU", "0 VNĐ", new Color(0x0077B6));
         lblTongDoanhThu = (JLabel) ((JPanel) card1.getComponent(0)).getComponent(1);
 
         // Card 2: Lợi nhuận
-        JPanel card2 = createInsightCard("📈 LỢI NHUẬN", "0 VNĐ (0%)", new Color(0x28A745));
+        JPanel card2 = createInsightCard("LỢI NHUẬN", "0 VNĐ (0%)", new Color(0x28A745));
         lblLoiNhuan = (JLabel) ((JPanel) card2.getComponent(0)).getComponent(1);
 
         // Card 3: Loại sinh lời nhất
-        JPanel card3 = createInsightCard("🏆 LOẠI SINH LỜI NHẤT", "N/A", new Color(0xFD7E14));
+        JPanel card3 = createInsightCard("LOẠI SINH LỜI NHẤT", "N/A", new Color(0xFD7E14));
         lblLoaiTotNhat = (JLabel) ((JPanel) card3.getComponent(0)).getComponent(1);
 
         // Card 4: So với năm trước
-        JPanel card4 = createInsightCard("🔄 SO VỚI NĂM TRƯỚC", "N/A", new Color(0x28A745));
+        JPanel card4 = createInsightCard("SO VỚI NĂM TRƯỚC", "N/A", new Color(0x28A745));
         lblXuHuong = (JLabel) ((JPanel) card4.getComponent(0)).getComponent(1);
 
         pnInsights.add(card1);

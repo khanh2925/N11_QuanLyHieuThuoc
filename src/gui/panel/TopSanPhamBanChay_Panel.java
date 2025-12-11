@@ -116,12 +116,12 @@ public class TopSanPhamBanChay_Panel extends JPanel {
         cmbSoLuong.setBounds(380, 50, 100, 30);
         pnTieuChiLoc.add(cmbSoLuong);
 
-        JButton btnThongKe = new PillButton("📊 Thống Kê");
+        JButton btnThongKe = new PillButton("Thống Kê");
         btnThongKe.setBounds(520, 45, 120, 35);
         btnThongKe.addActionListener(e -> loadDuLieuThongKe());
         pnTieuChiLoc.add(btnThongKe);
 
-        JButton btnXuatExcel = new PillButton("📥 Xuất Excel");
+        JButton btnXuatExcel = new PillButton("Xuất Excel");
         btnXuatExcel.setBounds(660, 45, 120, 35);
         btnXuatExcel.addActionListener(e -> xuatExcel());
         pnTieuChiLoc.add(btnXuatExcel);
@@ -246,19 +246,19 @@ public class TopSanPhamBanChay_Panel extends JPanel {
         pnInsights.setPreferredSize(new Dimension(0, 80));
 
         // Card 1: Tổng doanh thu
-        JPanel card1 = createInsightCard("💰 TỔNG DOANH THU", "0 VNĐ", new Color(0x0077B6));
+        JPanel card1 = createInsightCard("TỔNG DOANH THU", "0 VNĐ", new Color(0x0077B6));
         lblTongDoanhThu = (JLabel) ((JPanel) card1.getComponent(0)).getComponent(1);
 
         // Card 2: Top 10 đóng góp
-        JPanel card2 = createInsightCard("📊 TOP 10 CHIẾM", "-- doanh thu", new Color(0x00B4D8));
+        JPanel card2 = createInsightCard("TOP 10 CHIẾM", "-- doanh thu", new Color(0x00B4D8));
         lblTopContribution = (JLabel) ((JPanel) card2.getComponent(0)).getComponent(1);
 
         // Card 3: SP bán chạy nhất
-        JPanel card3 = createInsightCard("🏆 BÁN CHẠY #1", "Chưa có dữ liệu", new Color(0x48CAE4));
+        JPanel card3 = createInsightCard("BÁN CHẠY #1", "Chưa có dữ liệu", new Color(0x48CAE4));
         lblBestSeller = (JLabel) ((JPanel) card3.getComponent(0)).getComponent(1);
 
         // Card 4: Xu hướng
-        JPanel card4 = createInsightCard("📈 XU HƯỚNG", "-- vs kỳ trước", new Color(0x28A745));
+        JPanel card4 = createInsightCard("XU HƯỚNG", "-- vs kỳ trước", new Color(0x28A745));
         lblTrend = (JLabel) ((JPanel) card4.getComponent(0)).getComponent(1);
 
         pnInsights.add(card1);
@@ -381,7 +381,7 @@ public class TopSanPhamBanChay_Panel extends JPanel {
                 } else {
                     trend = "→ 0%";
                 }
-            }			
+            }
 
             // Lưu best seller
             if (i == 0) {
