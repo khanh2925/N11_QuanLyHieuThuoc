@@ -218,8 +218,7 @@ public class Main_GUI extends JFrame {
 		}
 
 		// ScrollPane cho phần menu chính (cuộn mượt và hiện đại)
-		JScrollPane scrollPane = new JScrollPane(menuScrollContent,
-				JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+		JScrollPane scrollPane = new JScrollPane(menuScrollContent, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		scrollPane.setBorder(null);
 		scrollPane.getViewport().setBackground(new Color(199, 234, 239));

@@ -320,5 +320,41 @@ public class PhieuNhap_DAO {
 
 		return dsPhieuNhap;
 	}
+	/**
+	 * Tính tổng tiền nhập hàng theo tháng (cho biểu đồ)
+	 * @param thang Tháng (1-12)
+	 * @param nam Năm
+	 * @return Tổng tiền nhập hàng
+	 */
+	public double tinhTongTienNhapTheoThang(int thang, int nam) {
+		String sql = """
+				SELECT COALESCE(SUM(TongTien), 0) AS TongTienNhap
+				FROM PhieuNhap
+				WHERE MONTH(NgayNhap) = ? AND YEAR(NgayNhap) = ?
+				""";
+		
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		
+		try {
+			ps = con.prepareStatement(sql);
+			ps.setInt(1, thang);
+			ps.setInt(2, nam);
+			rs = ps.executeQuery();
+			
+			if (rs.next()) {
+				return rs.getDouble("TongTienNhap");
+			}
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi tính tổng tiền nhập theo tháng: " + e.getMessage());
+		} finally {
+			try { if (rs != null) rs.close(); } catch (Exception ignored) {}
+			try { if (ps != null) ps.close(); } catch (Exception ignored) {}
+		}
+		
+		return 0;
+	}
 
 }
