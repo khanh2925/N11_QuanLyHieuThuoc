@@ -27,6 +27,7 @@ import entity.TaiKhoan;
 import enums.LoaiSanPham;
 import gui.panel.HuyHangItemPanel;
 import gui.dialog.DialogChonLo;
+import gui.dialog.PhieuHuyPreviewDialog;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -605,9 +606,21 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 				String.format("✔ Tạo phiếu huỷ thành công!\nMã phiếu: %s\nTổng tiền huỷ: %,.0f đ", ph.getMaPhieuHuy(),
 						ph.getTongTien()),
 				"Thành công", JOptionPane.INFORMATION_MESSAGE);
+		int confirmHienThiPhieuHuy = JOptionPane.showConfirmDialog(this,
+		        "Tạo phiếu huỷ thành công!\nBạn có muốn xem phiếu không?",
+		        "Xem phiếu",
+		        JOptionPane.YES_NO_OPTION);
+
+		if (confirmHienThiPhieuHuy == JOptionPane.YES_OPTION) {
+		    Window w = SwingUtilities.getWindowAncestor(this);
+		    new PhieuHuyPreviewDialog(w, ph).setVisible(true);
+		}
+
 
 		resetForm();
 	}
+	
+	
 
 	// ===========================================
 	// ================ TEST MAIN ================

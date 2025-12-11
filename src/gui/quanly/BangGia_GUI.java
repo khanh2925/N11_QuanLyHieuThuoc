@@ -357,6 +357,17 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         JScrollPane scr = new JScrollPane(tblChiTiet);
         scr.setBorder(BorderFactory.createEmptyBorder());
         p.add(scr, BorderLayout.CENTER);
+        
+     // ✅BỔ SUNG SỰ KIỆN CLICK VÀO HÀNG
+        tblChiTiet.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int row = tblChiTiet.getSelectedRow();
+                if (row >= 0) {
+                    xuLyClickDongChiTiet(row);
+                }
+            }
+        });
     }
     
     // --- TAB 3: MÔ PHỎNG ---
@@ -411,7 +422,14 @@ public class BangGia_GUI extends JPanel implements ActionListener {
     // --- 1. THÊM BẢNG GIÁ ---
     private void xuLyThemBangGia() {
         if (!validInput()) return;
-
+        String maBG = txtMaBG.getText().trim();
+        if (bangGiaDAO.timBangGiaTheoMa(maBG) != null) {
+            JOptionPane.showMessageDialog(this,
+                "Mã bảng giá đã tồn tại!\nVui lòng làm mới để tạo mã mới.",
+                "Trùng mã bảng giá",
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         BangGia bgThat = taoBangGiaTuForm(); 
         if (bgThat == null) return;
 
@@ -492,14 +510,19 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         txtMaBG.setText(bangGiaDAO.taoMaBangGia());
         txtTenBG.setText("");
         txtNgayApDung.setText(LocalDate.now().format(dtf));
-        chkHoatDong.setSelected(false);
+        chkHoatDong.setSelected(true);
+        chkHoatDong.setEnabled(false);
+        
+        // ✅ BỔ SUNG: Reset ô tìm kiếm
+        txtTimKiem.setText(""); 
         
         // Reset quy trình nhập chi tiết
         resetInputChiTiet();
         dsChiTietTam.clear();
         renderBangChiTiet(dsChiTietTam);
         modelMoPhong.setRowCount(0); 
-
+        
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã, tên bảng giá...");
         List<BangGia> list = bangGiaDAO.layTatCaBangGia();
         renderDanhSachBangGia(list);
     }
@@ -522,13 +545,28 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         List<BangGia> list = bangGiaDAO.layTatCaBangGia();
         List<BangGia> ketQua = new ArrayList<>();
         
+        // Nếu từ khóa rỗng, hiển thị tất cả
+        if (tuKhoa.isEmpty()) {
+            renderDanhSachBangGia(list);
+            return;
+        }
+
         for(BangGia bg : list) {
             if(bg.getMaBangGia().toLowerCase().contains(tuKhoa.toLowerCase()) ||
                bg.getTenBangGia().toLowerCase().contains(tuKhoa.toLowerCase())) {
                 ketQua.add(bg);
             }
         }
-        renderDanhSachBangGia(ketQua);
+        
+        renderDanhSachBangGia(ketQua); // Render kết quả (có thể rỗng)
+
+        // ✅ BỔ SUNG: Kiểm tra và thông báo nếu không tìm thấy
+        if (ketQua.isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "Không tìm thấy Bảng Giá nào phù hợp với từ khóa: '" + tuKhoa + "'", 
+                "Không tìm thấy", JOptionPane.INFORMATION_MESSAGE);
+            xuLyLamMoi();
+        }
     }
 
     // --- 6. XỬ LÝ CHI TIẾT (TỐI ƯU UX) ---
@@ -715,6 +753,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
                     // Đã full, khóa nhập
                     nextStartPrice = -1; 
                     btnThemCT.setEnabled(false);
+                    chkHoatDong.setEnabled(!bg.isHoatDong());
                     txtGiaTu.setText("---");
                 } else {
                     nextStartPrice = last.getGiaDen() + 1;
@@ -771,6 +810,50 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         }
 
         return true;
+    }
+    private void xuLyClickDongChiTiet(int row) {
+        if (dsChiTietTam.isEmpty() || row < 0 || row >= dsChiTietTam.size()) return;
+
+        ChiTietBangGia ct = dsChiTietTam.get(row);
+        
+        // Hiển thị thông tin
+        txtGiaTu.setText(dfTien.format(ct.getGiaTu()));
+        txtTiLe.setText(String.valueOf(ct.getTiLe()));
+
+        if (ct.getGiaDen() == Double.MAX_VALUE) {
+            txtGiaDen.setText("∞");
+            chkKhoangCuoi.setSelected(true);
+            // Khóa tất cả các ô input vì đây là dòng cuối
+            txtGiaDen.setEnabled(false); 
+            txtTiLe.setEnabled(false);
+            chkKhoangCuoi.setEnabled(false);
+            btnThemCT.setEnabled(false);
+        } else {
+            txtGiaDen.setText(dfTien.format(ct.getGiaDen()));
+            chkKhoangCuoi.setSelected(false);
+            // Vẫn giữ trạng thái input cho dòng tiếp theo (nếu dòng được click không phải dòng cuối)
+            // Tuy nhiên, vì mục đích là chỉ xem, ta chỉ cần hiển thị
+            
+            // Cảnh báo nếu không phải dòng cuối
+            if (row != dsChiTietTam.size() - 1) {
+                 JOptionPane.showMessageDialog(this, 
+                    "⚠️ Lưu ý: Để chỉnh sửa quy tắc này, bạn cần xóa quy tắc cuối cùng (Xóa dòng cuối) trước.", 
+                    "Xem Quy Tắc", JOptionPane.WARNING_MESSAGE);
+            }
+            
+            // Sau khi click xem, ta reset lại trạng thái nhập liệu về dòng tiếp theo (nếu có)
+            // Hoặc giữ nguyên trạng thái đang nhập dở
+            if (row == dsChiTietTam.size() - 1 && nextStartPrice > 0) {
+                // Nếu click vào dòng cuối (và nó chưa phải vô cực) -> có thể muốn sửa
+                // Giữ nguyên input để cho người dùng quyết định
+            } else if (dsChiTietTam.size() > 0 && dsChiTietTam.get(dsChiTietTam.size() - 1).getGiaDen() != Double.MAX_VALUE) {
+                // Tự động set lại input về trạng thái nhập tiếp theo
+                txtGiaTu.setText(dfTien.format(nextStartPrice));
+                txtGiaDen.setText("");
+                txtTiLe.setText("");
+                chkKhoangCuoi.setSelected(false);
+            }
+        }
     }
 
     // --- UI Helpers ---

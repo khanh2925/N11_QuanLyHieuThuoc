@@ -136,6 +136,7 @@ public class HuyHangItemPanel extends JPanel {
 		soLuongBox.setPreferredSize(new Dimension(140, 30));
 		soLuongBox.setBorder(new LineBorder(new Color(0xDDDDDD), 1, true));
 
+		// nút Giảm
 		btnGiam = new JButton("-");
 		btnGiam.setFont(new Font("Segoe UI", Font.BOLD, 16));
 		btnGiam.setPreferredSize(new Dimension(40, 30));
@@ -143,36 +144,29 @@ public class HuyHangItemPanel extends JPanel {
 		btnGiam.setFocusPainted(false);
 		soLuongBox.add(btnGiam);
 
-		txtSLHuy = TaoJtextNhanh.hienThi(String.valueOf(item.getSoLuongHuy()), new Font("Segoe UI", Font.PLAIN, 16),
-				Color.BLACK);
-		txtSLHuy.setMaximumSize(new Dimension(600, 30));
+		// ô nhập SL huỷ
+		txtSLHuy = TaoJtextNhanh.hienThi(
+		        String.valueOf(item.getSoLuongHuy()),
+		        new Font("Segoe UI", Font.PLAIN, 16),
+		        Color.BLACK
+		);
+		txtSLHuy.setMaximumSize(new Dimension(60, 30));
 		txtSLHuy.setHorizontalAlignment(SwingConstants.CENTER);
 		txtSLHuy.setEditable(true);
 		soLuongBox.add(txtSLHuy);
 
+		// nút Tăng  >>> BỊ THIẾU Ở BẢN CŨ
+		btnTang = new JButton("+");
+		btnTang.setFont(new Font("Segoe UI", Font.BOLD, 16));
+		btnTang.setPreferredSize(new Dimension(40, 30));
+		btnTang.setMargin(new Insets(0, 0, 0, 0));
+		btnTang.setFocusPainted(false);
+		soLuongBox.add(btnTang);
 
-        // ===== THÀNH TIỀN =====
-        txtThanhTien = TaoJtextNhanh.taoTextDonHang(
-                formatTien(item.getThanhTien()), new Font("Segoe UI", Font.BOLD, 16), new Color(0xD32F2F), 120);
-        txtThanhTien.setHorizontalAlignment(SwingConstants.RIGHT);
-        add(txtThanhTien);
-        add(Box.createHorizontalGlue());
-        
-        // ===== XÓA =====
-        btnXoa = new JButton();
-        btnXoa.setPreferredSize(new Dimension(40, 40));
-        btnXoa.setBorderPainted(false);
-        btnXoa.setContentAreaFilled(false);
-        btnXoa.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        try {
-            ImageIcon icon = new ImageIcon(getClass().getResource("/resources/images/bin.png"));
-            btnXoa.setIcon(new ImageIcon(icon.getImage().getScaledInstance(22, 22, Image.SCALE_SMOOTH)));
-        } catch (Exception ignored) {}
-        add(btnXoa);
-
-
+		// thêm box số lượng vào panel
 		add(soLuongBox);
 		add(Box.createHorizontalStrut(5));
+
 
 		// ===== ĐƠN GIÁ NHẬP =====
 		txtDonGia = TaoJtextNhanh.taoTextDonHang(formatTien(item.getDonGiaNhap()), new Font("Segoe UI", Font.PLAIN, 16),

@@ -1,15 +1,95 @@
 package dao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import database.connectDB;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import database.connectDB;
 
+/**
+ * DAO phục vụ các tính toán thống kê phức tạp cho Dashboard
+ */
 public class ThongKe_DAO {
 
+    public ThongKe_DAO() {
+    }
+
+    /**
+     * Tính lợi nhuận theo tháng = Doanh thu - Chi phí nhập hàng đã bán
+     * @param thang Tháng (1-12)
+     * @param nam Năm
+     * @return Lợi nhuận ước tính (doanh thu - giá nhập trung bình)
+     */
+    public double tinhLoiNhuanTheoThang(int thang, int nam) {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+        
+        // Giả định đơn giản: Lợi nhuận = 25-30% doanh thu (tỷ suất lợi nhuận trung bình ngành dược)
+        // Nếu cần tính chính xác hơn, cần join với PhieuNhap để lấy giá nhập
+        String sql = """
+                SELECT COALESCE(SUM(TongThanhToan), 0) AS TongDoanhThu
+                FROM HoaDon
+                WHERE MONTH(NgayLap) = ? AND YEAR(NgayLap) = ?
+                """;
+        
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setInt(1, thang);
+            stmt.setInt(2, nam);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    double doanhThu = rs.getDouble("TongDoanhThu");
+                    // Giả định tỷ suất lợi nhuận 25.5% (có thể điều chỉnh)
+                    return doanhThu * 0.255;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi tính lợi nhuận: " + e.getMessage());
+        }
+        return 0;
+    }
+    
+    /**
+     * Tính lợi nhuận theo tháng (phiên bản tính toán chính xác hơn)
+     * Dựa trên giá bán - giá nhập thực tế từ sản phẩm
+     * @param thang Tháng (1-12)
+     * @param nam Năm
+     * @return Lợi nhuận thực tế
+     */
+    public double tinhLoiNhuanChinhXacTheoThang(int thang, int nam) {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+        
+        String sql = """
+                SELECT 
+                    COALESCE(SUM(cthd.ThanhTien), 0) AS TongDoanhThu,
+                    COALESCE(SUM(cthd.SoLuong * qc.HeSoQuyDoi * sp.GiaNhap), 0) AS TongChiPhi
+                FROM ChiTietHoaDon cthd
+                INNER JOIN HoaDon hd ON cthd.MaHoaDon = hd.MaHoaDon
+                INNER JOIN LoSanPham lo ON cthd.MaLo = lo.MaLo
+                INNER JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+                INNER JOIN QuyCachDongGoi qc ON cthd.MaDonViTinh = qc.MaDonViTinh 
+                    AND sp.MaSanPham = qc.MaSanPham
+                WHERE MONTH(hd.NgayLap) = ? AND YEAR(hd.NgayLap) = ?
+                """;
+        
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setInt(1, thang);
+            stmt.setInt(2, nam);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    double doanhThu = rs.getDouble("TongDoanhThu");
+                    double chiPhi = rs.getDouble("TongChiPhi");
+                    return doanhThu - chiPhi;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi tính lợi nhuận chính xác: " + e.getMessage());
+            // Fallback về phương pháp ước tính
+            return tinhLoiNhuanTheoThang(thang, nam);
+        }
+        return 0;
+    }
     public static class BanGhiThongKe {
         public String thoiGian;
         public double doanhThu;
@@ -22,136 +102,150 @@ public class ThongKe_DAO {
         }
     }
 
-    // --- HÀM TRỢ GIÚP TẠO QUERY ĐỘNG ---
-    private String getDieuKienLoc(String loaiSP, String maKM, String aliasSP, String aliasKM_HD, String aliasKM_CT) {
-        StringBuilder sql = new StringBuilder();
+    // Hàm hỗ trợ xây dựng câu WHERE động
+    private String getDieuKienLoc(String loaiSP, String maKM) {
+        String sql = "";
+        // Lọc theo Loại sản phẩm
         if (loaiSP != null && !loaiSP.equals("Tất cả")) {
-            sql.append(" AND ").append(aliasSP).append(".LoaiSanPham = ? ");
+            sql += " AND sp.LoaiSanPham = ? ";
         }
+        // Lọc theo Mã khuyến mãi (Kiểm tra cả KM hóa đơn và KM chi tiết)
         if (maKM != null && !maKM.equals("Tất cả")) {
-            sql.append(" AND (").append(aliasKM_HD).append(" = ? OR ").append(aliasKM_CT).append(" = ?) ");
+            sql += " AND (hd.MaKM = ? OR ct.MaKM = ?) ";
         }
-        return sql.toString();
+        return sql;
     }
 
-    private int setThamSoLoc(PreparedStatement ps, int idx, String loaiSP, String maKM) throws SQLException {
+    private void setThamSoLoc(PreparedStatement ps, int startIndex, String loaiSP, String maKM) throws SQLException {
+        int idx = startIndex;
         if (loaiSP != null && !loaiSP.equals("Tất cả")) {
-            ps.setString(idx++, loaiSP);
+            ps.setString(idx++, loaiSP); // Enum trong DB lưu dạng String (ví dụ 'THUOC')
         }
         if (maKM != null && !maKM.equals("Tất cả")) {
             ps.setString(idx++, maKM);
             ps.setString(idx++, maKM);
         }
-        return idx;
     }
 
     /**
-     * TỔNG HỢP DỮ LIỆU: BÁN - TRẢ (Net Revenue)
-     * type: 1=Ngày, 2=Tháng, 3=Năm
+     * Thống kê theo ngày với bộ lọc mở rộng
      */
-    private List<BanGhiThongKe> getThongKeChung(int type, Object p1, Object p2, String loaiSP, String maKM) {
+    public List<BanGhiThongKe> getDoanhThuTheoNgay(java.util.Date tuNgay, java.util.Date denNgay, String loaiSP, String maKM) {
         List<BanGhiThongKe> list = new ArrayList<>();
-        
-        String selectTime, whereTimeHD, whereTimePT, groupBy;
-
-        if (type == 1) { // Ngày
-            selectTime = "FORMAT(Temp.Ngay, 'dd/MM/yyyy')";
-            whereTimeHD = "hd.NgayLap BETWEEN ? AND ?";
-            whereTimePT = "pt.NgayLap BETWEEN ? AND ?";
-            groupBy = "Temp.Ngay";
-        } else if (type == 2) { // Tháng
-            selectTime = "'T' + CAST(MONTH(Temp.Ngay) AS VARCHAR)";
-            whereTimeHD = "YEAR(hd.NgayLap) = ?";
-            whereTimePT = "YEAR(pt.NgayLap) = ?";
-            groupBy = "MONTH(Temp.Ngay)";
-        } else { // Năm
-            selectTime = "CAST(YEAR(Temp.Ngay) AS VARCHAR)";
-            whereTimeHD = "YEAR(hd.NgayLap) BETWEEN ? AND ?";
-            whereTimePT = "YEAR(pt.NgayLap) BETWEEN ? AND ?";
-            groupBy = "YEAR(Temp.Ngay)";
-        }
-
-        String sql = 
-            "SELECT " + selectTime + " as ThoiGian, " +
-            "SUM(Temp.ThanhTien) as DoanhThu, " +
-            "COUNT(DISTINCT Temp.MaHoaDon) as SoDon " + 
-            "FROM ( " +
-            // --- PHẦN 1: HÓA ĐƠN ---
-            "   SELECT hd.NgayLap as Ngay, ct.ThanhTien, hd.MaHoaDon " + 
-            "   FROM HoaDon hd " +
-            "   JOIN ChiTietHoaDon ct ON hd.MaHoaDon = ct.MaHoaDon " +
-            "   JOIN LoSanPham lo ON ct.MaLo = lo.MaLo " +
-            "   JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham " +
-            "   WHERE " + whereTimeHD + getDieuKienLoc(loaiSP, maKM, "sp", "hd.MaKM", "ct.MaKM") +
-            "   UNION ALL " +
-            // --- PHẦN 2: PHIẾU TRẢ (DOANH THU ÂM) ---
-            "   SELECT pt.NgayLap as Ngay, -ctpt.ThanhTienHoan, NULL as MaHoaDon " + 
-            "   FROM PhieuTra pt " +
-            "   JOIN ChiTietPhieuTra ctpt ON pt.MaPhieuTra = ctpt.MaPhieuTra " +
-            "   JOIN LoSanPham lo ON ctpt.MaLo = lo.MaLo " +
-            "   JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham " +
-            "   LEFT JOIN HoaDon hd ON ctpt.MaHoaDon = hd.MaHoaDon " +
-            "   WHERE " + whereTimePT + getDieuKienLoc(loaiSP, maKM, "sp", "hd.MaKM", "NULL") +
-            ") as Temp " +
-            "GROUP BY " + groupBy + " " +
-            "ORDER BY " + groupBy + " ASC";
-
-        // Sử dụng try-with-resources để tự động đóng kết nối
-        try (Connection con = connectDB.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        Connection con = null;
+        try {
+            connectDB.getInstance();
+            con = connectDB.getConnection();
             
-            int idx = 1;
-            // Tham số thời gian Hóa Đơn
-            if (type == 1) {
-                ps.setDate(idx++, new java.sql.Date(((java.util.Date)p1).getTime()));
-                ps.setDate(idx++, new java.sql.Date(((java.util.Date)p2).getTime()));
-            } else {
-                ps.setInt(idx++, (int)p1);
-                if (type == 3) ps.setInt(idx++, (int)p2);
-            }
-            idx = setThamSoLoc(ps, idx, loaiSP, maKM);
-            
-            // Tham số thời gian Phiếu Trả
-            if (type == 1) {
-                ps.setDate(idx++, new java.sql.Date(((java.util.Date)p1).getTime()));
-                ps.setDate(idx++, new java.sql.Date(((java.util.Date)p2).getTime()));
-            } else {
-                ps.setInt(idx++, (int)p1);
-                if (type == 3) ps.setInt(idx++, (int)p2);
-            }
-            setThamSoLoc(ps, idx, loaiSP, maKM);
+            // JOIN các bảng để lấy thông tin Loại SP và Khuyến Mãi
+            String sql = "SELECT FORMAT(hd.NgayLap, 'dd/MM/yyyy') as Ngay, " +
+                         "SUM(ct.ThanhTien) as TongTien, " + // Cộng tiền chi tiết
+                         "COUNT(DISTINCT hd.MaHoaDon) as SoDon " +
+                         "FROM HoaDon hd " +
+                         "JOIN ChiTietHoaDon ct ON hd.MaHoaDon = ct.MaHoaDon " +
+                         "JOIN LoSanPham lo ON ct.MaLo = lo.MaLo " +
+                         "JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham " +
+                         "WHERE hd.NgayLap BETWEEN ? AND ? " + 
+                         getDieuKienLoc(loaiSP, maKM) +
+                         " GROUP BY hd.NgayLap " +
+                         "ORDER BY hd.NgayLap ASC";
 
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    list.add(new BanGhiThongKe(rs.getString("ThoiGian"), rs.getDouble("DoanhThu"), rs.getInt("SoDon")));
-                }
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setDate(1, new java.sql.Date(tuNgay.getTime()));
+            ps.setDate(2, new java.sql.Date(denNgay.getTime()));
+            setThamSoLoc(ps, 3, loaiSP, maKM);
+            
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new BanGhiThongKe(rs.getString("Ngay"), rs.getDouble("TongTien"), rs.getInt("SoDon")));
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
         return list;
     }
 
-    public List<BanGhiThongKe> getDoanhThuTheoNgay(java.util.Date tu, java.util.Date den, String loaiSP, String maKM) {
-        return getThongKeChung(1, tu, den, loaiSP, maKM);
-    }
-
+    /**
+     * Thống kê theo tháng với bộ lọc mở rộng
+     */
     public List<BanGhiThongKe> getDoanhThuTheoThang(int nam, String loaiSP, String maKM) {
-        return getThongKeChung(2, nam, null, loaiSP, maKM);
+        List<BanGhiThongKe> list = new ArrayList<>();
+        Connection con = null;
+        try {
+            connectDB.getInstance();
+            con = connectDB.getConnection();
+
+            String sql = "SELECT MONTH(hd.NgayLap) as Thang, " +
+                         "SUM(ct.ThanhTien) as TongTien, " +
+                         "COUNT(DISTINCT hd.MaHoaDon) as SoDon " +
+                         "FROM HoaDon hd " +
+                         "JOIN ChiTietHoaDon ct ON hd.MaHoaDon = ct.MaHoaDon " +
+                         "JOIN LoSanPham lo ON ct.MaLo = lo.MaLo " +
+                         "JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham " +
+                         "WHERE YEAR(hd.NgayLap) = ? " +
+                         getDieuKienLoc(loaiSP, maKM) +
+                         " GROUP BY MONTH(hd.NgayLap) " +
+                         "ORDER BY MONTH(hd.NgayLap) ASC";
+
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, nam);
+            setThamSoLoc(ps, 2, loaiSP, maKM);
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new BanGhiThongKe("T" + rs.getInt("Thang"), rs.getDouble("TongTien"), rs.getInt("SoDon")));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
     }
 
-    public List<BanGhiThongKe> getDoanhThuTheoNam(int namTu, int namDen, String loaiSP, String maKM) {
-        return getThongKeChung(3, namTu, namDen, loaiSP, maKM);
-    }
+    /**
+     * Thống kê theo năm với bộ lọc mở rộng
+     */
+    public List<BanGhiThongKe> getDoanhThuTheoNam(int namBatDau, int namKetThuc, String loaiSP, String maKM) {
+        List<BanGhiThongKe> list = new ArrayList<>();
+        Connection con = null;
+        try {
+            connectDB.getInstance();
+            con = connectDB.getConnection();
 
+            String sql = "SELECT YEAR(hd.NgayLap) as Nam, " +
+                         "SUM(ct.ThanhTien) as TongTien, " +
+                         "COUNT(DISTINCT hd.MaHoaDon) as SoDon " +
+                         "FROM HoaDon hd " +
+                         "JOIN ChiTietHoaDon ct ON hd.MaHoaDon = ct.MaHoaDon " +
+                         "JOIN LoSanPham lo ON ct.MaLo = lo.MaLo " +
+                         "JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham " +
+                         "WHERE YEAR(hd.NgayLap) BETWEEN ? AND ? " +
+                         getDieuKienLoc(loaiSP, maKM) +
+                         " GROUP BY YEAR(hd.NgayLap) " +
+                         "ORDER BY YEAR(hd.NgayLap) ASC";
+
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, namBatDau);
+            ps.setInt(2, namKetThuc);
+            setThamSoLoc(ps, 3, loaiSP, maKM);
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new BanGhiThongKe(String.valueOf(rs.getInt("Nam")), rs.getDouble("TongTien"), rs.getInt("SoDon")));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+    
+    // Hàm phụ để lấy danh sách Khuyến mãi đưa vào ComboBox (nếu cần)
     public List<String[]> getDanhSachKhuyenMai() {
         List<String[]> list = new ArrayList<>();
-        String sql = "SELECT MaKM, TenKM FROM KhuyenMai WHERE TrangThai = 1"; // Chỉ lấy KM đang hoạt động
-        try (Connection con = connectDB.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while(rs.next()) list.add(new String[]{rs.getString("MaKM"), rs.getString("TenKM")});
-        } catch (Exception e) { e.printStackTrace(); }
+        try {
+            Connection con = connectDB.getConnection();
+            // Lấy các khuyến mãi còn hoạt động hoặc tất cả
+            String sql = "SELECT MaKM, TenKM FROM KhuyenMai"; 
+            PreparedStatement ps = con.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            while(rs.next()){
+                list.add(new String[]{rs.getString("MaKM"), rs.getString("TenKM")});
+            }
+        } catch (Exception e) {}
         return list;
     }
+    
 }

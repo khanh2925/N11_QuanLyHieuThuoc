@@ -57,6 +57,10 @@ public class Main_GUI extends JFrame {
 
 	private NhanVien nvDangNhap;
 	private JLabel lblUserTop;
+	
+	// Reference đến Dashboard để có thể refresh khi cần
+	private gui.quanly.TongQuanQuanLy_GUI dashboardQL;
+	private gui.nhanvien.TongQuanNV_GUI dashboardNV;
 
 	public Main_GUI(NhanVien nv) {
 		this.nvDangNhap = nv;
@@ -84,13 +88,8 @@ public class Main_GUI extends JFrame {
 
 		boolean isQL = nvDangNhap != null && nvDangNhap.isQuanLy();
 		if (isQL) { // Thêm các panel chức năng - sau này gắn tên panel vào đây
-			cardPanel.add(new JPanel(new GridBagLayout()) {
-				{
-					JLabel lbl = new JLabel("Màn hình tổng quan");
-					lbl.setFont(new Font("Times New Roman", Font.PLAIN, 48));
-					add(lbl);
-				}
-			}, "tongquan");
+			dashboardQL = new gui.quanly.TongQuanQuanLy_GUI(this);
+			cardPanel.add(dashboardQL, "tongquan");
 			cardPanel.add(new ThongKeDoanhThu_GUI(), "thongke");
 			cardPanel.add(new ThemPhieuNhap_GUI(), "nhaphang");
 			cardPanel.add(new QL_HuyHang_GUI(), "xuathuy");
@@ -101,7 +100,8 @@ public class Main_GUI extends JFrame {
 			cardPanel.add(new NhanVien_QL_GUI(), "nhanvien");
 			showCard("tongquan");
 		} else {
-			cardPanel.add(new TongQuanNV_GUI(), "tongquan");
+			dashboardNV = new TongQuanNV_GUI();
+			cardPanel.add(dashboardNV, "tongquan");
 			cardPanel.add(new BanHang_GUI(), "banhang");
 			cardPanel.add(new TraHangNhanVien_GUI(), "trahang");
 			cardPanel.add(new HuyHangNhanVien_GUI(), "xuathuy");
@@ -370,6 +370,17 @@ public class Main_GUI extends JFrame {
 	}
 
 	private void showCard(String key) {
+		// Refresh dashboard nếu đang chuyển đến tổng quan
+		if ("tongquan".equals(key)) {
+			if (dashboardQL != null) {
+				dashboardQL.refreshDashboard();
+			}
+			if (dashboardNV != null) {
+				// Nếu có method refresh cho dashboard nhân viên thì gọi ở đây
+				// dashboardNV.refreshDashboard();
+			}
+		}
+		
 		((CardLayout) cardPanel.getLayout()).show(cardPanel, key);
 
 		// Reset màu tất cả
@@ -378,6 +389,22 @@ public class Main_GUI extends JFrame {
 			b.setForeground(Color.BLACK);
 			b.setOpaque(false);
 		});
+	}
+	
+	/**
+	 * Method public để chuyển card từ bên ngoài (ví dụ: từ Dashboard)
+	 * @param key Tên card cần chuyển đến
+	 */
+	public void chuyenDenCard(String key) {
+		// Refresh dashboard nếu đang chuyển đến tổng quan
+		if ("tongquan".equals(key)) {
+			if (dashboardQL != null) {
+				dashboardQL.refreshDashboard();
+			}
+			// Nếu cần cũng có thể thêm cho dashboardNV
+		}
+		
+		showCard(key);
 
 		JButton activeBtn = menuContainers.get(key);
 		if (activeBtn == null)
