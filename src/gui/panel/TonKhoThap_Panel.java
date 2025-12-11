@@ -1,12 +1,29 @@
 package gui.panel;
 
 import java.awt.*;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.text.DecimalFormat;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
 
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
 import component.button.PillButton;
+import dao.ThongKe_DAO;
 
 /**
  * Panel hiển thị danh sách sản phẩm có tồn kho thấp
@@ -19,6 +36,7 @@ public class TonKhoThap_Panel extends JPanel {
     private DefaultTableModel tableModel;
     private JLabel lblTongQuan;
     private JComboBox<Integer> cmbNguong;
+    private JComboBox<String> cmbLoaiSP;
 
     // Insight cards
     private JLabel lblTongSP;
@@ -26,7 +44,13 @@ public class TonKhoThap_Panel extends JPanel {
     private JLabel lblCanNhapGap;
     private JLabel lblNCCGoiY;
 
+    // DAO
+    private ThongKe_DAO thongKeDAO;
+    private static final int SO_NGAY_TINH_TB = 30; // Tính TB bán trong 30 ngày
+
     public TonKhoThap_Panel() {
+        thongKeDAO = new ThongKe_DAO();
+
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
@@ -43,28 +67,27 @@ public class TonKhoThap_Panel extends JPanel {
         pnTieuChiLoc.setLayout(null);
 
         JLabel lblNguong = new JLabel("Ngưỡng tồn kho tối thiểu:");
-        lblNguong.setFont(new Font("Tahoma", Font.PLAIN, 14));
+        lblNguong.setFont(new java.awt.Font("Tahoma", java.awt.Font.PLAIN, 14));
         lblNguong.setBounds(20, 30, 180, 25);
         pnTieuChiLoc.add(lblNguong);
 
         Integer[] nguongOptions = { 5, 10, 20, 30, 50, 100 };
         cmbNguong = new JComboBox<>(nguongOptions);
         cmbNguong.setSelectedItem(10);
-        cmbNguong.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        cmbNguong.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
         cmbNguong.setBounds(200, 28, 100, 30);
         pnTieuChiLoc.add(cmbNguong);
 
         JLabel lblLoaiSP = new JLabel("Loại sản phẩm:");
-        lblLoaiSP.setFont(new Font("Tahoma", Font.PLAIN, 14));
+        lblLoaiSP.setFont(new java.awt.Font("Tahoma", java.awt.Font.PLAIN, 14));
         lblLoaiSP.setBounds(330, 30, 120, 25);
         pnTieuChiLoc.add(lblLoaiSP);
 
-        String[] loaiOptions = { "Tất cả", "Thuốc kê đơn", "Thuốc không kê đơn", "Thực phẩm chức năng",
-                "Dụng cụ y tế" };
-        JComboBox<String> cmbLoaiSP = new JComboBox<>(loaiOptions);
-        cmbLoaiSP.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        cmbLoaiSP = new JComboBox<>();
+        cmbLoaiSP.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
         cmbLoaiSP.setBounds(450, 28, 180, 30);
         pnTieuChiLoc.add(cmbLoaiSP);
+        loadLoaiSanPham();
 
         JButton btnLoc = new PillButton("🔍 Lọc");
         btnLoc.setBounds(660, 25, 100, 35);
@@ -88,11 +111,11 @@ public class TonKhoThap_Panel extends JPanel {
         pnTongQuan.setPreferredSize(new Dimension(0, 50));
 
         JLabel lblIcon = new JLabel("⚠️");
-        lblIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
+        lblIcon.setFont(new java.awt.Font("Segoe UI Emoji", java.awt.Font.PLAIN, 20));
         pnTongQuan.add(lblIcon);
 
-        lblTongQuan = new JLabel("Có 8 sản phẩm tồn kho thấp. Ưu tiên nhập 4 SP cần gấp!");
-        lblTongQuan.setFont(new Font("Tahoma", Font.BOLD, 14));
+        lblTongQuan = new JLabel("Đang tải dữ liệu...");
+        lblTongQuan.setFont(new java.awt.Font("Tahoma", java.awt.Font.BOLD, 14));
         lblTongQuan.setForeground(new Color(0x856404));
         pnTongQuan.add(lblTongQuan);
 
@@ -112,9 +135,9 @@ public class TonKhoThap_Panel extends JPanel {
         };
 
         tblTonKho = new JTable(tableModel);
-        tblTonKho.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        tblTonKho.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
         tblTonKho.setRowHeight(32);
-        tblTonKho.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
+        tblTonKho.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
         tblTonKho.getTableHeader().setBackground(new Color(0x0077B6));
         tblTonKho.getTableHeader().setForeground(Color.WHITE);
 
@@ -140,11 +163,11 @@ public class TonKhoThap_Panel extends JPanel {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 setHorizontalAlignment(JLabel.CENTER);
 
-                String forecast = value.toString();
+                String forecast = value != null ? value.toString() : "";
                 if (forecast.contains("1 ngày") || forecast.contains("2 ngày") || forecast.contains("Hết")) {
                     setBackground(new Color(0xF8D7DA));
                     setForeground(new Color(0x721C24));
-                    setFont(getFont().deriveFont(Font.BOLD));
+                    setFont(getFont().deriveFont(java.awt.Font.BOLD));
                 } else if (forecast.contains("3 ngày") || forecast.contains("4 ngày") || forecast.contains("5 ngày")) {
                     setBackground(new Color(0xFFF3CD));
                     setForeground(new Color(0x856404));
@@ -169,7 +192,7 @@ public class TonKhoThap_Panel extends JPanel {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 setHorizontalAlignment(JLabel.CENTER);
 
-                String status = value.toString();
+                String status = value != null ? value.toString() : "";
                 if (status.contains("Cần nhập gấp")) {
                     setBackground(new Color(0xF8D7DA));
                     setForeground(new Color(0x721C24));
@@ -219,8 +242,75 @@ public class TonKhoThap_Panel extends JPanel {
 
         pnMain.add(pnContent, BorderLayout.CENTER);
 
-        // Load dữ liệu mẫu
-        loadDuLieuMau();
+        // ===== SỰ KIỆN =====
+        btnLoc.addActionListener(e -> loadDuLieu());
+        btnXuatExcel.addActionListener(e -> xuatExcel());
+
+        // Load dữ liệu lần đầu
+        loadDuLieu();
+    }
+
+    /**
+     * Load danh sách loại sản phẩm vào ComboBox
+     */
+    private void loadLoaiSanPham() {
+        cmbLoaiSP.removeAllItems();
+        cmbLoaiSP.addItem("Tất cả");
+
+        List<String> danhSachLoai = thongKeDAO.layDanhSachLoaiSanPham();
+        for (String loai : danhSachLoai) {
+            // Chuyển enum name thành tên hiển thị
+            String tenHienThi = chuyenEnumThanhTenHienThi(loai);
+            cmbLoaiSP.addItem(tenHienThi);
+        }
+    }
+
+    /**
+     * Chuyển enum name thành tên hiển thị dễ đọc
+     */
+    private String chuyenEnumThanhTenHienThi(String enumName) {
+        if (enumName == null)
+            return "";
+        switch (enumName) {
+            case "THUOC":
+                return "Thuốc";
+            case "MY_PHAM":
+                return "Mỹ phẩm";
+            case "THUC_PHAM_BO_SUNG":
+                return "Thực phẩm bổ sung";
+            case "DUNG_CU_Y_TE":
+                return "Dụng cụ y tế";
+            case "SAN_PHAM_CHO_ME_VA_BE":
+                return "Sản phẩm cho mẹ và bé";
+            case "SAN_PHAM_KHAC":
+                return "Sản phẩm khác";
+            default:
+                return enumName;
+        }
+    }
+
+    /**
+     * Chuyển tên hiển thị thành enum name để query
+     */
+    private String chuyenTenHienThiThanhEnum(String tenHienThi) {
+        if (tenHienThi == null || tenHienThi.equals("Tất cả"))
+            return null;
+        switch (tenHienThi) {
+            case "Thuốc":
+                return "THUOC";
+            case "Mỹ phẩm":
+                return "MY_PHAM";
+            case "Thực phẩm bổ sung":
+                return "THUC_PHAM_BO_SUNG";
+            case "Dụng cụ y tế":
+                return "DUNG_CU_Y_TE";
+            case "Sản phẩm cho mẹ và bé":
+                return "SAN_PHAM_CHO_ME_VA_BE";
+            case "Sản phẩm khác":
+                return "SAN_PHAM_KHAC";
+            default:
+                return tenHienThi;
+        }
     }
 
     /**
@@ -233,19 +323,19 @@ public class TonKhoThap_Panel extends JPanel {
         pnInsights.setPreferredSize(new Dimension(0, 80));
 
         // Card 1: Tổng SP cần nhập
-        JPanel card1 = createInsightCard("📦 TỔNG SP CẦN NHẬP", "8 sản phẩm", new Color(0xDC3545));
+        JPanel card1 = createInsightCard("📦 TỔNG SP CẦN NHẬP", "0 sản phẩm", new Color(0xDC3545));
         lblTongSP = (JLabel) ((JPanel) card1.getComponent(0)).getComponent(1);
 
         // Card 2: Chi phí nhập ước tính
-        JPanel card2 = createInsightCard("💵 CHI PHÍ ƯỚC TÍNH", "45,600,000 VNĐ", new Color(0xFD7E14));
+        JPanel card2 = createInsightCard("💵 CHI PHÍ ƯỚC TÍNH", "0 VNĐ", new Color(0xFD7E14));
         lblChiPhiNhap = (JLabel) ((JPanel) card2.getComponent(0)).getComponent(1);
 
         // Card 3: Cần nhập gấp
-        JPanel card3 = createInsightCard("🚨 CẦN NHẬP GẤP", "4 SP (hết trong 3 ngày)", new Color(0xDC3545));
+        JPanel card3 = createInsightCard("🚨 CẦN NHẬP GẤP", "0 SP", new Color(0xDC3545));
         lblCanNhapGap = (JLabel) ((JPanel) card3.getComponent(0)).getComponent(1);
 
         // Card 4: NCC gợi ý
-        JPanel card4 = createInsightCard("🏢 NCC GỢI Ý", "Dược phẩm Hậu Giang", new Color(0x0077B6));
+        JPanel card4 = createInsightCard("🏢 NCC GỢI Ý", "Đang tải...", new Color(0x0077B6));
         lblNCCGoiY = (JLabel) ((JPanel) card4.getComponent(0)).getComponent(1);
 
         pnInsights.add(card1);
@@ -272,11 +362,11 @@ public class TonKhoThap_Panel extends JPanel {
         content.setBackground(Color.WHITE);
 
         JLabel lblTitle = new JLabel(title);
-        lblTitle.setFont(new Font("Tahoma", Font.PLAIN, 11));
+        lblTitle.setFont(new java.awt.Font("Tahoma", java.awt.Font.PLAIN, 11));
         lblTitle.setForeground(new Color(0x6C757D));
 
         JLabel lblValue = new JLabel(value);
-        lblValue.setFont(new Font("Tahoma", Font.BOLD, 13));
+        lblValue.setFont(new java.awt.Font("Tahoma", java.awt.Font.BOLD, 13));
         lblValue.setForeground(accentColor);
 
         content.add(lblTitle);
@@ -286,40 +376,47 @@ public class TonKhoThap_Panel extends JPanel {
         return card;
     }
 
-    private void loadDuLieuMau() {
+    /**
+     * Load dữ liệu từ database
+     */
+    private void loadDuLieu() {
         tableModel.setRowCount(0);
 
         DecimalFormat dfMoney = new DecimalFormat("#,### VNĐ");
 
-        // Dữ liệu mẫu với các metric mới
-        // Format: Mã, Tên, Tồn kho, TB bán/ngày, Giá nhập, NCC
-        Object[][] duLieuMau = {
-                { "SP001", "Paracetamol 500mg", 3, 2.5, 50000L, "Dược Hậu Giang" },
-                { "SP005", "Amoxicillin 250mg", 5, 1.8, 150000L, "Dược Cửu Long" },
-                { "SP012", "Vitamin B Complex", 7, 1.2, 85000L, "Traphaco" },
-                { "SP018", "Omeprazole 20mg", 8, 2.0, 120000L, "Dược Hậu Giang" },
-                { "SP023", "Cetirizine 10mg", 4, 3.0, 45000L, "Imexpharm" },
-                { "SP031", "Calcium + D3", 9, 1.5, 180000L, "Traphaco" },
-                { "SP045", "Ibuprofen 400mg", 6, 1.0, 75000L, "Dược Cửu Long" },
-                { "SP052", "Aspirin 81mg", 2, 2.2, 35000L, "Dược Hậu Giang" }
-        };
+        int nguong = (Integer) cmbNguong.getSelectedItem();
+        String loaiSP = chuyenTenHienThiThanhEnum((String) cmbLoaiSP.getSelectedItem());
+
+        // Lấy danh sách sản phẩm tồn kho thấp
+        List<Object[]> danhSachSP = thongKeDAO.laySanPhamTonKhoThap(nguong, loaiSP);
 
         long tongChiPhi = 0;
         int countUrgent = 0;
 
-        for (int i = 0; i < duLieuMau.length; i++) {
-            Object[] row = duLieuMau[i];
+        for (int i = 0; i < danhSachSP.size(); i++) {
+            Object[] row = danhSachSP.get(i);
             String maSP = (String) row[0];
             String tenSP = (String) row[1];
-            int tonKho = (int) row[2];
-            double tbBan = (double) row[3];
-            long giaNhap = (long) row[4];
-            String ncc = (String) row[5];
+            // String loaiSPStr = (String) row[2]; // Không sử dụng trong bảng
+            int tonKho = (Integer) row[3];
+            double giaNhap = (Double) row[4];
+            String tenNCC = (String) row[6];
+            if (tenNCC == null || tenNCC.isEmpty()) {
+                tenNCC = "Không rõ";
+            }
+
+            // Tính trung bình bán/ngày
+            double tbBan = thongKeDAO.tinhTrungBinhBanNgay(maSP, SO_NGAY_TINH_TB);
+            if (tbBan < 0.1)
+                tbBan = 0.1; // Tránh chia cho 0
 
             // Tính dự báo hết hàng
             int duBaoHet = (int) Math.ceil(tonKho / tbBan);
             String duBaoText;
-            if (duBaoHet <= 0) {
+            if (tonKho <= 0) {
+                duBaoText = "Đã hết!";
+                duBaoHet = 0;
+            } else if (duBaoHet <= 0) {
                 duBaoText = "Đã hết!";
             } else if (duBaoHet == 1) {
                 duBaoText = "1 ngày";
@@ -333,7 +430,7 @@ public class TonKhoThap_Panel extends JPanel {
                 slDeXuat = 0;
 
             // Chi phí ước tính
-            long chiPhi = slDeXuat * giaNhap;
+            long chiPhi = (long) (slDeXuat * giaNhap);
             tongChiPhi += chiPhi;
 
             // Trạng thái
@@ -354,18 +451,209 @@ public class TonKhoThap_Panel extends JPanel {
                     duBaoText,
                     slDeXuat,
                     dfMoney.format(chiPhi),
-                    ncc,
+                    tenNCC,
                     trangThai
             });
         }
 
         // Cập nhật insight cards
-        lblTongSP.setText(duLieuMau.length + " sản phẩm");
+        lblTongSP.setText(danhSachSP.size() + " sản phẩm");
         lblChiPhiNhap.setText(dfMoney.format(tongChiPhi));
         lblCanNhapGap.setText(countUrgent + " SP (hết trong 3 ngày)");
 
+        // Lấy NCC gợi ý
+        Object[] nccGoiY = thongKeDAO.timNhaCungCapGoiY(nguong);
+        String tenNCCGoiY = (String) nccGoiY[0];
+        int soSP = (Integer) nccGoiY[1];
+        if (soSP > 0) {
+            lblNCCGoiY.setText(tenNCCGoiY + " (" + soSP + " SP)");
+        } else {
+            lblNCCGoiY.setText("Không có dữ liệu");
+        }
+
         // Cập nhật tổng quan
-        lblTongQuan.setText(String.format("Có %d sản phẩm tồn kho thấp. Ưu tiên nhập %d SP cần gấp trước!",
-                duLieuMau.length, countUrgent));
+        if (danhSachSP.isEmpty()) {
+            lblTongQuan.setText("✅ Không có sản phẩm nào tồn kho thấp dưới ngưỡng " + nguong);
+        } else {
+            lblTongQuan.setText(String.format("Có %d sản phẩm tồn kho thấp. Ưu tiên nhập %d SP cần gấp trước!",
+                    danhSachSP.size(), countUrgent));
+        }
+    }
+
+    /**
+     * Xuất dữ liệu ra file Excel
+     */
+    private void xuatExcel() {
+        if (tableModel.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this,
+                    "Không có dữ liệu để xuất!",
+                    "Thông báo",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Lưu file Excel");
+        fileChooser.setSelectedFile(new File("TonKhoThap_" +
+                java.time.LocalDate.now().toString() + ".xlsx"));
+
+        int result = fileChooser.showSaveDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File file = fileChooser.getSelectedFile();
+        if (!file.getName().endsWith(".xlsx")) {
+            file = new File(file.getAbsolutePath() + ".xlsx");
+        }
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Tồn kho thấp");
+
+            // Style cho header
+            CellStyle headerStyle = workbook.createCellStyle();
+            XSSFFont headerFont = (XSSFFont) workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setFontHeightInPoints((short) 12);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+            headerStyle.setBorderTop(BorderStyle.THIN);
+            headerStyle.setBorderLeft(BorderStyle.THIN);
+            headerStyle.setBorderRight(BorderStyle.THIN);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+
+            // Style cho dữ liệu
+            CellStyle dataStyle = workbook.createCellStyle();
+            dataStyle.setBorderBottom(BorderStyle.THIN);
+            dataStyle.setBorderTop(BorderStyle.THIN);
+            dataStyle.setBorderLeft(BorderStyle.THIN);
+            dataStyle.setBorderRight(BorderStyle.THIN);
+
+            // Style cho số tiền
+            CellStyle moneyStyle = workbook.createCellStyle();
+            moneyStyle.cloneStyleFrom(dataStyle);
+            moneyStyle.setAlignment(HorizontalAlignment.RIGHT);
+            DataFormat format = workbook.createDataFormat();
+            moneyStyle.setDataFormat(format.getFormat("#,##0 \"VNĐ\""));
+
+            // Style cho cảnh báo đỏ
+            CellStyle warningStyle = workbook.createCellStyle();
+            warningStyle.cloneStyleFrom(dataStyle);
+            warningStyle.setFillForegroundColor(IndexedColors.RED.getIndex());
+            warningStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            XSSFFont whiteFont = (XSSFFont) workbook.createFont();
+            whiteFont.setColor(IndexedColors.WHITE.getIndex());
+            whiteFont.setBold(true);
+            warningStyle.setFont(whiteFont);
+
+            // Tạo header row
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < tableModel.getColumnCount(); i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(tableModel.getColumnName(i));
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Tạo data rows
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                Row row = sheet.createRow(i + 1);
+                for (int j = 0; j < tableModel.getColumnCount(); j++) {
+                    Cell cell = row.createCell(j);
+                    Object value = tableModel.getValueAt(i, j);
+                    if (value != null) {
+                        String strValue = value.toString();
+                        // Cột chi phí - bỏ VNĐ và format số
+                        if (j == 7) {
+                            try {
+                                String numStr = strValue.replaceAll("[^\\d]", "");
+                                if (!numStr.isEmpty()) {
+                                    cell.setCellValue(Long.parseLong(numStr));
+                                    cell.setCellStyle(moneyStyle);
+                                } else {
+                                    cell.setCellValue(strValue);
+                                    cell.setCellStyle(dataStyle);
+                                }
+                            } catch (NumberFormatException ex) {
+                                cell.setCellValue(strValue);
+                                cell.setCellStyle(dataStyle);
+                            }
+                        }
+                        // Cột trạng thái
+                        else if (j == 9) {
+                            cell.setCellValue(strValue.replaceAll("[🔴🟡]", "").trim());
+                            if (strValue.contains("Cần nhập gấp")) {
+                                cell.setCellStyle(warningStyle);
+                            } else {
+                                cell.setCellStyle(dataStyle);
+                            }
+                        } else {
+                            cell.setCellValue(strValue);
+                            cell.setCellStyle(dataStyle);
+                        }
+                    } else {
+                        cell.setCellValue("");
+                        cell.setCellStyle(dataStyle);
+                    }
+                }
+            }
+
+            // Auto-size columns
+            for (int i = 0; i < tableModel.getColumnCount(); i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            // Thêm sheet tóm tắt
+            Sheet summarySheet = workbook.createSheet("Tóm tắt");
+            Row row1 = summarySheet.createRow(0);
+            row1.createCell(0).setCellValue("Tổng sản phẩm tồn kho thấp:");
+            row1.createCell(1).setCellValue(lblTongSP.getText());
+
+            Row row2 = summarySheet.createRow(1);
+            row2.createCell(0).setCellValue("Chi phí nhập ước tính:");
+            row2.createCell(1).setCellValue(lblChiPhiNhap.getText());
+
+            Row row3 = summarySheet.createRow(2);
+            row3.createCell(0).setCellValue("Số SP cần nhập gấp:");
+            row3.createCell(1).setCellValue(lblCanNhapGap.getText());
+
+            Row row4 = summarySheet.createRow(3);
+            row4.createCell(0).setCellValue("NCC gợi ý:");
+            row4.createCell(1).setCellValue(lblNCCGoiY.getText());
+
+            Row row5 = summarySheet.createRow(4);
+            row5.createCell(0).setCellValue("Ngưỡng tồn kho:");
+            row5.createCell(1).setCellValue(cmbNguong.getSelectedItem() + " sản phẩm");
+
+            Row row6 = summarySheet.createRow(5);
+            row6.createCell(0).setCellValue("Ngày xuất:");
+            row6.createCell(1).setCellValue(java.time.LocalDateTime.now().toString());
+
+            summarySheet.autoSizeColumn(0);
+            summarySheet.autoSizeColumn(1);
+
+            // Ghi file
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                workbook.write(fos);
+            }
+
+            JOptionPane.showMessageDialog(this,
+                    "Xuất Excel thành công!\n" + file.getAbsolutePath(),
+                    "Thành công",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            // Mở file sau khi xuất
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(file);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                    "Lỗi xuất Excel: " + e.getMessage(),
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 }
