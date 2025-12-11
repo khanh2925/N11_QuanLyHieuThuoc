@@ -436,4 +436,151 @@ public class ThongKe_DAO {
         }
         return result;
     }
+
+    // ============================================================
+    // ⏰ THỐNG KÊ LÔ SẮP HẾT HẠN
+    // ============================================================
+
+    /**
+     * Lấy danh sách lô sản phẩm sắp hết hạn trong vòng N ngày
+     * 
+     * @param soNgay      Số ngày để lọc (7, 15, 30, 60, 90)
+     * @param loaiSanPham Loại sản phẩm (null = tất cả)
+     * @return List chứa Object[]: {MaLo, TenSP, LoaiSP, HanSuDung, SoLuongTon,
+     *         GiaBan, MaSP}
+     */
+    public java.util.List<Object[]> layLoSapHetHan(int soNgay, String loaiSanPham) {
+        java.util.List<Object[]> result = new java.util.ArrayList<>();
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        // Query: Lấy các lô còn hạn, hết hạn trong vòng N ngày tới, còn tồn kho
+        String sql = """
+                SELECT
+                    lo.MaLo,
+                    sp.TenSanPham,
+                    sp.LoaiSanPham,
+                    lo.HanSuDung,
+                    lo.SoLuongTon,
+                    sp.GiaBan,
+                    sp.MaSanPham
+                FROM LoSanPham lo
+                INNER JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+                WHERE lo.HanSuDung >= GETDATE()
+                    AND lo.HanSuDung <= DATEADD(DAY, ?, GETDATE())
+                    AND lo.SoLuongTon > 0
+                    AND sp.HoatDong = 1
+                """;
+
+        if (loaiSanPham != null && !loaiSanPham.isEmpty() && !loaiSanPham.equals("Tất cả")) {
+            sql += " AND sp.LoaiSanPham = ? ";
+        }
+
+        sql += " ORDER BY lo.HanSuDung ASC, lo.SoLuongTon DESC";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            int idx = 1;
+            stmt.setInt(idx++, soNgay);
+            if (loaiSanPham != null && !loaiSanPham.isEmpty() && !loaiSanPham.equals("Tất cả")) {
+                stmt.setString(idx, loaiSanPham);
+            }
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Object[] row = new Object[7];
+                    row[0] = rs.getString("MaLo");
+                    row[1] = rs.getString("TenSanPham");
+                    row[2] = rs.getString("LoaiSanPham");
+                    row[3] = rs.getDate("HanSuDung").toLocalDate();
+                    row[4] = rs.getInt("SoLuongTon");
+                    row[5] = rs.getDouble("GiaBan");
+                    row[6] = rs.getString("MaSanPham");
+                    result.add(row);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi lấy lô sắp hết hạn: " + e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
+     * Tính trung bình số lượng bán/ngày của một LÔ cụ thể trong N ngày gần nhất
+     * 
+     * @param maLo   Mã lô
+     * @param soNgay Số ngày để tính trung bình (ví dụ: 30 ngày)
+     * @return Trung bình số lượng bán/ngày của lô đó
+     */
+    public double tinhTrungBinhBanNgayTheoLo(String maLo, int soNgay) {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        String sql = """
+                SELECT COALESCE(SUM(cthd.SoLuong * qc.HeSoQuyDoi), 0) / ? AS TrungBinhBanNgay
+                FROM ChiTietHoaDon cthd
+                INNER JOIN HoaDon hd ON cthd.MaHoaDon = hd.MaHoaDon
+                INNER JOIN LoSanPham lo ON cthd.MaLo = lo.MaLo
+                INNER JOIN QuyCachDongGoi qc ON cthd.MaDonViTinh = qc.MaDonViTinh
+                    AND lo.MaSanPham = qc.MaSanPham
+                WHERE cthd.MaLo = ?
+                    AND hd.NgayLap >= DATEADD(DAY, -?, GETDATE())
+                """;
+
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setDouble(1, soNgay);
+            stmt.setString(2, maLo);
+            stmt.setInt(3, soNgay);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    double tb = rs.getDouble("TrungBinhBanNgay");
+                    // Nếu lô này không có bán gì trong N ngày, thử lấy TB bán của cả SP
+                    if (tb < 0.01) {
+                        // Fallback: lấy mã SP từ lô và tính TB bán của toàn bộ SP
+                        return tinhTrungBinhBanNgayTuMaLo(maLo, soNgay);
+                    }
+                    return tb;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi tính TB bán/ngày theo lô: " + e.getMessage());
+        }
+        return 0.1; // Mặc định nhỏ để tránh chia 0
+    }
+
+    /**
+     * Helper: Tính TB bán/ngày của sản phẩm dựa trên mã lô (fallback)
+     */
+    private double tinhTrungBinhBanNgayTuMaLo(String maLo, int soNgay) {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        String sql = """
+                SELECT COALESCE(SUM(cthd.SoLuong * qc.HeSoQuyDoi), 0) / ? AS TrungBinhBanNgay
+                FROM ChiTietHoaDon cthd
+                INNER JOIN HoaDon hd ON cthd.MaHoaDon = hd.MaHoaDon
+                INNER JOIN LoSanPham lo ON cthd.MaLo = lo.MaLo
+                INNER JOIN QuyCachDongGoi qc ON cthd.MaDonViTinh = qc.MaDonViTinh
+                    AND lo.MaSanPham = qc.MaSanPham
+                WHERE lo.MaSanPham = (SELECT MaSanPham FROM LoSanPham WHERE MaLo = ?)
+                    AND hd.NgayLap >= DATEADD(DAY, -?, GETDATE())
+                """;
+
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setDouble(1, soNgay);
+            stmt.setString(2, maLo);
+            stmt.setInt(3, soNgay);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    double tb = rs.getDouble("TrungBinhBanNgay");
+                    return tb > 0.01 ? tb : 0.1; // Mặc định 0.1 nếu không có dữ liệu
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi tính TB bán/ngày từ mã lô: " + e.getMessage());
+        }
+        return 0.1;
+    }
 }
