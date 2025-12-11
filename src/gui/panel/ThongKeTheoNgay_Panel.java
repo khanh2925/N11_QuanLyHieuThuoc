@@ -1,187 +1,232 @@
 package gui.panel;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridLayout;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
+import java.awt.*;
+import java.text.NumberFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
-
 import com.toedter.calendar.JDateChooser;
-
 import component.chart.BieuDoCotJFreeChart;
 import component.chart.DuLieuBieuDoCot;
+import dao.ThongKe_DAO;
+import dao.ThongKe_DAO.BanGhiThongKe;
+import enums.LoaiSanPham;
 
 public class ThongKeTheoNgay_Panel extends JPanel {
 
-    private JDateChooser ngayBatDau_DataChoose;
+    private JDateChooser ngayBatDau_DataChoose, ngayKetThuc_DataChoose;
+    private JComboBox<String> cmbLoaiSP;
+    private JComboBox<String> cmbKhuyenMai;
     private BieuDoCotJFreeChart bieuDoDoanhThu;
+    
+    // Thêm các Label mới
+    private JLabel lblGiaTriTongDoanhThu, lblGiaTriCaoNhat, lblGiaTriThapNhat;
+    private JLabel lblGiaTriTrungBinh, lblGiaTriTongGiaoDich, lblGiaTriTangTruong;
+    
+    private ThongKe_DAO thongKeDAO;
 
     public ThongKeTheoNgay_Panel() {
-        // --- Thiết lập cơ bản cho panel này ---
+        thongKeDAO = new ThongKe_DAO(); 
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
-        // --- Bắt đầu xây dựng giao diện ---
         JPanel pnMain = new JPanel(new BorderLayout(0, 10));
         pnMain.setBackground(Color.WHITE);
         pnMain.setBorder(new EmptyBorder(10, 10, 10, 10));
         add(pnMain, BorderLayout.CENTER);
 
-        // -- Panel chứa các tiêu chí lọc --
-        JPanel pnTieuChiLoc = new JPanel();
+        // --- Panel Tiêu chí lọc ---
+        JPanel pnTieuChiLoc = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
         pnTieuChiLoc.setBackground(new Color(0xE3F2F5));
         pnTieuChiLoc.setBorder(BorderFactory.createTitledBorder("Tiêu chí lọc"));
-        pnTieuChiLoc.setPreferredSize(new Dimension(0, 120));
-        pnTieuChiLoc.setLayout(null);
+        pnTieuChiLoc.setPreferredSize(new Dimension(0, 80));
 
-        // Các component trong panel Tiêu chí lọc
-        JLabel lblNgayBatDau = new JLabel("Ngày bắt đầu");
-        lblNgayBatDau.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblNgayBatDau.setBounds(20, 27, 114, 20);
-        pnTieuChiLoc.add(lblNgayBatDau);
-
+        pnTieuChiLoc.add(new JLabel("Từ:"));
         ngayBatDau_DataChoose = new JDateChooser();
-        ngayBatDau_DataChoose.setDateFormatString("dd-MM-yyyy");
-        ngayBatDau_DataChoose.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        ngayBatDau_DataChoose.setBounds(20, 63, 200, 30);
+        ngayBatDau_DataChoose.setDateFormatString("dd/MM/yyyy");
+        ngayBatDau_DataChoose.setPreferredSize(new Dimension(110, 30));
+        // Mặc định lấy 7 ngày gần nhất
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DAY_OF_MONTH, -7);
+        ngayBatDau_DataChoose.setDate(cal.getTime());
         pnTieuChiLoc.add(ngayBatDau_DataChoose);
 
-        JLabel lblNgayKetThuc = new JLabel("Ngày kết thúc");
-        lblNgayKetThuc.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblNgayKetThuc.setBounds(299, 27, 122, 20);
-        pnTieuChiLoc.add(lblNgayKetThuc);
-
-        JDateChooser ngayKetThuc_DataChoose = new JDateChooser();
-        ngayKetThuc_DataChoose.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        ngayKetThuc_DataChoose.setDateFormatString("dd-MM-yyyy");
-        ngayKetThuc_DataChoose.setBounds(299, 63, 200, 30);
+        pnTieuChiLoc.add(new JLabel("Đến:"));
+        ngayKetThuc_DataChoose = new JDateChooser();
+        ngayKetThuc_DataChoose.setDateFormatString("dd/MM/yyyy");
+        ngayKetThuc_DataChoose.setPreferredSize(new Dimension(110, 30));
+        ngayKetThuc_DataChoose.setDate(new Date()); 
         pnTieuChiLoc.add(ngayKetThuc_DataChoose);
 
-        JLabel lblLoaiSanPham = new JLabel("Loại sản phẩm");
-        lblLoaiSanPham.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblLoaiSanPham.setBounds(580, 27, 122, 20);
-        pnTieuChiLoc.add(lblLoaiSanPham);
+        pnTieuChiLoc.add(new JLabel("Loại SP:"));
+        cmbLoaiSP = new JComboBox<>();
+        cmbLoaiSP.addItem("Tất cả");
+        for (LoaiSanPham loai : LoaiSanPham.values()) {
+            cmbLoaiSP.addItem(loai.getTenLoai()); 
+        }
+        cmbLoaiSP.setPreferredSize(new Dimension(130, 30));
+        pnTieuChiLoc.add(cmbLoaiSP);
 
-        String[] loaiSanPhamData = {"Tất cả sản phẩm", "Thuốc kê đơn", "Thuốc không kê đơn", "Thực phẩm chức năng", "Dụng cụ y tế"};
-        JComboBox<String> cmbLoaiSanPham = new JComboBox<>(loaiSanPhamData);
-        ((JLabel) cmbLoaiSanPham.getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
-        cmbLoaiSanPham.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cmbLoaiSanPham.setBounds(580, 63, 200, 30);
-        pnTieuChiLoc.add(cmbLoaiSanPham);
-
-        JLabel lblKhuyenMai = new JLabel("Khuyến mãi");
-        lblKhuyenMai.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblKhuyenMai.setBounds(860, 27, 122, 20);
-        pnTieuChiLoc.add(lblKhuyenMai);
-
-        String[] khuyenMaiData = {"Tất cả khuyến mãi", "Giảm giá 10%", "Mua 1 tặng 1", "Không áp dụng"};
-        JComboBox<String> cmbKhuyenMai = new JComboBox<>(khuyenMaiData);
-        ((JLabel) cmbKhuyenMai.getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
-        cmbKhuyenMai.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cmbKhuyenMai.setBounds(860, 63, 200, 30);
+        pnTieuChiLoc.add(new JLabel("Khuyến mãi:"));
+        cmbKhuyenMai = new JComboBox<>();
+        loadDuLieuKhuyenMaiVaoComboBox();
+        cmbKhuyenMai.setPreferredSize(new Dimension(150, 30));
         pnTieuChiLoc.add(cmbKhuyenMai);
 
+        JButton btnLoc = new JButton("Lọc");
+        btnLoc.setBackground(new Color(0x005a9e));
+        btnLoc.setForeground(Color.WHITE);
+        pnTieuChiLoc.add(btnLoc);
+        
         pnMain.add(pnTieuChiLoc, BorderLayout.NORTH);
 
-        // Panel bao bọc biểu đồ và thống kê
-        JPanel pnMainContent = new JPanel(new BorderLayout(0, 10));
-        pnMainContent.setBackground(Color.WHITE);
-
-        // ===== PANEL BIỂU ĐỒ =====
-        JPanel pnBieuDo = new JPanel();
+        JPanel pnContent = new JPanel(new BorderLayout(0, 10));
+        pnContent.setBackground(Color.WHITE);
+        
+        // --- Biểu đồ ---
+        JPanel pnBieuDo = new JPanel(new BorderLayout());
         pnBieuDo.setBorder(BorderFactory.createTitledBorder("Biểu đồ doanh thu"));
         pnBieuDo.setBackground(Color.WHITE);
-        pnBieuDo.setLayout(new BorderLayout(0, 0));
-
         bieuDoDoanhThu = new BieuDoCotJFreeChart();
-        bieuDoDoanhThu.setBuocNhayTrucY(500000);
-        bieuDoDoanhThu.setTieuDeTrucX("Ngày trong tuần");
+        bieuDoDoanhThu.setTieuDeTrucX("Thời gian");
         bieuDoDoanhThu.setTieuDeTrucY("Doanh thu (VNĐ)");
         pnBieuDo.add(bieuDoDoanhThu, BorderLayout.CENTER);
-
-        // ===== PANEL THỐNG KÊ TỔNG QUAN =====
-        JPanel pnThongKe = new JPanel();
+        
+        // --- Panel Tổng quan (Sửa lại GridLayout 2 hàng, 3 cột) ---
+        JPanel pnThongKe = new JPanel(new GridLayout(2, 3, 20, 15)); // 2 rows, 3 cols, gap
         pnThongKe.setBackground(new Color(0xE3F2F5));
-        pnThongKe.setBorder(new CompoundBorder(
-                BorderFactory.createTitledBorder("Tổng quan"),
-                new EmptyBorder(10, 20, 10, 20)
-        ));
-        pnThongKe.setPreferredSize(new Dimension(0, 140));
-        pnThongKe.setLayout(new GridLayout(2, 4, 20, 10));
+        pnThongKe.setBorder(new CompoundBorder(BorderFactory.createTitledBorder("Tổng quan"), new EmptyBorder(10, 20, 10, 20)));
+        pnThongKe.setPreferredSize(new Dimension(0, 200)); // Tăng chiều cao xíu
+        
+        Font fTitle = new Font("Tahoma", Font.PLAIN, 15); 
+        Font fValue = new Font("Tahoma", Font.BOLD, 18); 
+        Color cMain = new Color(0x005a9e);
 
-        Font labelFont = new Font("Tahoma", Font.PLAIN, 16);
-        Font valueFont = new Font("Tahoma", Font.BOLD, 18);
-        Color valueColor = new Color(0x005a9e);
+        lblGiaTriTongDoanhThu = createLabel(pnThongKe, "Tổng doanh thu:", fTitle, fValue, cMain);
+        lblGiaTriCaoNhat = createLabel(pnThongKe, "Cao nhất:", fTitle, fValue, new Color(0x28a745)); // Xanh lá
+        lblGiaTriThapNhat = createLabel(pnThongKe, "Thấp nhất:", fTitle, fValue, new Color(0xdc3545)); // Đỏ
+        
+        lblGiaTriTrungBinh = createLabel(pnThongKe, "Trung bình/ngày:", fTitle, fValue, cMain);
+        lblGiaTriTongGiaoDich = createLabel(pnThongKe, "Tổng đơn hàng:", fTitle, fValue, cMain);
+        lblGiaTriTangTruong = createLabel(pnThongKe, "So với kỳ trước:", fTitle, fValue, Color.GRAY);
 
-        JLabel lblTongDoanhThu = new JLabel("Tổng doanh thu:", SwingConstants.LEFT);
-        lblTongDoanhThu.setFont(labelFont);
-        JLabel lblGiaTriTongDoanhThu = new JLabel("0 VNĐ");
-        lblGiaTriTongDoanhThu.setFont(valueFont);
-        lblGiaTriTongDoanhThu.setForeground(valueColor);
+        pnContent.add(pnBieuDo, BorderLayout.CENTER);
+        pnContent.add(pnThongKe, BorderLayout.SOUTH);
+        pnMain.add(pnContent, BorderLayout.CENTER);
 
-        JLabel lblDoanhThuCaoNhat = new JLabel("Doanh thu cao nhất:", SwingConstants.LEFT);
-        lblDoanhThuCaoNhat.setFont(labelFont);
-        JLabel lblGiaTriCaoNhat = new JLabel("0 VNĐ (dd/mm/yyyy)");
-        lblGiaTriCaoNhat.setFont(valueFont);
-        lblGiaTriCaoNhat.setForeground(valueColor);
-
-        JLabel lblTongGiaoDich = new JLabel("Tổng số giao dịch:", SwingConstants.LEFT);
-        lblTongGiaoDich.setFont(labelFont);
-        JLabel lblGiaTriTongGiaoDich = new JLabel("0");
-        lblGiaTriTongGiaoDich.setFont(valueFont);
-        lblGiaTriTongGiaoDich.setForeground(valueColor);
-
-        JLabel lblDoanhThuTrungBinh = new JLabel("Doanh thu trung bình/ngày:", SwingConstants.LEFT);
-        lblDoanhThuTrungBinh.setFont(labelFont);
-        JLabel lblGiaTriTrungBinh = new JLabel("0 VNĐ");
-        lblGiaTriTrungBinh.setFont(valueFont);
-        lblGiaTriTrungBinh.setForeground(valueColor);
-
-        pnThongKe.add(lblTongDoanhThu);
-        pnThongKe.add(lblGiaTriTongDoanhThu);
-        pnThongKe.add(lblDoanhThuCaoNhat);
-        pnThongKe.add(lblGiaTriCaoNhat);
-        pnThongKe.add(lblTongGiaoDich);
-        pnThongKe.add(lblGiaTriTongGiaoDich);
-        pnThongKe.add(lblDoanhThuTrungBinh);
-        pnThongKe.add(lblGiaTriTrungBinh);
-
-        pnMainContent.add(pnBieuDo, BorderLayout.CENTER);
-        pnMainContent.add(pnThongKe, BorderLayout.SOUTH);
-        pnMain.add(pnMainContent, BorderLayout.CENTER);
-
-        // Vẽ biểu đồ với dữ liệu mẫu
-        veBieuDoVoiDuLieuMau();
+        btnLoc.addActionListener(e -> loadDuLieuTuDatabase());
+        loadDuLieuTuDatabase();
+    }
+    
+    private void loadDuLieuKhuyenMaiVaoComboBox() {
+        cmbKhuyenMai.addItem("Tất cả");
+        List<String[]> listKM = thongKeDAO.getDanhSachKhuyenMai();
+        for (String[] km : listKM) {
+            cmbKhuyenMai.addItem(km[0]); 
+        }
     }
 
-    /**
-     * Nạp dữ liệu mẫu vào biểu đồ.
-     * Sau này bạn sẽ thay thế phần dữ liệu cứng này bằng dữ liệu lấy từ database.
-     */
-    private void veBieuDoVoiDuLieuMau() {
+    private JLabel createLabel(JPanel p, String t, Font f1, Font f2, Color c) {
+        JPanel pChild = new JPanel(new BorderLayout(5, 5));
+        pChild.setOpaque(false);
+        JLabel lTitle = new JLabel(t);
+        lTitle.setFont(f1);
+        JLabel lValue = new JLabel("0"); 
+        lValue.setFont(f2); 
+        lValue.setForeground(c);
+        pChild.add(lTitle, BorderLayout.NORTH);
+        pChild.add(lValue, BorderLayout.CENTER);
+        p.add(pChild);
+        return lValue;
+    }
+
+    private void loadDuLieuTuDatabase() {
+        Date tu = ngayBatDau_DataChoose.getDate();
+        Date den = ngayKetThuc_DataChoose.getDate();
+        if (tu == null || den == null) return;
+        if (tu.after(den)) {
+            JOptionPane.showMessageDialog(this, "Ngày bắt đầu phải trước ngày kết thúc!");
+            return;
+        }
+
+        String tenLoaiHienThi = (String) cmbLoaiSP.getSelectedItem();
+        String maLoaiSP = "Tất cả";
+        if (!"Tất cả".equals(tenLoaiHienThi)) {
+            for (LoaiSanPham loai : LoaiSanPham.values()) {
+                if (loai.getTenLoai().equals(tenLoaiHienThi)) {
+                    maLoaiSP = loai.name(); break;
+                }
+            }
+        }
+        String maKM = (String) cmbKhuyenMai.getSelectedItem();
+
+        // 1. Lấy dữ liệu chính
+        List<BanGhiThongKe> ds = thongKeDAO.getDoanhThuTheoNgay(tu, den, maLoaiSP, maKM);
+        
         bieuDoDoanhThu.xoaToanBoDuLieu();
-        bieuDoDoanhThu.setTieuDeBieuDo("Thống Kê Doanh Thu Theo Ngày");
+        bieuDoDoanhThu.setTieuDeBieuDo("Thống Kê Từ " + formatDate(tu) + " Đến " + formatDate(den));
+        Color col = new Color(79, 129, 189);
+        
+        double tong = 0;
+        double max = 0;
+        double min = Double.MAX_VALUE; // Khởi tạo min
+        int don = 0; 
+        String ngayMax = "";
+        String ngayMin = "";
+        
+        for (BanGhiThongKe item : ds) {
+            bieuDoDoanhThu.themDuLieu(new DuLieuBieuDoCot(item.thoiGian, "Doanh thu", item.doanhThu, col));
+            tong += item.doanhThu;
+            don += item.soLuongDon;
+            
+            if (item.doanhThu > max) { max = item.doanhThu; ngayMax = item.thoiGian; }
+            if (item.doanhThu < min) { min = item.doanhThu; ngayMin = item.thoiGian; }
+        }
+        if (!ds.isEmpty()) {
+            double trungBinh = tong / ds.size(); // Trung bình trên số ngày có dữ liệu hoặc số ngày chọn
+            // Nếu muốn chính xác theo khoảng thời gian chọn (kể cả ngày ko có doanh thu):
+            // long soNgay = (den.getTime() - tu.getTime()) / (24 * 60 * 60 * 1000) + 1;
+            // double trungBinh = tong / soNgay;
+            
+            if (trungBinh > 0) {
+                bieuDoDoanhThu.themDuongTrungBinh(trungBinh);
+            }
+        }
+        if (ds.isEmpty()) min = 0; // Xử lý nếu không có dữ liệu
 
-        Color mauCot = new Color(79, 129, 189);
-        String tenNhom = "Doanh thu";
+        NumberFormat vn = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+        
+        // Update Labels cơ bản
+        lblGiaTriTongDoanhThu.setText(vn.format(tong));
+        lblGiaTriTongGiaoDich.setText(String.valueOf(don));
+        lblGiaTriTrungBinh.setText(vn.format(ds.isEmpty() ? 0 : tong / ds.size()));
+        
+        lblGiaTriCaoNhat.setText(max > 0 ? "<html>" + vn.format(max) + "<br><span style='font-size:10px; color:gray'>(" + ngayMax + ")</span></html>" : "0 VNĐ");
+        lblGiaTriThapNhat.setText(min > 0 ? "<html>" + vn.format(min) + "<br><span style='font-size:10px; color:gray'>(" + ngayMin + ")</span></html>" : (ds.isEmpty() ? "0 VNĐ" : vn.format(min)));
 
-        // Sử dụng ngày hôm nay và lùi lại 7 ngày để dữ liệu luôn mới
-        // (Ví dụ hôm nay là 26-10-2025)
-        bieuDoDoanhThu.themDuLieu(new DuLieuBieuDoCot("20/10/2025", tenNhom, 1500000, mauCot));
-        bieuDoDoanhThu.themDuLieu(new DuLieuBieuDoCot("21/10/2025", tenNhom, 2100000, mauCot));
-        bieuDoDoanhThu.themDuLieu(new DuLieuBieuDoCot("22/10/2025", tenNhom, 1850000, mauCot));
-        bieuDoDoanhThu.themDuLieu(new DuLieuBieuDoCot("23/10/2025", tenNhom, 3200000, mauCot));
-        bieuDoDoanhThu.themDuLieu(new DuLieuBieuDoCot("24/10/2025", tenNhom, 2800000, mauCot));
-        bieuDoDoanhThu.themDuLieu(new DuLieuBieuDoCot("25/10/2025", tenNhom, 2500000, mauCot));
-        bieuDoDoanhThu.themDuLieu(new DuLieuBieuDoCot("26/10/2025", tenNhom, 4100000, mauCot));
+        // 2. Tính Tăng trưởng so với kỳ trước
+        // Kỳ trước = (Tu - duration) đến (Tu - 1 ngày)
+        long duration = den.getTime() - tu.getTime(); // Milliseconds
+        Date prevDen = new Date(tu.getTime() - 24L * 60 * 60 * 1000); // Trước ngày bắt đầu 1 ngày
+        Date prevTu = new Date(prevDen.getTime() - duration);
+        
+        double tongKyTruoc = thongKeDAO.getTongDoanhThuTrongKhoang(prevTu, prevDen, maLoaiSP, maKM);
+        
+        if (tongKyTruoc == 0) {
+            lblGiaTriTangTruong.setText("---");
+            lblGiaTriTangTruong.setForeground(Color.GRAY);
+        } else {
+            double phanTram = ((tong - tongKyTruoc) / tongKyTruoc) * 100;
+            String icon = phanTram >= 0 ? "▲" : "▼";
+            Color color = phanTram >= 0 ? new Color(0x28a745) : new Color(0xdc3545);
+            lblGiaTriTangTruong.setText(String.format("%s %.1f%%", icon, Math.abs(phanTram)));
+            lblGiaTriTangTruong.setForeground(color);
+            lblGiaTriTangTruong.setToolTipText("Kỳ trước: " + vn.format(tongKyTruoc));
+        }
     }
+    private String formatDate(Date d) { return new java.text.SimpleDateFormat("dd/MM/yyyy").format(d); }
 }
