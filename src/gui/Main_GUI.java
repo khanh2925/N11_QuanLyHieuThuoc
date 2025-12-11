@@ -13,6 +13,7 @@ import javax.swing.border.EmptyBorder;
 import entity.NhanVien;
 import gui.nhanvien.BanHang_GUI;
 import gui.nhanvien.HuyHangNhanVien_GUI;
+import gui.nhanvien.ThongKeNhanVien_GUI;
 import gui.nhanvien.TongQuanNV_GUI;
 import gui.nhanvien.TraHangNhanVien_GUI;
 import gui.quanly.BangGia_GUI;
@@ -26,6 +27,7 @@ import gui.quanly.QL_HuyHang_GUI;
 import gui.quanly.QuanLySanPham_GUI;
 import gui.quanly.ThemPhieuNhap_GUI;
 import gui.quanly.ThongKeDoanhThu_GUI;
+import gui.quanly.ThongKeNhanVien_QL_GUI;
 import gui.tracuu.TraCuuBangGia_GUI;
 import gui.tracuu.TraCuuDonHang_GUI;
 import gui.tracuu.TraCuuDonTraHang_GUI;
@@ -68,7 +70,6 @@ public class Main_GUI extends JFrame {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setSize(1920, 1080);
 		setLocationRelativeTo(null);
-		setUndecorated(true); // Ẩn thanh tiêu đề mặc định);
 		buildUI();
 		hienThongTinNhanVien();
 	}
@@ -98,6 +99,8 @@ public class Main_GUI extends JFrame {
 			cardPanel.add(new KhachHang_NV_GUI(), "khachhang");
 			cardPanel.add(new KhuyenMai_GUI(), "khuyenmai");
 			cardPanel.add(new NhanVien_QL_GUI(), "nhanvien");
+			cardPanel.add(new gui.quanly.ThongKeNhanVien_QL_GUI(), "thongkenhanvien");
+		    // ...
 			showCard("tongquan");
 		} else {
 			dashboardNV = new TongQuanNV_GUI();
@@ -106,6 +109,7 @@ public class Main_GUI extends JFrame {
 			cardPanel.add(new TraHangNhanVien_GUI(), "trahang");
 			cardPanel.add(new HuyHangNhanVien_GUI(), "xuathuy");
 			cardPanel.add(new KhachHang_NV_GUI(), "khachhang");
+			cardPanel.add(new ThongKeNhanVien_GUI(nvDangNhap.getMaNhanVien()), "thongke");
 			showCard("banhang");
 		}
 	}
@@ -166,6 +170,7 @@ public class Main_GUI extends JFrame {
 					new TraCuuDonViTinh_GUI());
 			addSubmenuButton("tracuu", "tracuubanggia", "Bảng giá", "/resources/images/icon_bang_gia.png",
 					new TraCuuBangGia_GUI());
+			addSubmenuButton("thongke", "thongke_nhanvien_list", "Hiệu suất nhân viên", "/resources/images/icon_thong_ke.png", new ThongKeNhanVien_QL_GUI());
 			
 			addMenuButton(menuScrollContent, "Quản lý nhập hàng", "nhaphang", "/resources/images/icon_nhap_hang.png");
 			addMenuButton(menuScrollContent, "Quản lý xuất huỷ", "xuathuy", "/resources/images/icon_xuat_huy.png");
@@ -205,6 +210,7 @@ public class Main_GUI extends JFrame {
 					new TraCuuKhachHang_GUI());
 
 			addMenuButton(menuScrollContent, "Quản lý khách hàng", "khachhang", "/resources/images/icon_khach_hang.png");
+			addMenuButton(menuScrollContent, "Thống kê cá nhân", "thongke", "/resources/images/icon_thong_ke.png");
 
 			menuScrollContent.add(Box.createVerticalGlue());
 		}

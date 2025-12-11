@@ -15,6 +15,8 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.CategoryAxis;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.NumberTickUnit;
+import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
 import org.jfree.chart.labels.StandardCategoryToolTipGenerator;
 import org.jfree.chart.plot.CategoryPlot;
@@ -22,9 +24,10 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.chart.renderer.category.StandardBarPainter;
-import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.chart.ui.Layer;
 import org.jfree.chart.ui.RectangleAnchor;
 import org.jfree.chart.ui.TextAnchor;
+import org.jfree.data.category.DefaultCategoryDataset;
 
 public class BieuDoCotJFreeChart extends JPanel {
 
@@ -49,81 +52,51 @@ public class BieuDoCotJFreeChart extends JPanel {
         );
 
         bieuDoCot.setBackgroundPaint(Color.WHITE);
-        
+        bieuDoCot.setAntiAlias(true);
+        bieuDoCot.setTextAntiAlias(true);
+
         CategoryPlot vungVe = bieuDoCot.getCategoryPlot();
+        vungVe.setOutlineVisible(false);
         vungVe.setBackgroundPaint(Color.WHITE);
-        vungVe.setRangeGridlinePaint(new Color(220, 220, 220)); // Đường lưới ngang mờ
+        vungVe.setRangeGridlinePaint(new Color(220, 220, 220));
         vungVe.setDomainGridlinesVisible(false);
-        vungVe.setOutlineVisible(false); // Tắt khung viền bao quanh
 
-        // --- CẤU HÌNH TRỤC X (TRỤC NGANG) ---
         Font fontTruc = new Font("Segoe UI", Font.PLAIN, 13);
+        
         CategoryAxis trucX = vungVe.getDomainAxis();
-        
-        // === ĐÂY LÀ PHẦN BẠN CẦN ===
-        trucX.setAxisLineVisible(true);  // Hiện đường kẻ trục X
-        trucX.setAxisLinePaint(new Color(150, 150, 150)); // Màu xám cho đường kẻ
-        trucX.setAxisLineStroke(new BasicStroke(1.0f)); // Độ dày đường kẻ
-        // ============================
-        
-        trucX.setTickMarksVisible(false); // Ẩn các vạch nhỏ đánh dấu
+        trucX.setAxisLineVisible(false);
+        trucX.setTickMarksVisible(false);
         trucX.setTickLabelFont(fontTruc);
-        trucX.setTickLabelPaint(new Color(80, 80, 80));
-        // Tăng khoảng cách giữa nhãn và trục một chút cho thoáng
-        trucX.setTickLabelInsets(new org.jfree.chart.ui.RectangleInsets(5, 5, 5, 5));
+        trucX.setTickLabelPaint(new Color(100, 100, 100));
 
-        // --- CẤU HÌNH TRỤC Y (TRỤC DỌC) ---
         NumberAxis trucY = (NumberAxis) vungVe.getRangeAxis();
-        trucY.setAxisLineVisible(false); // Ẩn trục dọc (chỉ để lưới ngang)
+        trucY.setAxisLineVisible(false);
         trucY.setTickMarksVisible(false);
         trucY.setTickLabelFont(fontTruc);
-        trucY.setTickLabelPaint(new Color(80, 80, 80));
+        trucY.setTickLabelPaint(new Color(100, 100, 100));
         trucY.setNumberFormatOverride(new DecimalFormat("#,##0"));
 
-        // --- RENDERER CỘT (BAR) ---
-        BarRenderer rendererCot = new RendererTuyChinhEnhanced();
-        rendererCot.setDrawBarOutline(false);
-        rendererCot.setShadowVisible(false);
-        rendererCot.setMaximumBarWidth(0.08); // Độ rộng cột tối đa
-        rendererCot.setBarPainter(new StandardBarPainter()); // Bỏ hiệu ứng bóng 3D
+        BarRenderer rendererTuyChinh = new RendererTuyChinhEnhanced();
+        rendererTuyChinh.setDrawBarOutline(false);
+        rendererTuyChinh.setShadowVisible(false);
+        rendererTuyChinh.setMaximumBarWidth(0.08); 
+        rendererTuyChinh.setBarPainter(new StandardBarPainter());
+
+        rendererTuyChinh.setDefaultItemLabelsVisible(true);
+        Font fontGiaTri = new Font("Segoe UI", Font.BOLD, 15);
+        DecimalFormat dinhDangSo = new DecimalFormat("#,##0"); 
+        rendererTuyChinh.setDefaultItemLabelGenerator(new StandardCategoryItemLabelGenerator("{2}", dinhDangSo));
+        rendererTuyChinh.setDefaultItemLabelFont(fontGiaTri);
+        rendererTuyChinh.setDefaultItemLabelPaint(new Color(50, 50, 50));
         
-        // Hiển thị số trên đỉnh cột
-        rendererCot.setDefaultItemLabelsVisible(true);
-        rendererCot.setDefaultItemLabelGenerator(new StandardCategoryItemLabelGenerator("{2}", new DecimalFormat("#,##0")));
-        rendererCot.setDefaultItemLabelFont(new Font("Segoe UI", Font.BOLD, 11));
-        rendererCot.setDefaultItemLabelPaint(new Color(50, 50, 50));
+        rendererTuyChinh.setDefaultToolTipGenerator(new StandardCategoryToolTipGenerator(
+                "{1} ({0}): {2}", new DecimalFormat("#,##0")));
         
-        // Tooltip
-        rendererCot.setDefaultToolTipGenerator(new StandardCategoryToolTipGenerator("{1}: {2}", new DecimalFormat("#,##0")));
-        
-        vungVe.setRenderer(rendererCot);
+        vungVe.setRenderer(rendererTuyChinh);
 
         return bieuDoCot;
     }
     
-    // --- VẼ ĐƯỜNG TRUNG BÌNH (AVERAGE LINE) ---
-    public void veDuongTrungBinh(double giaTri) {
-        CategoryPlot plot = bieuDo.getCategoryPlot();
-        plot.clearRangeMarkers(); // Xóa đường cũ
-        
-        if (giaTri > 0) {
-            ValueMarker marker = new ValueMarker(giaTri);
-            marker.setPaint(new Color(220, 53, 69)); // Màu đỏ
-            // Nét đứt (Dashed line)
-            marker.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[]{8.0f, 4.0f}, 0.0f));
-            
-            // Label hiển thị giá trị
-            marker.setLabel("TB: " + new DecimalFormat("#,##0").format(giaTri));
-            marker.setLabelFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 11));
-            marker.setLabelPaint(new Color(220, 53, 69));
-            marker.setLabelAnchor(RectangleAnchor.TOP_LEFT);
-            marker.setLabelTextAnchor(TextAnchor.BOTTOM_LEFT);
-            
-            plot.addRangeMarker(marker);
-        }
-    }
-    
-    // Renderer màu Gradient cho cột
     private class RendererTuyChinhEnhanced extends BarRenderer {
         @Override
         public Paint getItemPaint(int hang, int cot) {
@@ -132,40 +105,114 @@ public class BieuDoCotJFreeChart extends JPanel {
             for (DuLieuBieuDoCot duLieu : danhSachDuLieu) {
                 if (duLieu.getTenNhom().equals(tenNhom) && duLieu.getTenDanhMuc().equals(tenDanhMuc)) {
                     Color mauGoc = duLieu.getMauSac();
-                    Color mauNhat = new Color(
-                        Math.min(255, mauGoc.getRed() + 40),
-                        Math.min(255, mauGoc.getGreen() + 40),
-                        Math.min(255, mauGoc.getBlue() + 40)
+                    Color mauNhatHon = new Color(
+                        Math.min(255, mauGoc.getRed() + 30),
+                        Math.min(255, mauGoc.getGreen() + 30),
+                        Math.min(255, mauGoc.getBlue() + 30)
                     );
-                    return new GradientPaint(0f, 0f, mauNhat, 0f, 1000f, mauGoc); 
+                    return new GradientPaint(0f, 0f, mauNhatHon, 0f, 100f, mauGoc); 
                 }
             }
             return super.getItemPaint(hang, cot);
         }
     }
 
+    private void capNhatBieuDo() {
+        tapDuLieu.clear();
+        for (DuLieuBieuDoCot duLieu : danhSachDuLieu) {
+            tapDuLieu.addValue(duLieu.getGiaTri(), duLieu.getTenNhom(), duLieu.getTenDanhMuc());
+        }
+    }
+
     public void themDuLieu(DuLieuBieuDoCot duLieu) {
         danhSachDuLieu.add(duLieu);
-        tapDuLieu.addValue(duLieu.getGiaTri(), duLieu.getTenNhom(), duLieu.getTenDanhMuc());
+        capNhatBieuDo();
     }
 
     public void xoaToanBoDuLieu() {
         danhSachDuLieu.clear();
-        tapDuLieu.clear();
-        bieuDo.getCategoryPlot().clearRangeMarkers();
-    }
-    
-    public void setTieuDeTrucX(String tieuDe) {
-        bieuDo.getCategoryPlot().getDomainAxis().setLabel(tieuDe);
-        bieuDo.getCategoryPlot().getDomainAxis().setLabelFont(new Font("Segoe UI", Font.BOLD, 14));
-    }
-    
-    public void setTieuDeTrucY(String tieuDe) {
-        bieuDo.getCategoryPlot().getRangeAxis().setLabel(tieuDe);
-        bieuDo.getCategoryPlot().getRangeAxis().setLabelFont(new Font("Segoe UI", Font.BOLD, 14));
+        capNhatBieuDo();
     }
     
     public void setTieuDeBieuDo(String tieuDe) {
+        Font fontTieuDe = new Font("Segoe UI", Font.BOLD, 18);
         bieuDo.setTitle(tieuDe);
+        bieuDo.getTitle().setFont(fontTieuDe);
+        bieuDo.getTitle().setPaint(new Color(50, 50, 50));
+    }
+
+    public void setLegendVisible(boolean visible) {
+        bieuDo.getLegend().setVisible(visible);
+    }
+    
+    public void setBuocNhayTrucY(double buocNhay) {
+        CategoryPlot plot = bieuDo.getCategoryPlot();
+        NumberAxis trucY = (NumberAxis) plot.getRangeAxis();
+        if (buocNhay > 0) {
+            trucY.setTickUnit(new NumberTickUnit(buocNhay));
+        }
+    }
+    
+    public void setDaiTrucY(double giaTriThapNhat, double giaTriCaoNhat) {
+        CategoryPlot plot = bieuDo.getCategoryPlot();
+        NumberAxis trucY = (NumberAxis) plot.getRangeAxis();
+        if (giaTriCaoNhat > giaTriThapNhat) {
+            trucY.setRange(giaTriThapNhat, giaTriCaoNhat);
+        }
+    }
+    
+    /**
+     * === PHƯƠNG THỨC MỚI: Đặt tiêu đề cho trục ngang (X) ===
+     * @param tieuDe Tên tiêu đề bạn muốn hiển thị
+     */
+    public void setTieuDeTrucX(String tieuDe) {
+        CategoryPlot plot = bieuDo.getCategoryPlot();
+        CategoryAxis trucX = plot.getDomainAxis();
+        trucX.setLabel(tieuDe);
+        trucX.setLabelFont(new Font("Segoe UI", Font.BOLD, 14));
+        trucX.setLabelPaint(new Color(80, 80, 80));
+    }
+    
+    /**
+     * === PHƯƠNG THỨC MỚI: Đặt tiêu đề cho trục dọc (Y) ===
+     * @param tieuDe Tên tiêu đề bạn muốn hiển thị
+     */
+    public void setTieuDeTrucY(String tieuDe) {
+        CategoryPlot plot = bieuDo.getCategoryPlot();
+        ValueAxis trucY = plot.getRangeAxis();
+        trucY.setLabel(tieuDe);
+        trucY.setLabelFont(new Font("Segoe UI", Font.BOLD, 14));
+        trucY.setLabelPaint(new Color(80, 80, 80));
+    }
+    /**
+     * === PHƯƠNG THỨC MỚI: Thêm đường trung bình ===
+     * @param giaTri Giá trị trung bình để vẽ đường kẻ ngang
+     */
+    public void themDuongTrungBinh(double giaTri) {
+        if (giaTri <= 0) return;
+        
+        CategoryPlot plot = bieuDo.getCategoryPlot();
+        
+        // Tạo marker (đường kẻ)
+        ValueMarker marker = new ValueMarker(giaTri);
+        
+        // Thiết lập màu sắc (Màu đỏ cam)
+        marker.setPaint(new Color(255, 100, 100));
+        
+        // Thiết lập kiểu nét đứt (Dashed line)
+        marker.setStroke(new BasicStroke(
+            2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 
+            1.0f, new float[]{10.0f, 6.0f}, 0.0f
+        ));
+        
+        // Thiết lập nhãn hiển thị bên cạnh dòng
+        marker.setLabel("Trung bình: " + new DecimalFormat("#,##0").format(giaTri));
+        marker.setLabelFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 13));
+        marker.setLabelPaint(new Color(200, 50, 50));
+        marker.setLabelAnchor(RectangleAnchor.TOP_LEFT);
+        marker.setLabelTextAnchor(TextAnchor.BOTTOM_LEFT);
+        
+        // Thêm vào lớp ForeGround (vẽ đè lên cột) hoặc Background (vẽ sau cột)
+        plot.addRangeMarker(marker, Layer.FOREGROUND);
     }
 }

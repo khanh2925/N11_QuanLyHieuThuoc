@@ -247,5 +247,36 @@ public class ThongKe_DAO {
         } catch (Exception e) {}
         return list;
     }
+    /**
+     * Hàm phụ trợ: Lấy tổng doanh thu duy nhất trong 1 khoảng thời gian
+     * Dùng để tính % tăng trưởng so với kỳ trước
+     */
+    public double getTongDoanhThuTrongKhoang(java.util.Date tuNgay, java.util.Date denNgay, String loaiSP, String maKM) {
+        double tong = 0;
+        Connection con = null;
+        try {
+            connectDB.getInstance();
+            con = connectDB.getConnection();
+            
+            String sql = "SELECT COALESCE(SUM(ct.ThanhTien), 0) as TongTien " +
+                         "FROM HoaDon hd " +
+                         "JOIN ChiTietHoaDon ct ON hd.MaHoaDon = ct.MaHoaDon " +
+                         "JOIN LoSanPham lo ON ct.MaLo = lo.MaLo " +
+                         "JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham " +
+                         "WHERE hd.NgayLap BETWEEN ? AND ? " + 
+                         getDieuKienLoc(loaiSP, maKM); // Tận dụng hàm getDieuKienLoc có sẵn
+
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setDate(1, new java.sql.Date(tuNgay.getTime()));
+            ps.setDate(2, new java.sql.Date(denNgay.getTime()));
+            setThamSoLoc(ps, 3, loaiSP, maKM); // Tận dụng hàm setThamSoLoc có sẵn
+            
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                tong = rs.getDouble("TongTien");
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return tong;
+    }
     
 }

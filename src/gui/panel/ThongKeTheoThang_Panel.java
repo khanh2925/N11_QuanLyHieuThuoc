@@ -17,7 +17,11 @@ public class ThongKeTheoThang_Panel extends JPanel {
     private JComboBox<Integer> cmbChonNam;
     private JComboBox<String> cmbLoaiSP, cmbKhuyenMai;
     private BieuDoCotJFreeChart bieuDoDoanhThu;
-    private JLabel lblGiaTriTongDoanhThu, lblGiaTriCaoNhat, lblGiaTriTongGiaoDich, lblGiaTriTrungBinh;
+    
+    // Thêm các Label mới
+    private JLabel lblGiaTriTongDoanhThu, lblGiaTriCaoNhat, lblGiaTriThapNhat;
+    private JLabel lblGiaTriTrungBinh, lblGiaTriTongGiaoDich, lblGiaTriTangTruong;
+    
     private ThongKe_DAO thongKeDAO;
 
     public ThongKeTheoThang_Panel() {
@@ -75,16 +79,23 @@ public class ThongKeTheoThang_Panel extends JPanel {
         bieuDoDoanhThu.setTieuDeTrucY("Doanh thu");
         pnChart.add(bieuDoDoanhThu, BorderLayout.CENTER);
 
-        // --- STATS ---
-        JPanel pnStats = new JPanel(new GridLayout(2, 4, 20, 10));
+        // --- STATS (GridLayout 2x3) ---
+        JPanel pnStats = new JPanel(new GridLayout(2, 3, 20, 15));
         pnStats.setBackground(new Color(0xE3F2F5));
         pnStats.setBorder(new CompoundBorder(BorderFactory.createTitledBorder("Tổng quan"), new EmptyBorder(10, 20, 10, 20)));
-        pnStats.setPreferredSize(new Dimension(0, 140));
-        Font f1 = new Font("Tahoma", 0, 16); Font f2 = new Font("Tahoma", 1, 18); Color c = new Color(0x009966);
-        lblGiaTriTongDoanhThu = createLabel(pnStats, "Tổng doanh thu:", f1, f2, c);
-        lblGiaTriCaoNhat = createLabel(pnStats, "Tháng cao nhất:", f1, f2, c);
-        lblGiaTriTongGiaoDich = createLabel(pnStats, "Tổng giao dịch:", f1, f2, c);
-        lblGiaTriTrungBinh = createLabel(pnStats, "TB/Tháng:", f1, f2, c);
+        pnStats.setPreferredSize(new Dimension(0, 200));
+        
+        Font fTitle = new Font("Tahoma", Font.PLAIN, 15);
+        Font fValue = new Font("Tahoma", Font.BOLD, 18);
+        Color cMain = new Color(0x009966);
+
+        lblGiaTriTongDoanhThu = createLabel(pnStats, "Tổng doanh thu:", fTitle, fValue, cMain);
+        lblGiaTriCaoNhat = createLabel(pnStats, "Tháng cao nhất:", fTitle, fValue, new Color(0x28a745));
+        lblGiaTriThapNhat = createLabel(pnStats, "Tháng thấp nhất:", fTitle, fValue, new Color(0xdc3545));
+        
+        lblGiaTriTrungBinh = createLabel(pnStats, "TB/Tháng:", fTitle, fValue, cMain);
+        lblGiaTriTongGiaoDich = createLabel(pnStats, "Tổng đơn hàng:", fTitle, fValue, cMain);
+        lblGiaTriTangTruong = createLabel(pnStats, "So với năm trước:", fTitle, fValue, Color.GRAY);
 
         pnContent.add(pnChart, BorderLayout.CENTER);
         pnContent.add(pnStats, BorderLayout.SOUTH);
@@ -95,7 +106,13 @@ public class ThongKeTheoThang_Panel extends JPanel {
     }
 
     private JLabel createLabel(JPanel p, String t, Font f1, Font f2, Color c) {
-        p.add(new JLabel(t)).setFont(f1); JLabel l = new JLabel("0"); l.setFont(f2); l.setForeground(c); p.add(l); return l;
+        JPanel pChild = new JPanel(new BorderLayout(5, 5));
+        pChild.setOpaque(false);
+        pChild.add(new JLabel(t){{setFont(f1);}}, BorderLayout.NORTH);
+        JLabel l = new JLabel("0"); l.setFont(f2); l.setForeground(c);
+        pChild.add(l, BorderLayout.CENTER);
+        p.add(pChild); 
+        return l;
     }
 
     private void loadDuLieu() {
@@ -113,18 +130,52 @@ public class ThongKeTheoThang_Panel extends JPanel {
         bieuDoDoanhThu.xoaToanBoDuLieu();
         bieuDoDoanhThu.setTieuDeBieuDo("Doanh Thu Năm " + nam);
         Color col = new Color(0, 153, 102);
-        double tong = 0, max = 0; int don = 0; String tMax = "";
+        
+        double tong = 0, max = 0; 
+        double min = Double.MAX_VALUE;
+        int don = 0; 
+        String tMax = "", tMin = "";
         
         for (BanGhiThongKe item : ds) {
             bieuDoDoanhThu.themDuLieu(new DuLieuBieuDoCot(item.thoiGian, "Doanh thu", item.doanhThu, col));
-            tong += item.doanhThu; don += item.soLuongDon;
+            tong += item.doanhThu; 
+            don += item.soLuongDon;
+            
             if (item.doanhThu > max) { max = item.doanhThu; tMax = item.thoiGian; }
+            if (item.doanhThu < min) { min = item.doanhThu; tMin = item.thoiGian; }
         }
+     // === ĐOẠN CODE MỚI THÊM VÀO ĐÂY ===
+        // Tính trung bình theo tháng (chia cho 12 tháng cố định hoặc chia cho ds.size() tùy nghiệp vụ)
+        // Ở đây tôi dùng chia 12 theo logic label cũ của bạn
+        double trungBinh = tong / 12; 
+        if (trungBinh > 0) {
+            bieuDoDoanhThu.themDuongTrungBinh(trungBinh);
+        }
+        if(ds.isEmpty()) min = 0;
         
         NumberFormat vn = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
         lblGiaTriTongDoanhThu.setText(vn.format(tong));
         lblGiaTriTongGiaoDich.setText(String.valueOf(don));
-        lblGiaTriCaoNhat.setText(max > 0 ? "<html>" + vn.format(max) + "<br><span style='font-size:10px'>(" + tMax + ")</span></html>" : "0 VNĐ");
-        lblGiaTriTrungBinh.setText(vn.format(tong / 12));
+        lblGiaTriTrungBinh.setText(vn.format(tong / 12)); // Trung bình chia 12 tháng
+        
+        lblGiaTriCaoNhat.setText(max > 0 ? "<html>" + vn.format(max) + "<br><span style='font-size:10px;color:gray'>(" + tMax + ")</span></html>" : "0 VNĐ");
+        lblGiaTriThapNhat.setText(min > 0 ? "<html>" + vn.format(min) + "<br><span style='font-size:10px;color:gray'>(" + tMin + ")</span></html>" : (ds.isEmpty() ? "0 VNĐ" : vn.format(min)));
+
+        // Tính so sánh năm trước
+        // Năm trước
+        List<BanGhiThongKe> dsNamTruoc = thongKeDAO.getDoanhThuTheoThang(nam - 1, maLoaiSP, maKM);
+        double tongNamTruoc = dsNamTruoc.stream().mapToDouble(i -> i.doanhThu).sum();
+        
+        if (tongNamTruoc == 0) {
+            lblGiaTriTangTruong.setText("---");
+            lblGiaTriTangTruong.setForeground(Color.GRAY);
+        } else {
+            double phanTram = ((tong - tongNamTruoc) / tongNamTruoc) * 100;
+            String icon = phanTram >= 0 ? "▲" : "▼";
+            Color color = phanTram >= 0 ? new Color(0x28a745) : new Color(0xdc3545);
+            lblGiaTriTangTruong.setText(String.format("%s %.1f%%", icon, Math.abs(phanTram)));
+            lblGiaTriTangTruong.setForeground(color);
+            lblGiaTriTangTruong.setToolTipText("Năm " + (nam-1) + ": " + vn.format(tongNamTruoc));
+        }
     }
 }
