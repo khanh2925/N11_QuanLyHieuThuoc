@@ -1,5 +1,6 @@
 package component.chart;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
@@ -20,8 +21,12 @@ import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
 import org.jfree.chart.labels.StandardCategoryToolTipGenerator;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.chart.renderer.category.StandardBarPainter;
+import org.jfree.chart.ui.Layer;
+import org.jfree.chart.ui.RectangleAnchor;
+import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 public class BieuDoCotJFreeChart extends JPanel {
@@ -178,5 +183,36 @@ public class BieuDoCotJFreeChart extends JPanel {
         trucY.setLabel(tieuDe);
         trucY.setLabelFont(new Font("Segoe UI", Font.BOLD, 14));
         trucY.setLabelPaint(new Color(80, 80, 80));
+    }
+    /**
+     * === PHƯƠNG THỨC MỚI: Thêm đường trung bình ===
+     * @param giaTri Giá trị trung bình để vẽ đường kẻ ngang
+     */
+    public void themDuongTrungBinh(double giaTri) {
+        if (giaTri <= 0) return;
+        
+        CategoryPlot plot = bieuDo.getCategoryPlot();
+        
+        // Tạo marker (đường kẻ)
+        ValueMarker marker = new ValueMarker(giaTri);
+        
+        // Thiết lập màu sắc (Màu đỏ cam)
+        marker.setPaint(new Color(255, 100, 100));
+        
+        // Thiết lập kiểu nét đứt (Dashed line)
+        marker.setStroke(new BasicStroke(
+            2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 
+            1.0f, new float[]{10.0f, 6.0f}, 0.0f
+        ));
+        
+        // Thiết lập nhãn hiển thị bên cạnh dòng
+        marker.setLabel("Trung bình: " + new DecimalFormat("#,##0").format(giaTri));
+        marker.setLabelFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 13));
+        marker.setLabelPaint(new Color(200, 50, 50));
+        marker.setLabelAnchor(RectangleAnchor.TOP_LEFT);
+        marker.setLabelTextAnchor(TextAnchor.BOTTOM_LEFT);
+        
+        // Thêm vào lớp ForeGround (vẽ đè lên cột) hoặc Background (vẽ sau cột)
+        plot.addRangeMarker(marker, Layer.FOREGROUND);
     }
 }

@@ -79,7 +79,67 @@ public class PhieuHuy_DAO {
 		}
 		return list;
 	}
-
+	/** � Đếm số phiếu hủy chưa duyệt (cho Dashboard) */
+	public int demPhieuHuyChuaDuyet() {
+		String sql = "SELECT COUNT(*) AS SoLuong FROM PhieuHuy WHERE TrangThai = 0";
+		
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
+		Statement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = con.createStatement();
+			rs = st.executeQuery(sql);
+			
+			if (rs.next()) {
+				return rs.getInt("SoLuong");
+			}
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi đếm phiếu hủy chưa duyệt: " + e.getMessage());
+		} finally {
+			try { if (rs != null) rs.close(); } catch (Exception ignored) {}
+			try { if (st != null) st.close(); } catch (Exception ignored) {}
+		}
+		
+		return 0;
+	}
+	/**
+	 * Tính tổng tiền hủy hàng theo tháng (cho biểu đồ)
+	 * @param thang Tháng (1-12)
+	 * @param nam Năm
+	 * @return Tổng tiền hàng bị hủy
+	 */
+	public double tinhTongTienHuyTheoThang(int thang, int nam) {
+		String sql = """
+				SELECT COALESCE(SUM(TongTien), 0) AS TongTienHuy
+				FROM PhieuHuy
+				WHERE MONTH(NgayLapPhieu) = ? AND YEAR(NgayLapPhieu) = ?
+				""";
+		
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		
+		try {
+			ps = con.prepareStatement(sql);
+			ps.setInt(1, thang);
+			ps.setInt(2, nam);
+			rs = ps.executeQuery();
+			
+			if (rs.next()) {
+				return rs.getDouble("TongTienHuy");
+			}
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi tính tổng tiền hủy theo tháng: " + e.getMessage());
+		} finally {
+			try { if (rs != null) rs.close(); } catch (Exception ignored) {}
+			try { if (ps != null) ps.close(); } catch (Exception ignored) {}
+		}
+		
+		return 0;
+	}
 	/** 🔹 Lấy phiếu huỷ theo mã (kèm chi tiết, entity tự tính tongTien) */
 	public PhieuHuy layTheoMa(String maPhieuHuy) {
 		connectDB.getInstance();
@@ -304,5 +364,32 @@ public class PhieuHuy_DAO {
 		}
 		return false;
 	}
+	// Đếm số PH của nhân viên đã lập trong ngày hiện tại.
+	public int demSoPhieuHuyHomNayCuaNhanVien(String maNhanVien) {
+	    connectDB.getInstance();
+	    Connection con = connectDB.getConnection();
 
+	    String sql = """
+	        SELECT COUNT(*) AS SoLuong
+	        FROM PhieuHuy
+	        WHERE MaNhanVien = ?
+	          AND CAST(NgayLapPhieu AS DATE) = CAST(GETDATE() AS DATE)
+	    """;
+
+	    try (PreparedStatement ps = con.prepareStatement(sql)) {
+	        ps.setString(1, maNhanVien);
+
+	        try (ResultSet rs = ps.executeQuery()) {
+	            if (rs.next()) {
+	                return rs.getInt("SoLuong");
+	            }
+	        }
+	    } catch (SQLException e) {
+	        System.err.println("❌ Lỗi đếm số phiếu huỷ hôm nay của nhân viên: " + e.getMessage());
+	    }
+
+	    return 0;
+	}
+	
+	
 }

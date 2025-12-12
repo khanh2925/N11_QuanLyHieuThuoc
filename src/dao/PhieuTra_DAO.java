@@ -19,6 +19,7 @@ public class PhieuTra_DAO {
 		this.khachHangDAO = new KhachHang_DAO();
 		this.chiTietPhieuTraDAO = new ChiTietPhieuTra_DAO();
 	}
+	
 
 	// ============================================================
 	// 🔍 Tìm phiếu theo mã
@@ -70,6 +71,68 @@ public class PhieuTra_DAO {
 		}
 
 		return null;
+	}
+	// ============================================================
+	// � Đếm số phiếu trả chưa duyệt (cho Dashboard)
+	// ============================================================
+	public int demPhieuTraChuaDuyet() {
+		String sql = "SELECT COUNT(*) AS SoLuong FROM PhieuTra WHERE DaDuyet = 0";
+		
+		Connection con = connectDB.getConnection();
+		Statement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = con.createStatement();
+			rs = st.executeQuery(sql);
+			
+			if (rs.next()) {
+				return rs.getInt("SoLuong");
+			}
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi đếm phiếu trả chưa duyệt: " + e.getMessage());
+		} finally {
+			try { if (rs != null) rs.close(); } catch (Exception ignored) {}
+			try { if (st != null) st.close(); } catch (Exception ignored) {}
+		}
+		
+		return 0;
+	}
+	
+	/**
+	 * Tính tổng tiền trả hàng theo tháng (cho biểu đồ)
+	 * @param thang Tháng (1-12)
+	 * @param nam Năm
+	 * @return Tổng tiền đã hoàn trả
+	 */
+	public double tinhTongTienTraTheoThang(int thang, int nam) {
+		String sql = """
+				SELECT COALESCE(SUM(TongTienHoan), 0) AS TongTienTra
+				FROM PhieuTra
+				WHERE MONTH(NgayLap) = ? AND YEAR(NgayLap) = ?
+				""";
+		
+		Connection con = connectDB.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		
+		try {
+			ps = con.prepareStatement(sql);
+			ps.setInt(1, thang);
+			ps.setInt(2, nam);
+			rs = ps.executeQuery();
+			
+			if (rs.next()) {
+				return rs.getDouble("TongTienTra");
+			}
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi tính tổng tiền trả theo tháng: " + e.getMessage());
+		} finally {
+			try { if (rs != null) rs.close(); } catch (Exception ignored) {}
+			try { if (ps != null) ps.close(); } catch (Exception ignored) {}
+		}
+		
+		return 0;
 	}
 
 	// ============================================================
@@ -662,5 +725,32 @@ public class PhieuTra_DAO {
 			return prefix + "0001";
 		}
 	}
+	//Đếm số PT của nhân viên đã tạo trong ngày hiện tại
+	public int demSoPhieuTraHomNayCuaNhanVien(String maNhanVien) {
+	    connectDB.getInstance();
+	    Connection con = connectDB.getConnection();
+
+	    String sql = """
+	        SELECT COUNT(*) AS SoLuong
+	        FROM PhieuTra
+	        WHERE MaNhanVien = ?
+	          AND CAST(NgayLap AS DATE) = CAST(GETDATE() AS DATE)
+	    """;
+
+	    try (PreparedStatement ps = con.prepareStatement(sql)) {
+	        ps.setString(1, maNhanVien);
+
+	        try (ResultSet rs = ps.executeQuery()) {
+	            if (rs.next()) {
+	                return rs.getInt("SoLuong");
+	            }
+	        }
+	    } catch (SQLException e) {
+	        System.err.println("❌ Lỗi đếm số phiếu trả hôm nay của nhân viên: " + e.getMessage());
+	    }
+
+	    return 0;
+	}
+	
 
 }

@@ -252,4 +252,69 @@ public class HoaDon_DAO {
 
         return dsHD;
     }
+    // ========== PHẦN THỐNG KÊ CHO DASHBOARD ==========
+    
+    /**
+     * Lấy tổng doanh thu theo tháng và năm
+     * @param thang Tháng (1-12)
+     * @param nam Năm (VD: 2024, 2025)
+     * @return Tổng doanh thu trong tháng đó
+     */
+    public double layDoanhThuTheoThang(int thang, int nam) {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+        
+        String sql = """
+                SELECT COALESCE(SUM(TongThanhToan), 0) AS TongDoanhThu
+                FROM HoaDon
+                WHERE MONTH(NgayLap) = ? AND YEAR(NgayLap) = ?
+                """;
+        
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setInt(1, thang);
+            stmt.setInt(2, nam);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("TongDoanhThu");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi lấy doanh thu theo tháng: " + e.getMessage());
+        }
+        return 0;
+    }
+    
+    /**
+     * Đếm số hóa đơn theo tháng và năm
+     * @param thang Tháng (1-12)
+     * @param nam Năm
+     * @return Số lượng hóa đơn
+     */
+    public int demSoHoaDonTheoThang(int thang, int nam) {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+        
+        String sql = """
+                SELECT COUNT(*) AS SoLuong
+                FROM HoaDon
+                WHERE MONTH(NgayLap) = ? AND YEAR(NgayLap) = ?
+                """;
+        
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setInt(1, thang);
+            stmt.setInt(2, nam);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("SoLuong");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi đếm số hóa đơn theo tháng: " + e.getMessage());
+        }
+        return 0;
+    }
+    
+    
 }
