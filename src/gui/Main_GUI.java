@@ -375,8 +375,8 @@ public class Main_GUI extends JFrame {
 				dashboardQL.refreshDashboard();
 			}
 			if (dashboardNV != null) {
-				// Nếu có method refresh cho dashboard nhân viên thì gọi ở đây
-				// dashboardNV.refreshDashboard();
+				
+				 dashboardNV.refreshDashboard();
 			}
 		}
 		
@@ -600,5 +600,6 @@ public class Main_GUI extends JFrame {
 		// Sẽ gọi getHoTen() (xem mục #2)
 		lblUserTop.setText(nvDangNhap.getMaNhanVien() + " - " + nvDangNhap.getTenNhanVien());
 	}
+	
 
 }

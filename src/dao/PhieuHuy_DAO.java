@@ -364,5 +364,32 @@ public class PhieuHuy_DAO {
 		}
 		return false;
 	}
+	// Đếm số PH của nhân viên đã lập trong ngày hiện tại.
+	public int demSoPhieuHuyHomNayCuaNhanVien(String maNhanVien) {
+	    connectDB.getInstance();
+	    Connection con = connectDB.getConnection();
 
+	    String sql = """
+	        SELECT COUNT(*) AS SoLuong
+	        FROM PhieuHuy
+	        WHERE MaNhanVien = ?
+	          AND CAST(NgayLapPhieu AS DATE) = CAST(GETDATE() AS DATE)
+	    """;
+
+	    try (PreparedStatement ps = con.prepareStatement(sql)) {
+	        ps.setString(1, maNhanVien);
+
+	        try (ResultSet rs = ps.executeQuery()) {
+	            if (rs.next()) {
+	                return rs.getInt("SoLuong");
+	            }
+	        }
+	    } catch (SQLException e) {
+	        System.err.println("❌ Lỗi đếm số phiếu huỷ hôm nay của nhân viên: " + e.getMessage());
+	    }
+
+	    return 0;
+	}
+	
+	
 }
