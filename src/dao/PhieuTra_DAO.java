@@ -725,5 +725,32 @@ public class PhieuTra_DAO {
 			return prefix + "0001";
 		}
 	}
+	//Đếm số PT của nhân viên đã tạo trong ngày hiện tại
+	public int demSoPhieuTraHomNayCuaNhanVien(String maNhanVien) {
+	    connectDB.getInstance();
+	    Connection con = connectDB.getConnection();
+
+	    String sql = """
+	        SELECT COUNT(*) AS SoLuong
+	        FROM PhieuTra
+	        WHERE MaNhanVien = ?
+	          AND CAST(NgayLap AS DATE) = CAST(GETDATE() AS DATE)
+	    """;
+
+	    try (PreparedStatement ps = con.prepareStatement(sql)) {
+	        ps.setString(1, maNhanVien);
+
+	        try (ResultSet rs = ps.executeQuery()) {
+	            if (rs.next()) {
+	                return rs.getInt("SoLuong");
+	            }
+	        }
+	    } catch (SQLException e) {
+	        System.err.println("❌ Lỗi đếm số phiếu trả hôm nay của nhân viên: " + e.getMessage());
+	    }
+
+	    return 0;
+	}
+	
 
 }

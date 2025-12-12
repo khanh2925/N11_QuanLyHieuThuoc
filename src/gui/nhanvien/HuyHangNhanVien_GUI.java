@@ -26,6 +26,8 @@ import entity.Session;
 import entity.TaiKhoan;
 import enums.LoaiSanPham;
 import gui.panel.HuyHangItemPanel;
+import gui.tracuu.TraCuuPhieuHuy_GUI;
+import gui.Main_GUI;
 import gui.dialog.DialogChonLo;
 import gui.dialog.PhieuHuyPreviewDialog;
 
@@ -617,9 +619,11 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		}
 
 
+
 		resetForm();
 	}
 	
+
 	
 
 	// ===========================================

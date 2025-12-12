@@ -77,7 +77,7 @@ public class TongQuanQuanLy_GUI extends JPanel implements ActionListener, MouseL
     
     // Formatter
     private DecimalFormat formatter = new DecimalFormat("#,###");
-    
+   
     
     /**
      * Constructor với Main_GUI reference để hỗ trợ chuyển tab
@@ -338,7 +338,7 @@ public class TongQuanQuanLy_GUI extends JPanel implements ActionListener, MouseL
         }
         
         JLabel lblTitle = new JLabel(title);
-        lblTitle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblTitle.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblTitle.setForeground(mauChu);
         lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         lblTitle.setBorder(new EmptyBorder(10, 10, 0, 10));
@@ -348,7 +348,7 @@ public class TongQuanQuanLy_GUI extends JPanel implements ActionListener, MouseL
         textField.setOpaque(false);
         textField.setBorder(null);
         textField.setForeground(mauChu);
-        textField.setFont(new Font("Segoe UI", Font.BOLD, 22)); 
+        textField.setFont(new Font("Segoe UI", Font.BOLD, 35)); 
         textField.setEditable(false); 
         textField.setAlignmentX(Component.LEFT_ALIGNMENT);
         textField.setBorder(new EmptyBorder(5, 10, 10, 10));
