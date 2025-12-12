@@ -12,6 +12,7 @@ public class ThongKe_DAO {
 
 	public ThongKe_DAO() {
 	}
+	
 
 	/**
 	 * Tính lợi nhuận theo tháng = Doanh thu - Chi phí nhập hàng đã bán
@@ -891,4 +892,173 @@ public class ThongKe_DAO {
 		}
 		return tong;
 	}
+	  // --- Class DTO mới để chứa dữ liệu 4 cột ---
+	public static class BanGhiTaiChinh {
+        public String thoiGian; // Sửa từ int thang -> String thoiGian
+        public double banHang;
+        public double nhapHang;
+        public double traHang;
+        public double huyHang;
+
+        public BanGhiTaiChinh(String thoiGian, double banHang, double nhapHang, double traHang, double huyHang) {
+            this.thoiGian = thoiGian;
+            this.banHang = banHang;
+            this.nhapHang = nhapHang;
+            this.traHang = traHang;
+            this.huyHang = huyHang;
+        }
+    }
+
+// --- 1. Hàm lấy dữ liệu tài chính theo THÁNG (Đã bỏ maKM) ---
+    public List<BanGhiTaiChinh> getThongKeTaiChinhTheoThang(int nam, String loaiSP) {
+        List<BanGhiTaiChinh> list = new ArrayList<>();
+        Connection con = null;
+        try {
+            connectDB.getInstance();
+            con = connectDB.getConnection();
+
+            String filterLoaiSP = "";
+            if (loaiSP != null && !loaiSP.equals("Tất cả")) {
+                filterLoaiSP = " AND sp.LoaiSanPham = N'" + loaiSP + "' ";
+            }
+
+            // Đã xóa phần filterKM
+            String sql = """
+                SELECT T.Thang, SUM(T.Val_Ban) AS BanHang, SUM(T.Val_Nhap) AS NhapHang, SUM(T.Val_Tra) AS TraHang, SUM(T.Val_Huy) AS HuyHang
+                FROM (
+                    -- 1. Bán
+                    SELECT MONTH(hd.NgayLap) AS Thang, SUM(ct.ThanhTien) AS Val_Ban, 0 AS Val_Nhap, 0 AS Val_Tra, 0 AS Val_Huy
+                    FROM HoaDon hd JOIN ChiTietHoaDon ct ON hd.MaHoaDon = ct.MaHoaDon JOIN LoSanPham lo ON ct.MaLo = lo.MaLo JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+                    WHERE YEAR(hd.NgayLap) = ? %s GROUP BY MONTH(hd.NgayLap)
+                    UNION ALL
+                    -- 2. Nhập
+                    SELECT MONTH(pn.NgayNhap), 0, SUM(ct.ThanhTien), 0, 0
+                    FROM PhieuNhap pn JOIN ChiTietPhieuNhap ct ON pn.MaPhieuNhap = ct.MaPhieuNhap JOIN LoSanPham lo ON ct.MaLo = lo.MaLo JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+                    WHERE YEAR(pn.NgayNhap) = ? %s GROUP BY MONTH(pn.NgayNhap)
+                    UNION ALL
+                    -- 3. Trả
+                    SELECT MONTH(pt.NgayLap), 0, 0, SUM(ct.ThanhTienHoan), 0
+                    FROM PhieuTra pt JOIN ChiTietPhieuTra ct ON pt.MaPhieuTra = ct.MaPhieuTra JOIN HoaDon hd ON ct.MaHoaDon = hd.MaHoaDon JOIN LoSanPham lo ON ct.MaLo = lo.MaLo JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+                    WHERE YEAR(pt.NgayLap) = ? AND pt.DaDuyet = 1 %s GROUP BY MONTH(pt.NgayLap)
+                    UNION ALL
+                    -- 4. Hủy
+                    SELECT MONTH(ph.NgayLapPhieu), 0, 0, 0, SUM(ct.ThanhTien)
+                    FROM PhieuHuy ph JOIN ChiTietPhieuHuy ct ON ph.MaPhieuHuy = ct.MaPhieuHuy JOIN LoSanPham lo ON ct.MaLo = lo.MaLo JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+                    WHERE YEAR(ph.NgayLapPhieu) = ? %s GROUP BY MONTH(ph.NgayLapPhieu)
+                ) AS T GROUP BY T.Thang ORDER BY T.Thang
+            """.formatted(filterLoaiSP, filterLoaiSP, filterLoaiSP, filterLoaiSP);
+
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, nam); ps.setInt(2, nam); ps.setInt(3, nam); ps.setInt(4, nam);
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new BanGhiTaiChinh("T" + rs.getInt("Thang"), rs.getDouble("BanHang"), rs.getDouble("NhapHang"), rs.getDouble("TraHang"), rs.getDouble("HuyHang")));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // --- 2. Hàm lấy dữ liệu tài chính theo NGÀY (Đã bỏ maKM) ---
+    public List<BanGhiTaiChinh> getThongKeTaiChinhTheoNgay(java.util.Date tuNgay, java.util.Date denNgay, String loaiSP) {
+        List<BanGhiTaiChinh> list = new ArrayList<>();
+        Connection con = null;
+        try {
+            connectDB.getInstance();
+            con = connectDB.getConnection();
+
+            String filterLoaiSP = "";
+            if (loaiSP != null && !loaiSP.equals("Tất cả")) {
+                filterLoaiSP = " AND sp.LoaiSanPham = N'" + loaiSP + "' ";
+            }
+
+            String sql = """
+                SELECT T.Ngay, SUM(T.Val_Ban) AS Ban, SUM(T.Val_Nhap) AS Nhap, SUM(T.Val_Tra) AS Tra, SUM(T.Val_Huy) AS Huy
+                FROM (
+                    SELECT hd.NgayLap AS Ngay, SUM(ct.ThanhTien) AS Val_Ban, 0 AS Val_Nhap, 0 AS Val_Tra, 0 AS Val_Huy
+                    FROM HoaDon hd JOIN ChiTietHoaDon ct ON hd.MaHoaDon = ct.MaHoaDon JOIN LoSanPham lo ON ct.MaLo = lo.MaLo JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+                    WHERE hd.NgayLap BETWEEN ? AND ? %s GROUP BY hd.NgayLap
+                    UNION ALL
+                    SELECT pn.NgayNhap, 0, SUM(ct.ThanhTien), 0, 0
+                    FROM PhieuNhap pn JOIN ChiTietPhieuNhap ct ON pn.MaPhieuNhap = ct.MaPhieuNhap JOIN LoSanPham lo ON ct.MaLo = lo.MaLo JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+                    WHERE pn.NgayNhap BETWEEN ? AND ? %s GROUP BY pn.NgayNhap
+                    UNION ALL
+                    SELECT pt.NgayLap, 0, 0, SUM(ct.ThanhTienHoan), 0
+                    FROM PhieuTra pt JOIN ChiTietPhieuTra ct ON pt.MaPhieuTra = ct.MaPhieuTra JOIN HoaDon hd ON ct.MaHoaDon = hd.MaHoaDon JOIN LoSanPham lo ON ct.MaLo = lo.MaLo JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+                    WHERE pt.NgayLap BETWEEN ? AND ? AND pt.DaDuyet = 1 %s GROUP BY pt.NgayLap
+                    UNION ALL
+                    SELECT ph.NgayLapPhieu, 0, 0, 0, SUM(ct.ThanhTien)
+                    FROM PhieuHuy ph JOIN ChiTietPhieuHuy ct ON ph.MaPhieuHuy = ct.MaPhieuHuy JOIN LoSanPham lo ON ct.MaLo = lo.MaLo JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+                    WHERE ph.NgayLapPhieu BETWEEN ? AND ? %s GROUP BY ph.NgayLapPhieu
+                ) AS T GROUP BY T.Ngay ORDER BY T.Ngay
+            """.formatted(filterLoaiSP, filterLoaiSP, filterLoaiSP, filterLoaiSP);
+
+            PreparedStatement ps = con.prepareStatement(sql);
+            java.sql.Date d1 = new java.sql.Date(tuNgay.getTime());
+            java.sql.Date d2 = new java.sql.Date(denNgay.getTime());
+            ps.setDate(1, d1); ps.setDate(2, d2); 
+            ps.setDate(3, d1); ps.setDate(4, d2); 
+            ps.setDate(5, d1); ps.setDate(6, d2); 
+            ps.setDate(7, d1); ps.setDate(8, d2); 
+
+            ResultSet rs = ps.executeQuery();
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+            while (rs.next()) {
+                java.sql.Date ngaySQL = rs.getDate("Ngay");
+                String labelNgay = (ngaySQL != null) ? sdf.format(ngaySQL) : "";
+                list.add(new BanGhiTaiChinh(labelNgay, rs.getDouble("Ban"), rs.getDouble("Nhap"), rs.getDouble("Tra"), rs.getDouble("Huy")));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // --- 3. Hàm lấy dữ liệu tài chính theo NĂM (Đã bỏ maKM) ---
+    public List<BanGhiTaiChinh> getThongKeTaiChinhTheoNam(int namBatDau, int namKetThuc, String loaiSP) {
+        List<BanGhiTaiChinh> list = new ArrayList<>();
+        Connection con = null;
+        try {
+            connectDB.getInstance();
+            con = connectDB.getConnection();
+
+            String filterLoaiSP = "";
+            if (loaiSP != null && !loaiSP.equals("Tất cả")) {
+                filterLoaiSP = " AND sp.LoaiSanPham = N'" + loaiSP + "' ";
+            }
+
+            String sql = """
+                SELECT T.Nam, SUM(T.Val_Ban) AS Ban, SUM(T.Val_Nhap) AS Nhap, SUM(T.Val_Tra) AS Tra, SUM(T.Val_Huy) AS Huy
+                FROM (
+                    SELECT YEAR(hd.NgayLap) AS Nam, SUM(ct.ThanhTien) AS Val_Ban, 0 AS Val_Nhap, 0 AS Val_Tra, 0 AS Val_Huy
+                    FROM HoaDon hd JOIN ChiTietHoaDon ct ON hd.MaHoaDon = ct.MaHoaDon JOIN LoSanPham lo ON ct.MaLo = lo.MaLo JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+                    WHERE YEAR(hd.NgayLap) BETWEEN ? AND ? %s GROUP BY YEAR(hd.NgayLap)
+                    UNION ALL
+                    SELECT YEAR(pn.NgayNhap), 0, SUM(ct.ThanhTien), 0, 0
+                    FROM PhieuNhap pn JOIN ChiTietPhieuNhap ct ON pn.MaPhieuNhap = ct.MaPhieuNhap JOIN LoSanPham lo ON ct.MaLo = lo.MaLo JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+                    WHERE YEAR(pn.NgayNhap) BETWEEN ? AND ? %s GROUP BY YEAR(pn.NgayNhap)
+                    UNION ALL
+                    SELECT YEAR(pt.NgayLap), 0, 0, SUM(ct.ThanhTienHoan), 0
+                    FROM PhieuTra pt JOIN ChiTietPhieuTra ct ON pt.MaPhieuTra = ct.MaPhieuTra JOIN HoaDon hd ON ct.MaHoaDon = hd.MaHoaDon JOIN LoSanPham lo ON ct.MaLo = lo.MaLo JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+                    WHERE YEAR(pt.NgayLap) BETWEEN ? AND ? AND pt.DaDuyet = 1 %s GROUP BY YEAR(pt.NgayLap)
+                    UNION ALL
+                    SELECT YEAR(ph.NgayLapPhieu), 0, 0, 0, SUM(ct.ThanhTien)
+                    FROM PhieuHuy ph JOIN ChiTietPhieuHuy ct ON ph.MaPhieuHuy = ct.MaPhieuHuy JOIN LoSanPham lo ON ct.MaLo = lo.MaLo JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+                    WHERE YEAR(ph.NgayLapPhieu) BETWEEN ? AND ? %s GROUP BY YEAR(ph.NgayLapPhieu)
+                ) AS T GROUP BY T.Nam ORDER BY T.Nam
+            """.formatted(filterLoaiSP, filterLoaiSP, filterLoaiSP, filterLoaiSP);
+
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, namBatDau); ps.setInt(2, namKetThuc);
+            ps.setInt(3, namBatDau); ps.setInt(4, namKetThuc);
+            ps.setInt(5, namBatDau); ps.setInt(6, namKetThuc);
+            ps.setInt(7, namBatDau); ps.setInt(8, namKetThuc);
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new BanGhiTaiChinh(String.valueOf(rs.getInt("Nam")), rs.getDouble("Ban"), rs.getDouble("Nhap"), rs.getDouble("Tra"), rs.getDouble("Huy")));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+	
+	
 }
