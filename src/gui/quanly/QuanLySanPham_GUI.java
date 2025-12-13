@@ -74,6 +74,43 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
 
         taiDuLieuSanPham();
         xoaTrangForm();
+        
+        // Thiết lập phím tắt
+        thietLapPhimTat();
+    }
+
+    /**
+     * Thiết lập phím tắt cho các component
+     */
+    private void thietLapPhimTat() {
+        // Lấy InputMap và ActionMap của JPanel chính
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+        
+        // --- PHÍM TẮT CHO txtTimKiem (F1, Ctrl+F) ---
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), "focusTimKiem");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "focusTimKiem");
+        actionMap.put("focusTimKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+        
+        // --- PHÍM TẮT CHO btnTimKiem (Enter khi đang focus vào txtTimKiem đã có sẵn) ---
+        // Không cần thêm vì đã có txtTimKiem.addActionListener(e -> timKiemSanPham());
+        
+        // --- PHÍM TẮT CHO btnLamMoi (F5, Ctrl+N) ---
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), "lamMoi");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK), "lamMoi");
+        actionMap.put("lamMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xoaTrangForm();
+                taiDuLieuSanPham();
+            }
+        });
     }
 
     private void taoPhanDau() {
@@ -82,18 +119,27 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         pnHeader.setBackground(new Color(0xE3F2F5));
 
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã, tên thuốc, số đăng ký...");
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm thuốc theo tên hoặc số đăng ký(F1/Ctrl+F)");
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20));
         txtTimKiem.setBounds(25, 17, 500, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
         txtTimKiem.setForeground(Color.GRAY);
+        txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
         txtTimKiem.addActionListener(e -> timKiemSanPham());
         pnHeader.add(txtTimKiem);
 
-        btnTimKiem = new PillButton("Tìm kiếm");
+        btnTimKiem = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "TÌM KIẾM<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
+                    "</center>" +
+                "</html>"
+            );
         btnTimKiem.setBounds(540, 22, 130, 50);
         btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnTimKiem.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã, tên, số đăng ký</html>");
         btnTimKiem.addActionListener(e -> timKiemSanPham());
         pnHeader.add(btnTimKiem);
     }
@@ -231,7 +277,18 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         gbc.gridy=1; 
         p.add(btnSua, gbc);
         
-        btnLamMoi = taoNutBam("Làm mới", w, h); 
+        btnLamMoi = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "LÀM MỚI<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(F5/Ctrl+N)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+        btnLamMoi.setFont(FONT_BOLD);
+        btnLamMoi.setPreferredSize(new Dimension(w, h));
+        btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5 hoặc Ctrl+N<br>Làm mới toàn bộ dữ liệu</html>");
+        btnLamMoi.addActionListener(this);
         gbc.gridy=2; 
         p.add(btnLamMoi, gbc);
     }
