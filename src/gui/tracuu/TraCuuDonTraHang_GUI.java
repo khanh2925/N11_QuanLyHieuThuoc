@@ -9,6 +9,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -57,7 +63,7 @@ import gui.dialog.PhieuTraPreviewDialog;
 @SuppressWarnings("serial")
 public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 
-	private static final String PLACEHOLDER_TIM_KIEM = "Tìm theo mã phiếu, tên KH hoặc SĐT...";
+	private static final String PLACEHOLDER_TIM_KIEM = "Tìm theo mã phiếu, tên KH hoặc SĐT... (F1 / Ctrl+F)";
 	// DAO
 	private final PhieuTra_DAO phieuTraDAO;
 	private final ChiTietPhieuTra_DAO chiTietPhieuTraDAO;
@@ -107,6 +113,7 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 		add(pnCenter, BorderLayout.CENTER);
 
 		addEvents();
+		setupKeyboardShortcuts(); // Thiết lập phím tắt
 		initData();
 	}
 
@@ -123,10 +130,11 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 		// --- 1. Ô TÌM KIẾM TO (Bên trái) ---
 		txtTimKiem = new JTextField();
 		PlaceholderSupport.addPlaceholder(txtTimKiem, PLACEHOLDER_TIM_KIEM);
-		txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		txtTimKiem.setBounds(15, 17, 350, 60);
+		txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+		txtTimKiem.setBounds(25, 17, 480, 60);
 		txtTimKiem.setBorder(new RoundedBorder(20));
 		txtTimKiem.setBackground(Color.WHITE);
+		txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
 		pnHeader.add(txtTimKiem);
 
 		// --- 2. BỘ LỌC NGÀY (Ở giữa) ---
@@ -134,46 +142,68 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 		// Từ ngày
 		JLabel lblTu = new JLabel("Từ:");
 		lblTu.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		lblTu.setBounds(375, 28, 35, 35);
+		lblTu.setBounds(525, 28, 35, 35);
 		pnHeader.add(lblTu);
 
 		dateTuNgay = new JDateChooser();
 		dateTuNgay.setDateFormatString("dd/MM/yyyy");
 		dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		dateTuNgay.setBounds(410, 28, 140, 38);
+		dateTuNgay.setBounds(560, 28, 140, 38);
 		pnHeader.add(dateTuNgay);
 
 		// Đến ngày
 		JLabel lblDen = new JLabel("Đến:");
 		lblDen.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		lblDen.setBounds(560, 28, 40, 35);
+		lblDen.setBounds(710, 28, 40, 35);
 		pnHeader.add(lblDen);
 
 		dateDenNgay = new JDateChooser();
 		dateDenNgay.setDateFormatString("dd/MM/yyyy");
 		dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		dateDenNgay.setBounds(600, 28, 140, 38);
+		dateDenNgay.setBounds(750, 28, 140, 38);
 		pnHeader.add(dateDenNgay);
 
 		// --- 3. TRẠNG THÁI ---
-		addFilterLabel("Trạng thái:", 755, 28, 85, 35);
+		addFilterLabel("Trạng thái:", 905, 28, 85, 35);
 		cbTrangThai = new JComboBox<>();
-		setupComboBox(cbTrangThai, 840, 28, 130, 38);
+		setupComboBox(cbTrangThai, 990, 28, 130, 38);
 
 		// --- 4. CÁC NÚT CHỨC NĂNG (Bên phải) ---
-		btnTimKiem = new PillButton("Tìm kiếm");
-		btnTimKiem.setBounds(985, 22, 110, 50);
-		btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 16));
+		btnTimKiem = new PillButton(
+				"<html>" +
+						"<center>" +
+						"TÌM KIẾM<br>" +
+						"<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
+						"</center>" +
+						"</html>");
+		btnTimKiem.setBounds(1135, 22, 130, 50);
+		btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnTimKiem.setToolTipText(
+				"<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã phiếu, SĐT và bộ lọc</html>");
 		pnHeader.add(btnTimKiem);
 
-		btnLamMoi = new PillButton("Làm mới");
-		btnLamMoi.setBounds(1105, 22, 110, 50);
-		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 16));
+		btnLamMoi = new PillButton(
+				"<html>" +
+						"<center>" +
+						"LÀM MỚI<br>" +
+						"<span style='font-size:10px; color:#888888;'>(F5)</span>" +
+						"</center>" +
+						"</html>");
+		btnLamMoi.setBounds(1275, 22, 130, 50);
+		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
 		pnHeader.add(btnLamMoi);
 
-		btnXemPhieuTra = new PillButton("Xem phiếu trả");
-		btnXemPhieuTra.setBounds(1225, 22, 170, 50);
-		btnXemPhieuTra.setFont(new Font("Segoe UI", Font.BOLD, 16));
+		btnXemPhieuTra = new PillButton(
+				"<html>" +
+						"<center>" +
+						"XEM PHIẾU TRẢ<br>" +
+						"<span style='font-size:10px; color:#888888;'>(F3)</span>" +
+						"</center>" +
+						"</html>");
+		btnXemPhieuTra.setBounds(1415, 22, 180, 50);
+		btnXemPhieuTra.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnXemPhieuTra.setToolTipText("<html><b>Phím tắt:</b> F3<br>Xem chi tiết phiếu trả đang chọn</html>");
 		pnHeader.add(btnXemPhieuTra);
 	}
 
@@ -353,6 +383,52 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 								"Bạn vừa mở phiếu trả: " + ma + "\n(Có thể mở form chi tiết hoặc sửa phiếu tại đây)");
 					}
 				}
+			}
+		});
+	}
+
+	/**
+	 * Thiết lập phím tắt cho màn hình Tra cứu Đơn trả hàng
+	 */
+	private void setupKeyboardShortcuts() {
+		InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+		ActionMap actionMap = getActionMap();
+
+		// F1: Focus tìm kiếm
+		inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
+		actionMap.put("focusTimKiem", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtTimKiem.requestFocus();
+				txtTimKiem.selectAll();
+			}
+		});
+
+		// F5: Làm mới
+		inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
+		actionMap.put("lamMoi", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				xuLyLamMoi();
+			}
+		});
+
+		// Ctrl+F: Focus tìm kiếm
+		inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
+		actionMap.put("timKiem", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtTimKiem.requestFocus();
+				txtTimKiem.selectAll();
+			}
+		});
+
+		// F3: Xem phiếu trả
+		inputMap.put(KeyStroke.getKeyStroke("F3"), "xemPhieuTra");
+		actionMap.put("xemPhieuTra", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				xuLyXemPhieuTra();
 			}
 		});
 	}

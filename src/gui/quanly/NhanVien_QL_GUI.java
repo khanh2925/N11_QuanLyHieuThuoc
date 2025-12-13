@@ -97,6 +97,8 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		// Center (SplitPane)
 		taoPhanCenter();
 		add(pnCenter, BorderLayout.CENTER);
+
+		setupKeyboardShortcuts(); // Thiết lập phím tắt
 	}
 
 	// =====================================================================
@@ -108,26 +110,42 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		pnHeader.setBackground(new Color(0xE3F2F5));
 
 		txtTimKiem = new JTextField();
-		PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã, tên, số điện thoại...");
+		PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã, tên, số điện thoại... (F1 / Ctrl+F)");
 		txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
-		txtTimKiem.setBounds(25, 17, 500, 60);
+		txtTimKiem.setBounds(25, 17, 520, 60);
 		txtTimKiem.setBorder(new RoundedBorder(20));
 		txtTimKiem.setBackground(Color.WHITE);
 		txtTimKiem.setForeground(Color.GRAY);
+		txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
 		txtTimKiem.addActionListener(e -> xuLyTimKiem());
 
 		pnHeader.add(txtTimKiem);
 
-		btnTimKiem = new PillButton("Tìm kiếm");
-		btnTimKiem.setBounds(540, 22, 130, 50);
-		btnTimKiem.setFont(FONT_BOLD);
+		btnTimKiem = new PillButton(
+				"<html>" +
+						"<center>" +
+						"TÌM KIẾM<br>" +
+						"<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
+						"</center>" +
+						"</html>");
+		btnTimKiem.setBounds(560, 22, 130, 50);
+		btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnTimKiem.setToolTipText(
+				"<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã, tên và bộ lọc</html>");
 		btnTimKiem.addActionListener(e -> xuLyTimKiem());
 		pnHeader.add(btnTimKiem);
 
 		// Nút Xuất Excel
-		PillButton btnXuatExcel = new PillButton("Xuất Excel");
-		btnXuatExcel.setBounds(685, 22, 130, 50);
-		btnXuatExcel.setFont(FONT_BOLD);
+		PillButton btnXuatExcel = new PillButton(
+				"<html>" +
+						"<center>" +
+						"XUẤT EXCEL<br>" +
+						"<span style='font-size:10px; color:#888888;'>(Ctrl+E)</span>" +
+						"</center>" +
+						"</html>");
+		btnXuatExcel.setBounds(705, 22, 150, 50);
+		btnXuatExcel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnXuatExcel.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất dữ liệu ra file Excel</html>");
 		btnXuatExcel.addActionListener(e -> xuatExcel());
 		pnHeader.add(btnXuatExcel);
 	}
@@ -496,6 +514,52 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 					formatNgay(nv.getNgaySinh()), nv.getSoDienThoai(), nv.isQuanLy() ? "Quản lý" : "Nhân viên",
 					nv.getTenCaLam(), nv.isTrangThai() ? "Đang làm" : "Đã nghỉ" });
 		}
+	}
+
+	/**
+	 * Thiết lập phím tắt cho màn hình Quản lý Nhân viên
+	 */
+	private void setupKeyboardShortcuts() {
+		InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+		ActionMap actionMap = getActionMap();
+
+		// F1: Focus tìm kiếm
+		inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
+		actionMap.put("focusTimKiem", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtTimKiem.requestFocus();
+				txtTimKiem.selectAll();
+			}
+		});
+
+		// F5: Làm mới
+		inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
+		actionMap.put("lamMoi", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				lamMoiForm();
+			}
+		});
+
+		// Ctrl+F: Focus tìm kiếm
+		inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
+		actionMap.put("timKiem", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtTimKiem.requestFocus();
+				txtTimKiem.selectAll();
+			}
+		});
+
+		// Ctrl+E: Xuất Excel
+		inputMap.put(KeyStroke.getKeyStroke("control E"), "xuatExcel");
+		actionMap.put("xuatExcel", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				xuatExcel();
+			}
+		});
 	}
 
 	// =====================================================================
