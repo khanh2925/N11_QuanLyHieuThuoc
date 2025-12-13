@@ -42,6 +42,8 @@ import dao.KhuyenMai_DAO;
 import enums.HinhThucKM;
 import gui.panel.DonHangItemPanel;
 import gui.dialog.HoaDonPreviewDialog;
+import java.awt.event.KeyEvent;
+
 
 /**
  * Giao diện Bán Hàng
@@ -89,10 +91,10 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 	private NhanVien nhanVienHienTai = tk.getNhanVien();
 	private KhuyenMai kmHoaDonDangApDung;
 	
-	private final String PLACEHOLDER_TIM_KH = "Nhập số điện thoại khách hàng";
-	private final String PLACEHOLDER_TIM_THUOC = "Nhập mã sản phẩm hoặc số đăng ký";
-	private final String PLACEHOLDER_TIEN_KHACH = "Nhập tiền khách đưa";
-	private JTextField textField;
+	private final String PLACEHOLDER_TIM_KH = "Nhập số điện thoại khách hàng (F2)";
+	private final String PLACEHOLDER_TIM_THUOC = "Nhập mã sản phẩm hoặc số đăng ký (F1)";
+	private final String PLACEHOLDER_TIEN_KHACH = "Nhập tiền khách đưa (F3 hoặc Ctrl+1-6)";
+
 
 	private JButton btnApDungKMHD;
 	private KhuyenMai kmHoaDonGoiY; // Lưu tạm KM ngon nhất tìm được
@@ -111,6 +113,9 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 		khachHangHienTai = null;
 		khuyenMaiDao = new KhuyenMai_DAO();
 		hoaDonDao = new HoaDon_DAO();
+		
+		// Thiết lập phím tắt
+		setupKeyboardShortcuts();
 
 	}
 
@@ -371,6 +376,14 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 
 		// ==== NÚT BÁN HÀNG ====
 		btnBanHang = TaoButtonNhanh.banHang();
+		btnBanHang.setText(
+			    "<html>" +
+			        "<center>" +
+			            "BÁN HÀNG<br>" +
+			            "<span style='font-size:10px; color:#888888;'>(Ctrl + Enter)</span>" +
+			        "</center>" +
+			    "</html>"
+			);
 		btnBanHang.setAlignmentX(Component.CENTER_ALIGNMENT);
 		btnBanHang.addActionListener(this);
 		pnRight.add(btnBanHang);
@@ -462,7 +475,15 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 						pnDanhSachDon.repaint();
 						capNhatTongTien();
 						capNhatSTT();
+						
+						// Nếu đơn hàng trống sau khi xóa -> Reset ô tiền khách và focus về tìm sản phẩm
+						if (dsItem.isEmpty()) {
+							txtTienKhach.setText(PLACEHOLDER_TIEN_KHACH);
+							txtTienKhach.setForeground(Color.GRAY);
+							txtTimThuoc.requestFocus();
+						}
 					}
+					
 				}, this, dsItem, loSanPhamDao, quyCachDongGoiDao);
 
 		pnDanhSachDon.add(panel);
@@ -1132,7 +1153,216 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 	private void troVeKhachVangLai() {
 		khachHangHienTai = null;
 		txtTenKhachHang.setText("Vãng lai");
+		txtTimKH.setText(PLACEHOLDER_TIM_KH);
+		txtTimKH.setForeground(Color.GRAY);
+		
+		kmHoaDonGoiY = null;
+		kmHoaDonDangApDung = null;
+		btnApDungKMHD.setVisible(false);
+
+		capNhatTongTien();
 	}
+	/**
+	 * Thiết lập các phím tắt cho màn hình bán hàng
+	 */
+	private void setupKeyboardShortcuts() {
+		InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+		ActionMap actionMap = getActionMap();
+
+		// F1: Focus tìm sản phẩm
+		inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimThuoc");
+		actionMap.put("focusTimThuoc", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtTimThuoc.requestFocus();
+				txtTimThuoc.selectAll();
+			}
+		});
+
+		// F2: Focus tìm khách hàng
+		inputMap.put(KeyStroke.getKeyStroke("F2"), "focusTimKhach");
+		actionMap.put("focusTimKhach", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtTimKH.requestFocus();
+				txtTimKH.selectAll();
+			}
+		});
+
+		// F3: Focus tiền khách
+		inputMap.put(KeyStroke.getKeyStroke("F3"), "focusTienKhach");
+		actionMap.put("focusTienKhach", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtTienKhach.requestFocus();
+				txtTienKhach.selectAll();
+			}
+		});
+
+		// F4: Làm mới/Reset đơn hàng
+		inputMap.put(KeyStroke.getKeyStroke("F4"), "resetDonHang");
+		actionMap.put("resetDonHang", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (dsItem.isEmpty()) {
+					JOptionPane.showMessageDialog(BanHang_GUI.this, 
+						"Đơn hàng trống!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+					return;
+				}
+				int confirm = JOptionPane.showConfirmDialog(BanHang_GUI.this,
+					"Bạn có chắc muốn xóa toàn bộ đơn hàng?", "Xác nhận",
+					JOptionPane.YES_NO_OPTION);
+				if (confirm == JOptionPane.YES_OPTION) {
+					lamMoiSauKhiBanThanhCong();
+					JOptionPane.showMessageDialog(BanHang_GUI.this,
+						"Đã làm mới đơn hàng!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+				}
+			}
+		});
+
+		// F5: Trở về khách vãng lai
+		inputMap.put(KeyStroke.getKeyStroke("F5"), "khachVangLai");
+		actionMap.put("khachVangLai", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				troVeKhachVangLai();
+				JOptionPane.showMessageDialog(BanHang_GUI.this,
+					"Đã chuyển về khách vãng lai!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+			}
+		});
+
+
+		// F9: Áp dụng khuyến mãi hóa đơn
+		inputMap.put(KeyStroke.getKeyStroke("F9"), "apDungKMHD");
+		actionMap.put("apDungKMHD", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (btnApDungKMHD.isVisible()) {
+					xuLyApDungKMHoaDon();
+				}
+			}
+		});
+
+		// ESC: Hủy/Clear input hiện tại
+		inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), "clearInput");
+		actionMap.put("clearInput", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// Clear ô đang focus
+				Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+				if (focused instanceof JTextField) {
+					JTextField txt = (JTextField) focused;
+					txt.setText("");
+					if (txt == txtTimKH) {
+						txt.setText(PLACEHOLDER_TIM_KH);
+						txt.setForeground(Color.GRAY);
+						troVeKhachVangLai();
+						// Chuyển focus ra ngoài để lần sau click vào sẽ trigger focusGained
+						BanHang_GUI.this.requestFocus();
+					} else if (txt == txtTimThuoc) {
+						txt.setText(PLACEHOLDER_TIM_THUOC);
+						txt.setForeground(Color.GRAY);
+						// Chuyển focus ra ngoài
+						BanHang_GUI.this.requestFocus();
+					} else if (txt == txtTienKhach) {
+						txt.setText(PLACEHOLDER_TIEN_KHACH);
+						txt.setForeground(Color.GRAY);
+						capNhatTienThua();
+						// Chuyển focus ra ngoài
+						BanHang_GUI.this.requestFocus();
+					}
+				}
+			}
+		});
+
+		// Ctrl+Enter: Thanh toán nhanh
+		inputMap.put(KeyStroke.getKeyStroke("control ENTER"), "thanhToanNhanh");
+		actionMap.put("thanhToanNhanh", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				xuLyBanHang();
+			}
+		});
+
+		// Ctrl+1 đến Ctrl+6: Gợi ý tiền nhanh
+		for (int i = 0; i < 6; i++) {
+			final int index = i;
+			String key = "control " + (i + 1);
+			String action = "goiYTien" + i;
+			
+			inputMap.put(KeyStroke.getKeyStroke(key), action);
+			actionMap.put(action, new AbstractAction() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if (btnGoiY[index] != null && btnGoiY[index].isVisible()) {
+						long val = goiYValues[index];
+						if (val > 0) {
+							txtTienKhach.setText(formatTien(val));
+							txtTienKhach.setForeground(Color.BLACK);
+							capNhatTienThua();
+							txtTienKhach.requestFocus();
+						}
+					}
+				}
+			});
+		}
+
+		// Ctrl+N: Đơn hàng mới (làm mới)
+		inputMap.put(KeyStroke.getKeyStroke("control N"), "donHangMoi");
+		actionMap.put("donHangMoi", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (!dsItem.isEmpty()) {
+					int confirm = JOptionPane.showConfirmDialog(BanHang_GUI.this,
+						"Bạn có chắc muốn tạo đơn hàng mới?\n(Đơn hiện tại sẽ bị xóa)", "Xác nhận",
+						JOptionPane.YES_NO_OPTION);
+					if (confirm == JOptionPane.YES_OPTION) {
+						lamMoiSauKhiBanThanhCong();
+					}
+				}
+			}
+		});
+
+		// Ctrl+K: Focus tìm khách hàng
+		inputMap.put(KeyStroke.getKeyStroke("control K"), "focusKhachHang");
+		actionMap.put("focusKhachHang", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtTimKH.requestFocus();
+				txtTimKH.selectAll();
+			}
+		});
+
+		// Ctrl+F: Focus tìm sản phẩm
+		inputMap.put(KeyStroke.getKeyStroke("control F"), "focusSanPham");
+		actionMap.put("focusSanPham", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtTimThuoc.requestFocus();
+				txtTimThuoc.selectAll();
+			}
+		});
+
+		// Ctrl+P: Focus tiền thanh toán
+		inputMap.put(KeyStroke.getKeyStroke("control P"), "focusPayment");
+		actionMap.put("focusPayment", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtTienKhach.requestFocus();
+				txtTienKhach.selectAll();
+			}
+		});
+		
+		// Ctrl+I: Toggle thuốc theo đơn
+		inputMap.put(KeyStroke.getKeyStroke("control I"), "toggleThuocTheoDon");
+		actionMap.put("toggleThuocTheoDon", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				ckThuocTheoDon.setSelected(!ckThuocTheoDon.isSelected());
+			}
+		});
+	}
+	
 	private double tinhTienGiamHoaDon(double tongSauGiamSP, KhuyenMai km) {
 		if (km == null || km.getHinhThuc() == null)
 			return 0;

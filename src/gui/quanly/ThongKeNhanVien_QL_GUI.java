@@ -8,6 +8,14 @@ import dao.ThongKeNhanVien_DAO;
 import dao.ThongKeNhanVien_DAO.KetQuaThongKe;
 
 import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -15,13 +23,21 @@ import java.util.Date;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
-public class ThongKeNhanVien_QL_GUI extends JPanel {
+// Import Apache POI
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+public class ThongKeNhanVien_QL_GUI extends JPanel implements ActionListener, MouseListener {
 
     private JDateChooser dateTuNgay, dateDenNgay;
     private JComboBox<String> cmbCaLam;
     private JComboBox<String> cmbNhanVien;
-    private JButton btnLoc;
+    
+    // Khai báo nút là thuộc tính toàn cục
+    private JButton btnLoc, btnXuatExcel;
 
     // Các Label thống kê
     private JLabel lblTongDoanhSo, lblSoHoaDon, lblTrungBinhDon;
@@ -32,9 +48,6 @@ public class ThongKeNhanVien_QL_GUI extends JPanel {
 
     private ThongKeNhanVien_DAO dao;
 
-    /**
-     * Constructor cho Quản lý
-     */
     public ThongKeNhanVien_QL_GUI() {
         this.dao = new ThongKeNhanVien_DAO();
 
@@ -107,14 +120,20 @@ public class ThongKeNhanVien_QL_GUI extends JPanel {
         cmbCaLam.setBounds(660, 50, 120, 30);
         pnFilter.add(cmbCaLam);
 
+        // Nút Thống Kê
         btnLoc = new PillButton("Thống Kê");
         btnLoc.setBounds(810, 45, 120, 35);
         pnFilter.add(btnLoc);
 
+        // Nút Xuất Excel
+        btnXuatExcel = new PillButton("Xuất Excel");
+        btnXuatExcel.setBounds(940, 45, 120, 35);
+        pnFilter.add(btnXuatExcel);
+
         pnMain.add(pnFilter, BorderLayout.NORTH);
 
         // ==============================================================================
-        // 2. STATS PANEL (dời lên trên biểu đồ)
+        // 2. STATS PANEL
         // ==============================================================================
         JPanel pnStats = new JPanel(new GridLayout(2, 3, 20, 15));
         pnStats.setBackground(new Color(0xE3F2F5));
@@ -151,7 +170,6 @@ public class ThongKeNhanVien_QL_GUI extends JPanel {
         JPanel pnContent = new JPanel(new BorderLayout(0, 10));
         pnContent.setBackground(Color.WHITE);
 
-        // Đặt panel tổng quan ở trên, biểu đồ ở giữa
         JPanel pnTopSection = new JPanel(new BorderLayout(0, 10));
         pnTopSection.setBackground(Color.WHITE);
         pnTopSection.add(pnStats, BorderLayout.NORTH);
@@ -160,16 +178,54 @@ public class ThongKeNhanVien_QL_GUI extends JPanel {
         pnContent.add(pnTopSection, BorderLayout.CENTER);
         pnMain.add(pnContent, BorderLayout.CENTER);
 
-        // Sự kiện
-        btnLoc.addActionListener(e -> loadData());
+        // --- ĐĂNG KÝ SỰ KIỆN (Dùng 'this') ---
+        btnLoc.addActionListener(this);
+        btnLoc.addMouseListener(this);
+        
+        btnXuatExcel.addActionListener(this);
+        btnXuatExcel.addMouseListener(this);
 
         // Load dữ liệu ban đầu
         loadData();
     }
 
-    /**
-     * Hàm hỗ trợ nạp danh sách nhân viên vào ComboBox
-     */
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object source = e.getSource();
+        if (source.equals(btnLoc)) {
+            loadData();
+        } else if (source.equals(btnXuatExcel)) {
+            xuatFileExcel();
+        }
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+        Object source = e.getSource();
+        if (source instanceof JButton) {
+            ((JButton) source).setCursor(new Cursor(Cursor.HAND_CURSOR));
+        }
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+        Object source = e.getSource();
+        if (source instanceof JButton) {
+            ((JButton) source).setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+        }
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {}
+
+    @Override
+    public void mousePressed(MouseEvent e) {}
+
+    @Override
+    public void mouseReleased(MouseEvent e) {}
+
+    // --- CÁC HÀM LOGIC NGHIỆP VỤ ---
+
     private void loadDanhSachNhanVien() {
         cmbNhanVien.removeAllItems();
         cmbNhanVien.addItem("Tất cả nhân viên");
@@ -179,9 +235,6 @@ public class ThongKeNhanVien_QL_GUI extends JPanel {
         }
     }
 
-    /**
-     * Hàm hỗ trợ tạo Label
-     */
     private JLabel createLabel(JPanel p, String t, Font f1, Font f2, Color c) {
         JPanel pChild = new JPanel(new BorderLayout(5, 5));
         pChild.setOpaque(false);
@@ -196,9 +249,6 @@ public class ThongKeNhanVien_QL_GUI extends JPanel {
         return lValue;
     }
 
-    /**
-     * Hàm tải dữ liệu
-     */
     private void loadData() {
         Date tu = dateTuNgay.getDate();
         Date den = dateDenNgay.getDate();
@@ -213,8 +263,6 @@ public class ThongKeNhanVien_QL_GUI extends JPanel {
         }
 
         int caLam = cmbCaLam.getSelectedIndex();
-
-        // Xác định nhân viên cần xem
         String selectedItem = (String) cmbNhanVien.getSelectedItem();
         String targetMaNV = null;
 
@@ -224,10 +272,8 @@ public class ThongKeNhanVien_QL_GUI extends JPanel {
             }
         }
 
-        // Gọi DAO với mã nhân viên đã xác định
         KetQuaThongKe kq = dao.getThongKe(tu, den, targetMaNV, caLam);
 
-        // Cập nhật giao diện
         DecimalFormat dfTien = new DecimalFormat("#,##0 đ");
         DecimalFormat dfSo = new DecimalFormat("#,##0");
         DecimalFormat dfTyLe = new DecimalFormat("0.00'%'");
@@ -249,7 +295,6 @@ public class ThongKeNhanVien_QL_GUI extends JPanel {
         lblSoPhieuHuy.setText(dfSo.format(kq.soPhieuHuy));
         lblTyLeHoan.setText(dfTyLe.format(kq.getTyLeHoanTra()));
 
-        // Update Chart
         bieuDoHieuSuat.xoaToanBoDuLieu();
         String chartTitle = (targetMaNV == null) ? "Tổng hợp chỉ số toàn cửa hàng"
                 : "Chỉ số hiệu suất: " + selectedItem;
@@ -264,14 +309,123 @@ public class ThongKeNhanVien_QL_GUI extends JPanel {
         bieuDoHieuSuat.themDuLieu(new DuLieuBieuDoCot("Số Phiếu Hủy", "Số lượng", kq.soPhieuHuy, c3));
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Thống Kê Nhân Viên - Quản Lý");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1300, 850);
-            frame.setLocationRelativeTo(null);
-            frame.setContentPane(new ThongKeNhanVien_QL_GUI());
-            frame.setVisible(true);
-        });
+    private void xuatFileExcel() {
+        Date tu = dateTuNgay.getDate();
+        Date den = dateDenNgay.getDate();
+
+        if (tu == null || den == null || tu.after(den)) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày hợp lệ để xuất file!");
+            return;
+        }
+
+        int caLam = cmbCaLam.getSelectedIndex();
+        String selectedItem = (String) cmbNhanVien.getSelectedItem();
+        String targetMaNV = null;
+        if (selectedItem != null && !selectedItem.equals("Tất cả nhân viên")) {
+            if (selectedItem.contains(" - ")) {
+                targetMaNV = selectedItem.split(" - ")[0];
+            }
+        }
+        
+        KetQuaThongKe kq = dao.getThongKe(tu, den, targetMaNV, caLam);
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Chọn nơi lưu báo cáo hiệu suất");
+        String defaultName = "BaoCao_HieuSuat_" + (targetMaNV == null ? "ToanCuaHang" : targetMaNV) + ".xlsx";
+        fileChooser.setSelectedFile(new File(defaultName));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files", "xlsx"));
+
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            if (!file.getName().endsWith(".xlsx")) {
+                file = new File(file.getAbsolutePath() + ".xlsx");
+            }
+
+            try (XSSFWorkbook workbook = new XSSFWorkbook()) {
+                Sheet sheet = workbook.createSheet("Hiệu Suất Nhân Viên");
+
+                CellStyle headerStyle = workbook.createCellStyle();
+                XSSFFont headerFont = workbook.createFont();
+                headerFont.setBold(true);
+                headerFont.setColor(IndexedColors.WHITE.getIndex());
+                headerStyle.setFont(headerFont);
+                headerStyle.setFillForegroundColor(IndexedColors.ROYAL_BLUE.getIndex());
+                headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                headerStyle.setAlignment(HorizontalAlignment.CENTER);
+
+                CellStyle titleStyle = workbook.createCellStyle();
+                XSSFFont titleFont = workbook.createFont();
+                titleFont.setBold(true);
+                titleFont.setFontHeightInPoints((short) 16);
+                titleStyle.setFont(titleFont);
+                titleStyle.setAlignment(HorizontalAlignment.CENTER);
+
+                CellStyle currencyStyle = workbook.createCellStyle();
+                DataFormat format = workbook.createDataFormat();
+                currencyStyle.setDataFormat(format.getFormat("#,##0"));
+
+                Row titleRow = sheet.createRow(0);
+                Cell titleCell = titleRow.createCell(0);
+                titleCell.setCellValue("BÁO CÁO HIỆU SUẤT NHÂN VIÊN");
+                titleCell.setCellStyle(titleStyle);
+                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, 3));
+
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                sheet.createRow(1).createCell(0).setCellValue("Thời gian: " + sdf.format(tu) + " - " + sdf.format(den));
+                sheet.createRow(2).createCell(0).setCellValue("Đối tượng: " + (selectedItem == null ? "Tất cả" : selectedItem));
+                sheet.createRow(3).createCell(0).setCellValue("Ca làm việc: " + cmbCaLam.getSelectedItem());
+
+                String[] headers = {"Chỉ số", "Giá trị", "Ghi chú"};
+                Row headerRow = sheet.createRow(5);
+                for (int i = 0; i < headers.length; i++) {
+                    Cell cell = headerRow.createCell(i);
+                    cell.setCellValue(headers[i]);
+                    cell.setCellStyle(headerStyle);
+                }
+
+                int rowNum = 6;
+                addMetricRow(sheet, rowNum++, "Tổng doanh số", kq.tongDoanhSo, currencyStyle, "VNĐ");
+                addMetricRow(sheet, rowNum++, "Số lượng hóa đơn", kq.soHoaDon, null, "Hóa đơn");
+                addMetricRow(sheet, rowNum++, "Giá trị trung bình/HĐ", kq.getGiaTriTrungBinh(), currencyStyle, "VNĐ");
+                addMetricRow(sheet, rowNum++, "Số phiếu trả hàng", kq.soPhieuTra, null, "Phiếu");
+                addMetricRow(sheet, rowNum++, "Tổng tiền trả lại", kq.tongTienTra, currencyStyle, "VNĐ");
+                addMetricRow(sheet, rowNum++, "Số phiếu hủy", kq.soPhieuHuy, null, "Phiếu");
+                
+                Row rateRow = sheet.createRow(rowNum++);
+                rateRow.createCell(0).setCellValue("Tỷ lệ hoàn trả");
+                Cell rateVal = rateRow.createCell(1);
+                rateVal.setCellValue(kq.getTyLeHoanTra() / 100.0);
+                CellStyle percentStyle = workbook.createCellStyle();
+                percentStyle.setDataFormat(format.getFormat("0.00%"));
+                rateVal.setCellStyle(percentStyle);
+                rateRow.createCell(2).setCellValue("% theo số lượng");
+
+                sheet.autoSizeColumn(0);
+                sheet.autoSizeColumn(1);
+                sheet.autoSizeColumn(2);
+
+                try (FileOutputStream fos = new FileOutputStream(file)) {
+                    workbook.write(fos);
+                }
+
+                JOptionPane.showMessageDialog(this, "Xuất file thành công!\n" + file.getAbsolutePath());
+                if (Desktop.isDesktopSupported()) {
+                    Desktop.getDesktop().open(file);
+                }
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Lỗi xuất file: " + ex.getMessage());
+            }
+        }
+    }
+
+    private void addMetricRow(Sheet sheet, int rowIdx, String label, double val, CellStyle style, String note) {
+        Row row = sheet.createRow(rowIdx);
+        row.createCell(0).setCellValue(label);
+        Cell valCell = row.createCell(1);
+        valCell.setCellValue(val);
+        if (style != null) valCell.setCellStyle(style);
+        row.createCell(2).setCellValue(note);
     }
 }

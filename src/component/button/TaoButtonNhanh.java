@@ -19,6 +19,7 @@ public class TaoButtonNhanh {
     public static PillButton banHang() {
         PillButton btn = new PillButton("Bán hàng");
         btn.setMaximumSize(new Dimension(300, 70));
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 23));
         return btn;
     }
 }

@@ -48,6 +48,7 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
     private JDateChooser dateDenNgay;
     private PillButton btnTimKiem;
     private PillButton btnLamMoi;
+    private PillButton btnXemHoaDon;
 
     // DAO và Utils
     private HoaDon_DAO hoaDonDao;
@@ -82,6 +83,7 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
 
         // 4. DATA & EVENTS
         addEvents();
+        setupKeyboardShortcuts(); // Thiết lập phím tắt
         xuLyLamMoi(); // Load dữ liệu ban đầu
     }
 
@@ -96,12 +98,13 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
 
         // --- 1. Ô TÌM KIẾM TO (Bên trái) - KHỚP VỚI BÁN HÀNG/SẢN PHẨM ---
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã hóa đơn, SĐT khách hàng");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã hóa đơn, SĐT khách hàng (F1 / Ctrl+F)");
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20)); // Font 20
         // Set width = 480 để bằng với bên TraCuuSanPham
         txtTimKiem.setBounds(25, 17, 480, 60); 
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
+        txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
         pnHeader.add(txtTimKiem);
 
         // --- 2. BỘ LỌC NGÀY (Ở giữa) - KHỚP VỊ TRÍ COMBOX SẢN PHẨM ---
@@ -133,15 +136,44 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         pnHeader.add(dateDenNgay);
 
         // --- 3. CÁC NÚT CHỨC NĂNG (Bên phải) - KHỚP 100% ---
-        btnTimKiem = new PillButton("Tìm kiếm");
+        btnTimKiem = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "TÌM KIẾM<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
+                    "</center>" +
+                "</html>"
+            );
         btnTimKiem.setBounds(1120, 22, 130, 50);
         btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18)); 
+        btnTimKiem.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã hóa đơn, SĐT và bộ lọc ngày</html>");
         pnHeader.add(btnTimKiem);
 
-        btnLamMoi = new PillButton("Làm mới");
+        btnLamMoi = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "LÀM MỚI<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(F5)</span>" +
+                    "</center>" +
+                "</html>"
+            );
         btnLamMoi.setBounds(1265, 22, 130, 50);
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18)); 
+        btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
         pnHeader.add(btnLamMoi);
+        
+        btnXemHoaDon = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "XEM HÓA ĐƠN<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(F3)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+            btnXemHoaDon.setBounds(1410, 22, 170, 50);
+            btnXemHoaDon.setFont(new Font("Segoe UI", Font.BOLD, 18)); 
+            btnXemHoaDon.setToolTipText("<html><b>Phím tắt:</b> F3<br>Xem chi tiết hóa đơn đang chọn</html>");
+            pnHeader.add(btnXemHoaDon);
     }
 
     // ==============================================================================
@@ -244,6 +276,7 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
     private void addEvents() {
         btnTimKiem.addActionListener(this);
         btnLamMoi.addActionListener(this);
+        btnXemHoaDon.addActionListener(this);
         txtTimKiem.addActionListener(this); 
 
         // ListSelectionListener: Click vào bảng hóa đơn -> Load chi tiết
@@ -268,6 +301,71 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         });
     }
     
+    /**
+     * Thiết lập phím tắt cho màn hình Tra cứu Đơn hàng
+     */
+    private void setupKeyboardShortcuts() {
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+
+        // F1: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
+        actionMap.put("focusTimKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+
+        // F5: Làm mới
+        inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
+        actionMap.put("lamMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyLamMoi();
+            }
+        });
+
+        // Ctrl+F: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
+        actionMap.put("timKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+
+        // F3: Xem hóa đơn
+        inputMap.put(KeyStroke.getKeyStroke("F3"), "xemHoaDon");
+        actionMap.put("xemHoaDonF3", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyXemHoaDon();
+            }
+        });
+
+        // Enter trên ô tìm kiếm
+        txtTimKiem.addActionListener(ev -> xuLyTimKiem());
+    }
+    
+    /**
+     * Xử lý xem hóa đơn đang chọn
+     */
+    private void xuLyXemHoaDon() {
+        int row = tblHoaDon.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this,
+                "Vui lòng chọn hóa đơn cần xem!",
+                "Thông báo",
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        String maHD = tblHoaDon.getValueAt(row, 1).toString();
+        xemLaiHoaDon(maHD);
+    }
     @Override
     public void actionPerformed(ActionEvent e) {
         Object o = e.getSource();
@@ -275,6 +373,8 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
             xuLyTimKiem();
         } else if (o == btnLamMoi) {
             xuLyLamMoi();
+        } else if (o == btnXemHoaDon) {
+            xuLyXemHoaDon();
         }
     }
 
