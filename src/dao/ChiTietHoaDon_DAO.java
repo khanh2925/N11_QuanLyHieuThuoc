@@ -159,4 +159,33 @@ public class ChiTietHoaDon_DAO {
 
 		return danhSachChiTiet;
 	}
+	// đếm số sp đã bán trong ngày hiện tại của nhân viên
+	public int demSoSanPhamBanHomNay(String maNhanVien) {
+	    connectDB.getInstance();
+	    Connection con = connectDB.getConnection();
+
+	    String sql = """
+	        SELECT COUNT(DISTINCT sp.MaSanPham) AS SoSanPham
+	        FROM ChiTietHoaDon ct
+	        JOIN HoaDon hd ON ct.MaHoaDon = hd.MaHoaDon
+	        JOIN LoSanPham lo ON ct.MaLo = lo.MaLo
+	        JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+	        WHERE hd.MaNhanVien = ?
+	          AND CAST(hd.NgayLap AS DATE) = CAST(GETDATE() AS DATE)
+	    """;
+
+	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+	        stmt.setString(1, maNhanVien);
+
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            if (rs.next()) {
+	                return rs.getInt("SoSanPham");
+	            }
+	        }
+	    } catch (SQLException e) {
+	        System.err.println("❌ Lỗi đếm số SP khác nhau bán hôm nay: " + e.getMessage());
+	    }
+
+	    return 0;
+	}
 }

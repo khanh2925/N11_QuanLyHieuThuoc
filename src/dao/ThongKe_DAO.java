@@ -1061,4 +1061,55 @@ public class ThongKe_DAO {
     }
 	
 	
+	
+	
+	 //Data Transfer Object (DTO) 
+    public static class ThongKeHoaDonNgay {
+        private final int soHoaDon;
+        private final double tongTien;
+
+        public ThongKeHoaDonNgay(int soHoaDon, double tongTien) {
+            this.soHoaDon = soHoaDon;
+            this.tongTien = tongTien;
+        }
+
+        public int getSoHoaDon() {
+            return soHoaDon;
+        }
+
+        public double getTongTien() {
+            return tongTien;
+        }
+    }
+    
+
+    public ThongKeHoaDonNgay thongKeHoaDonHomNayCuaNhanVien(String maNhanVien) {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        String sql = """
+            SELECT 
+                COUNT(*) AS SoHoaDon,
+                COALESCE(SUM(TongThanhToan), 0) AS TongTien
+            FROM HoaDon
+            WHERE MaNhanVien = ?
+              AND CAST(NgayLap AS DATE) = CAST(GETDATE() AS DATE)
+        """;
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maNhanVien);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int soHoaDon = rs.getInt("SoHoaDon");
+                    double tongTien = rs.getDouble("TongTien");
+                    return new ThongKeHoaDonNgay(soHoaDon, tongTien);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi thống kê hoá đơn hôm nay: " + e.getMessage());
+        }
+
+        return new ThongKeHoaDonNgay(0, 0);
+    }
 }

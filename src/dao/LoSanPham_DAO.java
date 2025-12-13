@@ -3,7 +3,9 @@ package dao;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List; // 💡 Bổ sung import List
+import java.util.Map;
 
 import database.connectDB;
 import entity.LoSanPham;
@@ -408,6 +410,76 @@ public class LoSanPham_DAO {
 
         return danhSach;
     }
+    
+    
+    public int demSoLoSPToiHanSuDung() {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
 
+        String sql = """
+            SELECT COUNT(*) AS TongSoLoCanHuy
+            FROM LoSanPham L
+            JOIN SanPham SP ON L.MaSanPham = SP.MaSanPham
+            WHERE L.SoLuongTon > 0
+              AND L.HanSuDung < DATEADD(DAY,
+                    CASE
+                        WHEN SP.LoaiSanPham IN ('DUNG_CU_Y_TE', 'SAN_PHAM_CHO_ME_VA_BE') THEN 90
+                        WHEN SP.LoaiSanPham IN ('THUOC', 'MY_PHAM', 'THUC_PHAM_BO_SUNG', 'SAN_PHAM_KHAC') THEN 60
+                        ELSE 60
+                    END,
+                    CAST(GETDATE() AS DATE)
+              )
+        """;
+
+        try (PreparedStatement stmt = con.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) return rs.getInt("TongSoLoCanHuy");
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi đếm tổng số lô cần hủy theo HSD: " + e.getMessage());
+        }
+        return 0;
+    }
+
+
+public Map<LoaiSanPham, Integer> thongKeSoLoCanHuyTheoHSDTheoLoai() {
+    Map<LoaiSanPham, Integer> map = new LinkedHashMap<>();
+    for (LoaiSanPham l : LoaiSanPham.values()) map.put(l, 0);
+
+    connectDB.getInstance();
+    Connection con = connectDB.getConnection();
+
+    String sql = """
+        SELECT SP.LoaiSanPham, COUNT(*) AS SoLo
+        FROM LoSanPham L
+        JOIN SanPham SP ON L.MaSanPham = SP.MaSanPham
+        WHERE L.SoLuongTon > 0
+          AND L.HanSuDung < DATEADD(DAY,
+                CASE
+                    WHEN SP.LoaiSanPham IN ('DUNG_CU_Y_TE','SAN_PHAM_CHO_ME_VA_BE') THEN 90
+                    ELSE 60
+                END,
+                CAST(GETDATE() AS DATE)
+          )
+        GROUP BY SP.LoaiSanPham
+    """;
+
+    try (PreparedStatement ps = con.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+
+        while (rs.next()) {
+            String loaiStr = rs.getString("LoaiSanPham");
+            int soLo = rs.getInt("SoLo");
+            try {
+                LoaiSanPham loai = LoaiSanPham.valueOf(loaiStr.trim().toUpperCase());
+                map.put(loai, soLo);
+            } catch (Exception ignore) {}
+        }
+
+    } catch (SQLException e) {
+        System.err.println("❌ Lỗi thống kê số lô cần hủy theo HSD theo loại: " + e.getMessage());
+    }
+
+    return map;
+}
 
 }

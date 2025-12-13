@@ -1,4 +1,17 @@
+/**
 
+ *
+ * Mô tả: Dashboard tổng quan cho nghiệp vụ quản lý hiệu thuốc
+ * - 6 KPI Cards (2 hàng x 3 cột):
+ *   + Lợi nhuận của ngày hiện tại
+ *   + Số đơn hàng trong ngày hiện tại
+ *   + Số SP đã bán hiện tại
+ *   + Số lô sản phẩm sắt hết hạn
+ *   + Số Phiếu hủy đã tạo
+ *   + Số Phiếu trả đã tạo
+ * - Biểu đồ đường hiển thị số lô SP tới hạn cần hủy
+ * - Tích hợp DAO để lấy dữ liệu thực từ database
+ */
 package gui.nhanvien;
 
 import java.awt.*;
@@ -8,313 +21,323 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.ActionEvent;
-import com.toedter.calendar.JDateChooser;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.util.Map;
 
-import component.button.PillButton;
 import component.border.RoundedBorder;
+import component.chart.BieuDoCotJFreeChart;
+import component.chart.DuLieuBieuDoCot;
+import dao.ChiTietHoaDon_DAO;
+import dao.HoaDon_DAO;
+import dao.LoSanPham_DAO;
+import dao.ThongKe_DAO;
+import dao.ThongKe_DAO.ThongKeHoaDonNgay;
+import entity.Session;
+import enums.LoaiSanPham;
+import dao.PhieuTra_DAO;
+import dao.PhieuHuy_DAO;
 
 public class TongQuanNV_GUI extends JPanel implements ActionListener, MouseListener {
 
-    private JPanel pnCenter;   // vùng trung tâm
-    private JPanel pnHeader;   // vùng đầu trang
-    private JLabel lblNewLabel_1;
-    private JTextField txtSPBanNhieuNhat;
-    private JTextField txtSLuongBiTra;
-    private JTextField txtSLuongDonHang;
-    private JTextField txtDoanhThu;
-    
-    
-    public TongQuanNV_GUI() {
-        this.setPreferredSize(new Dimension(1537, 850));
-        initialize();
-    }
+	private JPanel pnCenter;
+	private JPanel pnHeader;
 
-    private void initialize() {
-        setLayout(new BorderLayout());
-        setPreferredSize(new Dimension(1537, 1168));
+	// KPIs Top Row (2 hàng x 3 cột = 5 thẻ + 1 ô trống)
+	private JTextField txtSoDon;
+	private JTextField txtTongTienDaBan;
+	private JTextField txtSPDaBan;
+	private JTextField txtLoSPSapHetHan;
+	private JTextField txtSoPhieuHuyDaTao;
+	private JTextField txtSoPhieuTraDaTao;
 
-        // ===== HEADER =====
-        pnHeader = new JPanel();
-        pnHeader.setPreferredSize(new Dimension(1073, 88));
-        pnHeader.setBackground(new Color(227, 242, 245));
-        add(pnHeader, BorderLayout.NORTH);
-        pnHeader.setLayout(new BorderLayout(0, 0));
-        
-        JLabel lblTongQuan = new JLabel("Tổng Quan Hôm Nay");
-        lblTongQuan.setHorizontalAlignment(SwingConstants.CENTER);
-        lblTongQuan.setForeground(new Color(0, 51, 102));
-        lblTongQuan.setFont(new Font("Segoe UI", Font.BOLD, 30));
-        pnHeader.add(lblTongQuan);
+	// Panel chứa Biểu đồ
+	private JPanel pnChartArea;
+	private BieuDoCotJFreeChart bieuDoCot;
 
-     // ===== CENTER =====
-        pnCenter = new JPanel();
-        pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
-        pnCenter.setBackground(Color.WHITE);
-        add(pnCenter, BorderLayout.CENTER);
-        
-     // Tạo font chung cho label
-        Font fontTieuDe = new Font("Segoe UI", Font.BOLD, 20); // chữ to + đậm
-        Color mauChu = new Color(0, 51, 102); // xanh đậm nhẹ cho nổi bật
-        pnCenter.setLayout(new GridLayout(0, 2, 0, 0));
-        
-                
-                JPanel pnlSPBanNhieuNhat = new JPanel();
-                pnCenter.add(pnlSPBanNhieuNhat);
-                pnlSPBanNhieuNhat.setLayout(null);
-                pnlSPBanNhieuNhat.setBackground(new Color(227, 242, 245));
-                pnlSPBanNhieuNhat.setBorder(new RoundedBorder(25));
-                
-                JLabel lblSPBanNhieuNhat = new JLabel("Sản phẩm bán nhiều nhất");
-                lblSPBanNhieuNhat.setFont(fontTieuDe);
-                lblSPBanNhieuNhat.setForeground(mauChu);
-                lblSPBanNhieuNhat.setBounds(89, 21, 246, 40);
-                pnlSPBanNhieuNhat.add(lblSPBanNhieuNhat);
-                
-                JPanel pnlHAMHSPBanNhieuNhat = new JPanel() {
-                    private Image backgroundImage;
+	// DAOs
+	private HoaDon_DAO hoaDonDAO;
+	private ThongKe_DAO thongKeDAO;
+	private PhieuTra_DAO phieuTraDAO;
+	private PhieuHuy_DAO phieuHuyDAO;
+	private ChiTietHoaDon_DAO chiTietHoaDonDAO;
+	private LoSanPham_DAO loSanPhamDao;
 
-                    { 
-                        try {
-                            
-                            java.net.URL imgURL = getClass().getResource("/resources/images/best-seller.png");
-                            if (imgURL != null) {
-                                backgroundImage = new ImageIcon(imgURL).getImage();
-                            } else {
-                                System.err.println("Không tìm thấy ảnh: /resources/images/hinhAnhSPBanNhieuNhat.png");
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
+	// Main GUI reference để chuyển card
+	private gui.Main_GUI mainGUI;
 
-                    @Override
-                    protected void paintComponent(Graphics g) {
-                        super.paintComponent(g);
-                        if (backgroundImage != null) {
-                            g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
-                        }
-                    }
-                };
-                pnlHAMHSPBanNhieuNhat.setBounds(10, 31, 69, 65);
-                pnlHAMHSPBanNhieuNhat.setOpaque(false); // để không bị che nền
-                pnlSPBanNhieuNhat.add(pnlHAMHSPBanNhieuNhat);
-                
-                txtSPBanNhieuNhat = new JTextField();
-                txtSPBanNhieuNhat.setBounds(89, 54, 246, 48);
-                pnlSPBanNhieuNhat.add(txtSPBanNhieuNhat);
-                txtSPBanNhieuNhat.setColumns(10);
-                txtSPBanNhieuNhat.setOpaque(false);
-                txtSPBanNhieuNhat.setBorder(null);
-                txtSPBanNhieuNhat.setForeground(new Color(0,51,102));
-                txtSPBanNhieuNhat.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        
-        // các panel chứa tiêu chí thống kê
-        JPanel pnlSLuongDonHang = new JPanel();
-        pnCenter.add(pnlSLuongDonHang);
-        pnlSLuongDonHang.setLayout(null);
-        pnlSLuongDonHang.setBackground(new Color(227, 242, 245));
-        pnlSLuongDonHang.setBorder(new RoundedBorder(25));
-        
-        JLabel lblSLuongDonHang = new JLabel("Số lượng đơn hàng");
-        lblSLuongDonHang.setFont(fontTieuDe);
-        lblSLuongDonHang.setForeground(mauChu);
-        lblSLuongDonHang.setBounds(89, 21, 197, 40);
-        pnlSLuongDonHang.add(lblSLuongDonHang);
-        
+	private Color mauChu = new Color(0, 51, 102);
+	private String maNV = Session.getInstance().getTaiKhoanDangNhap().getNhanVien().getMaNhanVien();
+	// Formatter
+	private DecimalFormat formatter = new DecimalFormat("#,###");
 
-        JPanel pnlHAMHSLDH = new JPanel() {
-            private Image backgroundImage;
+	/**
+	 * Constructor với Main_GUI reference để hỗ trợ chuyển tab
+	 * 
+	 * @param mainGUI Tham chiếu đến Main_GUI
+	 */
+	public TongQuanNV_GUI(gui.Main_GUI mainGUI) {
+		this.mainGUI = mainGUI;
+		this.setPreferredSize(new Dimension(1537, 850));
 
-            {
-                java.net.URL imgURL = getClass().getResource("/resources/images/soluongdonhangNV.png");
-                if (imgURL != null) {
-                    backgroundImage = new ImageIcon(imgURL).getImage();
-                }
-            }
+		// Khởi tạo DAOs
+		hoaDonDAO = new HoaDon_DAO();
+		thongKeDAO = new ThongKe_DAO();
+		phieuTraDAO = new PhieuTra_DAO();
+		phieuHuyDAO = new PhieuHuy_DAO();
+		chiTietHoaDonDAO = new ChiTietHoaDon_DAO();
+		loSanPhamDao = new LoSanPham_DAO();
 
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                if (backgroundImage != null) {
-                    g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
-                }
-            }
-        };
-        pnlHAMHSLDH.setBounds(10, 31, 69, 65);
-        pnlHAMHSLDH.setOpaque(false);
-        pnlSLuongDonHang.add(pnlHAMHSLDH);
-        
-        txtSLuongDonHang = new JTextField();
-        txtSLuongDonHang.setColumns(10);
-        txtSLuongDonHang.setBounds(89, 54, 246, 48);
-        pnlSLuongDonHang.add(txtSLuongDonHang);
-        txtSLuongDonHang.setOpaque(false);              
-        txtSLuongDonHang.setBorder(null);               
-        txtSLuongDonHang.setForeground(new Color(0,51,102)); 
-        txtSLuongDonHang.setFont(new Font("Segoe UI", Font.BOLD, 20)); 
-        
-                
-                JPanel pnlSLuongBiTra = new JPanel();
-                pnCenter.add(pnlSLuongBiTra);
-                pnlSLuongBiTra.setLayout(null);
-                pnlSLuongBiTra.setBackground(new Color(227, 242, 245));
-                pnlSLuongBiTra.setBorder(new RoundedBorder(25));
-                
-      
-                JLabel lblSLuongBiTra = new JLabel("Số lượng sản phẩm bị trả");
-                lblSLuongBiTra.setFont(fontTieuDe);
-                lblSLuongBiTra.setForeground(mauChu);
-                lblSLuongBiTra.setBounds(89, 21, 257, 40);
-                pnlSLuongBiTra.add(lblSLuongBiTra);
-                
-                JPanel pnlHAMHSLuongBiTra = new JPanel() {
-                    private Image backgroundImage;
+		initialize();
+		// Load dữ liệu thật từ database
+		loadRealData();
+		loadChartLoaiHSD();
+	}
 
-                    { 
-                        try {
-                            
-                            java.net.URL imgURL = getClass().getResource("/resources/images/sale-return-icon.png");
-                            if (imgURL != null) {
-                                backgroundImage = new ImageIcon(imgURL).getImage();
-                            } else {
-                                System.err.println("Không tìm thấy ảnh: /resources/images/hinhAnhBiTra.png");
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
+	/**
+	 * Constructor mặc định (dùng cho test)
+	 */
+	public TongQuanNV_GUI() {
+		this(null);
+	}
 
-                    @Override
-                    protected void paintComponent(Graphics g) {
-                        super.paintComponent(g);
-                        if (backgroundImage != null) {
-                            g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
-                        }
-                    }
-                };
-                
-                        pnlHAMHSLuongBiTra.setBounds(10, 31, 69, 65);
-                        pnlHAMHSLuongBiTra.setOpaque(false);
-                        pnlSLuongBiTra.add(pnlHAMHSLuongBiTra);
-                        
-                        txtSLuongBiTra = new JTextField();
-                        txtSLuongBiTra.setColumns(10);
-                        txtSLuongBiTra.setBounds(89, 54, 246, 48);
-                        pnlSLuongBiTra.add(txtSLuongBiTra);
-                        txtSLuongBiTra.setOpaque(false);
-                        txtSLuongBiTra.setBorder(null);
-                        txtSLuongBiTra.setForeground(new Color(0,51,102));
-                        txtSLuongBiTra.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        
-        
-        
-        JPanel pnlDoanhThu = new JPanel();
-        pnCenter.add(pnlDoanhThu);
-        pnlDoanhThu.setLayout(null);
-        pnlDoanhThu.setBackground(new Color(227, 242, 245));
-        pnlDoanhThu.setBorder(new RoundedBorder(25));
-        
+	
+	private void initialize() {
+		setLayout(new BorderLayout());
 
-        
-        JLabel lblDoanhThu = new JLabel("Doanh thu");
-        lblDoanhThu.setFont(fontTieuDe);
-        lblDoanhThu.setForeground(mauChu);
-        lblDoanhThu.setBounds(89, 21, 197, 40);
-        pnlDoanhThu.add(lblDoanhThu);
-        
-        JPanel pnlHAMHDoanhThu = new JPanel() {
-            private Image backgroundImage;
+		// ===== HEADER (NORTH) =====
+		pnHeader = new JPanel();
+		pnHeader.setPreferredSize(new Dimension(1073, 80));
+		pnHeader.setBackground(new Color(227, 242, 245));
+		add(pnHeader, BorderLayout.NORTH);
+		pnHeader.setLayout(new BorderLayout(0, 0));
 
-            { 
-                try {
-                    
-                    java.net.URL imgURL = getClass().getResource("/resources/images/doanhthuNV.png");
-                    if (imgURL != null) {
-                        backgroundImage = new ImageIcon(imgURL).getImage();
-                    } else {
-                        System.err.println("Không tìm thấy ảnh: /resources/images/hinhAnhDoanhThu.png");
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
+		JLabel lblTongQuan = new JLabel("Tổng Quan");
+		lblTongQuan.setHorizontalAlignment(SwingConstants.CENTER);
+		lblTongQuan.setForeground(new Color(0, 51, 102));
+		lblTongQuan.setFont(new Font("Segoe UI", Font.BOLD, 36));
+		pnHeader.add(lblTongQuan);
+		
+		pnCenter = new JPanel();
+		pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
+		pnCenter.setBackground(Color.WHITE);
+		add(pnCenter, BorderLayout.CENTER);
+		pnCenter.setLayout(new BoxLayout(pnCenter, BoxLayout.Y_AXIS));
+		
+		createKPIpn();
+		createChart();
+	}
 
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                if (backgroundImage != null) {
-                    g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
-                }
-            }
-        };
+	// --- KHU VỰC KPI ---
+	private void createKPIpn() {
 
-        
-        pnlHAMHDoanhThu.setBounds(10, 31, 69, 65);
-        pnlHAMHDoanhThu.setOpaque(false); 
-        pnlDoanhThu.add(pnlHAMHDoanhThu);
-        
-        txtDoanhThu = new JTextField();
-        txtDoanhThu.setColumns(10);
-        txtDoanhThu.setBounds(89, 54, 246, 48);
-        pnlDoanhThu.add(txtDoanhThu);
-        txtDoanhThu.setOpaque(false);
-        txtDoanhThu.setBorder(null);
-        txtDoanhThu.setForeground(new Color(0,51,102));
-        txtDoanhThu.setFont(new Font("Segoe UI", Font.BOLD, 20));
+		JPanel pnlKPIs = new JPanel(new GridLayout(2, 3, 15, 15)); // 2 hàng, 3 cột
+		pnlKPIs.setMaximumSize(new Dimension(Integer.MAX_VALUE, 320));
+		pnlKPIs.setOpaque(false);
+
+		// Hàng 1
+		// Thẻ 1: Lợi nhuận tháng này
+		txtSoDon = new JTextField();
+		pnlKPIs.add(taoTheKPI("Số đơn hôm nay", mauChu, txtSoDon, null, null));
+
+		// Thẻ 2: Lợi nhuận tháng trước
+		txtTongTienDaBan = new JTextField();
+		pnlKPIs.add(taoTheKPI("Tổng tiền hóa đơn", mauChu, txtTongTienDaBan, null, null));
+
+		// Thẻ 3: Tổng tiền nhập hàng tháng này
+		txtSPDaBan = new JTextField();
+		pnlKPIs.add(taoTheKPI("Số SP đã bán hôm nay", mauChu, txtSPDaBan, null, null));
+
+		// Hàng 2
+		// Thẻ 4: Khách hàng mới
+		txtLoSPSapHetHan = new JTextField();
+		pnlKPIs.add(taoTheKPI("Lô SP sắp hết hạn", mauChu, txtLoSPSapHetHan, null, null));
+
+		// Thẻ 5: Đơn trả cần duyệt (có thể click) - Border đỏ
+		txtSoPhieuHuyDaTao = new JTextField();
+		pnlKPIs.add(taoTheKPI("Số phiếu hủy đã tạo hôm nay", mauChu, txtSoPhieuHuyDaTao, null, null));
+
+		// Thẻ 6: Đơn hủy cần duyệt (có thể click) - Border đỏ
+		txtSoPhieuTraDaTao = new JTextField();
+		pnlKPIs.add(taoTheKPI("Số phiếu trả đã tạo hôm nay", mauChu, txtSoPhieuTraDaTao, null, null));
+
+		pnCenter.add(pnlKPIs);
+		pnCenter.add(Box.createVerticalStrut(40));
+	}
+	
+	/**
+	 * Phương thức helper tạo thẻ KPI - Chức năng: chỉ thiết lập giao diện cho
+	 * JTextField đã được tạo.
+	 */
+	private JPanel taoTheKPI(String title, Color mauChu, JTextField textField, String actionType, Color mauBorder) {
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		panel.setBackground(new Color(227, 242, 245));
+		panel.setBorder(new RoundedBorder(15));
+		panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		panel.setPreferredSize(new Dimension(100, 100));
+
+		JLabel lblTitle = new JLabel(title);
+		lblTitle.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+		lblTitle.setForeground(mauChu);
+		lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+		lblTitle.setBorder(new EmptyBorder(10, 10, 0, 10));
+
+		// Setup JTextField đã được truyền vào
+		textField.setColumns(10);
+		textField.setOpaque(false);
+		textField.setBorder(null);
+		textField.setForeground(mauChu);
+		textField.setFont(new Font("Segoe UI", Font.BOLD, 40));
+		textField.setEditable(false);
+		textField.setAlignmentX(Component.LEFT_ALIGNMENT);
+		textField.setBorder(new EmptyBorder(5, 10, 10, 10));
+
+		panel.add(lblTitle);
+		panel.add(textField);
+
+		return panel;
+	}
+	
+	// ===== Biểu đồ =====
+	private void createChart() {		
 
 
-        pnCenter.revalidate();
-        pnCenter.repaint();
-        
-        
-        
-        
-    }
+		pnChartArea = new JPanel();
+		pnChartArea.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(0, 51, 102)),
+				"Biểu đồ số lượng lô SP gần hết hạn", TitledBorder.LEFT, TitledBorder.TOP,
+				new Font("Segoe UI", Font.BOLD, 20), mauChu));
+		pnChartArea.setBackground(Color.WHITE);
+		pnChartArea.setLayout(new BorderLayout());
+		pnChartArea.setPreferredSize(new Dimension(0, 500));
+		pnChartArea.setMaximumSize(new Dimension(Integer.MAX_VALUE, 500));
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Khung trống - clone base");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1280, 800);
-            frame.setLocationRelativeTo(null);
-            frame.setContentPane(new TongQuanNV_GUI());
-            frame.setVisible(true);
-        });
-    }
+		bieuDoCot = new BieuDoCotJFreeChart();
+		bieuDoCot.setTieuDeBieuDo("Số lô cần hủy theo hạn sử dụng");
+		bieuDoCot.setTieuDeTrucX("Loại sản phẩm");
+		bieuDoCot.setTieuDeTrucY("Số lô");
+		
+		pnChartArea.removeAll();
+		pnChartArea.setLayout(new BorderLayout());
+		pnChartArea.add(bieuDoCot, BorderLayout.CENTER);
+		pnCenter.add(pnChartArea);
+		pnCenter.add(Box.createVerticalStrut(10));
+
+		pnChartArea.revalidate();
+		pnChartArea.repaint();
+	}
+
+	// biểu đố hiện thị số lô tới hạn cần hủy theo loaisanpham
+	private void loadChartLoaiHSD() {
+		bieuDoCot.xoaToanBoDuLieu();
+
+		Map<LoaiSanPham, Integer> data = loSanPhamDao.thongKeSoLoCanHuyTheoHSDTheoLoai();
+
+		int max = 0;
+
+		for (var entry : data.entrySet()) {
+			LoaiSanPham loai = entry.getKey();
+			int soLo = entry.getValue();
+			max = Math.max(max, soLo);
+
+			Color mau;
+			if (soLo >= 10)
+				mau = new Color(220, 53, 69);
+			else if (soLo >= 5)
+				mau = new Color(255, 193, 7);
+			else
+				mau = new Color(25, 135, 84);
+
+			bieuDoCot.themDuLieu(new DuLieuBieuDoCot(loai.getTenLoai(), "Cần hủy theo HSD", soLo, mau));
+		}
+
+		bieuDoCot.setDaiTrucY(0, max + 3);
+	}
+	
+	/**
+	 * Load dữ liệu thật từ database
+	 */
+	private void loadRealData() {
+
+		try {
+
+			ThongKeHoaDonNgay tk = thongKeDAO.thongKeHoaDonHomNayCuaNhanVien(maNV);
+
+			int soHoaDon = tk.getSoHoaDon();
+			double tongTienBanHang = tk.getTongTien();
+			// 1. số đơn hôm nay
+			txtSoDon.setText(String.valueOf(soHoaDon));
+			
+			// 2. Lợi nhuận tháng trước
+			txtTongTienDaBan.setText(formatter.format(tongTienBanHang) + " ₫");
+
+			// 3. số SP đã bán trong hôm nay
+			int soSPDaBan = chiTietHoaDonDAO.demSoSanPhamBanHomNay(maNV);
+			txtSPDaBan.setText(String.valueOf(soSPDaBan));
+
+			// 4. số lô sp gần hết hạn
+			int soLoToiHanSD = loSanPhamDao.demSoLoSPToiHanSuDung();
+			txtLoSPSapHetHan.setText(String.valueOf(soLoToiHanSD));
+
+			int soPhieuHuy = phieuHuyDAO.demSoPhieuHuyHomNayCuaNhanVien(maNV);
+			txtSoPhieuHuyDaTao.setText(String.valueOf(soPhieuHuy));
+
+			// 6. Phiếu hủy chưa duyệt
+			int soPhieuTra = phieuTraDAO.demSoPhieuTraHomNayCuaNhanVien(maNV);
+			txtSoPhieuTraDaTao.setText(String.valueOf(soPhieuTra));
+
+		} catch (Exception e) {
+			System.err.println("❌ Lỗi load dữ liệu dashboard: " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+	
+
+	/**
+	 * Refresh lại toàn bộ dữ liệu dashboard Gọi method này khi cần cập nhật dữ liệu
+	 * (VD: sau khi thêm hóa đơn mới)
+	 */
+	public void refreshDashboard() {
+
+		// Load lại dữ liệu mới
+		loadRealData();
+		loadChartLoaiHSD();
+	}
+
+	// --- MAIN VÀ INTERFACE METHODS ---
+	public static void main(String[] args) {
+		SwingUtilities.invokeLater(() -> {
+			JFrame frame = new JFrame("Dashboard Tổng Quan NV");
+			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			frame.setSize(1280, 850);
+			frame.setLocationRelativeTo(null);
+			frame.setContentPane(new TongQuanNV_GUI());
+			frame.setVisible(true);
+		});
+	}
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void mouseEntered(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void mouseExited(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
-		
 	}
 }

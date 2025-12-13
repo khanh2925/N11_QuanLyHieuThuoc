@@ -474,12 +474,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
     }
 
 
-    public void lamMoi() {
-        xuLyLamMoi();
-    }
-
-
-    private void LamMoi() {
+    private void lamMoi() {
         xuLyLamMoi();
     }
 
@@ -537,6 +532,8 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
             });
         }
     }
+    
+   
 
     // ==============================================================================
     // TEST MAIN
