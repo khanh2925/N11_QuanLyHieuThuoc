@@ -1,8 +1,13 @@
 package gui.tracuu;
 
 import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.*;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.text.DecimalFormat;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +15,11 @@ import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.*;
+
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import component.button.PillButton;
 import component.input.PlaceholderSupport;
@@ -69,6 +78,7 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
 
     // Cache Data
     private List<SanPham> dsSanPhamHienTai;
+	private PillButton btnXuatExcel;
 
     public TraCuuSanPham_GUI() {
         setPreferredSize(new Dimension(1537, 850));
@@ -81,6 +91,8 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
 
         // 2. Dựng giao diện
         initialize();
+        setupKeyboardShortcuts(); // Thiết lập phím tắt
+
     }
 
     private void initialize() {
@@ -113,11 +125,12 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
 
         // --- Ô TÌM KIẾM (Font 20) ---
         txtTimThuoc = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimThuoc, "Nhập tên thuốc, mã SP, số đăng ký...");
+        PlaceholderSupport.addPlaceholder(txtTimThuoc, "Nhập tên thuốc, mã SP, số đăng ký... (F1 / Ctrl+F)");
         txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 20)); 
         txtTimThuoc.setBounds(25, 17, 480, 60);
         txtTimThuoc.setBorder(new RoundedBorder(20));
         txtTimThuoc.setBackground(Color.WHITE);
+        txtTimThuoc.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
         pnHeader.add(txtTimThuoc);
 
         // --- BỘ LỌC (Font 18) ---
@@ -137,15 +150,44 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
         setupComboBox(cbTrangThai, 890, 28, 180, 38);
 
         // --- NÚT (Font 18) ---
-        btnTimKiem = new PillButton("Tìm kiếm");
+        btnTimKiem = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "TÌM KIẾM<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
+                    "</center>" +
+                "</html>"
+            );
         btnTimKiem.setBounds(1120, 22, 130, 50);
         btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18)); 
+        btnTimKiem.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã, tên sản phẩm và bộ lọc</html>");
         pnHeader.add(btnTimKiem);
 
-        btnLamMoi = new PillButton("Làm mới");
+        btnLamMoi = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "LÀM MỚI<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(F5)</span>" +
+                    "</center>" +
+                "</html>"
+            );
         btnLamMoi.setBounds(1265, 22, 130, 50);
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18)); 
+        btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
         pnHeader.add(btnLamMoi);
+        
+        btnXuatExcel = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "XUẤT EXCEL<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Ctrl+E)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+        btnXuatExcel.setBounds(1410, 22, 150, 50);
+        btnXuatExcel.setFont(new Font("Segoe UI", Font.BOLD, 18)); 
+        btnXuatExcel.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất dữ liệu ra file Excel (Danh sách, Lô hàng, Quy cách)</html>");
+        pnHeader.add(btnXuatExcel);
     }
 
     // Helper tạo label và combobox (Font 18)
@@ -311,6 +353,7 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
     private void addEvents() {
         btnTimKiem.addActionListener(this);
         btnLamMoi.addActionListener(this);
+        btnXuatExcel.addActionListener(this);
         txtTimThuoc.addActionListener(this);
 
         tblSanPham.getSelectionModel().addListSelectionListener(e -> {
@@ -334,6 +377,54 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
         });
     }
 
+    /**
+     * Thiết lập phím tắt cho màn hình Tra cứu Sản phẩm
+     */
+    private void setupKeyboardShortcuts() {
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+
+        // F1: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
+        actionMap.put("focusTimKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimThuoc.requestFocus();
+                txtTimThuoc.selectAll();
+            }
+        });
+
+        // F5: Làm mới
+        inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
+        actionMap.put("lamMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyLamMoi();
+            }
+        });
+
+        // Ctrl+F: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
+        actionMap.put("timKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimThuoc.requestFocus();
+                txtTimThuoc.selectAll();
+            }
+        });
+
+        // Ctrl+E: Xuất Excel
+        inputMap.put(KeyStroke.getKeyStroke("control E"), "xuatExcel");
+        actionMap.put("xuatExcel", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuatExcel();
+            }
+        });
+
+        // Enter trên ô tìm kiếm
+        txtTimThuoc.addActionListener(ev -> xuLyTimKiem());
+    }
     @Override
     public void actionPerformed(ActionEvent e) {
         Object o = e.getSource();
@@ -342,6 +433,8 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
             xuLyTimKiem();
         } else if (o == btnLamMoi) {
             xuLyLamMoi();
+        } else if (o == btnXuatExcel) {
+            xuatExcel();
         }
     }
 
@@ -484,7 +577,202 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
             }
         }
     }
-    
+    /**
+     * Xuất danh sách sản phẩm ra file Excel
+     */
+    private void xuatExcel() {
+        // Tự động tìm kiếm trước khi xuất để chắc chắn xuất đúng tiêu chí
+        xuLyTimKiem();
+        if (modelSanPham.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Chọn nơi lưu file Excel");
+        fileChooser.setSelectedFile(new File("DanhSachSanPham_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".xlsx"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
+
+        int userSelection = fileChooser.showSaveDialog(this);
+        if (userSelection != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File fileToSave = fileChooser.getSelectedFile();
+        if (!fileToSave.getName().endsWith(".xlsx")) {
+            fileToSave = new File(fileToSave.getAbsolutePath() + ".xlsx");
+        }
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            // Style cho tiêu đề
+            CellStyle headerStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setFontHeightInPoints((short) 12);
+            headerFont.setColor(IndexedColors.WHITE.getIndex());
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+            headerStyle.setBorderTop(BorderStyle.THIN);
+            headerStyle.setBorderLeft(BorderStyle.THIN);
+            headerStyle.setBorderRight(BorderStyle.THIN);
+
+            // Style cho dữ liệu
+            CellStyle dataStyle = workbook.createCellStyle();
+            dataStyle.setBorderBottom(BorderStyle.THIN);
+            dataStyle.setBorderTop(BorderStyle.THIN);
+            dataStyle.setBorderLeft(BorderStyle.THIN);
+            dataStyle.setBorderRight(BorderStyle.THIN);
+
+            // ===== SHEET 1: DANH SÁCH SẢN PHẨM =====
+            Sheet sheetSP = workbook.createSheet("Danh sách sản phẩm");
+
+            // Tạo header
+            Row headerRow = sheetSP.createRow(0);
+            String[] headers = {"Mã SP", "Tên sản phẩm", "Loại", "Số ĐK", "Đường dùng", "Giá Bán Gốc", "Vị trí", "Trạng thái"};
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Điền dữ liệu từ bảng
+            for (int row = 0; row < modelSanPham.getRowCount(); row++) {
+                Row dataRow = sheetSP.createRow(row + 1);
+                for (int col = 0; col < modelSanPham.getColumnCount(); col++) {
+                    Cell cell = dataRow.createCell(col);
+                    Object value = modelSanPham.getValueAt(row, col);
+                    cell.setCellValue(value != null ? value.toString() : "");
+                    cell.setCellStyle(dataStyle);
+                }
+            }
+
+            // Auto-size columns
+            for (int i = 0; i < headers.length; i++) {
+                sheetSP.autoSizeColumn(i);
+            }
+
+            // ===== SHEET 2: LÔ SẢN PHẨM =====
+            Sheet sheetLo = workbook.createSheet("Lô sản phẩm");
+
+            // Header lô sản phẩm
+            Row headerRowLo = sheetLo.createRow(0);
+            String[] headersLo = {"Mã SP", "Tên SP", "Mã lô", "Hạn sử dụng", "Số lượng tồn"};
+            for (int i = 0; i < headersLo.length; i++) {
+                Cell cell = headerRowLo.createCell(i);
+                cell.setCellValue(headersLo[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Điền dữ liệu lô cho tất cả SP
+            int loRowIdx = 1;
+            for (int row = 0; row < modelSanPham.getRowCount(); row++) {
+                String maSP = modelSanPham.getValueAt(row, 0).toString();
+                String tenSP = modelSanPham.getValueAt(row, 1).toString();
+                
+                List<LoSanPham> listLo = loSanPhamDao.layDanhSachLoTheoMaSanPham(maSP);
+                if (listLo != null && !listLo.isEmpty()) {
+                    for (LoSanPham lo : listLo) {
+                        Row dataRow = sheetLo.createRow(loRowIdx++);
+                        dataRow.createCell(0).setCellValue(maSP);
+                        dataRow.createCell(1).setCellValue(tenSP);
+                        dataRow.createCell(2).setCellValue(lo.getMaLo());
+                        dataRow.createCell(3).setCellValue(dtf.format(lo.getHanSuDung()));
+                        dataRow.createCell(4).setCellValue(lo.getSoLuongTon());
+                        
+                        for (int col = 0; col < 5; col++) {
+                            dataRow.getCell(col).setCellStyle(dataStyle);
+                        }
+                    }
+                }
+            }
+
+            // Auto-size columns
+            for (int i = 0; i < headersLo.length; i++) {
+                sheetLo.autoSizeColumn(i);
+            }
+
+            // ===== SHEET 3: QUY CÁCH ĐÓNG GÓI =====
+            Sheet sheetQC = workbook.createSheet("Quy cách đóng gói");
+
+            // Header quy cách
+            Row headerRowQC = sheetQC.createRow(0);
+            String[] headersQC = {"Mã SP", "Tên SP", "Mã quy cách", "Đơn vị tính", "Hệ số quy đổi", "Giá bán", "Tỷ lệ giảm", "Loại DVT"};
+            for (int i = 0; i < headersQC.length; i++) {
+                Cell cell = headerRowQC.createCell(i);
+                cell.setCellValue(headersQC[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Điền dữ liệu quy cách cho tất cả SP
+            int qcRowIdx = 1;
+            for (int row = 0; row < modelSanPham.getRowCount(); row++) {
+                String maSP = modelSanPham.getValueAt(row, 0).toString();
+                String tenSP = modelSanPham.getValueAt(row, 1).toString();
+                
+                SanPham sp = dsSanPhamHienTai.stream()
+                        .filter(s -> s.getMaSanPham().equals(maSP))
+                        .findFirst()
+                        .orElse(null);
+                
+                if (sp != null) {
+                    double giaBanGoc = sp.getGiaBan();
+                    List<QuyCachDongGoi> listQC = quyCachDao.layDanhSachQuyCachTheoSanPham(maSP);
+                    
+                    if (listQC != null && !listQC.isEmpty()) {
+                        for (QuyCachDongGoi qc : listQC) {
+                            Row dataRow = sheetQC.createRow(qcRowIdx++);
+                            String tenDVT = qc.getDonViTinh() != null ? qc.getDonViTinh().getTenDonViTinh() : "N/A";
+                            double giaBanQuyCach = giaBanGoc * qc.getHeSoQuyDoi() * (1 - qc.getTiLeGiam());
+                            String loaiDVT = qc.isDonViGoc() ? "Đơn vị gốc" : "Quy đổi";
+                            String tiLeGiamText = (int)(qc.getTiLeGiam() * 100) + "%";
+                            
+                            dataRow.createCell(0).setCellValue(maSP);
+                            dataRow.createCell(1).setCellValue(tenSP);
+                            dataRow.createCell(2).setCellValue(qc.getMaQuyCach());
+                            dataRow.createCell(3).setCellValue(tenDVT);
+                            dataRow.createCell(4).setCellValue(qc.getHeSoQuyDoi());
+                            dataRow.createCell(5).setCellValue(df.format(giaBanQuyCach));
+                            dataRow.createCell(6).setCellValue(tiLeGiamText);
+                            dataRow.createCell(7).setCellValue(loaiDVT);
+                            
+                            for (int col = 0; col < 8; col++) {
+                                dataRow.getCell(col).setCellStyle(dataStyle);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Auto-size columns
+            for (int i = 0; i < headersQC.length; i++) {
+                sheetQC.autoSizeColumn(i);
+            }
+
+            // Ghi file
+            try (FileOutputStream fos = new FileOutputStream(fileToSave)) {
+                workbook.write(fos);
+            }
+
+            JOptionPane.showMessageDialog(this, 
+                "Xuất Excel thành công!\nFile: " + fileToSave.getAbsolutePath() + 
+                "\n\nĐã xuất " + modelSanPham.getRowCount() + " sản phẩm kèm đầy đủ thông tin Lô và Quy cách.", 
+                "Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+            // Mở file sau khi xuất
+            if (java.awt.Desktop.isDesktopSupported()) {
+                java.awt.Desktop.getDesktop().open(fileToSave);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, 
+                "Lỗi khi xuất file Excel:\n" + e.getMessage(), 
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
     // ==============================================================================
     //                                  MAIN
     // ==============================================================================

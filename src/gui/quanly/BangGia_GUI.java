@@ -90,6 +90,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         dsChiTietTam = new ArrayList<>();
         
         initialize();
+        setupKeyboardShortcuts(); // Thiết lập phím tắt
     }
 
     private void initialize() {
@@ -117,15 +118,16 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         pnHeader.setBackground(new Color(0xE3F2F5));
 
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã, tên bảng giá...");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã, tên bảng giá... (F1 / Ctrl+F)");
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
         txtTimKiem.setBounds(25, 17, 500, 60);
+        txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
         txtTimKiem.setForeground(Color.GRAY);
         pnHeader.add(txtTimKiem);
 
-        btnTimKiem = new PillButton("Tìm kiếm");
+        btnTimKiem = new PillButton("Tìm kiếm (Enter)");
         btnTimKiem.setBounds(540, 22, 130, 50);
         btnTimKiem.setFont(FONT_BOLD);
         btnTimKiem.addActionListener(this);
@@ -181,7 +183,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
 
         // --- C. TẠO SPLIT PANE ---
         splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pnTopWrapper, tabbedPane);
-        splitPane.setDividerLocation(280);
+        splitPane.setDividerLocation(290);
         splitPane.setResizeWeight(0.0); 
         
         pnCenter.add(splitPane, BorderLayout.CENTER);
@@ -200,6 +202,8 @@ public class BangGia_GUI extends JPanel implements ActionListener {
 
         p.add(createLabel("Tên BG:", xStart, yStart + (hText + gap)));
         txtTenBG = createTextField(xStart + wLbl, yStart + (hText + gap), wTxt);
+        PlaceholderSupport.addPlaceholder(txtTenBG, "Nhập tên bảng giá (F2)");
+        txtTenBG.setToolTipText("<html><b>Phím tắt:</b> F2<br>Nhập tên bảng giá (VD: Bảng giá tháng 1/2025)</html>");
         p.add(txtTenBG);
 
         // CHECKBOX: "Đặt làm mặc định"
@@ -208,7 +212,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         chkHoatDong.setForeground(new Color(0, 100, 0));
         chkHoatDong.setBackground(Color.WHITE);
         chkHoatDong.setBounds(xStart + wLbl, yStart + (hText + gap)*2 + 5, 400, hText);
-        chkHoatDong.setToolTipText("Khi chọn: Bảng giá này sẽ hoạt động, các bảng giá khác sẽ ngừng hoạt động.");
+        chkHoatDong.setToolTipText("<html>Khi chọn: Bảng giá này sẽ hoạt động, các bảng giá khác sẽ ngừng hoạt động.<br><b>Lưu ý:</b> Chỉ có 1 bảng giá hoạt động tại một thời điểm!</html>");
         p.add(chkHoatDong);
 
         // CỘT 2
@@ -235,18 +239,44 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         int btnH = 45;
         int btnW = 140;
 
-        btnThem = createPillButton("Tạo mới", btnW, btnH);
+        btnThem = createPillButton(
+                "<html>" +
+                    "<center>" +
+                        "TẠO MỚI<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Ctrl+N)</span>" +
+                    "</center>" +
+                "</html>", btnW, btnH);
+        btnThem.setToolTipText("<html><b>Phím tắt:</b> Ctrl+N<br>Tạo bảng giá mới (sẽ hỏi xác nhận nếu đang nhập dở)</html>");
         gbc.gridy = 0; p.add(btnThem, gbc);
 
-        btnSua = createPillButton("Cập nhật", btnW, btnH);
+        btnSua = createPillButton(
+                "<html>" +
+                    "<center>" +
+                        "CẬP NHẬT<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Ctrl+U)</span>" +
+                    "</center>" +
+                "</html>", btnW, btnH);
+        btnSua.setToolTipText("<html><b>Phím tắt:</b> Ctrl+U<br>Cập nhật bảng giá đang chọn (phải chọn bảng giá trước)</html>");
         gbc.gridy = 1; p.add(btnSua, gbc);
 
-        btnNgungHoatDong = createPillButton("Ngưng HĐ", btnW, btnH);
-        btnNgungHoatDong.setBackground(new Color(255, 235, 238)); // Đỏ nhạt
-        btnNgungHoatDong.setForeground(Color.RED);
+        btnNgungHoatDong = createPillButton(
+                "<html>" +
+                    "<center>" +
+                        "NGƯNG HĐ<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Ctrl+D)</span>" +
+                    "</center>" +
+                "</html>", btnW, btnH);
+        btnNgungHoatDong.setToolTipText("<html><b>Phím tắt:</b> Ctrl+D<br>Ngừng hoạt động bảng giá đang chọn</html>");
         gbc.gridy = 2; p.add(btnNgungHoatDong, gbc);
 
-        btnLamMoi = createPillButton("Làm mới", btnW, btnH);
+        btnLamMoi = createPillButton(
+                "<html>" +
+                    "<center>" +
+                        "LÀM MỚI<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(F5)</span>" +
+                    "</center>" +
+                "</html>", btnW, btnH);
+        btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Xóa form và làm mới (sẽ hỏi xác nhận nếu đang nhập dở)</html>");
         gbc.gridy = 3; p.add(btnLamMoi, gbc);
     }
 
@@ -308,13 +338,16 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         
         // 2. Giá đến
         pnToolBar.add(new JLabel("Đến:"));
-        txtGiaDen = new JTextField(8); 
+        txtGiaDen = new JTextField(8);
+        PlaceholderSupport.addPlaceholder(txtGiaDen, "F3");
+        txtGiaDen.setToolTipText("<html><b>Phím tắt:</b> F3<br>Nhập giá kết thúc của khoảng (VD: 100000)<br>Nhấn Enter để nhảy sang Tỉ lệ</html>");
         pnToolBar.add(txtGiaDen);
         
         // 3. Checkbox "Trở lên"
         chkKhoangCuoi = new JCheckBox("Trở lên (Cuối)");
         chkKhoangCuoi.setBackground(Color.WHITE);
         chkKhoangCuoi.setFont(new Font("Segoe UI", Font.ITALIC, 14));
+        chkKhoangCuoi.setToolTipText("<html><b>Phím tắt:</b> F6<br>Tích vào nếu đây là khoảng giá cuối cùng (từ X trở lên)</html>");
         // Logic UX: Chọn "Trở lên" thì vô hiệu hóa ô "Đến"
         chkKhoangCuoi.addActionListener(e -> {
             if (chkKhoangCuoi.isSelected()) {
@@ -328,21 +361,25 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         });
         pnToolBar.add(chkKhoangCuoi);
         
-        // 4. Tỉ lệ
+     // 4. Tỉ lệ
         pnToolBar.add(new JLabel("Tỉ lệ (VD 1.2):"));
-        txtTiLe = new JTextField(5); 
+        txtTiLe = new JTextField(5);
+        PlaceholderSupport.addPlaceholder(txtTiLe, "F4");
+        txtTiLe.setToolTipText("<html><b>Phím tắt:</b> F4<br>Nhập tỉ lệ định giá (VD: 1.2 = bán gấp 1.2 lần giá vốn)<br>Nhấn Enter để thêm quy tắc vào bảng</html>");
         pnToolBar.add(txtTiLe);
 
         // 5. Nút Thêm
-        btnThemCT = createPillButton("Thêm quy tắc", 130, 35);
+        btnThemCT = createPillButton("Thêm quy tắc (F7)", 150, 35);
         btnThemCT.setFont(FONT_TEXT);
+        btnThemCT.setToolTipText("<html><b>Phím tắt:</b> F7<br>Thêm quy tắc giá vào bảng tạm<br>(Giá Từ sẽ tự động nhảy)</html>");
         pnToolBar.add(btnThemCT);
         
         // 6. Nút Xóa (Xóa dòng cuối)
-        btnXoaCT = createPillButton("Xóa dòng cuối", 130, 35);
+        btnXoaCT = createPillButton("Xóa dòng cuối (F8)", 160, 35);
         btnXoaCT.setBackground(new Color(255, 235, 238));
         btnXoaCT.setForeground(Color.RED);
         btnXoaCT.setFont(FONT_TEXT);
+        btnXoaCT.setToolTipText("<html><b>Phím tắt:</b> F8<br>Xóa dòng cuối cùng trong bảng quy tắc</html>");
         pnToolBar.add(btnXoaCT);
         
         p.add(pnToolBar, BorderLayout.NORTH);
@@ -509,20 +546,20 @@ public class BangGia_GUI extends JPanel implements ActionListener {
     private void xuLyLamMoi() {
         txtMaBG.setText(bangGiaDAO.taoMaBangGia());
         txtTenBG.setText("");
+        PlaceholderSupport.addPlaceholder(txtTenBG, "Nhập tên bảng giá (F2)");
         txtNgayApDung.setText(LocalDate.now().format(dtf));
         chkHoatDong.setSelected(true);
         chkHoatDong.setEnabled(false);
         
         // ✅ BỔ SUNG: Reset ô tìm kiếm
         txtTimKiem.setText(""); 
-        
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã, tên bảng giá... (F1 / Ctrl+F)");
         // Reset quy trình nhập chi tiết
         resetInputChiTiet();
         dsChiTietTam.clear();
         renderBangChiTiet(dsChiTietTam);
         modelMoPhong.setRowCount(0); 
         
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã, tên bảng giá...");
         List<BangGia> list = bangGiaDAO.layTatCaBangGia();
         renderDanhSachBangGia(list);
     }
@@ -740,6 +777,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         if (bg != null) {
             txtMaBG.setText(bg.getMaBangGia());
             txtTenBG.setText(bg.getTenBangGia());
+            txtTenBG.setForeground(Color.BLACK); // Đảm bảo chữ màu đen, không phải placeholder
             txtNgayApDung.setText(dtf.format(bg.getNgayApDung()));
             chkHoatDong.setSelected(bg.isHoatDong());
             
@@ -900,6 +938,203 @@ public class BangGia_GUI extends JPanel implements ActionListener {
             BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
             TitledBorder.LEFT, TitledBorder.TOP, FONT_BOLD, Color.DARK_GRAY
         );
+    }
+
+    /**
+     * Thiết lập phím tắt cho màn hình Quản lý Bảng Giá
+     */
+    private void setupKeyboardShortcuts() {
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+
+        // F1: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
+        actionMap.put("focusTimKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+
+        // F2: Focus tên bảng giá
+        inputMap.put(KeyStroke.getKeyStroke("F2"), "focusTenBG");
+        actionMap.put("focusTenBG", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTenBG.requestFocus();
+                txtTenBG.selectAll();
+            }
+        });
+
+        // F3: Focus giá đến (tab chi tiết)
+        inputMap.put(KeyStroke.getKeyStroke("F3"), "focusGiaDen");
+        actionMap.put("focusGiaDen", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (txtGiaDen.isEnabled()) {
+                    txtGiaDen.requestFocus();
+                    txtGiaDen.selectAll();
+                }
+            }
+        });
+
+        // F4: Focus tỉ lệ (tab chi tiết)
+        inputMap.put(KeyStroke.getKeyStroke("F4"), "focusTiLe");
+        actionMap.put("focusTiLe", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (txtTiLe.isEnabled()) {
+                    txtTiLe.requestFocus();
+                    txtTiLe.selectAll();
+                }
+            }
+        });
+
+        // F5: Làm mới
+        inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
+        actionMap.put("lamMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Kiểm tra xem có dữ liệu chưa lưu không
+                if (!dsChiTietTam.isEmpty() || !txtTenBG.getText().trim().isEmpty()) {
+                    int confirm = JOptionPane.showConfirmDialog(BangGia_GUI.this,
+                        "Bạn có dữ liệu chưa lưu. Bạn có chắc muốn làm mới?",
+                        "Xác nhận", JOptionPane.YES_NO_OPTION);
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        xuLyLamMoi();
+                    }
+                } else {
+                    xuLyLamMoi();
+                }
+            }
+        });
+
+        // F6: Toggle checkbox "Trở lên"
+        inputMap.put(KeyStroke.getKeyStroke("F6"), "toggleKhoangCuoi");
+        actionMap.put("toggleKhoangCuoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (chkKhoangCuoi.isEnabled()) {
+                    chkKhoangCuoi.doClick();
+                }
+            }
+        });
+
+        // F7: Thêm quy tắc chi tiết
+        inputMap.put(KeyStroke.getKeyStroke("F7"), "themChiTiet");
+        actionMap.put("themChiTiet", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnThemCT.isEnabled()) {
+                    xuLyThemChiTietVaoBangTam();
+                }
+            }
+        });
+
+        // F8: Xóa dòng cuối
+        inputMap.put(KeyStroke.getKeyStroke("F8"), "xoaDongCuoi");
+        actionMap.put("xoaDongCuoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyXoaChiTietKhoiBangTam();
+            }
+        });
+
+        // Ctrl+N: Tạo mới bảng giá
+        inputMap.put(KeyStroke.getKeyStroke("control N"), "taoMoi");
+        actionMap.put("taoMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!dsChiTietTam.isEmpty()) {
+                    int confirm = JOptionPane.showConfirmDialog(BangGia_GUI.this,
+                        "Bạn có dữ liệu chưa lưu. Bạn có chắc muốn tạo mới?",
+                        "Xác nhận", JOptionPane.YES_NO_OPTION);
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        xuLyLamMoi();
+                    }
+                } else {
+                    xuLyLamMoi();
+                }
+            }
+        });
+
+        // Ctrl+S: Lưu (Thêm/Cập nhật)
+        inputMap.put(KeyStroke.getKeyStroke("control S"), "luu");
+        actionMap.put("luu", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Kiểm tra xem đang ở chế độ thêm hay sửa
+                String maBG = txtMaBG.getText().trim();
+                if (bangGiaDAO.timBangGiaTheoMa(maBG) != null) {
+                    xuLyCapNhatBangGia();
+                } else {
+                    xuLyThemBangGia();
+                }
+            }
+        });
+
+        // Ctrl+U: Cập nhật
+        inputMap.put(KeyStroke.getKeyStroke("control U"), "capNhat");
+        actionMap.put("capNhat", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyCapNhatBangGia();
+            }
+        });
+
+        // Ctrl+D: Ngưng hoạt động
+        inputMap.put(KeyStroke.getKeyStroke("control D"), "ngungHoatDong");
+        actionMap.put("ngungHoatDong", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyNgungHoatDong();
+            }
+        });
+
+        // Ctrl+F: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
+        actionMap.put("timKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+
+        // Enter trên ô tìm kiếm
+        txtTimKiem.addActionListener(e -> xuLyTimKiem());
+
+        // Enter trên ô giá đến
+        txtGiaDen.addActionListener(e -> {
+            if (txtGiaDen.isEnabled() && !txtGiaDen.getText().trim().isEmpty()) {
+                txtTiLe.requestFocus();
+                txtTiLe.selectAll();
+            }
+        });
+
+        // Enter trên ô tỉ lệ
+        txtTiLe.addActionListener(e -> {
+            if (btnThemCT.isEnabled()) {
+                xuLyThemChiTietVaoBangTam();
+            }
+        });
+
+        // ESC: Làm mới input chi tiết
+        inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), "clearInput");
+        actionMap.put("clearInput", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+                if (focused instanceof JTextField) {
+                    JTextField txt = (JTextField) focused;
+                    txt.setText("");
+                    if (txt == txtTimKiem) {
+                        xuLyLamMoi();
+                    }
+                }
+            }
+        });
     }
 
     public static void main(String[] args) {

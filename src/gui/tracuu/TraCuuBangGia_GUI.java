@@ -54,6 +54,7 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
     private JComboBox<String> cbNam;
     private PillButton btnTimKiem;
     private PillButton btnLamMoi; 
+    private PillButton btnXuatExcel; 
 
     // Utils & DAO
     private final DecimalFormat dfTien = new DecimalFormat("#,### đ");
@@ -77,6 +78,7 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
         dsBangGiaHienTai = new ArrayList<>();
 
         initialize();
+        setupKeyboardShortcuts(); // Thiết lập phím tắt
     }
 
     private void initialize() {
@@ -109,11 +111,12 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
 
         // --- Ô TÌM KIẾM (Font 20, Size 480x60 - Chuẩn) ---
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã bảng giá, tên bảng giá...");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã bảng giá, tên bảng giá... (F1 / Ctrl+F)");
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20)); 
         txtTimKiem.setBounds(25, 17, 480, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
+        txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
         pnHeader.add(txtTimKiem);
 
         // --- BỘ LỌC (Font 18) ---
@@ -143,15 +146,44 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
         pnHeader.add(cbNam);
 
         // --- NÚT CHỨC NĂNG (Font 18 Bold - Chuẩn) ---
-        btnTimKiem = new PillButton("Tìm kiếm");
-        btnTimKiem.setBounds(1120, 22, 130, 50);
+        btnTimKiem = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "TÌM KIẾM<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+        btnTimKiem.setBounds(1120, 22, 160, 50);
         btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnTimKiem.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã, tên bảng giá và bộ lọc</html>");
         pnHeader.add(btnTimKiem);
 
-        btnLamMoi = new PillButton("Làm mới");
-        btnLamMoi.setBounds(1265, 22, 130, 50);
+        btnLamMoi = new PillButton(
+            "<html>" +
+                "<center>" +
+                    "LÀM MỚI<br>" +
+                    "<span style='font-size:10px; color:#888888;'>(F5)</span>" +
+                "</center>" +
+            "</html>"
+        );
+        btnLamMoi.setBounds(1295, 22, 140, 50);
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
         pnHeader.add(btnLamMoi);
+        
+        btnXuatExcel = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "XUẤT EXCEL<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Ctrl+E)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+        btnXuatExcel.setBounds(1450, 22, 150, 50);
+        btnXuatExcel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnXuatExcel.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất dữ liệu ra file Excel (Danh sách, Quy tắc, Mô phỏng)</html>");
+        pnHeader.add(btnXuatExcel);
     }
     
     // Helper tạo label font 18
@@ -294,6 +326,7 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
         btnTimKiem.addActionListener(this);
         btnLamMoi.addActionListener(this);
         txtTimKiem.addActionListener(this); 
+        btnXuatExcel.addActionListener(this);
 
         // Click bảng giá -> Load chi tiết
         tblBangGia.getSelectionModel().addListSelectionListener(e -> {
@@ -303,6 +336,56 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
         });
     }
 
+    /**
+     * Thiết lập phím tắt cho màn hình Tra cứu Bảng Giá
+     */
+    private void setupKeyboardShortcuts() {
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+
+        // F1: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
+        actionMap.put("focusTimKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+
+        // F5: Làm mới
+        inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
+        actionMap.put("lamMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyLamMoi();
+            }
+        });
+
+        // Ctrl+F: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
+        actionMap.put("timKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+
+        // Ctrl+E: Xuất Excel
+        inputMap.put(KeyStroke.getKeyStroke("control E"), "xuatExcel");
+        actionMap.put("xuatExcel", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyXuatExcel();
+            }
+        });
+
+        // Enter trên ô tìm kiếm
+        txtTimKiem.addActionListener(ev -> xuLyTimKiem());
+    }
+
+
     @Override
     public void actionPerformed(ActionEvent e) {
         Object o = e.getSource();
@@ -310,13 +393,15 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
             xuLyTimKiem();
         } else if (o == btnLamMoi) {
             xuLyLamMoi();
-        }
+        } else if (o == btnXuatExcel) {
+			xuLyXuatExcel();
+		}
     }
 
     // --- 1. Load Data ---
     private void xuLyLamMoi() {
         txtTimKiem.setText("");
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã bảng giá, tên bảng giá...");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã bảng giá, tên bảng giá... (F1 / Ctrl+F)");
         cbTrangThai.setSelectedIndex(0);
         
         // Load tất cả từ DB
@@ -468,6 +553,217 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
         }
     }
     
+    // --- Xuất Excel ---
+    private void xuLyXuatExcel() {
+    	xuLyTimKiem();
+        if (modelBangGia.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Chọn nơi lưu file Excel");
+        fileChooser.setSelectedFile(new java.io.File("DanhSachBangGia_" + java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd")) + ".xlsx"));
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
+
+        int userSelection = fileChooser.showSaveDialog(this);
+        if (userSelection != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        java.io.File fileToSave = fileChooser.getSelectedFile();
+        if (!fileToSave.getName().endsWith(".xlsx")) {
+            fileToSave = new java.io.File(fileToSave.getAbsolutePath() + ".xlsx");
+        }
+
+        try (org.apache.poi.ss.usermodel.Workbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook()) {
+            // Style cho tiêu đề
+            org.apache.poi.ss.usermodel.CellStyle headerStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setFontHeightInPoints((short) 12);
+            headerFont.setColor(org.apache.poi.ss.usermodel.IndexedColors.WHITE.getIndex());
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(org.apache.poi.ss.usermodel.IndexedColors.DARK_BLUE.getIndex());
+            headerStyle.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setAlignment(org.apache.poi.ss.usermodel.HorizontalAlignment.CENTER);
+            headerStyle.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            headerStyle.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            headerStyle.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            headerStyle.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+
+            // Style cho dữ liệu
+            org.apache.poi.ss.usermodel.CellStyle dataStyle = workbook.createCellStyle();
+            dataStyle.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            dataStyle.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            dataStyle.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            dataStyle.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+
+            // ===== SHEET 1: DANH SÁCH BẢNG GIÁ =====
+            org.apache.poi.ss.usermodel.Sheet sheetBG = workbook.createSheet("Danh sách Bảng giá");
+
+            // Tạo header
+            org.apache.poi.ss.usermodel.Row headerRow = sheetBG.createRow(0);
+            String[] headers = {"STT", "Mã Bảng Giá", "Tên Bảng Giá", "Ngày áp dụng", "Người lập", "Trạng thái"};
+            for (int i = 0; i < headers.length; i++) {
+                org.apache.poi.ss.usermodel.Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Điền dữ liệu từ bảng
+            for (int row = 0; row < modelBangGia.getRowCount(); row++) {
+                org.apache.poi.ss.usermodel.Row dataRow = sheetBG.createRow(row + 1);
+                for (int col = 0; col < modelBangGia.getColumnCount(); col++) {
+                    org.apache.poi.ss.usermodel.Cell cell = dataRow.createCell(col);
+                    Object value = modelBangGia.getValueAt(row, col);
+                    cell.setCellValue(value != null ? value.toString() : "");
+                    cell.setCellStyle(dataStyle);
+                }
+            }
+
+            // Auto-size columns
+            for (int i = 0; i < headers.length; i++) {
+                sheetBG.autoSizeColumn(i);
+            }
+
+            // ===== SHEET 2: QUY TẮC GIÁ =====
+            org.apache.poi.ss.usermodel.Sheet sheetQT = workbook.createSheet("Quy tắc định giá");
+
+            // Header quy tắc
+            org.apache.poi.ss.usermodel.Row headerRowQT = sheetQT.createRow(0);
+            String[] headersQT = {"Mã Bảng Giá", "Tên Bảng Giá", "STT", "Giá nhập từ", "Giá nhập đến", "Tỉ lệ định giá", "Lợi nhuận dự kiến"};
+            for (int i = 0; i < headersQT.length; i++) {
+                org.apache.poi.ss.usermodel.Cell cell = headerRowQT.createCell(i);
+                cell.setCellValue(headersQT[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Điền dữ liệu quy tắc cho tất cả bảng giá
+            int qtRowIdx = 1;
+            for (int row = 0; row < modelBangGia.getRowCount(); row++) {
+                String maBG = modelBangGia.getValueAt(row, 1).toString();
+                String tenBG = modelBangGia.getValueAt(row, 2).toString();
+                
+                List<ChiTietBangGia> listCT = chiTietBangGiaDAO.layChiTietTheoMaBangGia(maBG);
+                if (listCT != null && !listCT.isEmpty()) {
+                    // Sắp xếp theo Giá Từ tăng dần
+                    listCT.sort((a, b) -> Double.compare(a.getGiaTu(), b.getGiaDen()));
+                    
+                    int stt = 1;
+                    for (ChiTietBangGia ct : listCT) {
+                        org.apache.poi.ss.usermodel.Row dataRow = sheetQT.createRow(qtRowIdx++);
+                        
+                        double loiNhuanPhanTram = (ct.getTiLe() - 1) * 100;
+                        String giaDenStr = (ct.getGiaDen() > 999999999) ? "Trở lên" : dfTien.format(ct.getGiaDen());
+                        
+                        dataRow.createCell(0).setCellValue(maBG);
+                        dataRow.createCell(1).setCellValue(tenBG);
+                        dataRow.createCell(2).setCellValue(stt++);
+                        dataRow.createCell(3).setCellValue(dfTien.format(ct.getGiaTu()));
+                        dataRow.createCell(4).setCellValue(giaDenStr);
+                        dataRow.createCell(5).setCellValue(ct.getTiLe() + " (" + (int)(ct.getTiLe()*100) + "%)");
+                        dataRow.createCell(6).setCellValue(String.format("%.0f %%", loiNhuanPhanTram));
+                        
+                        for (int col = 0; col < 7; col++) {
+                            dataRow.getCell(col).setCellStyle(dataStyle);
+                        }
+                    }
+                }
+            }
+
+            // Auto-size columns
+            for (int i = 0; i < headersQT.length; i++) {
+                sheetQT.autoSizeColumn(i);
+            }
+
+            // ===== SHEET 3: MÔ PHỎNG GIÁ BÁN =====
+            org.apache.poi.ss.usermodel.Sheet sheetMP = workbook.createSheet("Mô phỏng giá bán");
+
+            // Header mô phỏng
+            org.apache.poi.ss.usermodel.Row headerRowMP = sheetMP.createRow(0);
+            String[] headersMP = {"Mã Bảng Giá", "Tên Bảng Giá", "Mã SP", "Tên sản phẩm", "Giá nhập (Vốn)", "Tỉ lệ áp dụng", "Giá bán ra"};
+            for (int i = 0; i < headersMP.length; i++) {
+                org.apache.poi.ss.usermodel.Cell cell = headerRowMP.createCell(i);
+                cell.setCellValue(headersMP[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Điền dữ liệu mô phỏng cho tất cả bảng giá
+            int mpRowIdx = 1;
+            List<SanPham> listSP = sanPhamDAO.layTatCaSanPham();
+            int limitSP = 20; // Giới hạn 20 SP mẫu cho mỗi bảng giá
+            
+            for (int row = 0; row < modelBangGia.getRowCount(); row++) {
+                String maBG = modelBangGia.getValueAt(row, 1).toString();
+                String tenBG = modelBangGia.getValueAt(row, 2).toString();
+                
+                List<ChiTietBangGia> listQuyTac = chiTietBangGiaDAO.layChiTietTheoMaBangGia(maBG);
+                
+                if (listQuyTac != null && !listQuyTac.isEmpty()) {
+                    int count = 0;
+                    for (SanPham sp : listSP) {
+                        if (count >= limitSP) break;
+                        
+                        double giaNhap = sp.getGiaNhap();
+                        
+                        // Tìm quy tắc áp dụng cho SP này
+                        ChiTietBangGia ruleMatch = null;
+                        for (ChiTietBangGia rule : listQuyTac) {
+                            if (giaNhap >= rule.getGiaTu() && giaNhap <= rule.getGiaDen()) {
+                                ruleMatch = rule;
+                                break;
+                            }
+                        }
+                        
+                        double tiLe = (ruleMatch != null) ? ruleMatch.getTiLe() : 0;
+                        double giaBan = (tiLe > 0) ? giaNhap * tiLe : 0;
+                        
+                        org.apache.poi.ss.usermodel.Row dataRow = sheetMP.createRow(mpRowIdx++);
+                        dataRow.createCell(0).setCellValue(maBG);
+                        dataRow.createCell(1).setCellValue(tenBG);
+                        dataRow.createCell(2).setCellValue(sp.getMaSanPham());
+                        dataRow.createCell(3).setCellValue(sp.getTenSanPham());
+                        dataRow.createCell(4).setCellValue(dfTien.format(giaNhap));
+                        dataRow.createCell(5).setCellValue((tiLe > 0) ? String.valueOf(tiLe) : "Chưa cấu hình");
+                        dataRow.createCell(6).setCellValue((giaBan > 0) ? dfTien.format(giaBan) : "N/A");
+                        
+                        for (int col = 0; col < 7; col++) {
+                            dataRow.getCell(col).setCellStyle(dataStyle);
+                        }
+                        
+                        count++;
+                    }
+                }
+            }
+
+            // Auto-size columns
+            for (int i = 0; i < headersMP.length; i++) {
+                sheetMP.autoSizeColumn(i);
+            }
+
+            // Ghi file
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(fileToSave)) {
+                workbook.write(fos);
+            }
+
+            JOptionPane.showMessageDialog(this, 
+                "Xuất Excel thành công!\nFile: " + fileToSave.getAbsolutePath() + 
+                "\n\nĐã xuất " + modelBangGia.getRowCount() + " bảng giá kèm đầy đủ Quy tắc và Mô phỏng giá.", 
+                "Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+            // Mở file sau khi xuất
+            if (java.awt.Desktop.isDesktopSupported()) {
+                java.awt.Desktop.getDesktop().open(fileToSave);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, 
+                "Lỗi khi xuất file Excel:\n" + e.getMessage(), 
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
     // ==============================================================================
     //                                  MAIN
     // ==============================================================================
