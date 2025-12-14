@@ -83,13 +83,11 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
      * Thiết lập phím tắt cho các component
      */
     private void thietLapPhimTat() {
-        // Lấy InputMap và ActionMap của JPanel chính
         InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap actionMap = getActionMap();
         
-        // --- PHÍM TẮT CHO txtTimKiem (F1, Ctrl+F) ---
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), "focusTimKiem");
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "focusTimKiem");
+        // F1: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
         actionMap.put("focusTimKiem", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -98,12 +96,28 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
             }
         });
         
-        // --- PHÍM TẮT CHO btnTimKiem (Enter khi đang focus vào txtTimKiem đã có sẵn) ---
-        // Không cần thêm vì đã có txtTimKiem.addActionListener(e -> timKiemSanPham());
+        // Ctrl+F: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
+        actionMap.put("timKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
         
-        // --- PHÍM TẮT CHO btnLamMoi (F5, Ctrl+N) ---
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), "lamMoi");
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK), "lamMoi");
+        // F2: Focus tên sản phẩm
+        inputMap.put(KeyStroke.getKeyStroke("F2"), "focusTenSP");
+        actionMap.put("focusTenSP", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTenSP.requestFocus();
+                txtTenSP.selectAll();
+            }
+        });
+        
+        // F5: Làm mới
+        inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
         actionMap.put("lamMoi", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -111,6 +125,104 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
                 taiDuLieuSanPham();
             }
         });
+        
+        // Ctrl+N: Thêm mới
+        inputMap.put(KeyStroke.getKeyStroke("control N"), "themMoi");
+        actionMap.put("themMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (kiemTraDuLieu()) {
+                    SanPham sp = layThongTinTuForm();
+                    if (sanPhamDAO.themSanPham(sp)) {
+                        JOptionPane.showMessageDialog(QuanLySanPham_GUI.this, "Thêm thành công!");
+                        taiDuLieuSanPham();
+                        xoaTrangForm();
+                    } else {
+                        JOptionPane.showMessageDialog(QuanLySanPham_GUI.this, "Thêm thất bại!");
+                    }
+                }
+            }
+        });
+        
+        // Ctrl+S: Lưu (Thêm hoặc Cập nhật - Smart Save)
+        inputMap.put(KeyStroke.getKeyStroke("control S"), "luu");
+        actionMap.put("luu", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Kiểm tra xem đang chọn sản phẩm hay không
+                if (tblSanPham.getSelectedRow() != -1) {
+                    // Đang sửa
+                    if (kiemTraDuLieu()) {
+                        SanPham sp = layThongTinTuForm();
+                        if (sanPhamDAO.capNhatSanPham(sp)) {
+                            JOptionPane.showMessageDialog(QuanLySanPham_GUI.this, "Cập nhật thành công!");
+                            taiDuLieuSanPham();
+                            xoaTrangForm();
+                        }
+                    }
+                } else {
+                    // Đang thêm mới
+                    if (kiemTraDuLieu()) {
+                        SanPham sp = layThongTinTuForm();
+                        if (sanPhamDAO.themSanPham(sp)) {
+                            JOptionPane.showMessageDialog(QuanLySanPham_GUI.this, "Thêm thành công!");
+                            taiDuLieuSanPham();
+                            xoaTrangForm();
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Ctrl+U: Cập nhật
+        inputMap.put(KeyStroke.getKeyStroke("control U"), "capNhat");
+        actionMap.put("capNhat", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (tblSanPham.getSelectedRow() == -1) {
+                    JOptionPane.showMessageDialog(QuanLySanPham_GUI.this, "Vui lòng chọn sản phẩm cần sửa!");
+                    return;
+                }
+                if (kiemTraDuLieu()) {
+                    SanPham sp = layThongTinTuForm();
+                    if (sanPhamDAO.capNhatSanPham(sp)) {
+                        JOptionPane.showMessageDialog(QuanLySanPham_GUI.this, "Cập nhật thành công!");
+                        taiDuLieuSanPham();
+                        xoaTrangForm();
+                    }
+                }
+            }
+        });
+        
+        // F7: Thêm quy cách
+        inputMap.put(KeyStroke.getKeyStroke("F7"), "themQuyCach");
+        actionMap.put("themQuyCach", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyThemQuyCach();
+            }
+        });
+        
+        // F8: Xóa quy cách
+        inputMap.put(KeyStroke.getKeyStroke("F8"), "xoaQuyCach");
+        actionMap.put("xoaQuyCach", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyXoaQuyCach();
+            }
+        });
+        
+        // F9: Sửa quy cách
+        inputMap.put(KeyStroke.getKeyStroke("F9"), "suaQuyCach");
+        actionMap.put("suaQuyCach", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLySuaQuyCach();
+            }
+        });
+        
+        // Enter trên ô tìm kiếm
+        txtTimKiem.addActionListener(e -> timKiemSanPham());
     }
 
     private void taoPhanDau() {
@@ -119,14 +231,13 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         pnHeader.setBackground(new Color(0xE3F2F5));
 
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm thuốc theo tên hoặc số đăng ký(F1/Ctrl+F)");
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã, tên thuốc, số đăng ký...");
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
         txtTimKiem.setBounds(25, 17, 500, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
         txtTimKiem.setForeground(Color.GRAY);
         txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
-        txtTimKiem.addActionListener(e -> timKiemSanPham());
         pnHeader.add(txtTimKiem);
 
         btnTimKiem = new PillButton(
@@ -216,6 +327,8 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         p.add(taoNhan("Tên SP:", xStart, yStart));
         txtTenSP = taoTruongNhap(xStart + wLbl, yStart, wTxt + 50 + wLbl + wTxt - wTxt); 
         txtTenSP.setSize((xCol2 + wLbl + wTxt) - (xStart + wLbl), hText);
+        PlaceholderSupport.addPlaceholder(txtTenSP, "Nhập tên sản phẩm (F2)");
+        txtTenSP.setToolTipText("<html><b>Phím tắt:</b> F2<br>Nhập tên sản phẩm</html>");
         p.add(txtTenSP);
 
         yStart += hText + gap;
@@ -269,11 +382,33 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
 
         int w=140, h=45;
         
-        btnThem = taoNutBam("Thêm", w, h); 
+        btnThem = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "THÊM<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Ctrl+N)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+        btnThem.setFont(FONT_BOLD);
+        btnThem.setPreferredSize(new Dimension(w, h));
+        btnThem.setToolTipText("<html><b>Phím tắt:</b> Ctrl+N<br>Thêm sản phẩm mới</html>");
+        btnThem.addActionListener(this);
         gbc.gridy=0; 
         p.add(btnThem, gbc);
         
-        btnSua = taoNutBam("Cập nhật", w, h); 
+        btnSua = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "CẬP NHẬT<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Ctrl+U)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+        btnSua.setFont(FONT_BOLD);
+        btnSua.setPreferredSize(new Dimension(w, h));
+        btnSua.setToolTipText("<html><b>Phím tắt:</b> Ctrl+U hoặc Ctrl+S (smart save)<br>Cập nhật sản phẩm đã chọn</html>");
+        btnSua.addActionListener(this);
         gbc.gridy=1; 
         p.add(btnSua, gbc);
         
@@ -281,7 +416,7 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
                 "<html>" +
                     "<center>" +
                         "LÀM MỚI<br>" +
-                        "<span style='font-size:10px; color:#888888;'>(F5/Ctrl+N)</span>" +
+                        "<span style='font-size:10px; color:#888888;'>(F5)</span>" +
                     "</center>" +
                 "</html>"
             );
@@ -325,20 +460,46 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         JPanel pnToolBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
         pnToolBar.setBackground(Color.WHITE);
         
-        btnThemQC = new PillButton("Thêm quy cách");
-        btnThemQC.setPreferredSize(new Dimension(150, 35));
+        btnThemQC = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "Thêm quy cách<br>" +
+                        "<span style='font-size:9px; color:#888888;'>(F7)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+        btnThemQC.setPreferredSize(new Dimension(150, 40));
+        btnThemQC.setToolTipText("<html><b>Phím tắt:</b> F7<br>Thêm quy cách đóng gói mới</html>");
         btnThemQC.addActionListener(this);
         pnToolBar.add(btnThemQC);
         
-        btnSuaQC = new PillButton("Sửa quy cách");
-        btnSuaQC.setPreferredSize(new Dimension(150, 35));
+        btnXoaQC = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "Xóa quy cách<br>" +
+                        "<span style='font-size:9px; color:#888888;'>(F8)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+        btnXoaQC.setPreferredSize(new Dimension(150, 40));
+        btnXoaQC.setToolTipText("<html><b>Phím tắt:</b> F8<br>Xóa quy cách đã chọn</html>");
+        btnXoaQC.addActionListener(this);
+        pnToolBar.add(btnXoaQC);
+        
+        btnSuaQC = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "Sửa quy cách<br>" +
+                        "<span style='font-size:9px; color:#888888;'>(F9)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+        btnSuaQC.setPreferredSize(new Dimension(150, 40));
+        btnSuaQC.setToolTipText("<html><b>Phím tắt:</b> F9<br>Sửa quy cách đã chọn</html>");
         btnSuaQC.addActionListener(this);
         pnToolBar.add(btnSuaQC);
 
-        btnXoaQC = new PillButton("Xóa quy cách");
-        btnXoaQC.setPreferredSize(new Dimension(150, 35));
-        btnXoaQC.addActionListener(this);
-        pnToolBar.add(btnXoaQC);
+
         
         p.add(pnToolBar, BorderLayout.NORTH);
         

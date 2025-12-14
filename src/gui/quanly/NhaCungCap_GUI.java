@@ -30,7 +30,7 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
     private DefaultTableModel modelNhaCungCap;
 
     // Buttons (Đã xóa btnXoa)
-    private PillButton btnThem, btnSua, btnLamMoi, btnTimKiem;
+    private PillButton btnThem, btnSua, btnNgungHoatDong, btnLamMoi, btnTimKiem;
 
     // DAO
     private NhaCungCap_DAO nccDAO;
@@ -76,13 +76,11 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
      * Thiết lập phím tắt cho các component
      */
     private void thietLapPhimTat() {
-        // Lấy InputMap và ActionMap của JPanel chính
         InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap actionMap = getActionMap();
         
-        // --- PHÍM TẮT CHO txtTimKiem (F1, Ctrl+F) ---
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), "focusTimKiem");
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "focusTimKiem");
+        // F1: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
         actionMap.put("focusTimKiem", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -91,12 +89,81 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
             }
         });
         
-        // --- PHÍM TẮT CHO btnTimKiem (Enter khi đang focus vào txtTimKiem đã có sẵn) ---
-        // Không cần thêm vì đã có txtTimKiem.addActionListener(e -> xuLyTimKiem());
+        // Ctrl+F: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
+        actionMap.put("timKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
         
-        // --- PHÍM TẮT CHO btnLamMoi (F5, Ctrl+N) ---
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), "lamMoi");
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK), "lamMoi");
+        // F2: Focus tên nhà cung cấp
+        inputMap.put(KeyStroke.getKeyStroke("F2"), "focusTenNCC");
+        actionMap.put("focusTenNCC", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTenNCC.requestFocus();
+                txtTenNCC.selectAll();
+            }
+        });
+        
+        // Ctrl+N: Thêm mới
+        inputMap.put(KeyStroke.getKeyStroke("control N"), "themMoi");
+        actionMap.put("themMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (validData()) {
+                    NhaCungCap ncc = getFromForm();
+                    String maMoi = nccDAO.taoMaTuDong();
+                    ncc.setMaNhaCungCap(maMoi);
+                    
+                    if (nccDAO.themNhaCungCap(ncc)) {
+                        JOptionPane.showMessageDialog(NhaCungCap_GUI.this, "Thêm nhà cung cấp thành công!");
+                        loadDataLenBang();
+                        lamMoiForm();
+                    } else {
+                        JOptionPane.showMessageDialog(NhaCungCap_GUI.this, "Thêm thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
+        
+        // Ctrl+U: Cập nhật
+        inputMap.put(KeyStroke.getKeyStroke("control U"), "capNhat");
+        actionMap.put("capNhat", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int row = tblNhaCungCap.getSelectedRow();
+                if (row == -1) {
+                    JOptionPane.showMessageDialog(NhaCungCap_GUI.this, "Vui lòng chọn nhà cung cấp cần cập nhật!");
+                    return;
+                }
+                if (validData()) {
+                    NhaCungCap ncc = getFromForm();
+                    if (nccDAO.capNhatNhaCungCap(ncc)) {
+                        JOptionPane.showMessageDialog(NhaCungCap_GUI.this, "Cập nhật thông tin thành công!");
+                        loadDataLenBang();
+                        tblNhaCungCap.setRowSelectionInterval(row, row);
+                    } else {
+                        JOptionPane.showMessageDialog(NhaCungCap_GUI.this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
+        
+        // Ctrl+D: Ngưng hoạt động
+        inputMap.put(KeyStroke.getKeyStroke("control D"), "ngungHoatDong");
+        actionMap.put("ngungHoatDong", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyNgungHoatDong();
+            }
+        });
+        
+        // F5: Làm mới
+        inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
         actionMap.put("lamMoi", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -104,6 +171,9 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
                 loadDataLenBang();
             }
         });
+        
+        // Enter trên ô tìm kiếm
+        txtTimKiem.addActionListener(e -> xuLyTimKiem());
     }
     
     private void taoPhanHeader() {
@@ -112,15 +182,14 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         pnHeader.setBackground(new Color(0xE3F2F5));
 
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Nhập mã hoặc số điện thoại NCC(F1/Ctrl+F)");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Nhập mã hoặc số điện thoại NCC...");
         
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
         txtTimKiem.setBounds(25, 17, 500, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
         txtTimKiem.setForeground(Color.GRAY);
-        // Sự kiện nhấn Enter để tìm kiếm
-        txtTimKiem.addActionListener(e -> xuLyTimKiem());
+        txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
         pnHeader.add(txtTimKiem);
 
         btnTimKiem = new PillButton(
@@ -189,6 +258,8 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
 
         p.add(createLabel("Tên NCC:", xStart, yStart + gap + hText));
         txtTenNCC = createTextField(xStart + wLbl, yStart + gap + hText, wTxt);
+        PlaceholderSupport.addPlaceholder(txtTenNCC, "Nhập tên nhà cung cấp (F2)");
+        txtTenNCC.setToolTipText("<html><b>Phím tắt:</b> F2<br>Nhập tên nhà cung cấp</html>");
         p.add(txtTenNCC);
         
         p.add(createLabel("SĐT:", xStart, yStart + (gap + hText) * 2));
@@ -226,24 +297,61 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         int btnH = 45;
         int btnW = 140;
 
-        btnThem = createPillButton("Thêm", btnW, btnH);
+        btnThem = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "THÊM<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Ctrl+N)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+        btnThem.setFont(FONT_BOLD);
+        btnThem.setPreferredSize(new Dimension(btnW, btnH));
+        btnThem.setToolTipText("<html><b>Phím tắt:</b> Ctrl+N<br>Thêm nhà cung cấp mới</html>");
+        btnThem.addActionListener(this);
         gbc.gridy = 0; p.add(btnThem, gbc);
 
-        btnSua = createPillButton("Cập nhật", btnW, btnH);
+        btnSua = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "CẬP NHẬT<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Ctrl+U)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+        btnSua.setFont(FONT_BOLD);
+        btnSua.setPreferredSize(new Dimension(btnW, btnH));
+        btnSua.setToolTipText("<html><b>Phím tắt:</b> Ctrl+U<br>Cập nhật nhà cung cấp đã chọn</html>");
+        btnSua.addActionListener(this);
         gbc.gridy = 1; p.add(btnSua, gbc);
 
-        // Đã xóa nút Xóa ở vị trí này
+        btnNgungHoatDong = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "NGƯNG HĐ<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Ctrl+D)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+        btnNgungHoatDong.setFont(FONT_BOLD);
+        btnNgungHoatDong.setPreferredSize(new Dimension(btnW, btnH));
+        btnNgungHoatDong.setToolTipText("<html><b>Phím tắt:</b> Ctrl+D<br>Ngưng hoạt động nhà cung cấp đã chọn</html>");
+        btnNgungHoatDong.addActionListener(this);
+        gbc.gridy = 2; p.add(btnNgungHoatDong, gbc);
 
         btnLamMoi = new PillButton(
                 "<html>" +
                     "<center>" +
                         "LÀM MỚI<br>" +
-                        "<span style='font-size:10px; color:#888888;'>(F5/Ctrl+N)</span>" +
+                        "<span style='font-size:10px; color:#888888;'>(F5)</span>" +
                     "</center>" +
                 "</html>"
             );
-
-        gbc.gridy = 2; p.add(btnLamMoi, gbc);
+        btnLamMoi.setFont(FONT_BOLD);
+        btnLamMoi.setPreferredSize(new Dimension(btnW, btnH));
+        btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu</html>");
+        btnLamMoi.addActionListener(this);
+        gbc.gridy = 3; p.add(btnLamMoi, gbc);
     }
 
     private void taoBangDanhSach(JPanel p) {
@@ -332,6 +440,11 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         
         // --- ĐÃ XÓA LOGIC NÚT XÓA ---
         
+        // --- NÚT NGƯNG HOẠT ĐỘNG ---
+        else if (o.equals(btnNgungHoatDong)) {
+            xuLyNgungHoatDong();
+        }
+        
         // --- NÚT LÀM MỚI ---
         else if (o.equals(btnLamMoi)) {
             lamMoiForm();
@@ -415,6 +528,41 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         } else {
             JOptionPane.showMessageDialog(this, "Không tìm thấy nhà cung cấp với thông tin: " + keyword);
             loadDataLenBang(); // Load lại toàn bộ nếu không thấy
+        }
+    }
+
+    /**
+     * Ngưng hoạt động nhà cung cấp
+     */
+    private void xuLyNgungHoatDong() {
+        String maNCC = txtMaNCC.getText();
+        if (maNCC.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn nhà cung cấp cần ngưng hoạt động!");
+            return;
+        }
+
+        // Kiểm tra trạng thái hiện tại
+        if (cboTrangThai.getSelectedItem().equals("Ngưng hoạt động")) {
+            JOptionPane.showMessageDialog(this, "Nhà cung cấp này đã ở trạng thái ngưng hoạt động rồi.");
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            "Nhà cung cấp này ĐANG HOẠT ĐỘNG.\nBạn có chắc chắn muốn ngưng hoạt động không?", 
+            "Cảnh báo", JOptionPane.YES_NO_OPTION);
+        
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        // Lấy thông tin từ form và set trạng thái = false
+        NhaCungCap ncc = getFromForm();
+        ncc.setHoatDong(false);
+        
+        if (nccDAO.capNhatNhaCungCap(ncc)) {
+            JOptionPane.showMessageDialog(this, "Đã ngưng hoạt động nhà cung cấp: " + maNCC);
+            loadDataLenBang();
+            lamMoiForm();
+        } else {
+            JOptionPane.showMessageDialog(this, "Ngưng hoạt động thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 

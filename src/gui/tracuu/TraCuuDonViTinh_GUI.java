@@ -53,6 +53,7 @@ public class TraCuuDonViTinh_GUI extends JPanel implements ActionListener, Mouse
         
         setPreferredSize(new Dimension(1537, 850));
         initialize();
+        setupKeyboardShortcuts();
     }
 
     private void initialize() {
@@ -91,13 +92,13 @@ public class TraCuuDonViTinh_GUI extends JPanel implements ActionListener, Mouse
         pnHeader.add(txtTimKiem);
 
         // --- NÚT CHỨC NĂNG ---
-        btnTim = new PillButton("Tìm kiếm");
+        btnTim = new PillButton("<html><center>TÌM KIẾM<br><span style='font-size:10px; color:#888888;'>(Enter)</span></center></html>");
         btnTim.setBounds(550, 22, 140, 50);
         btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnTim);
         
-        btnLamMoi = new PillButton("Làm mới");
-        btnLamMoi.setBounds(710, 22, 140, 50); // Đã chỉnh lại vị trí cho đẹp
+        btnLamMoi = new PillButton("<html><center>LÀM MỚI<br><span style='font-size:10px; color:#888888;'>(F5)</span></center></html>");
+        btnLamMoi.setBounds(710, 22, 140, 50);
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnLamMoi);
     }
@@ -292,6 +293,46 @@ private void taoPhanGiua() {
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm mã hoặc tên đơn vị tính...");
         taiDuLieuLenBang();
         modelSanPhamSuDung.setRowCount(0);
+    }
+
+    /**
+     * Thiết lập phím tắt cho giao diện
+     */
+    private void setupKeyboardShortcuts() {
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+
+        // F1: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
+        actionMap.put("focusTimKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+
+        // F5: Làm mới
+        inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
+        actionMap.put("lamMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyLamMoi();
+            }
+        });
+
+        // Ctrl+F: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
+        actionMap.put("timKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+
+        // Enter trên ô tìm kiếm
+        txtTimKiem.addActionListener(ev -> xuLyTimKiem());
     }
 
     // ==============================================================================
