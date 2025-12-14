@@ -2,6 +2,8 @@ package gui.quanly;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -10,7 +12,17 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.*;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import component.button.PillButton;
 import component.input.PlaceholderSupport;
@@ -61,6 +73,7 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 	public KhuyenMai_GUI() {
 		setPreferredSize(new Dimension(1537, 850));
 		initialize();
+		setupKeyboardShortcuts(); // Thiết lập phím tắt
 		loadDataKhuyenMai();
 		lamMoiForm(); // sinh mã mới ngay từ đầu
 		if (!dsKhuyenMai.isEmpty()) {
@@ -91,17 +104,41 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		pnHeader.setBackground(new Color(0xE3F2F5));
 
 		txtTimKiem = new JTextField();
-		PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm khuyến mãi...");
+		PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm khuyến mãi... (F1 / Ctrl+F)");
 		txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
 		txtTimKiem.setBounds(25, 17, 500, 60);
 		txtTimKiem.setBorder(new RoundedBorder(20));
+		txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
+		txtTimKiem.addActionListener(e -> xuLyTimKiem());
 		pnHeader.add(txtTimKiem);
 
-		btnTimKiem = new PillButton("Tìm kiếm");
+		btnTimKiem = new PillButton(
+				"<html>" +
+						"<center>" +
+						"TÌM KIẾM<br>" +
+						"<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
+						"</center>" +
+						"</html>");
 		btnTimKiem.setBounds(540, 22, 130, 50);
-		btnTimKiem.setFont(FONT_BOLD);
+		btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnTimKiem.setToolTipText(
+				"<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã, tên khuyến mãi</html>");
 		btnTimKiem.addActionListener(e -> xuLyTimKiem());
 		pnHeader.add(btnTimKiem);
+
+		// Nút Xuất Excel
+		PillButton btnXuatExcel = new PillButton(
+				"<html>" +
+						"<center>" +
+						"XUẤT EXCEL<br>" +
+						"<span style='font-size:10px; color:#888888;'>(Ctrl+E)</span>" +
+						"</center>" +
+						"</html>");
+		btnXuatExcel.setBounds(685, 22, 150, 50);
+		btnXuatExcel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnXuatExcel.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất dữ liệu ra file Excel</html>");
+		btnXuatExcel.addActionListener(e -> xuatExcel());
+		pnHeader.add(btnXuatExcel);
 	}
 
 	// ====================== CENTER (SPLIT) ======================
@@ -338,6 +375,52 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		else if (o.equals(btnXoaSP)) {
 			xuLyXoaSanPhamApDung();
 		}
+	}
+
+	/**
+	 * Thiết lập phím tắt cho màn hình Quản lý Khuyến mãi
+	 */
+	private void setupKeyboardShortcuts() {
+		InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+		ActionMap actionMap = getActionMap();
+
+		// F1: Focus tìm kiếm
+		inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
+		actionMap.put("focusTimKiem", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtTimKiem.requestFocus();
+				txtTimKiem.selectAll();
+			}
+		});
+
+		// F5: Làm mới
+		inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
+		actionMap.put("lamMoi", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				lamMoiForm();
+			}
+		});
+
+		// Ctrl+F: Focus tìm kiếm
+		inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
+		actionMap.put("timKiem", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtTimKiem.requestFocus();
+				txtTimKiem.selectAll();
+			}
+		});
+
+		// Ctrl+E: Xuất Excel
+		inputMap.put(KeyStroke.getKeyStroke("control E"), "xuatExcel");
+		actionMap.put("xuatExcel", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				xuatExcel();
+			}
+		});
 	}
 
 	// ---------- CRUD KM ----------
@@ -882,6 +965,98 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 			txt.requestFocus();
 			txt.selectAll();
 		});
+	}
+
+	/**
+	 * Xuất dữ liệu ra file Excel
+	 */
+	private void xuatExcel() {
+		if (modelKhuyenMai.getRowCount() == 0) {
+			JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất!",
+					"Thông báo", JOptionPane.WARNING_MESSAGE);
+			return;
+		}
+
+		try {
+			JFileChooser fileChooser = new JFileChooser();
+			fileChooser.setDialogTitle("Chọn nơi lưu file Excel");
+			fileChooser.setSelectedFile(new File("DanhSachKhuyenMai.xlsx"));
+			fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files", "xlsx"));
+
+			if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+				File file = fileChooser.getSelectedFile();
+				if (!file.getName().endsWith(".xlsx")) {
+					file = new File(file.getAbsolutePath() + ".xlsx");
+				}
+
+				XSSFWorkbook workbook = new XSSFWorkbook();
+				Sheet sheet = workbook.createSheet("Danh Sách Khuyến Mãi");
+
+				// Header style
+				CellStyle headerStyle = workbook.createCellStyle();
+				XSSFFont headerFont = workbook.createFont();
+				headerFont.setBold(true);
+				headerStyle.setFont(headerFont);
+				headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+				headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+				// Tiêu đề
+				Row titleRow = sheet.createRow(0);
+				Cell titleCell = titleRow.createCell(0);
+				titleCell.setCellValue("DANH SÁCH KHUYẾN MÃI");
+
+				CellStyle titleStyle = workbook.createCellStyle();
+				XSSFFont titleFont = workbook.createFont();
+				titleFont.setBold(true);
+				titleFont.setFontHeightInPoints((short) 16);
+				titleStyle.setFont(titleFont);
+				titleCell.setCellStyle(titleStyle);
+
+				// Thông tin ngày xuất
+				Row periodRow = sheet.createRow(1);
+				periodRow.createCell(0).setCellValue(
+						"Ngày xuất: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+
+				// Header row
+				Row headerRow = sheet.createRow(3);
+				for (int i = 0; i < modelKhuyenMai.getColumnCount(); i++) {
+					Cell cell = headerRow.createCell(i);
+					cell.setCellValue(modelKhuyenMai.getColumnName(i));
+					cell.setCellStyle(headerStyle);
+				}
+
+				// Data rows
+				for (int row = 0; row < modelKhuyenMai.getRowCount(); row++) {
+					Row dataRow = sheet.createRow(row + 4);
+					for (int col = 0; col < modelKhuyenMai.getColumnCount(); col++) {
+						Object value = modelKhuyenMai.getValueAt(row, col);
+						dataRow.createCell(col).setCellValue(value != null ? value.toString() : "");
+					}
+				}
+
+				// Auto-size columns
+				for (int i = 0; i < modelKhuyenMai.getColumnCount(); i++) {
+					sheet.autoSizeColumn(i);
+				}
+
+				// Write file
+				try (FileOutputStream fos = new FileOutputStream(file)) {
+					workbook.write(fos);
+				}
+				workbook.close();
+
+				JOptionPane.showMessageDialog(this,
+						"Xuất Excel thành công!\nFile: " + file.getAbsolutePath(),
+						"Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+				// Mở file
+				Desktop.getDesktop().open(file);
+			}
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, "Lỗi xuất Excel: " + e.getMessage(),
+					"Lỗi", JOptionPane.ERROR_MESSAGE);
+			e.printStackTrace();
+		}
 	}
 
 	public static void main(String[] args) {
