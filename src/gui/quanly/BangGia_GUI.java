@@ -413,10 +413,8 @@ public class BangGia_GUI extends JPanel implements ActionListener {
                     "<span style='font-size:10px; color:#888888;'>(F7)</span>" +
                 "</center>" +
             "</html>");
-        btnThemCT.setFont(FONT_TEXT);
+        btnThemCT.setFont(FONT_BOLD);
         btnThemCT.setPreferredSize(new Dimension(160, 35));
-        btnThemCT.setBackground(COLOR_PRIMARY);
-        btnThemCT.setForeground(Color.WHITE);
         btnThemCT.setToolTipText("<html><b>Phím tắt:</b> F7<br>Thêm quy tắc giá vào bảng tạm<br>(Giá Từ sẽ tự động nhảy)</html>");
         btnThemCT.addActionListener(this);
         pnToolBar.add(btnThemCT);
@@ -429,10 +427,8 @@ public class BangGia_GUI extends JPanel implements ActionListener {
                     "<span style='font-size:10px; color:#888888;'>(F8)</span>" +
                 "</center>" +
             "</html>");
-        btnXoaCT.setFont(FONT_TEXT);
+        btnXoaCT.setFont(FONT_BOLD);
         btnXoaCT.setPreferredSize(new Dimension(170, 35));
-        btnXoaCT.setBackground(COLOR_PRIMARY);
-        btnXoaCT.setForeground(Color.WHITE);
         btnXoaCT.setToolTipText("<html><b>Phím tắt:</b> F8<br>Xóa dòng cuối cùng trong bảng quy tắc</html>");
         btnXoaCT.addActionListener(this);
         pnToolBar.add(btnXoaCT);
@@ -445,10 +441,8 @@ public class BangGia_GUI extends JPanel implements ActionListener {
                     "<span style='font-size:10px; color:#888888;'>(F9)</span>" +
                 "</center>" +
             "</html>");
-        btnLamMoiCT.setFont(FONT_TEXT);
+        btnLamMoiCT.setFont(FONT_BOLD);
         btnLamMoiCT.setPreferredSize(new Dimension(150, 35));
-        btnLamMoiCT.setBackground(COLOR_PRIMARY);
-        btnLamMoiCT.setForeground(Color.WHITE);
         btnLamMoiCT.setToolTipText("<html><b>Phím tắt:</b> F9<br>Làm mới các ô nhập liệu<br>Để tiếp tục thêm quy tắc mới</html>");
         btnLamMoiCT.addActionListener(ev -> {
             xuLyLamMoiFormChiTiet();
