@@ -136,7 +136,14 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         pnHeader.add(dateDenNgay);
 
         // --- 3. CÁC NÚT CHỨC NĂNG (Bên phải) - KHỚP 100% ---
-        btnTimKiem = new PillButton("Tìm Kiếm");
+        btnTimKiem = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "TÌM KIẾM<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
+                    "</center>" +
+                "</html>"
+            );
         btnTimKiem.setBounds(1120, 22, 130, 50);
         btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18)); 
         btnTimKiem.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã hóa đơn, SĐT và bộ lọc ngày</html>");
