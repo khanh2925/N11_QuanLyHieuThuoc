@@ -65,9 +65,6 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
     private List<ChiTietPhieuHuy> dsCTPH;
 
     private PillButton btnLamMoi, btnTim;
-
-    private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 16);
-    private final Color COLOR_PRIMARY = new Color(33, 150, 243);
     private final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final DecimalFormat df = new DecimalFormat("#,###đ");
 
@@ -122,7 +119,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         txtTimKiem = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã phiếu, tên nhân viên");
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20)); // Font 20
-        txtTimKiem.setBounds(25, 17, 480, 60); // Width 480
+        txtTimKiem.setBounds(25, 17, 480, 60); 
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
         pnHeader.add(txtTimKiem);
@@ -235,9 +232,9 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
                 lbl.setFont(new Font("Segoe UI", Font.BOLD, 16));
                 String status = (String) value;
                 if ("Đã duyệt".equals(status)) {
-                    lbl.setForeground(new Color(0x2E7D32)); // Xanh lá
+                    lbl.setForeground(new Color(0x2E7D32)); 
                 } else {
-                    lbl.setForeground(new Color(0xE65100)); // Cam
+                    lbl.setForeground(new Color(0xE65100)); 
                 }
                 return lbl;
             }
@@ -322,8 +319,8 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
     // ==============================================================================
     private void initData() {
         loadComboTrangThai();
-        xuLyLamMoi(); // load all + set ngày mặc định
-        loadDuLieuPhieuHuyTheoPH(); // click chọn phiếu -> load chi tiết
+        xuLyLamMoi(); 
+        loadDuLieuPhieuHuyTheoPH(); 
     }
 
     private void loadComboTrangThai() {
@@ -349,7 +346,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
     private void addEvents() {
         btnLamMoi.addActionListener(this);
         btnTim.addActionListener(this);
-        txtTimKiem.addActionListener(this); // Enter trong ô tìm kiếm
+        txtTimKiem.addActionListener(this); 
      
     }
 

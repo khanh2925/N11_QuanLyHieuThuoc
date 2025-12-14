@@ -276,7 +276,7 @@ public class TongQuanNV_GUI extends JPanel implements ActionListener, MouseListe
 			txtSPDaBan.setText(String.valueOf(soSPDaBan));
 
 			// 4. số lô sp gần hết hạn
-			int soLoToiHanSD = loSanPhamDao.demSoLoSPToiHanSuDung();
+			int soLoToiHanSD = loSanPhamDao.layDanhSachLoSPToiHanSuDung().size();
 			txtLoSPSapHetHan.setText(String.valueOf(soLoToiHanSD));
 
 			int soPhieuHuy = phieuHuyDAO.demSoPhieuHuyHomNayCuaNhanVien(maNV);
