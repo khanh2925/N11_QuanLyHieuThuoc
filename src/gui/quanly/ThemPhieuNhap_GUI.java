@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -58,7 +60,7 @@ import gui.dialog.ChonLo_Dialog;
 import gui.dialog.ThemLo_Dialog;
 
 
-public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Serializable {
+public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Serializable{
     private JPanel pnDanhSachDon;
     private JTextField txtSearch;
     private JTextField txtTimNCC;
@@ -131,6 +133,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
 
         this.setPreferredSize(new Dimension(1537, 850));
         initialize(); //
+        setupKeyboardShortcuts();
     }
 
     /**
@@ -174,6 +177,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
 
         this.setPreferredSize(new Dimension(1537, 850));
         initialize(); // <-- ĐÃ VIỆT HÓA (từ initialize)
+        setupKeyboardShortcuts();
     }
 
 
@@ -191,31 +195,34 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
         pnHeader.setBorder(new EmptyBorder(15, 20, 15, 20));
         add(pnHeader, BorderLayout.NORTH);
 
-        txtSearch = TaoJtextNhanh.nhapLieu("Nhập Mã SP để thêm lô và nhấn Enter...");
+        txtSearch = TaoJtextNhanh.nhapLieu("Nhập Mã SP để thêm lô(F1/Ctrl+F)");
         txtSearch.setBounds(20, 15, 420, 58);
 //        PlaceholderSupport.addPlaceholder(txtSearch, "Nhập Mã SP để thêm lô và nhấn Enter...");
 //        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 16));
 //        txtSearch.setBorder(new RoundedBorder(15));
+        txtSearch.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhập mã sản phẩm và nhấn Enter để thêm lô</html>");
         txtSearch.addActionListener(this);
         pnHeader.setLayout(null);
         txtSearch.setPreferredSize(new Dimension(420, 60));
         pnHeader.add(txtSearch);
 
         JPanel pnHeaderButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        pnHeaderButtons.setBounds(500, 20, 300, 58);
+        pnHeaderButtons.setBounds(350, 20, 300, 58);
         pnHeaderButtons.setOpaque(false);
 
-        btnThemLo = new PillButton("Thêm lô");
-        btnThemLo.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnThemLo.setPreferredSize(new Dimension(120, 50));
-        btnThemLo.addActionListener(this);
-        pnHeaderButtons.add(btnThemLo);
-
-        btnNhapFile = new PillButton("Nhập từ file");
+        btnNhapFile = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "NHẬP TỪ FILE<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Ctrl+O)</span>" +
+                    "</center>" +
+                "</html>"
+            );
         btnNhapFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnNhapFile.setPreferredSize(new Dimension(150, 50));
+        btnNhapFile.setPreferredSize(new Dimension(180, 50));
         btnNhapFile.addActionListener(this);
         pnHeaderButtons.add(btnNhapFile);
+        btnNhapFile.setToolTipText("<html><b>Phím tắt:</b> Ctrl+O<br>Nhập danh sách sản phẩm từ file Excel</html>");
 
         pnHeader.add(pnHeaderButtons);
 
@@ -273,9 +280,9 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
         pnTimNCC.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
         pnTimNCC.setOpaque(false);
 
-        txtTimNCC = TaoJtextNhanh.nhapLieu("Nhập Số điện thoại NCC rồi nhấn Enter");
+        txtTimNCC = TaoJtextNhanh.nhapLieu("Nhập Số điện thoại NCC(F2/Ctrl+K)");
         txtTimNCC.setPreferredSize(new Dimension(120, 200));;
-
+        txtTimNCC.setToolTipText("<html><b>Phím tắt:</b> F2 hoặc Ctrl+K<br>Nhập số điện thoại nhà cung cấp và nhấn Enter</html>");
         txtTimNCC.addActionListener(this);
         pnTimNCC.add(txtTimNCC, BorderLayout.CENTER);
         pnSidebar.add(pnTimNCC);
@@ -376,12 +383,20 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
         pnSidebar.add(boxTongTien);
         pnSidebar.add(Box.createVerticalStrut(15));
 
-        btnNhapPhieu = new PillButton("Nhập Phiếu");
+        btnNhapPhieu = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "NHẬP PHIẾU<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(F9 / Ctrl+Enter)</span>" +
+                    "</center>" +
+                "</html>"
+            );
         btnNhapPhieu.setFont(new Font("Segoe UI", Font.BOLD, 20));
         btnNhapPhieu.setAlignmentX(Component.CENTER_ALIGNMENT);
-        btnNhapPhieu.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        btnNhapPhieu.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
         btnNhapPhieu.addActionListener(this);
         pnSidebar.add(btnNhapPhieu);
+        btnNhapPhieu.setToolTipText("<html><b>Phím tắt:</b> F9 hoặc Ctrl+Enter<br>Lưu phiếu nhập vào hệ thống</html>");
     }
 
 
@@ -441,13 +456,132 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
     }
 
     /**
+     * Thiết lập phím tắt cho màn hình Thêm Phiếu Nhập
+     */
+    private void setupKeyboardShortcuts() {
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+
+        // F1: Focus tìm sản phẩm
+        inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimSanPham");
+        actionMap.put("focusTimSanPham", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtSearch.requestFocus();
+                txtSearch.selectAll();
+            }
+        });
+
+        // Ctrl+F: Focus tìm sản phẩm
+        inputMap.put(KeyStroke.getKeyStroke("control F"), "timSanPham");
+        actionMap.put("timSanPham", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtSearch.requestFocus();
+                txtSearch.selectAll();
+            }
+        });
+
+        // F2: Focus tìm nhà cung cấp
+        inputMap.put(KeyStroke.getKeyStroke("F2"), "focusTimNCC");
+        actionMap.put("focusTimNCC", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimNCC.requestFocus();
+                txtTimNCC.selectAll();
+            }
+        });
+
+        // Ctrl+K: Focus tìm nhà cung cấp
+        inputMap.put(KeyStroke.getKeyStroke("control K"), "timNCC");
+        actionMap.put("timNCC", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimNCC.requestFocus();
+                txtTimNCC.selectAll();
+            }
+        });
+
+        // Ctrl+O: Nhập từ file
+        inputMap.put(KeyStroke.getKeyStroke("control O"), "nhapFile");
+        actionMap.put("nhapFile", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyNhapFile();
+            }
+        });
+
+        // F9: Nhập phiếu
+        inputMap.put(KeyStroke.getKeyStroke("F9"), "nhapPhieu");
+        actionMap.put("nhapPhieu", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyNhapPhieu();
+            }
+        });
+
+        // Ctrl+Enter: Nhập phiếu nhanh
+        inputMap.put(KeyStroke.getKeyStroke("control ENTER"), "nhapPhieuNhanh");
+        actionMap.put("nhapPhieuNhanh", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyNhapPhieu();
+            }
+        });
+
+        // F5: Làm mới (xóa tất cả)
+        inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
+        actionMap.put("lamMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int choice = JOptionPane.showConfirmDialog(
+                    ThemPhieuNhap_GUI.this,
+                    "Bạn có chắc muốn xóa tất cả dữ liệu và làm mới không?",
+                    "Xác nhận làm mới",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+                );
+                if (choice == JOptionPane.YES_OPTION) {
+                    xoaTatCaDuLieu();
+                }
+            }
+        });
+    }
+
+    /**
+     * Xóa tất cả dữ liệu và làm mới form
+     */
+    private void xoaTatCaDuLieu() {
+        // Xóa tất cả sản phẩm trong danh sách
+        pnDanhSachDon.removeAll();
+        capNhatTongTienHang();
+
+        // Reset thông tin nhà cung cấp
+        txtTimNCC.setText("");
+        datLaiThongTinNCC();
+
+        // Reset ô tìm kiếm sản phẩm
+        txtSearch.setText("");
+
+        // Cập nhật lại giao diện
+        pnDanhSachDon.revalidate();
+        pnDanhSachDon.repaint();
+
+        // Reset lại nhà cung cấp đã chọn
+        nhaCungCapDaChon = null;
+
+        // Focus vào ô tìm sản phẩm
+        txtSearch.requestFocus();
+    }
+
+    /**
      * Hàm bắt sự kiện (Không thể đổi tên hàm này)
      */
     @Override
     public void actionPerformed(ActionEvent e) {
         Object source = e.getSource();
 
-        if (source == btnThemLo || source == txtSearch) {
+        if (source == txtSearch) {
             xuLyThemLo();
         } else if (source == btnNhapFile) {
             xuLyNhapFile();
@@ -460,68 +594,153 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
 
     /**
      * Xử lý nghiệp vụ nhập hàng từ file Excel
-     * ✅ ĐÃ CẬP NHẬT: Tự động đọc SĐT Nhà Cung Cấp từ cột thứ 6 (Cell 5) của dòng dữ liệu đầu tiên
+     * ✅ CẤU TRÚC FILE:
+     * - Dòng 1-5: Thông tin Nhà Cung Cấp (Tên, SĐT, Địa chỉ, Email, Ghi chú)
+     * - Dòng 6: Header (Mã SP, HSD, Số lượng, Đơn giá, Đơn vị)
+     * - Dòng 7+: Dữ liệu sản phẩm
      */
     private void xuLyNhapFile() {
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Chọn file Excel để nhập");
+        fileChooser.setDialogTitle("📂 Chọn file Excel để nhập hàng");
         fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
+        
+        // Set thư mục mặc định
+        File defaultDir = new File(System.getProperty("user.home") + "/Desktop");
+        if (defaultDir.exists()) {
+            fileChooser.setCurrentDirectory(defaultDir);
+        }
 
         int userSelection = fileChooser.showOpenDialog(mainFrame);
 
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             File fileToRead = fileChooser.getSelectedFile();
 
-            JOptionPane.showMessageDialog(mainFrame,
-                "Đang xử lý file, vui lòng chờ...\nGiao diện có thể bị treo trong giây lát.",
-                "Đang nhập file",
-                JOptionPane.INFORMATION_MESSAGE);
-
-            StringBuilder errorMessages = new StringBuilder();
-            int successCount = 0;
-            int failCount = 0;
-            boolean daTimNCC = false; // 🚩 Cờ kiểm tra xem đã tìm NCC chưa
-
-            try (FileInputStream fis = new FileInputStream(fileToRead);
-                 Workbook workbook = new XSSFWorkbook(fis)) {
-
-                Sheet sheet = workbook.getSheetAt(0);
-                Iterator<Row> rowIterator = sheet.iterator();
-
-                // Bỏ qua dòng tiêu đề (Header)
-                if (rowIterator.hasNext()) {
-                    rowIterator.next();
+            // Tạo dialog loading đẹp hơn
+            JDialog loadingDialog = new JDialog(mainFrame, "Đang xử lý...", true);
+            JPanel loadingPanel = new JPanel(new BorderLayout(10, 10));
+            loadingPanel.setBorder(new EmptyBorder(20, 30, 20, 30));
+            loadingPanel.setBackground(Color.WHITE);
+            
+            JLabel lblIcon = new JLabel("⏳");
+            lblIcon.setFont(new Font("Segoe UI", Font.PLAIN, 48));
+            lblIcon.setHorizontalAlignment(SwingConstants.CENTER);
+            
+            JLabel lblMessage = new JLabel("<html><center>Đang đọc file Excel...<br>Vui lòng chờ trong giây lát</center></html>");
+            lblMessage.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            lblMessage.setHorizontalAlignment(SwingConstants.CENTER);
+            
+            loadingPanel.add(lblIcon, BorderLayout.NORTH);
+            loadingPanel.add(lblMessage, BorderLayout.CENTER);
+            
+            loadingDialog.getContentPane().add(loadingPanel);
+            loadingDialog.setSize(350, 180);
+            loadingDialog.setLocationRelativeTo(mainFrame);
+            loadingDialog.setUndecorated(true);
+            loadingDialog.getRootPane().setBorder(new LineBorder(new Color(0, 191, 165), 3));
+            
+            // Xử lý trong SwingWorker để không block UI
+            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    xuLyDocFileExcel(fileToRead);
+                    return null;
                 }
+                
+                @Override
+                protected void done() {
+                    loadingDialog.dispose();
+                }
+            };
+            
+            worker.execute();
+            loadingDialog.setVisible(true); // Block cho đến khi worker xong
+        }
+    }
 
-                while (rowIterator.hasNext()) {
-                    Row row = rowIterator.next();
-                    try {
-                        // 1. Đọc các ô dữ liệu cơ bản
-                        String maSP = layGiaTriChuoiTuO(row.getCell(0)); 
-                        LocalDate hsd = layGiaTriNgayTuO(row.getCell(1)); 
-                        int soLuong = (int) layGiaTriSoTuO(row.getCell(2)); 
-                        double donGia_Excel = layGiaTriSoTuO(row.getCell(3)); 
-                        String tenDVT_Excel = layGiaTriChuoiTuO(row.getCell(4)); 
+    /**
+     * Xử lý đọc file Excel và import dữ liệu
+     */
+    private void xuLyDocFileExcel(File fileToRead) {
+        final StringBuilder errorMessages = new StringBuilder();
+        final int[] counts = {0, 0}; // [0] = successCount, [1] = failCount
 
-                        // ============================================================
-                        // 🚩 LOGIC MỚI: Đọc SĐT Nhà Cung Cấp từ cột 5 (Cột F)
-                        // Chỉ thực hiện 1 lần duy nhất cho dòng dữ liệu hợp lệ đầu tiên
-                        // ============================================================
-                        if (!daTimNCC) {
-                            String sdtNCC = layGiaTriChuoiTuO(row.getCell(5)); // Lấy cột F
-                            if (!sdtNCC.isEmpty()) {
-                                txtTimNCC.setText(sdtNCC); // Điền SĐT vào ô tìm kiếm
-                                xuLyTimNhaCungCap();       // Gọi hàm xử lý tìm kiếm (tự động Enter)
-                                
-                                // Kiểm tra nếu tìm thấy thì khóa cờ lại, nếu không thấy thì báo lỗi nhẹ
-                                if (nhaCungCapDaChon != null) {
-                                    daTimNCC = true; 
-                                } else {
-                                    errorMessages.append("⚠️ Cảnh báo: Không tìm thấy NCC với SĐT: ").append(sdtNCC).append("\n");
-                                }
-                            }
+        try (FileInputStream fis = new FileInputStream(fileToRead);
+             Workbook workbook = new XSSFWorkbook(fis)) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+            
+            // ============================================================
+            // 🔹 BƯỚC 1: ĐỌC THÔNG TIN NHÀ CUNG CẤP TỪ 5 DÒNG ĐẦU
+            // ============================================================
+            // Dòng 1 (index 0): Tiêu đề "Thông Tin Phiếu Nhập"
+            // Dòng 2 (index 1): A2 = "Tên Nhà Cung Cấp", B2 = Tên NCC
+            // Dòng 3 (index 2): A3 = "Địa Chỉ", B3 = Địa chỉ
+            // Dòng 4 (index 3): A4 = "Email", B4 = Email
+            // Dòng 5 (index 4): A5 = "Số Điện Thoại", B5 = SĐT
+            // Dòng 6 (index 5): Header của bảng sản phẩm
+            // Dòng 7+ (index 6+): Dữ liệu sản phẩm
+            
+            String sdtNCC = "";
+            String tenNCC = "";
+            String diaChiNCC = "";
+            String emailNCC = "";
+            
+            try {
+                // Đọc Tên Nhà Cung Cấp từ B2 (dòng 2, cột 1)
+                Row row2 = sheet.getRow(1);
+                if (row2 != null && row2.getCell(1) != null) {
+                    tenNCC = layGiaTriChuoiTuO(row2.getCell(1));
+                }
+                
+                // Đọc Địa Chỉ từ B3 (dòng 3, cột 1)
+                Row row3 = sheet.getRow(2);
+                if (row3 != null && row3.getCell(1) != null) {
+                    diaChiNCC = layGiaTriChuoiTuO(row3.getCell(1));
+                }
+                
+                // Đọc Email từ B4 (dòng 4, cột 1)
+                Row row4 = sheet.getRow(3);
+                if (row4 != null && row4.getCell(1) != null) {
+                    emailNCC = layGiaTriChuoiTuO(row4.getCell(1));
+                }
+                
+                // Đọc Số Điện Thoại từ B5 (dòng 5, cột 1)
+                Row row5 = sheet.getRow(4);
+                if (row5 != null && row5.getCell(1) != null) {
+                    sdtNCC = layGiaTriChuoiTuO(row5.getCell(1));
+                    if (!sdtNCC.isEmpty()) {
+                        // Tự động nhập SĐT vào ô tìm kiếm và tìm NCC
+                        txtTimNCC.setText(sdtNCC);
+                        xuLyTimNhaCungCap();
+                        
+                        if (nhaCungCapDaChon == null) {
+                            errorMessages.append("⚠️ Không tìm thấy NCC với SĐT: ").append(sdtNCC).append("\n");
                         }
-                        // ============================================================
+                    }
+                }
+            } catch (Exception e) {
+                errorMessages.append("⚠️ Lỗi đọc thông tin NCC: ").append(e.getMessage()).append("\n");
+            }
+
+            // ============================================================
+            // 🔹 BƯỚC 2: ĐỌC DỮ LIỆU SẢN PHẨM (Từ dòng 8 trở đi)
+            // ============================================================
+            Iterator<Row> rowIterator = sheet.iterator();
+            
+            // Bỏ qua 7 dòng đầu (5 dòng thông tin NCC + 1 dòng header + 1 dòng bỏ qua)
+            for (int i = 0; i < 7 && rowIterator.hasNext(); i++) {
+                rowIterator.next();
+            }
+
+            while (rowIterator.hasNext()) {
+                Row row = rowIterator.next();
+                try {
+                    // Đọc các ô dữ liệu từ cột A-E (Mã SP, HSD, Số lượng, Đơn giá, Đơn vị)
+                    String maSP = layGiaTriChuoiTuO(row.getCell(0)); 
+                    LocalDate hsd = layGiaTriNgayTuO(row.getCell(1)); 
+                    int soLuong = (int) layGiaTriSoTuO(row.getCell(2)); 
+                    double donGia_Excel = layGiaTriSoTuO(row.getCell(3)); 
+                    String tenDVT_Excel = layGiaTriChuoiTuO(row.getCell(4));
 
                         if (maSP.isEmpty() && tenDVT_Excel.isEmpty() && (hsd == null || hsd.toString().isEmpty())) {
                             continue; // Bỏ qua dòng trống
@@ -573,46 +792,131 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
                             pnDanhSachDon.add(newPanel);
                             capNhatLaiSTT();
                         }
-                        successCount++;
+                        counts[0]++; // successCount++
 
                     } catch (Exception e) {
-                        failCount++;
+                        counts[1]++; // failCount++
                         errorMessages.append("Dòng ").append(row.getRowNum() + 1).append(": ").append(e.getMessage()).append("\n");
                     }
                 }
 
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Lỗi nghiêm trọng khi đọc file:\n" + e.getMessage(), "Lỗi File", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+        } catch (Exception e) {
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(this, 
+                    "❌ Lỗi nghiêm trọng khi đọc file:\n" + e.getMessage(), 
+                    "Lỗi File", 
+                    JOptionPane.ERROR_MESSAGE);
+            });
+            e.printStackTrace();
+            return;
+        }
 
+        // Cập nhật UI trên EDT
+        SwingUtilities.invokeLater(() -> {
             capNhatTongTienHang();
             pnDanhSachDon.revalidate();
             pnDanhSachDon.repaint();
-            SwingUtilities.invokeLater(() -> scrollPane.getVerticalScrollBar().setValue(scrollPane.getVerticalScrollBar().getMaximum()));
+            scrollPane.getVerticalScrollBar().setValue(scrollPane.getVerticalScrollBar().getMaximum());
 
-            String summaryMessage = String.format("Hoàn thành nhập file!\n\nThành công: %d dòng.\nThất bại: %d dòng.", successCount, failCount);
+            // Tạo dialog kết quả đẹp hơn
+            hienThiKetQuaNhapFile(counts[0], counts[1], errorMessages.toString());
+        });
+    }
+
+    /**
+     * Hiển thị kết quả nhập file với giao diện đẹp
+     */
+    private void hienThiKetQuaNhapFile(int successCount, int failCount, String errors) {
+        JDialog resultDialog = new JDialog(mainFrame, "📊 Kết Quả Nhập File", true);
+        resultDialog.setSize(600, 500);
+        resultDialog.setLocationRelativeTo(mainFrame);
+        
+        JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
+        mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        mainPanel.setBackground(Color.WHITE);
+        
+        // Header
+        JPanel headerPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+        headerPanel.setOpaque(false);
+        headerPanel.setBorder(new EmptyBorder(0, 0, 15, 0));
+        
+        JLabel lblSuccessIcon = new JLabel("Thành công:");
+        lblSuccessIcon.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        JLabel lblSuccessValue = new JLabel(successCount + " dòng");
+        lblSuccessValue.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        lblSuccessValue.setForeground(new Color(0, 150, 0));
+        
+        JLabel lblFailIcon = new JLabel("Thất bại:");
+        lblFailIcon.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        JLabel lblFailValue = new JLabel(failCount + " dòng");
+        lblFailValue.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        lblFailValue.setForeground(failCount > 0 ? Color.RED : Color.GRAY);
+        
+        JLabel lblNCCIcon = new JLabel("Nhà cung cấp:");
+        lblNCCIcon.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        JLabel lblNCCValue = new JLabel(
+            nhaCungCapDaChon != null ? nhaCungCapDaChon.getTenNhaCungCap() : "Chưa chọn"
+        );
+        lblNCCValue.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        lblNCCValue.setForeground(nhaCungCapDaChon != null ? new Color(0, 123, 255) : Color.RED);
+        
+        headerPanel.add(lblSuccessIcon);
+        headerPanel.add(lblSuccessValue);
+        headerPanel.add(lblFailIcon);
+        headerPanel.add(lblFailValue);
+        headerPanel.add(lblNCCIcon);
+        headerPanel.add(lblNCCValue);
+        
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
+        
+        // Chi tiết lỗi (nếu có)
+        if (failCount > 0 && !errors.isEmpty()) {
+            JPanel errorPanel = new JPanel(new BorderLayout(5, 5));
+            errorPanel.setOpaque(false);
             
-            // Thêm thông báo về NCC trong kết quả
-            if (nhaCungCapDaChon != null) {
-                summaryMessage += "\n\n✅ Đã chọn NCC: " + nhaCungCapDaChon.getTenNhaCungCap();
-            } else {
-                summaryMessage += "\n\n⚠️ Chưa chọn được NCC (Kiểm tra cột F trong file Excel).";
-            }
-
-            if (failCount > 0) {
-                JTextArea textArea = new JTextArea(errorMessages.toString());
-                textArea.setEditable(false);
-                JScrollPane scrollPane = new JScrollPane(textArea);
-                scrollPane.setPreferredSize(new Dimension(500, 200));
-                JOptionPane.showMessageDialog(this,
-                    new Object[]{summaryMessage, "\nChi tiết lỗi:", scrollPane},
-                    "Kết Quả Nhập File",
-                    JOptionPane.WARNING_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(this, summaryMessage, "Kết Quả Nhập File", JOptionPane.INFORMATION_MESSAGE);
-            }
+            JLabel lblErrorTitle = new JLabel("📝 Chi tiết lỗi:");
+            lblErrorTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+            errorPanel.add(lblErrorTitle, BorderLayout.NORTH);
+            
+            JTextArea textArea = new JTextArea(errors);
+            textArea.setEditable(false);
+            textArea.setFont(new Font("Consolas", Font.PLAIN, 12));
+            textArea.setBackground(new Color(255, 250, 240));
+            textArea.setBorder(new EmptyBorder(10, 10, 10, 10));
+            
+            JScrollPane scrollPane = new JScrollPane(textArea);
+            scrollPane.setBorder(new LineBorder(new Color(255, 200, 100), 2));
+            errorPanel.add(scrollPane, BorderLayout.CENTER);
+            
+            mainPanel.add(errorPanel, BorderLayout.CENTER);
+        } else {
+            JLabel lblSuccess = new JLabel(
+                "<html><center>🎉<br><br><b style='font-size:18px; color:#00796B;'>Nhập file thành công!</b><br><br>" +
+                "Tất cả dữ liệu đã được import vào danh sách nhập hàng.</center></html>"
+            );
+            lblSuccess.setHorizontalAlignment(SwingConstants.CENTER);
+            mainPanel.add(lblSuccess, BorderLayout.CENTER);
         }
+        
+        // Button
+        JButton btnClose = new JButton("Đóng");
+        btnClose.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnClose.setPreferredSize(new Dimension(100, 40));
+        btnClose.setBackground(new Color(0, 191, 165));
+        btnClose.setForeground(Color.WHITE);
+        btnClose.setFocusPainted(false);
+        btnClose.setBorder(new RoundedBorder(10));
+        btnClose.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnClose.addActionListener(e -> resultDialog.dispose());
+        
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.setOpaque(false);
+        buttonPanel.add(btnClose);
+        
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        resultDialog.getContentPane().add(mainPanel);
+        resultDialog.setVisible(true);
     }
 
     /**
@@ -655,19 +959,30 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
      * Helper: Lấy giá trị dạng Ngày từ ô Excel
      */
     private LocalDate layGiaTriNgayTuO(Cell cell) throws Exception {
-        if (cell == null) {
-            return null;
-        }
+    	if (cell == null) return null;
 
         if (cell.getCellType() == CellType.STRING) {
             String dateString = cell.getStringCellValue().trim();
             if (dateString.isEmpty()) return null;
+            
             try {
-                return LocalDate.parse(dateString, fmtDate);
-            } catch (Exception e) {
-                throw new Exception("Định dạng ngày '" + dateString + "' không hợp lệ (cần dd/MM/yyyy).");
-            }
-        }
+                // CÁCH 1: Nếu chỉ có ngày (dd/MM/yyyy)
+                return LocalDate.parse(dateString, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            } catch (Exception e1) {
+                try {
+                    // CÁCH 2: Nếu có cả giờ Tiếng Việt (dd/MM/yyyy hh:mm:ss a)
+                    // Quan trọng: Phải thêm Locale("vi", "VN") để hiểu SA/CH
+                    DateTimeFormatter fmtVietnamese = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm:ss a", new Locale("vi", "VN"));
+                    return LocalDate.parse(dateString, fmtVietnamese);
+                } catch (Exception e2) {
+                    // CÁCH 3: Thử format Tiếng Anh (AM/PM)
+                    try {
+                        DateTimeFormatter fmtEnglish = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm:ss a", Locale.ENGLISH);
+                        return LocalDate.parse(dateString, fmtEnglish);
+                    } catch (Exception e3) {
+                        throw new Exception("Định dạng ngày '" + dateString + "' không hợp lệ (Cần dd/MM/yyyy).");
+                    }}}}
+        
         else if (cell.getCellType() == CellType.NUMERIC && org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(cell)) {
             Date javaDate = cell.getDateCellValue();
             return javaDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
@@ -1442,4 +1757,14 @@ private void xuLyTimNhaCungCap() {
             repaint();
         }
     }
+	public static void main(String[] args) {
+		SwingUtilities.invokeLater(() -> {
+			JFrame frame = new JFrame("Quản Lý Khuyến Mãi");
+			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			frame.setSize(1500, 850);
+			frame.setLocationRelativeTo(null);
+			frame.setContentPane(new ThemPhieuNhap_GUI());
+			frame.setVisible(true);
+		});
+	}
 }

@@ -63,18 +63,57 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
 
         // 3. LOAD DATA TỪ CSDL
         loadDataLenBang();
+        
+        // 4. THIẾT LẬP PHÍM TẮT
+        thietLapPhimTat();
     }
 
     // ==========================================================================
     //                              PHẦN HEADER
     // ==========================================================================
+    
+    /**
+     * Thiết lập phím tắt cho các component
+     */
+    private void thietLapPhimTat() {
+        // Lấy InputMap và ActionMap của JPanel chính
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+        
+        // --- PHÍM TẮT CHO txtTimKiem (F1, Ctrl+F) ---
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), "focusTimKiem");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "focusTimKiem");
+        actionMap.put("focusTimKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+        
+        // --- PHÍM TẮT CHO btnTimKiem (Enter khi đang focus vào txtTimKiem đã có sẵn) ---
+        // Không cần thêm vì đã có txtTimKiem.addActionListener(e -> xuLyTimKiem());
+        
+        // --- PHÍM TẮT CHO btnLamMoi (F5, Ctrl+N) ---
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), "lamMoi");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK), "lamMoi");
+        actionMap.put("lamMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                lamMoiForm();
+                loadDataLenBang();
+            }
+        });
+    }
+    
     private void taoPhanHeader() {
         pnHeader = new JPanel(null);
         pnHeader.setPreferredSize(new Dimension(1073, 94));
         pnHeader.setBackground(new Color(0xE3F2F5));
 
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Nhập mã hoặc số điện thoại NCC...");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Nhập mã hoặc số điện thoại NCC(F1/Ctrl+F)");
+        
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
         txtTimKiem.setBounds(25, 17, 500, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
@@ -84,7 +123,16 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         txtTimKiem.addActionListener(e -> xuLyTimKiem());
         pnHeader.add(txtTimKiem);
 
-        btnTimKiem = new PillButton("Tìm kiếm");
+        btnTimKiem = new PillButton(
+                "<html>" +
+                        "<center>" +
+                            "Tìm Kiếm<br>" +
+                            "<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
+                        "</center>" +
+                    "</html>"
+                );
+
+        btnTimKiem.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã hoặc SĐT</html>");
         btnTimKiem.setBounds(540, 22, 130, 50);
         btnTimKiem.setFont(FONT_BOLD);
         btnTimKiem.addActionListener(e -> xuLyTimKiem());
@@ -186,7 +234,15 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
 
         // Đã xóa nút Xóa ở vị trí này
 
-        btnLamMoi = createPillButton("Làm mới", btnW, btnH);
+        btnLamMoi = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "LÀM MỚI<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(F5/Ctrl+N)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+
         gbc.gridy = 2; p.add(btnLamMoi, gbc);
     }
 
@@ -470,7 +526,6 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception e) {
             }
             JFrame frame = new JFrame("Tra cứu phiếu nhập");
