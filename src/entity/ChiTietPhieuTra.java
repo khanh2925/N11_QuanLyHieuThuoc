@@ -76,7 +76,7 @@ public class ChiTietPhieuTra {
 			throw new IllegalArgumentException("Số lượng trả phải > 0.");
 		if (this.chiTietHoaDon != null && soLuong > this.chiTietHoaDon.getSoLuong())
 			throw new IllegalArgumentException(
-					String.format("Số lượng trả (%d) không được vượt quá số lượng đã mua (%d).", soLuong,
+					String.format("Số lượng trả (%d) không được vượt quá số lượng đã mua (%.0f).", soLuong,
 							this.chiTietHoaDon.getSoLuong()));
 		this.soLuong = soLuong;
 		capNhatThanhTienHoan();

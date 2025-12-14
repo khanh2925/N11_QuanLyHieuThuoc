@@ -34,8 +34,6 @@ public class ChiTietKhuyenMaiSanPham {
             throw new IllegalArgumentException("Khuyến mãi không được null.");
         if (khuyenMai.isKhuyenMaiHoaDon())
             throw new IllegalArgumentException("Không thể gán khuyến mãi hóa đơn cho chi tiết sản phẩm.");
-        if (!khuyenMai.isDangHoatDong())
-            throw new IllegalArgumentException("Không thể gán khuyến mãi đã hết hạn hoặc ngừng hoạt động.");
 
         this.khuyenMai = khuyenMai;
     }

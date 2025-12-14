@@ -1,0 +1,127 @@
+[33me11733b[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mkhanh[m[33m, [m[1;31morigin/thanh[m[33m)[m update code
+[33m5210259[m[33m ([m[1;31morigin/khanh[m[33m)[m update code toan bo thanh vien moi nhat chuan bi bao cao qua met
+[33m44405d7[m update entity
+[33ma50e991[m update lai full entity
+[33ma124319[m Merge branch 'khoi' into khanh
+[33mc89605b[m them Phieu Nhap DAO
+[33mf7f4ab0[m update code moi nhat
+[33m41c8d8d[m Merge branch 'khanh' into khoi
+[33m8cdfed5[m  xoa button tim
+[33mc386d2d[m thêm sự kiên cho KhachHang_GUI
+[33m9bfaa5d[m them anh
+[33m0a90050[m update moi nhat
+[33m42ae87e[m Hoàn tất merge giữa nhánh main và khoi
+[33md9902d1[m Hoàn tất merge với main
+[33m88f303f[m Merge pull request #16 from khanh2925/khanh
+[33mb6a61c9[m update code moi nguoi, them load data cho sanpham
+[33m4fc99cf[m update
+[33me45339a[m update
+[33m956a1b8[m update them chuc nang o menu
+[33m78fc181[m[33m ([m[1;31morigin/khoi[m[33m)[m chuyen LoaiSanPham qua enum, them ThemKH_dialog, capNhatKH_dialog,sua entity sanpham, them quycachdonggoi_dao
+[33m7d85254[m Cập nhật code mới để đẩy lên branch thanh
+[33mc17b22d[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Fix conflict khi merge từ main
+[33me5b70a0[m Lưu tạm code trước khi pull
+[33mf898935[m Merge pull request #15 from khanh2925/khanh
+[33m8eb304d[m update code moi nhat cua cac thanh vien
+[33m830132e[m Merge remote-tracking branch 'origin/thanh' into khanh
+[33m820ba56[m them quy cach dong goi
+[33mc1d9a6e[m Them class DAO
+[33m2e949f4[m thêm các dao
+[33m77fbc73[m ThongKeDoanhThu_GUI
+[33m35f0ed7[m Merge remote-tracking branch 'origin/khanh' into khoi
+[33m9aee21c[m luu tam thoi
+[33m93c4142[m dao_taikhoan
+[33m3f04618[m sua ten class
+[33m2037c1b[m update mot xiu
+[33m3405470[m[33m ([m[1;32mmain[m[33m)[m Xóa file .class và bỏ qua thư mục bin khỏi Git
+[33mf0bc87e[m sủa tên file
+[33m655c09c[m merge code moi nhat
+[33m2b575f9[m thu nghiem bieu do
+[33m043e3bf[m Merge remote-tracking branch 'origin/kha' into khanh
+[33mdaeb242[m Merge remote-tracking branch 'origin/khoi' into khanh
+[33m1d12084[m Thêm màn hình tổng quan NV
+[33m8a0e51b[m Sửa gui đăng nhập và main gui để lấy thông tin đăng nhập nhân viên hiện tại
+[33m5d390d0[m Thêm khuyến mãi gui
+[33m1785514[m Hoàn tất merge, xóa file .class bị conflict
+[33me77758f[m Merge remote-tracking branch 'origin/kha' into khanh
+[33ma6845e3[m Lưu tạm code DonHang_GUI trước khi merge
+[33m510453d[m Bỏ qua thư mục bin/
+[33m62a09bd[m Thêm giao diện Quản lý sản phẩm
+[33maaf30c1[m Thêm Tra cứu kệ sản phẩm ở menu nhân viên
+[33mdfaabca[m hoàn thiện CapNhatNhanVien_Dialog
+[33m7088ab6[m hoàn thiện ThemNhanVien_Dialog
+[33m2be2379[m Cập nhật code từ main
+[33m7011fa8[m giải quyết xung đột code , đẩy code lên main
+[33m4caceeb[m Merge main into kha
+[33mee79e15[m fix something
+[33md264689[m Ignore bin folder
+[33m98d2a3b[m Merge pull request #11 from khanh2925/khanh
+[33m27095d7[m Merge branch 'main' into khanh
+[33m2ae83af[m cap nhat code moi nhat cua moi nguoi
+[33mc96ab47[m thêm class DonViTinh_GUI,NhanVien_QL_GUI
+[33m8a0b722[m them DonViTinh_GUI,NhanVien_GUI
+[33m6a52418[m Merge pull request #10 from khanh2925/main
+[33mc85202f[m cập nhật Main.java gắn các màn hình vào menu
+[33me24f975[m Merge branch 'main' of https://github.com/khanh2925/N11_QuanLyHieuThuoc
+[33m8015043[m Thêm .gitignore để bỏ qua bin và file IDE
+[33med16959[m Sua lai giao dien tra hang va don hang
+[33mbe425f4[m Cập nhật code mới vào main
+[33maaee17e[m Delete src/dao directory
+[33m6ac3e86[m Sửa gui Quản lý phiếu huỷ thêm dữ liệu test và sửa ô tìm kiếm, filter theo ngày
+[33m4da8ff6[m Sửa gui Thêm phiếu nhập các ô txt tìm kiếm và filter ngày
+[33m1e1222f[m Chỉnh sửa gui nhập hàng thêm dữ liệu test, ô tìm kiếm, filter theo ngày
+[33m2b8bf77[m thêm 2 custom component cho txt tìm kiếm
+[33m6211aea[m Merge branch 'khanh'
+[33m804531d[m cap nhat qua met moi roi
+[33m6f2883b[m Bỏ qua thư mục bin/
+[33m9ed914f[m Merge pull request #8 from khanh2925/khanh
+[33m5c9b1bb[m Merge branch 'main' into khanh
+[33m1bbb65c[m update code moi nhat cua 4 thanh vien
+[33m3d5c90b[m Merge branch 'main' of https://github.com/khanh2925/N11_QuanLyHieuThuoc
+[33m88eec94[m gop code cua moi nguoi
+[33m425a493[m Merge remote-tracking branch 'origin/thanh' into khanh
+[33mb14e6b2[m Merge remote-tracking branch 'origin/kha' into khanh
+[33md3097fc[m Cập nhật lại sự kiện sắp xếp khách hàng theo điểm tích lũy
+[33m174dd5e[m Thêm dữ liệu mẫu khách hàng vào danh sách dsKhachHang
+[33m655e3dd[m Merge remote-tracking branch 'origin/khoi' into khanh
+[33m332d28e[m thêm giao diện tra cứu đơn hàng, đơn trả, và thêm giao diện trả hàng bên nhân viên
+[33m7050ace[m them man hinh danh sach hoa don va tra hang cho quan ly
+[33mc869941[m Giao diện Quản lý phiếu huỷ
+[33m47d0f92[m DAO Phiếu huỷ & CT Phiếu huỷ có hàm lấy dữ liệu từ bảng
+[33mbb5d8a3[m Sửa các lỗi vặt và Thêm màn hình thêm phiếu nhập
+[33mb347e3a[m update soso
+[33m1aa077f[m Resolve conflict in DangNhap_Gui.java
+[33m0df5bab[m gop code cua kha
+[33m486f8c0[m Giao diện nhập hàng
+[33med9d55f[m Thêm class DAO cho nv, pn, ctpn, có method get dữ liệu
+[33ma8e01bb[m Sửa entity nhân viên thêm trạng thái
+[33m6a11d39[m Thêm icon cho submenu
+[33m10546bd[m Cập nhật NhanVien_GUI và QuanLy_GUI thành Main_GUI
+[33m9734afe[m Cập nhật code từ 4 người
+[33mff4481b[m Gộp file QuanLy_GUI và NhanVien_GUI thành Main_GUI chứa menu hiển thị theo biến isQuanLy và cardPanel
+[33m8b06efc[m Giải quyết conflict và giữ lại DangNhap_Gui.java
+[33m8efc84a[m Hoàn thiện menu cho màn hình nhân viên và quản lý
+[33m0e977fe[m Thêm giao diện trả hàng
+[33m73edea6[m a erge remote-tracking branch 'origin/thanh' into khanh
+[33m74dcbca[m day full code lên git
+[33mdb9b5b5[m update giao diện bán hàng
+[33md7d45e0[m Forced commit để push
+[33m5a13914[m update entity, ban hang gui
+[33m6c9f58b[m project update
+[33m3971491[m Cập nhật full code project ngày 15/10/2025
+[33m4292b47[m Merge code from kha into khanh
+[33m190a32c[m qua mot khanh
+[33m15f37db[m Sửa GUI BanHang
+[33m3b99970[m Tạo Class chứa menu và cardPanel để chuyển màn hình cho nhân viên và quản lý
+[33mc193cc6[m Thêm App.java chứa hàm main
+[33m2483f3b[m Thêm icon cho menu
+[33md9cc6eb[m update giao dien ban hang
+[33mb6c932e[m[33m ([m[1;32mkha[m[33m)[m Merge code lấy bản mới nhất
+[33mbb0dddc[m Sửa BanHang_GUI thành JPanel để gắn vào cardPanel
+[33m99ad4c3[m Thêm class NhanVien_GUI chứa menu và cardPanel
+[33m6e5ba5f[m Thêm icon, logo cho menu
+[33m6d2e20f[m Lưu thay đổi tạm thời trước khi merge
+[33m369645e[m khung layout
+[33m7e70b31[m hoan thien entity
+[33mb6af43b[m hoan thien entity
+[33mf9c5fb8[m Initial commit - tạo repo lần đầu

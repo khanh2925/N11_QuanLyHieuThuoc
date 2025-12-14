@@ -1,6 +1,6 @@
 package dao;
 
-import connectDB.connectDB;
+import database.connectDB;
 import entity.*;
 
 import java.sql.*;
@@ -20,40 +20,126 @@ public class PhieuHuy_DAO {
 		NhanVien_DAO nhanVienDAO = new NhanVien_DAO();
 		ChiTietPhieuHuy_DAO chiTietDAO = new ChiTietPhieuHuy_DAO();
 
-		// ✅ KHÔNG còn cột TongTienHuy trong SELECT
 		String sql = """
 				    SELECT MaPhieuHuy, NgayLapPhieu, MaNhanVien, TrangThai
 				    FROM PhieuHuy
 				    ORDER BY NgayLapPhieu DESC, MaPhieuHuy DESC
 				""";
 
-		try (Statement st = con.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+		Statement st = null;
+		ResultSet rs = null;
+
+		try {
+			st = con.createStatement();
+			rs = st.executeQuery(sql);
+
+			// Đọc tất cả mã phiếu trước
+			List<String> dsMa = new ArrayList<>();
+			List<LocalDate> dsNgay = new ArrayList<>();
+			List<String> dsMaNV = new ArrayList<>();
+			List<Boolean> dsTrangThai = new ArrayList<>();
 
 			while (rs.next()) {
-				String ma = rs.getString("MaPhieuHuy");
-				LocalDate ngay = rs.getDate("NgayLapPhieu").toLocalDate();
-				String maNV = rs.getString("MaNhanVien");
-				boolean trangThai = rs.getBoolean("TrangThai");
+				dsMa.add(rs.getString("MaPhieuHuy"));
+				dsNgay.add(rs.getDate("NgayLapPhieu").toLocalDate());
+				dsMaNV.add(rs.getString("MaNhanVien"));
+				dsTrangThai.add(rs.getBoolean("TrangThai"));
+			}
 
-				// Lấy nhân viên theo mã (lấy phần tử đầu nếu có)
+			// Đóng ResultSet và Statement
+			rs.close();
+			st.close();
+
+			// Load chi tiết sau
+			for (int i = 0; i < dsMa.size(); i++) {
 				NhanVien nv = null;
-				ArrayList<NhanVien> dsNV = nhanVienDAO.timNhanVien(maNV);
+				ArrayList<NhanVien> dsNV = nhanVienDAO.timNhanVien(dsMaNV.get(i));
 				if (!dsNV.isEmpty())
 					nv = dsNV.get(0);
 
-				PhieuHuy ph = new PhieuHuy(ma, ngay, nv, trangThai);
-				ph.setChiTietPhieuHuyList(chiTietDAO.timKiemChiTietPhieuHuyBangMa(ma));
-				// Entity tự tính tongTien
+				PhieuHuy ph = new PhieuHuy(dsMa.get(i), dsNgay.get(i), nv, dsTrangThai.get(i));
+				ph.setChiTietPhieuHuyList(chiTietDAO.timKiemChiTietPhieuHuyBangMa(dsMa.get(i)));
 				ph.capNhatTongTienTheoChiTiet();
-
 				list.add(ph);
 			}
+
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (SQLException ignored) {
+			}
+			try {
+				if (st != null)
+					st.close();
+			} catch (SQLException ignored) {
+			}
 		}
 		return list;
 	}
-
+	/** � Đếm số phiếu hủy chưa duyệt (cho Dashboard) */
+	public int demPhieuHuyChuaDuyet() {
+		String sql = "SELECT COUNT(*) AS SoLuong FROM PhieuHuy WHERE TrangThai = 0";
+		
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
+		Statement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = con.createStatement();
+			rs = st.executeQuery(sql);
+			
+			if (rs.next()) {
+				return rs.getInt("SoLuong");
+			}
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi đếm phiếu hủy chưa duyệt: " + e.getMessage());
+		} finally {
+			try { if (rs != null) rs.close(); } catch (Exception ignored) {}
+			try { if (st != null) st.close(); } catch (Exception ignored) {}
+		}
+		
+		return 0;
+	}
+	/**
+	 * Tính tổng tiền hủy hàng theo tháng (cho biểu đồ)
+	 * @param thang Tháng (1-12)
+	 * @param nam Năm
+	 * @return Tổng tiền hàng bị hủy
+	 */
+	public double tinhTongTienHuyTheoThang(int thang, int nam) {
+		String sql = """
+				SELECT COALESCE(SUM(TongTien), 0) AS TongTienHuy
+				FROM PhieuHuy
+				WHERE MONTH(NgayLapPhieu) = ? AND YEAR(NgayLapPhieu) = ?
+				""";
+		
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		
+		try {
+			ps = con.prepareStatement(sql);
+			ps.setInt(1, thang);
+			ps.setInt(2, nam);
+			rs = ps.executeQuery();
+			
+			if (rs.next()) {
+				return rs.getDouble("TongTienHuy");
+			}
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi tính tổng tiền hủy theo tháng: " + e.getMessage());
+		} finally {
+			try { if (rs != null) rs.close(); } catch (Exception ignored) {}
+			try { if (ps != null) ps.close(); } catch (Exception ignored) {}
+		}
+		
+		return 0;
+	}
 	/** 🔹 Lấy phiếu huỷ theo mã (kèm chi tiết, entity tự tính tongTien) */
 	public PhieuHuy layTheoMa(String maPhieuHuy) {
 		connectDB.getInstance();
@@ -105,22 +191,19 @@ public class PhieuHuy_DAO {
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 
-		// Entity có thể tự tính tongTien để hiển thị, nhưng KHÔNG lưu xuống bảng
-		// PhieuHuy
 		if (ph.getChiTietPhieuHuyList() != null) {
 			ph.capNhatTongTienTheoChiTiet();
 		}
 
-		// Chỉ có 4 cột theo schema
-		String sqlPH = "INSERT INTO PhieuHuy (MaPhieuHuy, NgayLapPhieu, MaNhanVien, TrangThai, TongTien) VALUES (?, ?, ?, ?,?)";
+		String sqlPH = "INSERT INTO PhieuHuy (MaPhieuHuy, NgayLapPhieu, MaNhanVien, TrangThai, TongTien) VALUES (?, ?, ?, ?, ?)";
 
-		// Giữ nguyên cấu trúc bảng chi tiết như bạn đang dùng
-		String sqlCT = "INSERT INTO ChiTietPhieuHuy (MaPhieuHuy, MaLo, SoLuongHuy, LyDoChiTiet, DonGiaNhap, ThanhTien, TrangThai) VALUES (?, ?, ?, ?, ?, ?, ?)";
+		// ✅ Thêm cột MaDonViTinh
+		String sqlCT = "INSERT INTO ChiTietPhieuHuy (MaPhieuHuy, MaLo, SoLuongHuy, LyDoChiTiet, DonGiaNhap, ThanhTien, MaDonViTinh, TrangThai) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
 		try {
 			con.setAutoCommit(false);
 
-			// 1️⃣ Thêm header (không có TongTienHuy)
+			// 1️⃣ Thêm header
 			try (PreparedStatement ps = con.prepareStatement(sqlPH)) {
 				ps.setString(1, ph.getMaPhieuHuy());
 				ps.setDate(2, java.sql.Date.valueOf(ph.getNgayLapPhieu()));
@@ -139,7 +222,15 @@ public class PhieuHuy_DAO {
 					psCT.setString(4, ct.getLyDoChiTiet());
 					psCT.setDouble(5, ct.getDonGiaNhap());
 					psCT.setDouble(6, ct.getThanhTien());
-					psCT.setInt(7, ct.getTrangThai()); // 1=chờ, 2=đã huỷ, 3=nhập lại kho (ví dụ)
+
+					// ✅ Thêm MaDonViTinh (từ ItemHuyHang.quyCachGoc)
+					String maDonViTinh = null;
+					if (ct.getDonViTinh() != null) {
+						maDonViTinh = ct.getDonViTinh().getMaDonViTinh();
+					}
+					psCT.setString(7, maDonViTinh);
+
+					psCT.setInt(8, ct.getTrangThai());
 					psCT.addBatch();
 				}
 				psCT.executeBatch();
@@ -147,7 +238,9 @@ public class PhieuHuy_DAO {
 
 			con.commit();
 			return true;
+
 		} catch (SQLException e) {
+			System.err.println("❌ Lỗi thêm phiếu hủy: " + e.getMessage());
 			e.printStackTrace();
 			try {
 				con.rollback();
@@ -271,5 +364,32 @@ public class PhieuHuy_DAO {
 		}
 		return false;
 	}
+	// Đếm số PH của nhân viên đã lập trong ngày hiện tại.
+	public int demSoPhieuHuyHomNayCuaNhanVien(String maNhanVien) {
+	    connectDB.getInstance();
+	    Connection con = connectDB.getConnection();
 
+	    String sql = """
+	        SELECT COUNT(*) AS SoLuong
+	        FROM PhieuHuy
+	        WHERE MaNhanVien = ?
+	          AND CAST(NgayLapPhieu AS DATE) = CAST(GETDATE() AS DATE)
+	    """;
+
+	    try (PreparedStatement ps = con.prepareStatement(sql)) {
+	        ps.setString(1, maNhanVien);
+
+	        try (ResultSet rs = ps.executeQuery()) {
+	            if (rs.next()) {
+	                return rs.getInt("SoLuong");
+	            }
+	        }
+	    } catch (SQLException e) {
+	        System.err.println("❌ Lỗi đếm số phiếu huỷ hôm nay của nhân viên: " + e.getMessage());
+	    }
+
+	    return 0;
+	}
+	
+	
 }

@@ -2,9 +2,11 @@ package dao;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
-import connectDB.connectDB;
+import database.connectDB;
 import entity.BangGia;
 import entity.ChiTietBangGia;
 import entity.ChiTietKhuyenMaiSanPham;
@@ -287,4 +289,34 @@ public class SanPham_DAO {
 		ps.setString(9, sp.getKeBanSanPham());
 		ps.setBoolean(10, sp.isHoatDong());
 	}
+
+	public Map<String, Object[]> thongKeSanPhamTheoNCC(String maNCC) {
+		Map<String, Object[]> result = new LinkedHashMap<>();
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
+
+		String sql = "SELECT sp.MaSanPham, sp.TenSanPham, sp.LoaiSanPham, "
+				+ "COUNT(DISTINCT pn.MaPhieuNhap) AS SoLanNhap, " + "SUM(ct.SoLuongNhap) AS TongSoLuong "
+				+ "FROM PhieuNhap pn " + "JOIN ChiTietPhieuNhap ct ON pn.MaPhieuNhap = ct.MaPhieuNhap "
+				+ "JOIN LoSanPham lo ON ct.MaLo = lo.MaLo " + "JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham "
+				+ "WHERE pn.MaNhaCungCap = ? " + "GROUP BY sp.MaSanPham, sp.TenSanPham, sp.LoaiSanPham "
+				+ "ORDER BY TongSoLuong DESC";
+
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setString(1, maNCC);
+
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					String maSP = rs.getString("MaSanPham");
+					result.put(maSP, new Object[] { rs.getString("TenSanPham"), rs.getString("LoaiSanPham"),
+							rs.getInt("SoLanNhap"), rs.getInt("TongSoLuong") });
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return result;
+	}
+
 }

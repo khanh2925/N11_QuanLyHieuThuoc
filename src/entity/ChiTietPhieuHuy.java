@@ -11,6 +11,7 @@ public class ChiTietPhieuHuy {
     private double donGiaNhap;   
     private double thanhTien;    
     private int trangThai;  // 🟢 1 = Chờ duyệt, 2 = Đã hủy, 3 = Từ chối hủy
+    private DonViTinh donViTinh;
 
     // ===== CONSTANTS =====
     public static final int CHO_DUYET = 1;
@@ -22,12 +23,13 @@ public class ChiTietPhieuHuy {
 
     public ChiTietPhieuHuy(PhieuHuy phieuHuy, LoSanPham loSanPham,
                            int soLuongHuy, double donGiaNhap,
-                           String lyDoChiTiet, int trangThai) {
+                           String lyDoChiTiet,DonViTinh donViTinh, int trangThai) {
         setPhieuHuy(phieuHuy);
         setLoSanPham(loSanPham);
         setSoLuongHuy(soLuongHuy);
         setDonGiaNhap(donGiaNhap);
         setLyDoChiTiet(lyDoChiTiet);
+        setDonViTinh(donViTinh);
         setTrangThai(trangThai);
         capNhatThanhTien();
     }
@@ -73,6 +75,15 @@ public class ChiTietPhieuHuy {
     public double getThanhTien() { return thanhTien; }
     public void capNhatThanhTien() {
         this.thanhTien = Math.round(soLuongHuy * donGiaNhap * 100.0) / 100.0;
+    }
+    
+    public DonViTinh getDonViTinh() {
+        return donViTinh;
+    }
+
+    public void setDonViTinh(DonViTinh donViTinh) {
+        // ✅ Cho phép null (dành cho sản phẩm chưa có đơn vị tính)
+        this.donViTinh = donViTinh;
     }
 
     public int getTrangThai() { return trangThai; }
