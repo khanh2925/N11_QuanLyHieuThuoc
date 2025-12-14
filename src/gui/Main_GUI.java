@@ -39,6 +39,7 @@ import gui.tracuu.TraCuuNhanVien_GUI;
 import gui.tracuu.TraCuuPhieuHuy_GUI;
 import gui.tracuu.TraCuuPhieuNhap_GUI;
 import gui.tracuu.TraCuuSanPham_GUI;
+import gui.tracuu.TraCuuLoSanPham_GUI;
 
 import java.awt.*;
 import java.net.URL;
@@ -173,6 +174,9 @@ public class Main_GUI extends JFrame {
 					new TraCuuDonViTinh_GUI());
 			addSubmenuButton("tracuu", "tracuubanggia", "Bảng giá", "/resources/images/icon_bang_gia.png",
 					new TraCuuBangGia_GUI());
+			addSubmenuButton("tracuu", "tracuulo", "Lô sản phẩm",
+			        "/resources/images/icon_san_pham.png",
+			        new TraCuuLoSanPham_GUI());
 
 			addMenuButton(menuScrollContent, "Quản lý nhập hàng", "nhaphang", "/resources/images/icon_nhap_hang.png");
 			addMenuButton(menuScrollContent, "Quản lý xuất huỷ", "xuathuy", "/resources/images/icon_xuat_huy.png");
@@ -214,6 +218,9 @@ public class Main_GUI extends JFrame {
 					new TraCuuKhuyenMai_GUI());
 			addSubmenuButton("tracuu", "tracuukhachhang", "Khách hàng", "/resources/images/icon_khach_hang.png",
 					new TraCuuKhachHang_GUI());
+			addSubmenuButton("tracuu", "tracuulo", "Lô sản phẩm",
+			        "/resources/images/icon_san_pham.png",
+			        new TraCuuLoSanPham_GUI());
 
 			addMenuButton(menuScrollContent, "Quản lý khách hàng", "khachhang",
 					"/resources/images/icon_khach_hang.png");
