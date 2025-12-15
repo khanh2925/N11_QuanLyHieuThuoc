@@ -16,7 +16,6 @@ import entity.ChiTietPhieuHuy;
 public class LoSanPham_DAO {
 
 	private final SanPham_DAO spDao = new SanPham_DAO();
-
 	public LoSanPham_DAO() {
 	}
 
@@ -125,12 +124,12 @@ public class LoSanPham_DAO {
 
 		try (PreparedStatement stmt = con.prepareStatement(sql)) {
 			stmt.setString(1, maLo);
-
+			
 			LocalDate hanSuDung = null;
 			int soLuongTon = 0;
 			String maSP = "";
 			SanPham sp = new SanPham();
-
+			
 			try (ResultSet rs = stmt.executeQuery()) {
 
 				if (rs.next()) {
@@ -138,7 +137,7 @@ public class LoSanPham_DAO {
 					soLuongTon = rs.getInt("SoLuongTon");
 					maSP = rs.getString("MaSanPham");
 				}
-
+				
 				sp = spDao.laySanPhamTheoMa(maSP);
 				return new LoSanPham(maLo, hanSuDung, soLuongTon, sp);
 			}
@@ -332,170 +331,155 @@ public class LoSanPham_DAO {
 		// Nếu chưa có lô nào → bắt đầu từ LO-000001
 		return "LO-000001";
 	}
-
-	/**
-	 * Xác định số ngày cảnh báo gần hết hạn theo LoaiSanPham.
-	 *
-	 * THUOC, MY_PHAM, THUC_PHAM_BO_SUNG, SAN_PHAM_KHAC → 60 ngày DUNG_CU_Y_TE,
-	 * SAN_PHAM_CHO_ME_VA_BE → 90 ngày
-	 */
-	private int soNgayCanhBaoTheoLoai(LoaiSanPham loai) {
-		if (loai == null) {
-			return 60; // mặc định
-		}
-
-		switch (loai) {
-		case THUOC:
-		case MY_PHAM:
-		case THUC_PHAM_BO_SUNG:
-		case SAN_PHAM_KHAC:
-			return 60;
-
-		case DUNG_CU_Y_TE:
-		case SAN_PHAM_CHO_ME_VA_BE:
-			return 90;
-
-		default:
-			return 60;
-		}
-	}
-
-	public List<LoSanPham> timLoGanHetHanTheoLoai(LoaiSanPham loaiSanPham) {
-		List<LoSanPham> danhSach = new ArrayList<>();
-
-		if (loaiSanPham == null) {
-			return danhSach;
-		}
-
-		// Ngày cảnh báo tính bằng Java
-		int soNgayCanhBao = soNgayCanhBaoTheoLoai(loaiSanPham);
-		LocalDate today = LocalDate.now();
-		LocalDate canhBao = today.plusDays(soNgayCanhBao);
-
-		connectDB.getInstance();
-		Connection con = connectDB.getConnection();
-
-		String sql = """
-				SELECT L.MaLo, L.HanSuDung, L.SoLuongTon, L.MaSanPham
-				FROM LoSanPham L
-				JOIN SanPham SP ON L.MaSanPham = SP.MaSanPham
-				WHERE SP.LoaiSanPham = ?
-				  AND L.HanSuDung < ?
-				  AND L.SoLuongTon > 0
-				""";
-
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-
-			stmt.setString(1, loaiSanPham.name()); // VD: THUC_PHAM_BO_SUNG
-			stmt.setDate(2, Date.valueOf(canhBao)); // so sánh HSD < canhBao
-
-			try (ResultSet rs = stmt.executeQuery()) {
-				while (rs.next()) {
-					String maLo = rs.getString("MaLo");
-					LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-					int soLuongTon = rs.getInt("SoLuongTon");
-					String maSP = rs.getString("MaSanPham");
-
-					SanPham sp = new SanPham(maSP);
-
-					danhSach.add(new LoSanPham(maLo, hanSuDung, soLuongTon, sp));
-				}
-			}
-
-		} catch (SQLException e) {
-			System.err.println("Lỗi tìm lô gần hết hạn theo loại sản phẩm: " + e.getMessage());
-		}
-
-		return danhSach;
-	}
-
-
-	public Map<LoaiSanPham, Integer> thongKeSoLoCanHuyTheoHSDTheoLoai() {
-		Map<LoaiSanPham, Integer> map = new LinkedHashMap<>();
-		for (LoaiSanPham l : LoaiSanPham.values())
-			map.put(l, 0);
-
-		connectDB.getInstance();
-		Connection con = connectDB.getConnection();
-
-		String sql = """
-				    SELECT SP.LoaiSanPham, COUNT(*) AS SoLo
-				    FROM LoSanPham L
-				    JOIN SanPham SP ON L.MaSanPham = SP.MaSanPham
-				    WHERE L.SoLuongTon > 0
-				      AND L.HanSuDung < DATEADD(DAY,
-				            CASE
-				                WHEN SP.LoaiSanPham IN ('DUNG_CU_Y_TE','SAN_PHAM_CHO_ME_VA_BE') THEN 90
-				                ELSE 60
-				            END,
-				            CAST(GETDATE() AS DATE)
-				      )
-				    GROUP BY SP.LoaiSanPham
-				""";
-
-		try (PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-
-			while (rs.next()) {
-				String loaiStr = rs.getString("LoaiSanPham");
-				int soLo = rs.getInt("SoLo");
-				try {
-					LoaiSanPham loai = LoaiSanPham.valueOf(loaiStr.trim().toUpperCase());
-					map.put(loai, soLo);
-				} catch (Exception ignore) {
-				}
-			}
-
-		} catch (SQLException e) {
-			System.err.println("❌ Lỗi thống kê số lô cần hủy theo HSD theo loại: " + e.getMessage());
-		}
-
-		return map;
-	}
 	
-	/** ✅ Lấy danh sách lô "tới hạn sử dụng" (cần hủy theo HSD) */
-	public List<LoSanPham> layDanhSachLoSPToiHanSuDung() {
-	    List<LoSanPham> danhSach = new ArrayList<>();
+    /**
+     * Xác định số ngày cảnh báo gần hết hạn theo LoaiSanPham.
+     *
+     * THUOC, MY_PHAM, THUC_PHAM_BO_SUNG, SAN_PHAM_KHAC → 60 ngày
+     * DUNG_CU_Y_TE, SAN_PHAM_CHO_ME_VA_BE              → 90 ngày
+     */
+    private int soNgayCanhBaoTheoLoai(LoaiSanPham loai) {
+        if (loai == null) {
+            return 60; // mặc định
+        }
 
-	    connectDB.getInstance();
-	    Connection con = connectDB.getConnection();
+        switch (loai) {
+            case THUOC:
+            case MY_PHAM:
+            case THUC_PHAM_BO_SUNG:
+            case SAN_PHAM_KHAC:
+                return 60;
 
-	    // ✅ GIỮ NGUYÊN rule như demSoLoSPToiHanSuDung(): 60/90 ngày theo loại
-	    String sql = """
-	        SELECT L.MaLo, L.HanSuDung, L.SoLuongTon, L.MaSanPham
-	        FROM LoSanPham L
-	        JOIN SanPham SP ON L.MaSanPham = SP.MaSanPham
-	        WHERE L.SoLuongTon > 0
-	          AND L.HanSuDung < DATEADD(DAY,
-	                CASE
-	                    WHEN SP.LoaiSanPham IN ('DUNG_CU_Y_TE', 'SAN_PHAM_CHO_ME_VA_BE') THEN 90
-	                    WHEN SP.LoaiSanPham IN ('THUOC', 'MY_PHAM', 'THUC_PHAM_BO_SUNG', 'SAN_PHAM_KHAC') THEN 60
-	                    ELSE 60
-	                END,
-	                CAST(GETDATE() AS DATE)
-	          )
-	        ORDER BY L.HanSuDung ASC
-	    """;
+            case DUNG_CU_Y_TE:
+            case SAN_PHAM_CHO_ME_VA_BE:
+                return 90;
 
-	    try (PreparedStatement stmt = con.prepareStatement(sql);
-	         ResultSet rs = stmt.executeQuery()) {
+            default:
+                return 60;
+        }
+    }
+    
 
-	        while (rs.next()) {
-	            String maLo = rs.getString("MaLo");
-	            LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-	            int soLuongTon = rs.getInt("SoLuongTon");
-	            String maSP = rs.getString("MaSanPham");
 
-	            // ✅ giống style các hàm khác: chỉ gắn SanPham theo mã, không query thêm
-	            SanPham sp = new SanPham(maSP);
 
-	            danhSach.add(new LoSanPham(maLo, hanSuDung, soLuongTon, sp));
-	        }
+    public List<LoSanPham> timLoGanHetHanTheoLoai(LoaiSanPham loaiSanPham) {
+        List<LoSanPham> danhSach = new ArrayList<>();
 
-	    } catch (SQLException e) {
-	        System.err.println("❌ Lỗi lấy danh sách lô tới hạn sử dụng: " + e.getMessage());
-	    }
+        if (loaiSanPham == null) {
+            return danhSach;
+        }
 
-	    return danhSach;
-	}
+        // Ngày cảnh báo tính bằng Java
+        int soNgayCanhBao = soNgayCanhBaoTheoLoai(loaiSanPham);
+        LocalDate today = LocalDate.now();
+        LocalDate canhBao = today.plusDays(soNgayCanhBao);
+
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        String sql = """
+                SELECT L.MaLo, L.HanSuDung, L.SoLuongTon, L.MaSanPham
+                FROM LoSanPham L
+                JOIN SanPham SP ON L.MaSanPham = SP.MaSanPham
+                WHERE SP.LoaiSanPham = ?
+                  AND L.HanSuDung < ?
+                  AND L.SoLuongTon > 0
+                """;
+
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+
+            stmt.setString(1, loaiSanPham.name());            // VD: THUC_PHAM_BO_SUNG
+            stmt.setDate(2, Date.valueOf(canhBao));           // so sánh HSD < canhBao
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String maLo = rs.getString("MaLo");
+                    LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
+                    int soLuongTon = rs.getInt("SoLuongTon");
+                    String maSP = rs.getString("MaSanPham");
+
+                    SanPham sp = new SanPham(maSP);
+
+                    danhSach.add(new LoSanPham(maLo, hanSuDung, soLuongTon, sp));
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Lỗi tìm lô gần hết hạn theo loại sản phẩm: " + e.getMessage());
+        }
+
+        return danhSach;
+    }
+    
+    
+    public int demSoLoSPToiHanSuDung() {
+        connectDB.getInstance();
+        Connection con = connectDB.getConnection();
+
+        String sql = """
+            SELECT COUNT(*) AS TongSoLoCanHuy
+            FROM LoSanPham L
+            JOIN SanPham SP ON L.MaSanPham = SP.MaSanPham
+            WHERE L.SoLuongTon > 0
+              AND L.HanSuDung < DATEADD(DAY,
+                    CASE
+                        WHEN SP.LoaiSanPham IN ('DUNG_CU_Y_TE', 'SAN_PHAM_CHO_ME_VA_BE') THEN 90
+                        WHEN SP.LoaiSanPham IN ('THUOC', 'MY_PHAM', 'THUC_PHAM_BO_SUNG', 'SAN_PHAM_KHAC') THEN 60
+                        ELSE 60
+                    END,
+                    CAST(GETDATE() AS DATE)
+              )
+        """;
+
+        try (PreparedStatement stmt = con.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) return rs.getInt("TongSoLoCanHuy");
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi đếm tổng số lô cần hủy theo HSD: " + e.getMessage());
+        }
+        return 0;
+    }
+
+
+public Map<LoaiSanPham, Integer> thongKeSoLoCanHuyTheoHSDTheoLoai() {
+    Map<LoaiSanPham, Integer> map = new LinkedHashMap<>();
+    for (LoaiSanPham l : LoaiSanPham.values()) map.put(l, 0);
+
+    connectDB.getInstance();
+    Connection con = connectDB.getConnection();
+
+    String sql = """
+        SELECT SP.LoaiSanPham, COUNT(*) AS SoLo
+        FROM LoSanPham L
+        JOIN SanPham SP ON L.MaSanPham = SP.MaSanPham
+        WHERE L.SoLuongTon > 0
+          AND L.HanSuDung < DATEADD(DAY,
+                CASE
+                    WHEN SP.LoaiSanPham IN ('DUNG_CU_Y_TE','SAN_PHAM_CHO_ME_VA_BE') THEN 90
+                    ELSE 60
+                END,
+                CAST(GETDATE() AS DATE)
+          )
+        GROUP BY SP.LoaiSanPham
+    """;
+
+    try (PreparedStatement ps = con.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+
+        while (rs.next()) {
+            String loaiStr = rs.getString("LoaiSanPham");
+            int soLo = rs.getInt("SoLo");
+            try {
+                LoaiSanPham loai = LoaiSanPham.valueOf(loaiStr.trim().toUpperCase());
+                map.put(loai, soLo);
+            } catch (Exception ignore) {}
+        }
+
+    } catch (SQLException e) {
+        System.err.println("❌ Lỗi thống kê số lô cần hủy theo HSD theo loại: " + e.getMessage());
+    }
+
+    return map;
+}
 
 }
