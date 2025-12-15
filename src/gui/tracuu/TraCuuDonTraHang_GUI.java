@@ -516,18 +516,11 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 
 		List<PhieuTra> ketQua = new ArrayList<>();
 
-		// 1. SEARCH LOGIC (Hybrid: DB + Cache)
+		// 1. SEARCH LOGIC (Sử dụng phương thức hybrid mới)
 		if (!keyword.isEmpty()) {
-			// Nếu tìm theo mã (PT-...) -> Query trực tiếp DB (chính xác tuyệt đối)
-			if (keyword.toUpperCase().startsWith("PT-")) {
-				PhieuTra pt = phieuTraDAO.timKiemPhieuTraBangMa(keyword);
-				if (pt != null) {
-					ketQua.add(pt);
-				}
-			} else {
-				// Nếu tìm theo SĐT -> Query DB (chính xác, đỡ loop cache)
-				ketQua = phieuTraDAO.timPhieuTraTheoSoDienThoai(keyword);
-			}
+			// Tìm kiếm theo keyword (hỗ trợ: mã phiếu, tên KH, SĐT)
+			// Case-insensitive, partial match
+			ketQua = phieuTraDAO.timPhieuTraTheoKeyword(keyword);
 		} else {
 			// Không có keyword -> Lấy từ cache (allPhieuTra đã được load từ đầu)
 			if (allPhieuTra == null || allPhieuTra.isEmpty()) {
