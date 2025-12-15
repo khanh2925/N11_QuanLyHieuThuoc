@@ -71,6 +71,39 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
 
         // 3. LOAD DATA
         loadDataLenBang();
+        
+        // 4. THIẾT LẬP PHÍM TẮT
+        thietLapPhimTat();
+    }
+
+    /**
+     * Thiết lập phím tắt cho các component
+     */
+    private void thietLapPhimTat() {
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+        
+        // F1, Ctrl+F: Focus vào ô tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), "focusTimKiem");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "focusTimKiem");
+        actionMap.put("focusTimKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+        
+        // F5, Ctrl+N: Làm mới
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), "lamMoi");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK), "lamMoi");
+        actionMap.put("lamMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                lamMoiForm();
+                loadDataLenBang();
+            }
+        });
     }
 
     // =====================================================================
@@ -82,12 +115,13 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
         pnHeader.setBackground(new Color(0xE3F2F5));
 
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên hoặc số điện thoại...");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên hoặc số điện thoại... (F1/Ctrl+F)");
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
         txtTimKiem.setBounds(25, 17, 500, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
         txtTimKiem.setForeground(Color.GRAY);
+        txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Gõ để lọc dữ liệu theo thời gian thực</html>");
         pnHeader.add(txtTimKiem);
 
         // 🔹 Gõ tới đâu lọc tới đó (DocumentListener)
@@ -188,7 +222,18 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
         btnSua = createPillButton("Cập nhật", btnW, btnH);
         gbc.gridy = 1; p.add(btnSua, gbc);
 
-        btnLamMoi = createPillButton("Làm mới", btnW, btnH);
+        btnLamMoi = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "LÀM MỚI<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(F5/Ctrl+N)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+        btnLamMoi.setFont(FONT_BOLD);
+        btnLamMoi.setPreferredSize(new Dimension(btnW, btnH));
+        btnLamMoi.addActionListener(this);
+        btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5 hoặc Ctrl+N<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
         gbc.gridy = 3; p.add(btnLamMoi, gbc);
     }
 

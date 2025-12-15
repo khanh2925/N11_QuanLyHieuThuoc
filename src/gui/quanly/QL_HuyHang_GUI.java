@@ -10,6 +10,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -114,6 +116,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 		btnXuatFile.addActionListener(this);
 		txtSearch.getDocument().addDocumentListener(this);
 
+		// Thiết lập phím tắt
+		thietLapPhimTat();
 	}
 
 	private void TaoHeader() {
@@ -125,11 +129,12 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 
 		// --- Ô TÌM KIẾM (Font 20) ---
 		txtSearch = new JTextField();
-		PlaceholderSupport.addPlaceholder(txtSearch, "Nhập mã phiếu hủy, mã sản phẩm, tên sản phẩm...");
+		PlaceholderSupport.addPlaceholder(txtSearch, "Nhập mã phiếu hủy,Tên NV (F1/Ctrl+F)");
 		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 20));
 		txtSearch.setBounds(25, 17, 500, 60);
 		txtSearch.setBorder(new RoundedBorder(20));
 		txtSearch.setBackground(Color.WHITE);
+		txtSearch.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Gõ để lọc dữ liệu theo thời gian thực</html>");
 		pnHeader.add(txtSearch);
 
 		// --- BỘ LỌC (Font 18) ---
@@ -157,14 +162,30 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 		pnHeader.add(dateDenNgay);
 
 		// --- NÚT (Font 18) ---
-		btnLamMoi = new PillButton("Làm mới");
+		btnLamMoi = new PillButton(
+			"<html>" +
+				"<center>" +
+					"LÀM MỚI<br>" +
+					"<span style='font-size:10px; color:#888888;'>(F5/Ctrl+N)</span>" +
+				"</center>" +
+			"</html>"
+		);
 		btnLamMoi.setBounds(1320, 22, 130, 50);
 		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5 hoặc Ctrl+N<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
 		pnHeader.add(btnLamMoi);
 
-		btnXuatFile = new PillButton("Xuất file");
+		btnXuatFile = new PillButton(
+			"<html>" +
+				"<center>" +
+					"XUẤT FILE<br>" +
+					"<span style='font-size:10px; color:#888888;'>(Ctrl+E)</span>" +
+				"</center>" +
+			"</html>"
+		);
 		btnXuatFile.setBounds(1465, 22, 130, 50);
 		btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnXuatFile.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất phiếu hủy đang chọn ra file Excel</html>");
 		pnHeader.add(btnXuatFile);
 	}
 
@@ -174,6 +195,49 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 		lbl.setBounds(x, y, w, h);
 		lbl.setFont(new Font("Segoe UI", Font.PLAIN, 18));
 		pnHeader.add(lbl);
+	}
+
+	/**
+	 * Thiết lập phím tắt cho các component
+	 */
+	private void thietLapPhimTat() {
+		InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+		ActionMap actionMap = getActionMap();
+
+		// F1, Ctrl+F: Focus vào ô tìm kiếm
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), "focusTimKiem");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "focusTimKiem");
+		actionMap.put("focusTimKiem", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtSearch.requestFocus();
+				txtSearch.selectAll();
+			}
+		});
+
+		// F5, Ctrl+N: Làm mới
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), "lamMoi");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK), "lamMoi");
+		actionMap.put("lamMoi", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtSearch.setText("");
+				cbTrangThai.setSelectedIndex(0);
+				dateTuNgay.setDate(null);
+				dateDenNgay.setDate(null);
+				loadDataTablePH();
+				modelCTPH.setRowCount(0);
+			}
+		});
+
+		// Ctrl+E: Xuất Excel
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK), "xuatExcel");
+		actionMap.put("xuatExcel", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				xuatExcelPhieuHuyDangChon();
+			}
+		});
 	}
 
 	private void TaoPanelCenter() {
@@ -229,7 +293,9 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 
 		// --- Lọc theo text: cột 0 (Mã PH) và 2 (Nhân viên)
 		String text = txtSearch.getText().trim();
-		if (!text.isEmpty() && !txtSearch.getForeground().equals(Color.GRAY)) {
+		// Kiểm tra placeholder: nếu text chứa placeholder text hoặc rỗng thì bỏ qua
+		String placeholderText = "Nhập mã phiếu hủy";
+		if (!text.isEmpty() && !text.contains(placeholderText)) {
 			filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(text), 0, 2));
 		}
 
