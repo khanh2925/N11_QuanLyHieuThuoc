@@ -267,19 +267,64 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		gbc.insets = new Insets(10, 0, 10, 0);
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 
-		btnThem = createPillButton("Thêm NV", 140, 45);
+		// Button dimensions
+		int btnW = 140;
+		int btnH = 45;
+
+		btnThem = new PillButton(
+				"<html>" +
+						"<center>" +
+						"THÊM NV<br>" +
+						"<span style='font-size:10px; color:#888888;'>(Ctrl+N)</span>" +
+						"</center>" +
+						"</html>");
+		btnThem.setFont(FONT_BOLD);
+		btnThem.setPreferredSize(new Dimension(btnW, btnH));
+		btnThem.setToolTipText("<html><b>Phím tắt:</b> Ctrl+N<br>Thêm nhân viên mới</html>");
+		btnThem.addActionListener(this);
 		gbc.gridy = 0;
 		p.add(btnThem, gbc);
 
-		btnSua = createPillButton("Cập nhật", 140, 45);
+		btnSua = new PillButton(
+				"<html>" +
+						"<center>" +
+						"CẬP NHẬT<br>" +
+						"<span style='font-size:10px; color:#888888;'>(Ctrl+U)</span>" +
+						"</center>" +
+						"</html>");
+		btnSua.setFont(FONT_BOLD);
+		btnSua.setPreferredSize(new Dimension(btnW, btnH));
+		btnSua.setToolTipText("<html><b>Phím tắt:</b> Ctrl+U<br>Cập nhật thông tin nhân viên đang chọn</html>");
+		btnSua.addActionListener(this);
 		gbc.gridy = 1;
 		p.add(btnSua, gbc);
 
-		btnXoa = createPillButton("Thôi việc", 140, 45);
+		btnXoa = new PillButton(
+				"<html>" +
+						"<center>" +
+						"THÔI VIỆC<br>" +
+						"<span style='font-size:10px; color:#888888;'>(Ctrl+D)</span>" +
+						"</center>" +
+						"</html>");
+		btnXoa.setFont(FONT_BOLD);
+		btnXoa.setPreferredSize(new Dimension(btnW, btnH));
+		btnXoa.setToolTipText(
+				"<html><b>Phím tắt:</b> Ctrl+D<br>Đánh dấu nhân viên đã nghỉ (Không xóa khỏi hệ thống)</html>");
+		btnXoa.addActionListener(this);
 		gbc.gridy = 2;
 		p.add(btnXoa, gbc);
 
-		btnLamMoi = createPillButton("Làm mới", 140, 45);
+		btnLamMoi = new PillButton(
+				"<html>" +
+						"<center>" +
+						"LÀM MỚI<br>" +
+						"<span style='font-size:10px; color:#888888;'>(F5)</span>" +
+						"</center>" +
+						"</html>");
+		btnLamMoi.setFont(FONT_BOLD);
+		btnLamMoi.setPreferredSize(new Dimension(btnW, btnH));
+		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới form nhập liệu</html>");
+		btnLamMoi.addActionListener(this);
 		gbc.gridy = 3;
 		p.add(btnLamMoi, gbc);
 	}
@@ -560,6 +605,33 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 				xuatExcel();
 			}
 		});
+
+		// Ctrl+N: Thêm
+		inputMap.put(KeyStroke.getKeyStroke("control N"), "themNV");
+		actionMap.put("themNV", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				xuLyThem();
+			}
+		});
+
+		// Ctrl+U: Cập nhật
+		inputMap.put(KeyStroke.getKeyStroke("control U"), "capNhatNV");
+		actionMap.put("capNhatNV", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				xuLyCapNhat();
+			}
+		});
+
+		// Ctrl+D: Thôi việc
+		inputMap.put(KeyStroke.getKeyStroke("control D"), "choNghiNV");
+		actionMap.put("choNghiNV", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				xuLyChoNghi();
+			}
+		});
 	}
 
 	// =====================================================================
@@ -725,14 +797,6 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		txt.setFont(FONT_TEXT);
 		txt.setBounds(x, y, w, 35);
 		return txt;
-	}
-
-	private PillButton createPillButton(String text, int w, int h) {
-		PillButton btn = new PillButton(text);
-		btn.setFont(FONT_BOLD);
-		btn.setPreferredSize(new Dimension(w, h));
-		btn.addActionListener(this);
-		return btn;
 	}
 
 	private JTable setupTable(DefaultTableModel model) {
