@@ -504,6 +504,9 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 	// ==============================================================================
 	// TÌM KIẾM
 	// ==============================================================================
+	// ==============================================================================
+	// TÌM KIẾM
+	// ==============================================================================
 	private void xuLyTimKiem() {
 		String keyword = txtTimKiem.getText().trim();
 		if (keyword.contains("Tìm theo"))
@@ -511,43 +514,67 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 
 		String tt = cbTrangThai.getSelectedItem().toString();
 
-		List<PhieuTra> ds = new ArrayList<>(allPhieuTra);
+		List<PhieuTra> ketQua = new ArrayList<>();
 
-		// --- keyword ---
+		// 1. SEARCH LOGIC (Hybrid: DB + Cache)
 		if (!keyword.isEmpty()) {
-			String kw = keyword.toLowerCase();
-			ds.removeIf(pt -> !(pt.getMaPhieuTra().toLowerCase().contains(kw)
-					|| pt.getKhachHang().getTenKhachHang().toLowerCase().contains(kw)
-					|| pt.getKhachHang().getSoDienThoai().contains(kw)));
+			// Nếu tìm theo mã (PT-...) -> Query trực tiếp DB (chính xác tuyệt đối)
+			if (keyword.toUpperCase().startsWith("PT-")) {
+				PhieuTra pt = phieuTraDAO.timKiemPhieuTraBangMa(keyword);
+				if (pt != null) {
+					ketQua.add(pt);
+				}
+			} else {
+				// Nếu tìm theo SĐT -> Query DB (chính xác, đỡ loop cache)
+				ketQua = phieuTraDAO.timPhieuTraTheoSoDienThoai(keyword);
+			}
+		} else {
+			// Không có keyword -> Lấy từ cache (allPhieuTra đã được load từ đầu)
+			if (allPhieuTra == null || allPhieuTra.isEmpty()) {
+				allPhieuTra = phieuTraDAO.layTatCaPhieuTra();
+			}
+			ketQua = new ArrayList<>(allPhieuTra);
 		}
 
-		// --- Lọc theo Ngày (Java Filter) ---
+		// 2. FILTER LOGIC (Áp dụng bộ lọc Date & Status trên kết quả tìm được)
+		List<PhieuTra> dsFinal = new ArrayList<>();
+
 		Date dTu = dateTuNgay.getDate();
 		Date dDen = dateDenNgay.getDate();
+		LocalDate fromDate = (dTu != null) ? dTu.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+				: LocalDate.MIN;
+		LocalDate toDate = (dDen != null) ? dDen.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+				: LocalDate.MAX;
 
-		if (dTu != null || dDen != null) {
-			LocalDate fromDate = (dTu != null) ? dTu.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-					: LocalDate.MIN;
-			LocalDate toDate = (dDen != null) ? dDen.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-					: LocalDate.MAX;
+		for (PhieuTra pt : ketQua) {
+			// Lọc Ngày
+			LocalDate ngayLap = pt.getNgayLap();
+			boolean checkNgay = (ngayLap.isEqual(fromDate) || ngayLap.isAfter(fromDate)) &&
+					(ngayLap.isEqual(toDate) || ngayLap.isBefore(toDate));
 
-			ds.removeIf(pt -> {
-				LocalDate ngayLap = pt.getNgayLap();
-				// So sánh ngày: fromDate <= ngayLap <= toDate
-				return !((ngayLap.isEqual(fromDate) || ngayLap.isAfter(fromDate)) &&
-						(ngayLap.isEqual(toDate) || ngayLap.isBefore(toDate)));
-			});
+			// Lọc Trạng Thái
+			boolean checkKy = true;
+			if (!"Tất cả".equals(tt)) {
+				if ("Đã duyệt".equals(tt))
+					checkKy = pt.isDaDuyet();
+				else
+					checkKy = !pt.isDaDuyet();
+			}
+
+			if (checkNgay && checkKy) {
+				dsFinal.add(pt);
+			}
 		}
 
-		// --- trạng thái ---
-		if (!"Tất cả".equals(tt)) {
-			if ("Đã duyệt".equals(tt))
-				ds.removeIf(pt -> !pt.isDaDuyet());
-			else
-				ds.removeIf(pt -> pt.isDaDuyet());
-		}
+		// 3. HIỂN THỊ
+		loadTablePhieuTra(dsFinal);
+		modelChiTiet.setRowCount(0);
 
-		loadTablePhieuTra(ds);
+		// Nếu tìm mã cụ thể mà không thấy
+		if (dsFinal.isEmpty() && !keyword.isEmpty()) {
+			JOptionPane.showMessageDialog(this, "Không tìm thấy phiếu trả nào phù hợp!", "Thông báo",
+					JOptionPane.INFORMATION_MESSAGE);
+		}
 	}
 
 	// ==============================================================================
