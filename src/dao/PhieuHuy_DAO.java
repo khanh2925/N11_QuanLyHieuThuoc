@@ -11,8 +11,18 @@ import java.util.List;
 
 public class PhieuHuy_DAO {
 
-	/** 🔹 Lấy tất cả phiếu huỷ (kèm chi tiết, entity tự tính tongTien) */
+	// ============ CACHE LAYER ============
+	// Cache toàn bộ phiếu hủy (dùng chung toàn ứng dụng)
+	private static List<PhieuHuy> cacheAllPhieuHuy = null;
+
+	/** 🔹 Lấy tất cả phiếu huỷ (kèm chi tiết, entity tự tính tongTien) - CÓ CACHE */
 	public List<PhieuHuy> layTatCaPhieuHuy() {
+		// Nếu cache đã có dữ liệu → Return cache (clone để tránh modify trực tiếp)
+		if (cacheAllPhieuHuy != null && !cacheAllPhieuHuy.isEmpty()) {
+			return new ArrayList<>(cacheAllPhieuHuy);
+		}
+		
+		// Cache rỗng → Query DB và lưu vào cache
 		List<PhieuHuy> list = new ArrayList<>();
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
@@ -62,6 +72,9 @@ public class PhieuHuy_DAO {
 				ph.capNhatTongTienTheoChiTiet();
 				list.add(ph);
 			}
+			
+			// Lưu vào cache để lần sau không cần query nữa
+			cacheAllPhieuHuy = list;
 
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -77,7 +90,7 @@ public class PhieuHuy_DAO {
 			} catch (SQLException ignored) {
 			}
 		}
-		return list;
+		return new ArrayList<>(list); // Clone để tránh modify cache
 	}
 	/** � Đếm số phiếu hủy chưa duyệt (cho Dashboard) */
 	public int demPhieuHuyChuaDuyet() {
@@ -237,6 +250,12 @@ public class PhieuHuy_DAO {
 			}
 
 			con.commit();
+			
+			// ✅ Cập nhật cache: Thêm phiếu hủy mới vào đầu danh sách
+			if (cacheAllPhieuHuy != null) {
+				cacheAllPhieuHuy.add(0, ph); // Thêm vào đầu (mới nhất)
+			}
+			
 			return true;
 
 		} catch (SQLException e) {
@@ -328,6 +347,12 @@ public class PhieuHuy_DAO {
 			}
 
 			con.commit();
+			
+			// ✅ Cập nhật cache: Xóa phiếu hủy khỏi cache
+			if (cacheAllPhieuHuy != null) {
+				cacheAllPhieuHuy.removeIf(ph -> ph.getMaPhieuHuy().equals(maPhieuHuy));
+			}
+			
 			return true;
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -391,5 +416,52 @@ public class PhieuHuy_DAO {
 	    return 0;
 	}
 	
+	/**
+	 * 🔄 Force refresh cache - Xóa cache và load lại từ DB
+	 * Dùng khi cần đồng bộ dữ liệu real-time (VD: sau khi import data)
+	 */
+	public void refreshCache() {
+		cacheAllPhieuHuy = null;
+		layTatCaPhieuHuy(); // Load lại ngay
+	}
 	
+	/**
+	 * 📄 Lấy danh sách phiếu hủy từ cache (không query DB)
+	 * @return Danh sách phiếu hủy trong cache, hoặc null nếu chưa load
+	 */
+	public List<PhieuHuy> layCacheTam() {
+		if (cacheAllPhieuHuy == null) {
+			return null;
+		}
+		return new ArrayList<>(cacheAllPhieuHuy);
+	}
+	
+	/**
+	 * 📝 Thêm phiếu hủy vào cache tạm (chưa lưu DB)
+	 * @param ph Phiếu hủy cần thêm
+	 */
+	public void themVaoCacheTam(PhieuHuy ph) {
+		if (cacheAllPhieuHuy == null) {
+			cacheAllPhieuHuy = new ArrayList<>();
+		}
+		cacheAllPhieuHuy.add(0, ph);
+	}
+	
+	/**
+	 * ❌ Xóa phiếu hủy khỏi cache tạm
+	 * @param maPhieuHuy Mã phiếu hủy cần xóa
+	 */
+	public void xoaKhoiCacheTam(String maPhieuHuy) {
+		if (cacheAllPhieuHuy != null) {
+			cacheAllPhieuHuy.removeIf(ph -> ph.getMaPhieuHuy().equals(maPhieuHuy));
+		}
+	}
+	
+	/**
+	 * 🗑️ Xóa toàn bộ cache tạm
+	 */
+	public void xoaCacheTam() {
+		cacheAllPhieuHuy = null;
+	}
+
 }
