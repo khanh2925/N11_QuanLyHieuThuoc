@@ -615,20 +615,45 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         // Lấy thông tin sản phẩm
         SanPham sp = sanPhamDAO.laySanPhamTheoMa(maSanPham);
         
-        // Hiển thị thông báo BẮT BUỘC phải thêm đơn vị gốc
-        JOptionPane.showMessageDialog(this,
-                "⚠️ BẮT BUỘC PHẢI THÊM ĐƠN VỊ GỐC!\n\n" +
-                "Sản phẩm: " + (sp != null ? sp.getTenSanPham() : maSanPham) + "\n\n" +
-                "Bạn PHẢI thêm ít nhất 1 quy cách đóng gói làm đơn vị gốc (đơn vị cơ bản)\n" +
-                "để hoàn tất việc tạo sản phẩm mới.\n\n" +
-                "Nhấn OK để tiếp tục thêm đơn vị gốc...",
-                "Yêu cầu bắt buộc",
-                JOptionPane.WARNING_MESSAGE);
-        
         // Vòng lặp cho đến khi có đơn vị gốc hoặc người dùng hủy
         boolean daCoGoc = false;
+        boolean lanDauTien = true; // Biến để theo dõi lần đầu tiên
         
         while (!daCoGoc) {
+            // Lần đầu tiên: Hiển thị thông báo hướng dẫn
+            if (lanDauTien) {
+                int chon = JOptionPane.showConfirmDialog(this,
+                        "⚠️ BẮT BUỘC PHẢI THÊM ĐƠN VỊ GỐC!\n\n" +
+                        "Sản phẩm: " + (sp != null ? sp.getTenSanPham() : maSanPham) + "\n\n" +
+                        "Bạn PHẢI thêm ít nhất 1 quy cách đóng gói làm đơn vị gốc (đơn vị cơ bản)\n" +
+                        "để hoàn tất việc tạo sản phẩm mới.\n\n" +
+                        "Chọn OK: Tiếp tục thêm đơn vị gốc\n" +
+                        "Chọn Cancel: Hủy và xóa sản phẩm",
+                        "Yêu cầu bắt buộc",
+                        JOptionPane.OK_CANCEL_OPTION,
+                        JOptionPane.WARNING_MESSAGE);
+                
+                if (chon != JOptionPane.OK_OPTION) {
+                    // Người dùng chọn Cancel → Xóa sản phẩm ngay
+                    boolean xoaOK = sanPhamDAO.xoaSanPham(maSanPham);
+                    if (xoaOK) {
+                        JOptionPane.showMessageDialog(this,
+                                "Đã hủy và xóa sản phẩm vừa tạo.\n" +
+                                "Sản phẩm chưa có đơn vị gốc nên không thể lưu.",
+                                "Đã hủy",
+                                JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(this,
+                                "⚠️ Không thể xóa sản phẩm!\n" +
+                                "Vui lòng xóa thủ công hoặc thêm đơn vị gốc cho sản phẩm này.",
+                                "Lỗi",
+                                JOptionPane.ERROR_MESSAGE);
+                    }
+                    break; // Thoát vòng lặp
+                }
+                lanDauTien = false;
+            }
+            
             // Mở dialog thêm quy cách đóng gói
             new QuyCachDongGoi_Dialog(this, maSanPham, null).setVisible(true);
             
