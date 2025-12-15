@@ -10,7 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HoaDon_DAO {
-
+    // ============ CACHE LAYER ============
+    // Cache toàn bộ hóa đơn (dùng chung toàn ứng dụng)
+    private static List<HoaDon> cacheAllHoaDon = null;
     private final NhanVien_DAO nhanVienDAO;
     private final KhachHang_DAO khachHangDAO;
     private final ChiTietHoaDon_DAO chiTietHoaDonDAO;
@@ -93,8 +95,14 @@ public class HoaDon_DAO {
         return null;
     }
 
-    /** 📜 Lấy toàn bộ hóa đơn (ĐÃ SỬA LỖI BUSY CONNECTION) */
+    /** 📜 Lấy toàn bộ hóa đơn (CÓ CACHE - TỐI ƯU) */
     public List<HoaDon> layTatCaHoaDon() {
+        // Nếu cache đã có dữ liệu → Return cache (clone để tránh modify trực tiếp)
+        if (cacheAllHoaDon != null && !cacheAllHoaDon.isEmpty()) {
+            return new ArrayList<>(cacheAllHoaDon);
+        }
+        
+        // Cache rỗng → Query DB và lưu vào cache
         List<HoaDon> dsHD = new ArrayList<>();
         List<String> dsMaHD = new ArrayList<>(); // Bước 1: Lưu tạm mã vào đây
 
@@ -125,15 +133,17 @@ public class HoaDon_DAO {
                     dsHD.add(hd);
                 }
             }
+            // Lưu vào cache để lần sau không cần query nữa
+            cacheAllHoaDon = dsHD;
 
         } catch (SQLException e) {
             System.err.println("❌ Lỗi lấy danh sách hóa đơn: " + e.getMessage());
         }
         // Không cần finally close rs/st ở đây vì đã close ở giữa rồi
-        return dsHD;
+        return new ArrayList<>(dsHD); // Clone để tránh modify cache
     }
 
-    // ... (Giữ nguyên hàm themHoaDon và taoMaHoaDon) ...
+  
     public boolean themHoaDon(HoaDon hd) {
         connectDB.getInstance();
         Connection con = connectDB.getConnection();
@@ -188,6 +198,12 @@ public class HoaDon_DAO {
             }
             stmtCTHD.executeBatch();
             con.commit();
+            
+            // ✅ Cập nhật cache: Thêm hóa đơn mới vào đầu danh sách
+            if (cacheAllHoaDon != null) {
+                cacheAllHoaDon.add(0, hd); // Thêm vào đầu (mới nhất)
+            }
+            
             return true;
         } catch (SQLException e) {
             try { if (con != null) con.rollback(); } catch (SQLException ignore) {}
@@ -197,7 +213,6 @@ public class HoaDon_DAO {
                 if (stmtHD != null) stmtHD.close();
                 if (stmtCTHD != null) stmtCTHD.close();
                 if (stmtUpdateTon != null) stmtUpdateTon.close();
-                if (con != null) con.setAutoCommit(true);
             } catch (SQLException ignore) {}
         }
     }
@@ -285,6 +300,14 @@ public class HoaDon_DAO {
         return 0;
     }
     
+    /**
+     * 🔄 Force refresh cache - Xóa cache và load lại từ DB
+     * Dùng khi cần đồng bộ dữ liệu real-time (VD: sau khi import data)
+     */
+    public void refreshCache() {
+        cacheAllHoaDon = null;
+        layTatCaHoaDon(); // Load lại ngay
+    }
     /**
      * Đếm số hóa đơn theo tháng và năm
      * @param thang Tháng (1-12)
