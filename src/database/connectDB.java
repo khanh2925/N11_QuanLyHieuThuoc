@@ -18,7 +18,9 @@ public class connectDB {
 			String user = "sa";
 			String password = "sapassword";
 			con = DriverManager.getConnection(url, user, password);
+			System.out.println("Kết nối thành công!");
 		} catch (SQLException e) {
+			System.err.println("Lỗi kết nối SQL Server: " + e.getMessage());
 			throw e; // Ném lại ngoại lệ để lớp gọi xử lý
 		}
 	}
@@ -27,6 +29,7 @@ public class connectDB {
 		if (con != null) {
 			try {
 				con.close();
+				System.out.println("Ngắt kết nối thành công!");
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
