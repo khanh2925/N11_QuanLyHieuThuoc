@@ -5,6 +5,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import javax.swing.AbstractAction;
+import javax.swing.InputMap;
+import javax.swing.ActionMap;
+import javax.swing.KeyStroke;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -53,6 +58,7 @@ public class TraCuuDonViTinh_GUI extends JPanel implements ActionListener, Mouse
         
         setPreferredSize(new Dimension(1537, 850));
         initialize();
+        setupKeyboardShortcuts();
     }
 
     private void initialize() {
@@ -83,22 +89,39 @@ public class TraCuuDonViTinh_GUI extends JPanel implements ActionListener, Mouse
 
         // --- Ô TÌM KIẾM ---
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm mã hoặc tên đơn vị tính...");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm mã hoặc tên đơn vị tính... (F1 / Ctrl+F)");
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
         txtTimKiem.setBounds(25, 17, 480, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
+        txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
         pnHeader.add(txtTimKiem);
 
         // --- NÚT CHỨC NĂNG ---
-        btnTim = new PillButton("Tìm kiếm");
+        btnTim = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "TÌM KIẾM<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
+                    "</center>" +
+                "</html>"
+            );
         btnTim.setBounds(550, 22, 140, 50);
         btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnTim.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã, tên đơn vị tính</html>");
         pnHeader.add(btnTim);
         
-        btnLamMoi = new PillButton("Làm mới");
-        btnLamMoi.setBounds(710, 22, 140, 50); // Đã chỉnh lại vị trí cho đẹp
+        btnLamMoi = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "LÀM MỚI<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(F5)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+        btnLamMoi.setBounds(710, 22, 140, 50);
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
         pnHeader.add(btnLamMoi);
     }
 
@@ -112,7 +135,7 @@ private void taoPhanGiua() {
         splitPane.setDividerLocation(400);
         splitPane.setResizeWeight(0.5);
 
-        String[] colDVT = {"STT", "Mã Đơn Vị", "Tên Đơn Vị Tính", "Số lượng thuốc đang dùng"};
+        String[] colDVT = {"STT", "Mã Đơn Vị", "Tên Đơn Vị Tính", "Số lượng sản phẩm đang dùng"};
         modelDonViTinh = new DefaultTableModel(colDVT, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -189,6 +212,52 @@ private void taoPhanGiua() {
         btnTim.addActionListener(this);
         btnLamMoi.addActionListener(this);
         tblDonViTinh.addMouseListener(this);
+    }
+
+    /**
+     * Thiết lập phím tắt cho màn hình Tra cứu Đơn vị tính
+     */
+    private void setupKeyboardShortcuts() {
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+
+        // F1: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
+        actionMap.put("focusTimKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+
+        // F5: Làm mới
+        inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
+        actionMap.put("lamMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyLamMoi();
+            }
+        });
+
+        // Ctrl+F: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
+        actionMap.put("timKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+
+        // Enter: Tìm kiếm (từ bất kỳ đâu trong panel)
+        inputMap.put(KeyStroke.getKeyStroke("ENTER"), "timKiemEnter");
+        actionMap.put("timKiemEnter", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyTimKiem();
+            }
+        });
     }
 
     /**
