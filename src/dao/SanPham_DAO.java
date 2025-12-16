@@ -16,11 +16,49 @@ import enums.DuongDung;
 
 public class SanPham_DAO {
 
-	// ✅ Chỉ giữ lại DAO cần thiết cho public API
+	// Thêm các DAO dependency
+	private BangGia_DAO bangGiaDAO;
+	private ChiTietBangGia_DAO chiTietBangGiaDAO;
 	private ChiTietKhuyenMaiSanPham_DAO chiTietKM_DAO;
 
+	// ✅ CACHE: Lưu bảng giá đang hoạt động và chi tiết để tránh N+1 query
+	private static BangGia cachedBangGiaActive = null;
+	private static List<ChiTietBangGia> cachedChiTietBangGia = null;
+
 	public SanPham_DAO() {
+		// Khởi tạo các DAO cần thiết để lấy thông tin giá bán và khuyến mãi
+		bangGiaDAO = new BangGia_DAO();
+		chiTietBangGiaDAO = new ChiTietBangGia_DAO();
 		chiTietKM_DAO = new ChiTietKhuyenMaiSanPham_DAO();
+	}
+
+	/** 🔄 Load và cache bảng giá đang hoạt động (gọi 1 lần thay vì mỗi SP) */
+	private void loadCacheBangGia() {
+		if (cachedBangGiaActive == null) {
+			cachedBangGiaActive = bangGiaDAO.layBangGiaDangHoatDong();
+			if (cachedBangGiaActive != null) {
+				cachedChiTietBangGia = chiTietBangGiaDAO.layChiTietTheoMaBangGia(cachedBangGiaActive.getMaBangGia());
+			}
+		}
+	}
+
+	/** � Refresh cache khi bảng giá thay đổi */
+	public static void refreshCacheBangGia() {
+		cachedBangGiaActive = null;
+		cachedChiTietBangGia = null;
+	}
+
+	/** 🔍 Tìm chi tiết bảng giá theo khoảng giá (trong cache thay vì query DB) */
+	private ChiTietBangGia timChiTietTheoKhoangGiaTrongCache(double giaNhap) {
+		if (cachedChiTietBangGia == null || cachedChiTietBangGia.isEmpty()) {
+			return null;
+		}
+		for (ChiTietBangGia ct : cachedChiTietBangGia) {
+			if (giaNhap >= ct.getGiaTu() && giaNhap <= ct.getGiaDen()) {
+				return ct;
+			}
+		}
+		return null;
 	}
 
 	/** 🔹 Lấy toàn bộ sản phẩm */
@@ -201,111 +239,7 @@ public class SanPham_DAO {
 		return chiTietKM_DAO.layChiTietKhuyenMaiDangHoatDongTheoMaSP(maSanPham);
 	}
 
-	/**
-	 * 🔹 Lấy sản phẩm với đầy đủ thông tin giá bán (OPTIMIZED - dùng JOIN)
-	 * Dùng khi cần hiển thị giá bán, tránh N+1 query problem
-	 */
-	public SanPham laySanPhamVoiGiaTheoMa(String maSanPham) {
-		connectDB.getInstance();
-		Connection con = connectDB.getConnection();
-		
-		String sql = """
-		    SELECT 
-		        sp.*,
-		        ctbg.GiaTu, ctbg.GiaDen, ctbg.TiLe,
-		        bg.MaBangGia, bg.TenBangGia
-		    FROM SanPham sp
-		    LEFT JOIN BangGia bg ON bg.HoatDong = 1
-		    LEFT JOIN ChiTietBangGia ctbg ON bg.MaBangGia = ctbg.MaBangGia
-		        AND sp.GiaNhap >= ctbg.GiaTu 
-		        AND sp.GiaNhap <= ctbg.GiaDen
-		    WHERE sp.MaSanPham = ?
-		    """;
-
-		try (PreparedStatement ps = con.prepareStatement(sql)) {
-			ps.setString(1, maSanPham);
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					// Tạo SanPham cơ bản
-					SanPham sp = taoSanPhamTuResultSet(rs);
-					
-					// Gán thông tin giá bán nếu có
-					if (rs.getObject("GiaTu") != null) {
-						BangGia bg = new BangGia();
-						bg.setMaBangGia(rs.getString("MaBangGia"));
-						bg.setTenBangGia(rs.getString("TenBangGia"));
-						
-						ChiTietBangGia ctbg = new ChiTietBangGia(
-							bg,
-							rs.getDouble("GiaTu"),
-							rs.getDouble("GiaDen"),
-							rs.getDouble("TiLe")
-						);
-						
-						sp.setChiTietBangGiaHienTai(ctbg);
-					}
-					
-					return sp;
-				}
-			}
-		} catch (SQLException e) {
-			System.err.println("❌ Lỗi lấy sản phẩm với giá theo mã: " + e.getMessage());
-		}
-		return null;
-	}
-
-	/**
-	 * 🔹 Lấy tất cả sản phẩm với giá bán (OPTIMIZED - dùng JOIN)
-	 * Dùng khi cần hiển thị danh sách sản phẩm kèm giá
-	 */
-	public ArrayList<SanPham> layTatCaSanPhamVoiGia() {
-		ArrayList<SanPham> danhSach = new ArrayList<>();
-		connectDB.getInstance();
-		Connection con = connectDB.getConnection();
-		
-		String sql = """
-		    SELECT 
-		        sp.*,
-		        ctbg.GiaTu, ctbg.GiaDen, ctbg.TiLe,
-		        bg.MaBangGia, bg.TenBangGia
-		    FROM SanPham sp
-		    LEFT JOIN BangGia bg ON bg.HoatDong = 1
-		    LEFT JOIN ChiTietBangGia ctbg ON bg.MaBangGia = ctbg.MaBangGia
-		        AND sp.GiaNhap >= ctbg.GiaTu 
-		        AND sp.GiaNhap <= ctbg.GiaDen
-		    ORDER BY sp.MaSanPham
-		    """;
-
-		try (Statement st = con.createStatement(); ResultSet rs = st.executeQuery(sql)) {
-			while (rs.next()) {
-				// Tạo SanPham cơ bản
-				SanPham sp = taoSanPhamTuResultSet(rs);
-				
-				// Gán thông tin giá bán nếu có
-				if (rs.getObject("GiaTu") != null) {
-					BangGia bg = new BangGia();
-					bg.setMaBangGia(rs.getString("MaBangGia"));
-					bg.setTenBangGia(rs.getString("TenBangGia"));
-					
-					ChiTietBangGia ctbg = new ChiTietBangGia(
-						bg,
-						rs.getDouble("GiaTu"),
-						rs.getDouble("GiaDen"),
-						rs.getDouble("TiLe")
-					);
-					
-					sp.setChiTietBangGiaHienTai(ctbg);
-				}
-				
-				danhSach.add(sp);
-			}
-		} catch (SQLException e) {
-			System.err.println("❌ Lỗi lấy danh sách sản phẩm với giá: " + e.getMessage());
-		}
-		return danhSach;
-	}
-
-	/** 🔹 Hàm tiện ích: tạo SanPham từ ResultSet (OPTIMIZED - không gọi DAO khác) */
+	/** 🔹 Hàm tiện ích: tạo SanPham từ ResultSet (ĐÃ CẬP NHẬT để lấy KM) */
 	private SanPham taoSanPhamTuResultSet(ResultSet rs) throws SQLException {
 		LoaiSanPham loai = null;
 		String loaiStr = rs.getString("LoaiSanPham");
@@ -329,9 +263,43 @@ public class SanPham_DAO {
 				duongDung, rs.getDouble("GiaNhap"), rs.getString("HinhAnh"), rs.getString("KeBanSanPham"),
 				rs.getBoolean("HoatDong"));
 
-		// ℹ️ KHÔNG tự động load giá bán và khuyến mãi ở đây nữa
-		// Để tránh N+1 query problem
-		// GUI/Business logic sẽ tự load khi cần thiết
+		// ✅ OPTIMIZED: Dùng cache thay vì gọi DAO mỗi lần
+		try {
+			// 1. Load cache nếu chưa có
+			loadCacheBangGia();
+
+			if (cachedBangGiaActive != null) {
+				double giaNhap = sp.getGiaNhap();
+
+				// 2. Tìm chi tiết bảng giá trong cache (không query DB)
+				ChiTietBangGia ctbg = timChiTietTheoKhoangGiaTrongCache(giaNhap);
+
+				if (ctbg != null) {
+					// 3. Gán chi tiết bảng giá, kích hoạt tính toán giaBan trong entity
+					sp.setChiTietBangGiaHienTai(ctbg);
+				}
+			}
+		} catch (Exception e) {
+			System.err.println("❌ Lỗi thiết lập giá bán cho sản phẩm " + sp.getMaSanPham() + ": " + e.getMessage());
+		}
+
+		// ====================================================================
+		// 💡 BỔ SUNG LOGIC: LẤY KHUYẾN MÃI ĐANG ÁP DỤNG VÀ GÁN VÀO SẢN PHẨM
+		try {
+			List<ChiTietKhuyenMaiSanPham> dsKM = chiTietKM_DAO
+					.layChiTietKhuyenMaiDangHoatDongTheoMaSP(sp.getMaSanPham());
+
+			// Giả định: Nếu tìm thấy, lấy khuyến mãi đầu tiên và gán vào SanPham
+			if (dsKM != null && !dsKM.isEmpty()) {
+				ChiTietKhuyenMaiSanPham kmHienTai = dsKM.get(0);
+
+				// ⚠️ Dòng code này yêu cầu SanPham.java có phương thức setKhuyenMaiHienTai()
+				// sp.setKhuyenMaiHienTai(kmHienTai);
+			}
+		} catch (Exception e) {
+			System.err.println("❌ Lỗi thiết lập khuyến mãi cho sản phẩm " + sp.getMaSanPham() + ": " + e.getMessage());
+		}
+		// ====================================================================
 
 		return sp;
 	}

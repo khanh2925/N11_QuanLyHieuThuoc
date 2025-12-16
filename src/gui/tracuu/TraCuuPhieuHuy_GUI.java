@@ -10,18 +10,6 @@ package gui.tracuu;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-<<<<<<< HEAD
-import java.awt.event.HierarchyEvent;
-import javax.swing.AbstractAction;
-import javax.swing.InputMap;
-import javax.swing.ActionMap;
-import javax.swing.KeyStroke;
-import javax.swing.JComponent;
-import java.awt.event.HierarchyListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-=======
->>>>>>> origin/main
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -84,7 +72,6 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         ctph_dao = new ChiTietPhieuHuy_DAO();
 
         initialize();
-        setupKeyboardShortcuts();
         addEvents();
         setupKeyboardShortcuts(); // Thiết lập phím tắt
         initData();
@@ -175,11 +162,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
             );
         btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnTim.setBounds(1252, 22, 130, 50);
-<<<<<<< HEAD
-        btnTim.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã phiếu, tên nhân viên và bộ lọc</html>");
-=======
         btnTim.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã phiếu, tên nhân viên và bộ lọc ngày</html>");
->>>>>>> origin/main
         pnHeader.add(btnTim);
 
         btnLamMoi = new PillButton(
@@ -407,17 +390,10 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
                 txtTimKiem.selectAll();
             }
         });
-<<<<<<< HEAD
-
-        // Enter: Tìm kiếm (từ bất kỳ đâu trong panel)
-        inputMap.put(KeyStroke.getKeyStroke("ENTER"), "timKiemEnter");
-        actionMap.put("timKiemEnter", new AbstractAction() {
-=======
         
         // Enter: Lọc/Tìm kiếm (hoạt động ở bất kỳ đâu trong cửa sổ)
         inputMap.put(KeyStroke.getKeyStroke("ENTER"), "enterTimKiem");
         actionMap.put("enterTimKiem", new AbstractAction() {
->>>>>>> origin/main
             @Override
             public void actionPerformed(ActionEvent e) {
                 xuLyTimKiem(true);
