@@ -3,6 +3,7 @@ package gui.dialog;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.SQLException;
 import java.util.List;
 import javax.swing.*;
 import dao.DonViTinh_DAO;
@@ -124,6 +125,10 @@ public class QuyCachDongGoi_Dialog extends JDialog implements ActionListener {
         if (maQuyCachEdit == null) {
             txtMaQC.setText(quyCachDAO.taoMaQuyCach());
         } else {
+            // ⚠️ KHI SỬA: KHÔNG cho phép thay đổi thuộc tính "là đơn vị gốc"
+            chkDonViGoc.setEnabled(false);
+            chkDonViGoc.setToolTipText("Không thể thay đổi thuộc tính 'đơn vị gốc' khi sửa. Chỉ có thể thay đổi đơn vị tính.");
+            
             List<QuyCachDongGoi> list = quyCachDAO.layDanhSachQuyCachTheoSanPham(maSanPham);
             for(QuyCachDongGoi qc : list) {
                 if(qc.getMaQuyCach().equals(maQuyCachEdit)) {
@@ -173,13 +178,65 @@ public class QuyCachDongGoi_Dialog extends JDialog implements ActionListener {
             if(idx < 0) return;
             DonViTinh dvtChon = listDVT.get(idx);
 
-            QuyCachDongGoi qc = new QuyCachDongGoi();
-            qc.setMaQuyCach(txtMaQC.getText());
-            qc.setDonViTinh(dvtChon);
-            qc.setSanPham(new SanPham(maSanPham));
-            qc.setHeSoQuyDoi(heSo);
-            qc.setTiLeGiam(tiLe);
-            qc.setDonViGoc(isGoc);
+            // ===== KIỂM TRA TRÙNG ĐỠN VỊ TÍNH =====
+            // Kiểm tra xem đơn vị tính đã được sử dụng cho quy cách khác chưa
+            QuyCachDongGoi qcTrungDVT = quyCachDAO.timQuyCachTheoSanPhamVaDonVi(maSanPham, dvtChon.getMaDonViTinh());
+            if(qcTrungDVT != null && !qcTrungDVT.getMaQuyCach().equals(maQuyCachEdit)) {
+                JOptionPane.showMessageDialog(this,
+                        "❌ ĐƠN VỊ TÍNH ĐÃ TỒN TẠI!\n\n" +
+                        "Đơn vị tính '" + dvtChon.getTenDonViTinh() + "' đã được sử dụng cho quy cách: " + qcTrungDVT.getMaQuyCach() + "\n\n" +
+                        "Mỗi sản phẩm không thể có 2 quy cách cùng đơn vị tính.\n" +
+                        "Vui lòng chọn đơn vị tính khác.",
+                        "Lỗi: Trùng đơn vị tính",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // ===== XỬ LÝ ĐƠN VỊ GỐC =====
+            if (isGoc && maQuyCachEdit == null) {
+                // Trường hợp THÊM MỚI quy cách là đơn vị gốc
+                QuyCachDongGoi qcGocCu = quyCachDAO.timQuyCachGocTheoSanPham(maSanPham);
+                
+                if(qcGocCu != null) {
+                    // Đã có đơn vị gốc → Hỏi có muốn THAY THẾ không
+                    int choice = JOptionPane.showConfirmDialog(this,
+                            "⚠️ SẢN PHẨM ĐÃ CÓ ĐƠN VỊ GỐC\n\n" +
+                            "Đơn vị gốc hiện tại: " + qcGocCu.getDonViTinh().getTenDonViTinh() + "\n" +
+                            "Đơn vị gốc mới: " + dvtChon.getTenDonViTinh() + "\n\n" +
+                            "Bạn có muốn THAY THẾ đơn vị gốc cũ bằng đơn vị mới không?\n\n" +
+                            "  • YES: Xóa đơn vị gốc cũ, thêm đơn vị gốc mới\n" +
+                            "  • NO: Hủy bỏ, giữ nguyên đơn vị gốc cũ",
+                            "Xác nhận thay thế đơn vị gốc",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.QUESTION_MESSAGE);
+                    
+                    if(choice == JOptionPane.YES_OPTION) {
+                        // Người dùng chọn THAY THẾ → Xóa đơn vị gốc cũ
+                        boolean xoaOK = quyCachDAO.xoaQuyCachDongGoi(qcGocCu.getMaQuyCach());
+                        if(!xoaOK) {
+                            JOptionPane.showMessageDialog(this, 
+                                "❌ Không thể xóa đơn vị gốc cũ! Vui lòng thử lại.", 
+                                "Lỗi", 
+                                JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
+                    } else {
+                        // Người dùng chọn HỦY → Không thêm, giữ nguyên đơn vị gốc cũ
+                        return;
+                    }
+                }
+            }
+
+            // Sử dụng constructor đầy đủ tham số để tránh lỗi validation khi set từng thuộc tính
+            SanPham sp = new SanPham(maSanPham);
+            QuyCachDongGoi qc = new QuyCachDongGoi(
+                txtMaQC.getText(),  // maQuyCach
+                dvtChon,            // donViTinh
+                sp,                 // sanPham
+                heSo,               // heSoQuyDoi
+                tiLe,               // tiLeGiam
+                isGoc               // isDonViGoc
+            );
 
             boolean kq;
             if (maQuyCachEdit == null) {
