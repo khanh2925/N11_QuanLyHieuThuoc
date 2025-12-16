@@ -8,22 +8,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import javax.swing.AbstractAction;
-import javax.swing.InputMap;
-import javax.swing.ActionMap;
-import javax.swing.KeyStroke;
-import javax.swing.JComponent;
 import java.text.DecimalFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.RowFilter;
-import javax.swing.table.TableRowSorter;
-
 import javax.swing.*;
 import javax.swing.border.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.table.*;
 
 import component.border.RoundedBorder;
@@ -35,7 +25,7 @@ import entity.LoSanPham;
 import entity.SanPham;
 
 @SuppressWarnings("serial")
-public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, MouseListener, DocumentListener {
+public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, MouseListener {
 
 	private JPanel pnHeader;
 	private JPanel pnCenter;
@@ -53,7 +43,7 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 	private final SanPham_DAO spDao = new SanPham_DAO();
 
 	private List<LoSanPham> allLo = new ArrayList<>();
-	private List<LoSanPham> loHetHan = new ArrayList<>();
+	// private List<LoSanPham> loHetHan = new ArrayList<>(); // Removed unused field
 	private List<LoSanPham> dsDangHienThi = new ArrayList<>();
 	private TableRowSorter<DefaultTableModel> sorterLo;
 
@@ -65,8 +55,8 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 	public TraCuuLoSanPham_GUI() {
 		setPreferredSize(new Dimension(1537, 850));
 		initialize();
-		setupKeyboardShortcuts();
 		addEvents();
+		setupKeyboardShortcuts(); // Thiết lập phím tắt
 		initData();
 	}
 
@@ -138,7 +128,7 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 			);
 		btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnTim.setBounds(1009, 22, 130, 50);
-		btnTim.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã lô, mã sản phẩm và bộ lọc</html>");
+		btnTim.setToolTipText("<html><b>Phím tắt:</b> Enter<br>Tìm kiếm theo mã lô, mã SP và bộ lọc</html>");
 		pnHeader.add(btnTim);
 
 		btnLamMoi = new PillButton(
@@ -149,7 +139,7 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 					"</center>" +
 				"</html>"
 			);
-		btnLamMoi.setBounds(1164, 22, 130, 50);
+		btnLamMoi.setBounds(1154, 22, 130, 50);
 		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
 		pnHeader.add(btnLamMoi);
@@ -305,11 +295,11 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 
 
 	private void loadDuLieuLo() {
+	    // Load cache ban đầu
 	    allLo = loDao.layTatCaLoSanPham();
 	    if (allLo == null) allLo = new ArrayList<>();
-
 	    dsDangHienThi = new ArrayList<>(allLo);
-	    apDungTimKiemTuDong();
+	    hienThiDanhSachLo(dsDangHienThi);
 	}
 
 	private void loadSanPhamCuaLoDangChon(String maSP) {
@@ -331,9 +321,8 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 		tblLo.addMouseListener(this);
 		btnLamMoi.addActionListener(this);
 		btnTim.addActionListener(this);
-		chkHetHan.addActionListener(this);
-		cbTonKho.addActionListener(this);
-		txtTimKiem.getDocument().addDocumentListener(this);
+		// Xóa các listener tự động, chỉ lọc khi nhấn Tìm hoặc Enter
+		txtTimKiem.addActionListener(this); 
 	}
 
 	/**
@@ -372,12 +361,12 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 			}
 		});
 
-		// Enter: Tìm kiếm (từ bất kỳ đâu trong panel)
-		inputMap.put(KeyStroke.getKeyStroke("ENTER"), "timKiemEnter");
-		actionMap.put("timKiemEnter", new AbstractAction() {
+		// Enter: Lọc/Tìm kiếm (hoạt động ở bất kỳ đâu trong cửa sổ, trừ khi focus vào checkbox)
+		inputMap.put(KeyStroke.getKeyStroke("ENTER"), "enterTimKiem");
+		actionMap.put("enterTimKiem", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				locTheoTonKhoKhiNhanTim();
+				xuLyTimKiem();
 			}
 		});
 	}
@@ -422,18 +411,10 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 	@Override
 	public void actionPerformed(ActionEvent e) {
 	    Object o = e.getSource();
-	    if (o == chkHetHan) {
-	        if (chkHetHan.isSelected()) {
-	            loadDuLieuLoHetHan();
-	        } else {
-	            loadDuLieuLo();
-	        }
-	        modelSanPham.setRowCount(0);
-	        return;
-	    }
-
-	    if (o == btnTim) {
-	        locTheoTonKhoKhiNhanTim();
+	    
+	    // Bỏ logic check box tự lock, dồn hết vào xử lý tìm kiếm
+	    if (o == btnTim || o == txtTimKiem) {
+	        xuLyTimKiem();
 	        return;
 	    }
 
@@ -445,58 +426,79 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 
 	private void lamMoi() {
 	    txtTimKiem.setText("");
+	    PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã lô, mã SP (F1 / Ctrl+F)");
 	    cbTonKho.setSelectedIndex(0);
 	    chkHetHan.setSelected(false);
-
-	    loadDuLieuLo();
+	    
+	    // Reset data
+	    allLo = loDao.layTatCaLoSanPham(); // Refresh cache if needed or just get
+	    dsDangHienThi = new ArrayList<>(allLo);
+	    hienThiDanhSachLo(dsDangHienThi);
+	    
 	    modelSanPham.setRowCount(0);
 	}
 
 
-	private void loadDuLieuLoHetHan() {
-	    loHetHan = loDao.layDanhSachLoSPToiHanSuDung();
-	    if (loHetHan == null) loHetHan = new ArrayList<>();
+	// Thay thế logic tìm kiếm cũ
+	private void xuLyTimKiem() {
+	    // 1. Xác định list nguồn
+	    List<LoSanPham> dsNguon;
+	    if (chkHetHan.isSelected()) {
+	         // Nếu check Hết hạn -> Lấy list sắp hết hạn từ DB (logic phức tạp trong DAO)
+	         dsNguon = loDao.layDanhSachLoSPToiHanSuDung();
+	    } else {
+	         // Nếu không -> Lấy từ Cache (đã load ở initData/lamMoi hoặc gọi lại)
+	    	 dsNguon = loDao.layTatCaLoSanPham();
+	    }
+	    if (dsNguon == null) dsNguon = new ArrayList<>();
 
-	    dsDangHienThi = new ArrayList<>(loHetHan);
+	    // 2. Filter Keyword và Tồn kho
+	    String keyword = txtTimKiem.getText().trim().toLowerCase();
+	    if (keyword.contains("tìm theo")) keyword = ""; // Placeholder check
 
-	    apDungTimKiemTuDong();
-	}
-	
-	private void locTheoTonKhoKhiNhanTim() {
-	    String option = cbTonKho.getSelectedItem() == null ? "Tất cả" : cbTonKho.getSelectedItem().toString();
+	    String tonKhoOpt = cbTonKho.getSelectedItem() == null ? "Tất cả" : cbTonKho.getSelectedItem().toString();
 
-	    String key = txtTimKiem.getText() == null ? "" : txtTimKiem.getText().trim().toLowerCase();
-
-	    List<LoSanPham> base = new ArrayList<>();
-	    for (LoSanPham lo : dsDangHienThi) {
-	        String maLo = (lo.getMaLo() == null) ? "" : lo.getMaLo().toLowerCase();
-	        String maSP = (lo.getSanPham() == null || lo.getSanPham().getMaSanPham() == null)
-	                ? "" : lo.getSanPham().getMaSanPham().toLowerCase();
-
-	        if (key.isEmpty() || maLo.contains(key) || maSP.contains(key)) {
-	            base.add(lo);
+	    List<LoSanPham> ketQua = new ArrayList<>();
+	    
+	    for (LoSanPham lo : dsNguon) {
+	        // Filter Keyword (Mã Lô hoặc Mã SP)
+	        boolean matchKey = false;
+	        if (keyword.isEmpty()) {
+	            matchKey = true;
+	        } else {
+	            String maLo = (lo.getMaLo() != null) ? lo.getMaLo().toLowerCase() : "";
+	            String maSP = (lo.getSanPham() != null && lo.getSanPham().getMaSanPham() != null) 
+	            		? lo.getSanPham().getMaSanPham().toLowerCase() : "";
+	            if (maLo.contains(keyword) || maSP.contains(keyword)) {
+	                matchKey = true;
+	            }
 	        }
-	    }
 
-	    if ("Tất cả".equalsIgnoreCase(option)) {
-	        hienThiDanhSachLo(base);
-	        return;
-	    }
-
-	    List<LoSanPham> kq = new ArrayList<>();
-	    for (LoSanPham lo : base) {
+	        // Filter Tồn kho
+	        boolean matchTon = false;
 	        int ton = lo.getSoLuongTon();
+	        if (tonKhoOpt.equalsIgnoreCase("Tất cả")) {
+	            matchTon = true;
+	        } else if (tonKhoOpt.equalsIgnoreCase("Còn tồn")) {
+	            matchTon = (ton > 0);
+	        } else if (tonKhoOpt.equalsIgnoreCase("Hết hàng")) {
+	            matchTon = (ton <= 0);
+	        }
 
-	        if ("Còn tồn".equalsIgnoreCase(option)) {
-	            // giữ row có tồn > 0
-	            if (ton > 0) kq.add(lo);
-	        } else if ("Hết hàng".equalsIgnoreCase(option)) {
-	            // giữ row có tồn == 0
-	            if (ton == 0) kq.add(lo);
+	        if (matchKey && matchTon) {
+	            ketQua.add(lo);
 	        }
 	    }
 
-	    hienThiDanhSachLo(kq);
+	    // 3. Hiển thị
+	    dsDangHienThi = ketQua;
+	    hienThiDanhSachLo(dsDangHienThi);
+	    modelSanPham.setRowCount(0);
+	    
+	    // Thông báo nếu tìm cụ thể mà không thấy
+	    if (ketQua.isEmpty() && !keyword.isEmpty()) {
+	         JOptionPane.showMessageDialog(this, "Không tìm thấy lô sản phẩm thỏa mãn điều kiện!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+	    }
 	}
 
 	private void hienThiDanhSachLo(List<LoSanPham> ds) {
@@ -514,48 +516,5 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 	        });
 	    }
 	}
-
-	// ✅ Auto lọc theo txtTimKiem (mã lô / mã sp) dựa trên dsDangHienThi (list trung gian)
-	private void apDungTimKiemTuDong() {
-
-	    String key = txtTimKiem.getText() == null ? "" : txtTimKiem.getText().trim();
-
-
-	 if (key.equalsIgnoreCase("Tìm theo mã lô, mã SP")) {
-	     key = "";
-	 }
-
-	 key = key.toLowerCase();
-
-	    List<LoSanPham> ketQua = new ArrayList<>();
-	    for (LoSanPham lo : dsDangHienThi) {
-	        String maLo = (lo.getMaLo() == null) ? "" : lo.getMaLo().toLowerCase();
-	        String maSP = (lo.getSanPham() == null || lo.getSanPham().getMaSanPham() == null)
-	                ? "" : lo.getSanPham().getMaSanPham().toLowerCase();
-
-	        if (maLo.contains(key) || maSP.contains(key)) {
-	            ketQua.add(lo);
-	        }
-	    }
-
-	    hienThiDanhSachLo(ketQua);
-	}
-	
-
-	@Override
-	public void insertUpdate(DocumentEvent e) {
-	    apDungTimKiemTuDong();
-	}
-
-	@Override
-	public void removeUpdate(DocumentEvent e) {
-	    apDungTimKiemTuDong();
-	}
-
-	@Override
-	public void changedUpdate(DocumentEvent e) {
-	    apDungTimKiemTuDong();
-	}
-
 
 }

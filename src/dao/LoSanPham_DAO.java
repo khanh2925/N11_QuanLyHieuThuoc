@@ -15,13 +15,23 @@ import entity.ChiTietPhieuHuy;
 
 public class LoSanPham_DAO {
 
+	// ============ CACHE LAYER ============
+	// Cache toàn bộ lô sản phẩm (dùng chung toàn ứng dụng)
+	private static List<LoSanPham> cacheAllLoSanPham = null;
+
 	private final SanPham_DAO spDao = new SanPham_DAO();
 
 	public LoSanPham_DAO() {
 	}
 
-	/** Lấy toàn bộ lô sản phẩm */
+	/** 📜 Lấy toàn bộ lô sản phẩm (CÓ CACHE - TỐI ƯU) */
 	public ArrayList<LoSanPham> layTatCaLoSanPham() {
+		// Nếu cache đã có dữ liệu → Return cache (clone để tránh modify trực tiếp)
+		if (cacheAllLoSanPham != null && !cacheAllLoSanPham.isEmpty()) {
+			return new ArrayList<>(cacheAllLoSanPham);
+		}
+
+		// Cache rỗng → Query DB và lưu vào cache
 		ArrayList<LoSanPham> danhSach = new ArrayList<>();
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
@@ -45,10 +55,22 @@ public class LoSanPham_DAO {
 				danhSach.add(new LoSanPham(maLo, hanSuDung, soLuongTon, sp));
 			}
 
+			// Lưu vào cache để lần sau không cần query nữa
+			cacheAllLoSanPham = danhSach;
+
 		} catch (SQLException e) {
 			System.err.println("Lỗi lấy danh sách lô sản phẩm: " + e.getMessage());
 		}
-		return danhSach;
+		return new ArrayList<>(danhSach); // Clone để tránh modify cache
+	}
+
+	/**
+	 * 🔄 Force refresh cache - Xóa cache và load lại từ DB
+	 * Dùng khi cần đồng bộ dữ liệu real-time (VD: sau khi import data)
+	 */
+	public void refreshCache() {
+		cacheAllLoSanPham = null;
+		layTatCaLoSanPham(); // Load lại ngay
 	}
 
 	/** Thêm mới lô sản phẩm */
@@ -66,7 +88,14 @@ public class LoSanPham_DAO {
 			stmt.setDate(2, Date.valueOf(lo.getHanSuDung()));
 			stmt.setInt(3, lo.getSoLuongTon());
 			stmt.setString(4, lo.getSanPham() != null ? lo.getSanPham().getMaSanPham() : null);
-			return stmt.executeUpdate() > 0;
+			boolean success = stmt.executeUpdate() > 0;
+			
+			// ✅ Cập nhật cache: Thêm lô mới vào danh sách
+			if (success && cacheAllLoSanPham != null) {
+				cacheAllLoSanPham.add(lo);
+			}
+			
+			return success;
 		} catch (SQLException e) {
 			System.err.println("Lỗi thêm lô sản phẩm: " + e.getMessage());
 		}
@@ -89,7 +118,19 @@ public class LoSanPham_DAO {
 			stmt.setInt(2, lo.getSoLuongTon());
 			stmt.setString(3, lo.getSanPham() != null ? lo.getSanPham().getMaSanPham() : null);
 			stmt.setString(4, lo.getMaLo());
-			return stmt.executeUpdate() > 0;
+			boolean success = stmt.executeUpdate() > 0;
+			
+			// ✅ Cập nhật cache: Tìm và cập nhật lô trong cache
+			if (success && cacheAllLoSanPham != null) {
+				for (int i = 0; i < cacheAllLoSanPham.size(); i++) {
+					if (cacheAllLoSanPham.get(i).getMaLo().equals(lo.getMaLo())) {
+						cacheAllLoSanPham.set(i, lo);
+						break;
+					}
+				}
+			}
+			
+			return success;
 		} catch (SQLException e) {
 			System.err.println("Lỗi cập nhật lô sản phẩm: " + e.getMessage());
 		}
@@ -105,7 +146,14 @@ public class LoSanPham_DAO {
 
 		try (PreparedStatement stmt = con.prepareStatement(sql)) {
 			stmt.setString(1, maLo);
-			return stmt.executeUpdate() > 0;
+			boolean success = stmt.executeUpdate() > 0;
+			
+			// ✅ Cập nhật cache: Xóa lô khỏi danh sách
+			if (success && cacheAllLoSanPham != null) {
+				cacheAllLoSanPham.removeIf(lo -> lo.getMaLo().equals(maLo));
+			}
+			
+			return success;
 		} catch (SQLException e) {
 			System.err.println("Lỗi xóa lô sản phẩm: " + e.getMessage());
 		}
