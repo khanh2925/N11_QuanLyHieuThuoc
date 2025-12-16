@@ -272,23 +272,63 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		gbc.insets = new Insets(10, 0, 10, 0);
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 
-		btnThem = createPillButton("Tạo KM", 140, 45);
-		btnThem.addActionListener(this); // ✅ THÊM
+		// Button dimensions
+		int btnW = 140;
+		int btnH = 45;
+
+		btnThem = new PillButton(
+				"<html>" +
+						"<center>" +
+						"TẠO KM<br>" +
+						"<span style='font-size:10px; color:#888888;'>(Ctrl+N)</span>" +
+						"</center>" +
+						"</html>");
+		btnThem.setFont(FONT_BOLD);
+		btnThem.setPreferredSize(new Dimension(btnW, btnH));
+		btnThem.setToolTipText("<html><b>Phím tắt:</b> Ctrl+N<br>Tạo khuyến mãi mới</html>");
+		btnThem.addActionListener(this);
 		gbc.gridy = 0;
 		p.add(btnThem, gbc);
 
-		btnSua = createPillButton("Cập nhật", 140, 45);
-		btnSua.addActionListener(this); // ✅ THÊM
+		btnSua = new PillButton(
+				"<html>" +
+						"<center>" +
+						"CẬP NHẬT<br>" +
+						"<span style='font-size:10px; color:#888888;'>(Ctrl+U)</span>" +
+						"</center>" +
+						"</html>");
+		btnSua.setFont(FONT_BOLD);
+		btnSua.setPreferredSize(new Dimension(btnW, btnH));
+		btnSua.setToolTipText("<html><b>Phím tắt:</b> Ctrl+U<br>Cập nhật khuyến mãi đang chọn</html>");
+		btnSua.addActionListener(this);
 		gbc.gridy = 1;
 		p.add(btnSua, gbc);
 
-		btnXoa = createPillButton("Xóa", 140, 45);
-		btnXoa.addActionListener(this); // ✅ THÊM
+		btnXoa = new PillButton(
+				"<html>" +
+						"<center>" +
+						"XÓA<br>" +
+						"<span style='font-size:10px; color:#888888;'>(Ctrl+D)</span>" +
+						"</center>" +
+						"</html>");
+		btnXoa.setFont(FONT_BOLD);
+		btnXoa.setPreferredSize(new Dimension(btnW, btnH));
+		btnXoa.setToolTipText("<html><b>Phím tắt:</b> Ctrl+D<br>Xóa khuyến mãi đang chọn</html>");
+		btnXoa.addActionListener(this);
 		gbc.gridy = 2;
 		p.add(btnXoa, gbc);
 
-		btnLamMoi = createPillButton("Làm mới", 140, 45);
-		btnLamMoi.addActionListener(this); // ✅ THÊM
+		btnLamMoi = new PillButton(
+				"<html>" +
+						"<center>" +
+						"LÀM MỚI<br>" +
+						"<span style='font-size:10px; color:#888888;'>(F5)</span>" +
+						"</center>" +
+						"</html>");
+		btnLamMoi.setFont(FONT_BOLD);
+		btnLamMoi.setPreferredSize(new Dimension(btnW, btnH));
+		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới form nhập liệu</html>");
+		btnLamMoi.addActionListener(this);
 		gbc.gridy = 3;
 		p.add(btnLamMoi, gbc);
 	}
@@ -317,14 +357,33 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 
 	private void taoBangSanPhamApDung(JPanel p) {
 		// Toolbar thêm sản phẩm
+		// Toolbar thêm sản phẩm
 		JPanel pnTool = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		pnTool.setBackground(Color.WHITE);
 
-		btnChonSP = createPillButton("Chọn SP", 120, 35);
-		btnChonSP.addActionListener(this); // ✅ THÊM
+		btnChonSP = new PillButton(
+				"<html>" +
+						"<center>" +
+						"CHỌN SP<br>" +
+						"<span style='font-size:10px; color:#888888;'>(F7)</span>" +
+						"</center>" +
+						"</html>");
+		btnChonSP.setFont(FONT_BOLD);
+		btnChonSP.setPreferredSize(new Dimension(140, 45));
+		btnChonSP.setToolTipText("<html><b>Phím tắt:</b> F7<br>Mở danh sách chọn sản phẩm áp dụng</html>");
+		btnChonSP.addActionListener(this);
 
-		btnXoaSP = createPillButton("Xóa SP", 120, 35);
-		btnXoaSP.addActionListener(this); // ✅ THÊM
+		btnXoaSP = new PillButton(
+				"<html>" +
+						"<center>" +
+						"XÓA SP<br>" +
+						"<span style='font-size:10px; color:#888888;'>(F8)</span>" +
+						"</center>" +
+						"</html>");
+		btnXoaSP.setFont(FONT_BOLD);
+		btnXoaSP.setPreferredSize(new Dimension(140, 45));
+		btnXoaSP.setToolTipText("<html><b>Phím tắt:</b> F8<br>Xóa sản phẩm đã chọn khỏi khuyến mãi</html>");
+		btnXoaSP.addActionListener(this);
 
 		pnTool.add(btnChonSP);
 		pnTool.add(btnXoaSP);
@@ -419,6 +478,63 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				xuatExcel();
+			}
+		});
+
+		// Ctrl+N: Thêm
+		inputMap.put(KeyStroke.getKeyStroke("control N"), "themKM");
+		actionMap.put("themKM", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				xuLyThem();
+			}
+		});
+
+		// Ctrl+U: Cập nhật
+		inputMap.put(KeyStroke.getKeyStroke("control U"), "capNhatKM");
+		actionMap.put("capNhatKM", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				xuLyCapNhat();
+			}
+		});
+
+		// Ctrl+D: Xóa
+		inputMap.put(KeyStroke.getKeyStroke("control D"), "xoaKM");
+		actionMap.put("xoaKM", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				xuLyXoa();
+			}
+		});
+
+		// F7: Chọn SP (Tab 2)
+		inputMap.put(KeyStroke.getKeyStroke("F7"), "chonSP");
+		actionMap.put("chonSP", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// Chỉ hoạt động nếu đang ở tab 2 hoặc muốn switch qua?
+				// Đơn giản là gọi hàm xử lý, hàm đó sẽ check logic
+				if (splitPane.getBottomComponent() instanceof JTabbedPane) {
+					JTabbedPane tabs = (JTabbedPane) splitPane.getBottomComponent();
+					if (tabs.getSelectedIndex() == 1) { // Tab "Sản phẩm áp dụng"
+						xuLyThemSanPhamApDung();
+					}
+				}
+			}
+		});
+
+		// F8: Xóa SP (Tab 2)
+		inputMap.put(KeyStroke.getKeyStroke("F8"), "xoaSP");
+		actionMap.put("xoaSP", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (splitPane.getBottomComponent() instanceof JTabbedPane) {
+					JTabbedPane tabs = (JTabbedPane) splitPane.getBottomComponent();
+					if (tabs.getSelectedIndex() == 1) {
+						xuLyXoaSanPhamApDung();
+					}
+				}
 			}
 		});
 	}
@@ -937,14 +1053,6 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		txt.setFont(FONT_TEXT);
 		txt.setBounds(x, y, w, 35);
 		return txt;
-	}
-
-	private PillButton createPillButton(String text, int w, int h) {
-		PillButton btn = new PillButton(text);
-		btn.setFont(FONT_BOLD);
-		btn.setPreferredSize(new Dimension(w, h));
-		btn.addActionListener(this);
-		return btn;
 	}
 
 	private JTable setupTable(DefaultTableModel model) {

@@ -407,30 +407,55 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 	}
 
 	// ==============================================================================
-	// TÌM KIẾM
+	// TÌM KIẾM (giống đơn hàng - hybrid cache + filter)
 	// ==============================================================================
 	private void xuLyTimKiem() {
 		String keyword = txtTimKiem.getText().trim();
 		String tt = cbTrangThai.getSelectedItem().toString();
 
-		List<NhaCungCap> ds = new ArrayList<>(allNhaCungCap);
+		List<NhaCungCap> ketQua = new ArrayList<>();
 
-		// --- keyword ---
-		if (!keyword.isEmpty() && !keyword.equals(PLACEHOLDER_TIM_KIEM)) {
+		// LOGIC TỐI ƯU: Lai ghép 2 phương pháp (giống TraCuuDonHang_GUI)
+		// 1. Nếu chỉ có bộ lọc → Filter trên cache (nhanh hơn)
+		if (keyword.isEmpty() || keyword.equals(PLACEHOLDER_TIM_KIEM)) {
+			// Đảm bảo cache đã được load
+			if (allNhaCungCap == null || allNhaCungCap.isEmpty()) {
+				taiDanhSachNhaCungCap();
+			}
+			ketQua = new ArrayList<>(allNhaCungCap); // Clone từ cache
+		}
+		// 2. Nếu có keyword cụ thể → Tìm kiếm trong cache (tối ưu)
+		else {
 			String kw = keyword.toLowerCase();
-			ds.removeIf(ncc -> !(ncc.getMaNhaCungCap().toLowerCase().contains(kw)
-					|| ncc.getTenNhaCungCap().toLowerCase().contains(kw)));
+			// Đảm bảo cache đã được load
+			if (allNhaCungCap == null || allNhaCungCap.isEmpty()) {
+				taiDanhSachNhaCungCap();
+			}
+			// Tìm kiếm lai ghép trên cache
+			for (NhaCungCap ncc : allNhaCungCap) {
+				if (ncc.getMaNhaCungCap().toLowerCase().contains(kw)
+						|| ncc.getTenNhaCungCap().toLowerCase().contains(kw)
+						|| (ncc.getSoDienThoai() != null && ncc.getSoDienThoai().contains(kw))) {
+					ketQua.add(ncc);
+				}
+			}
 		}
 
-		// --- trạng thái (khớp với isHoatDong) ---
+		// --- Áp dụng bộ lọc: trạng thái ---
 		if (!"Tất cả".equals(tt)) {
 			if ("Đang hoạt động".equals(tt))
-				ds.removeIf(ncc -> !ncc.isHoatDong());
+				ketQua.removeIf(ncc -> !ncc.isHoatDong());
 			else
-				ds.removeIf(ncc -> ncc.isHoatDong());
+				ketQua.removeIf(ncc -> ncc.isHoatDong());
 		}
 
-		loadTableNhaCungCap(ds);
+		loadTableNhaCungCap(ketQua);
+
+		// Nếu tìm kiếm cụ thể (có nhập text) mà không thấy thì báo
+		if (ketQua.isEmpty() && !keyword.isEmpty() && !keyword.equals(PLACEHOLDER_TIM_KIEM)) {
+			JOptionPane.showMessageDialog(this, "Không tìm thấy nhà cung cấp nào!", "Thông báo",
+					JOptionPane.INFORMATION_MESSAGE);
+		}
 	}
 
 	// ==============================================================================
@@ -441,6 +466,8 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 		PlaceholderSupport.addPlaceholder(txtTimKiem, PLACEHOLDER_TIM_KIEM);
 		cbTrangThai.setSelectedIndex(0);
 
+		// Refresh cache và tải lại dữ liệu từ DB
+		nhaCungCapDAO.refreshCache();
 		taiDanhSachNhaCungCap();
 		loadTableNhaCungCap(allNhaCungCap);
 	}

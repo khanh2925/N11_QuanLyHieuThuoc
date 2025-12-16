@@ -47,6 +47,7 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
     private JComboBox<String> cbHinhThuc;
     private JComboBox<String> cbTrangThai;
     private PillButton btnTim;
+    private PillButton btnLamMoi;
 
     private KhuyenMai_DAO khuyenMaiDAO;
     private ChiTietKhuyenMaiSanPham_DAO ctkmDAO;
@@ -62,6 +63,7 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
 
         setPreferredSize(new Dimension(1537, 850));
         initialize();
+        setupKeyboardShortcuts();
     }
 
     private void initialize() {
@@ -122,10 +124,15 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
         cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(cbTrangThai);
 
-        btnTim = new PillButton("Tìm kiếm");
+        btnTim = new PillButton("<html><center>TÌM KIẾM<br><span style='font-size:10px; color:#888888;'>(Enter)</span></center></html>");
         btnTim.setBounds(1230, 22, 120, 50);
         btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnHeader.add(btnTim);
+
+        btnLamMoi = new PillButton("<html><center>LÀM MỚI<br><span style='font-size:10px; color:#888888;'>(F5)</span></center></html>");
+        btnLamMoi.setBounds(1374, 22, 120, 50);
+        btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        pnHeader.add(btnLamMoi);
     }
 
     private void taoPhanGiua() {
@@ -249,14 +256,72 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
 
     private void dangKySuKien() {
         btnTim.addActionListener(this);
+        btnLamMoi.addActionListener(this);
         tblKhuyenMai.addMouseListener(this);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource().equals(btnTim)) {
+        Object o = e.getSource();
+        if (o.equals(btnTim)) {
             taiDuLieuKhuyenMai();
+        } else if (o.equals(btnLamMoi)) {
+            xuLyLamMoi();
         }
+    }
+
+    /**
+     * Xử lý làm mới form
+     */
+    private void xuLyLamMoi() {
+        txtTimKiem.setText("");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã KM, tên chương trình...");
+        cbLoaiKM.setSelectedIndex(0);
+        cbHinhThuc.setSelectedIndex(0);
+        cbTrangThai.setSelectedIndex(0);
+        taiDuLieuKhuyenMai();
+        modelSanPhamApDung.setRowCount(0);
+        modelLichSuApDung.setRowCount(0);
+    }
+
+    /**
+     * Thiết lập phím tắt cho giao diện
+     */
+    private void setupKeyboardShortcuts() {
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+
+        // F1: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
+        actionMap.put("focusTimKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+
+        // F5: Làm mới
+        inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
+        actionMap.put("lamMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyLamMoi();
+            }
+        });
+
+        // Ctrl+F: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
+        actionMap.put("timKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+
+        // Enter trên ô tìm kiếm
+        txtTimKiem.addActionListener(ev -> taiDuLieuKhuyenMai());
     }
 
     @Override
