@@ -9,7 +9,8 @@ import entity.DonViTinh;
 
 public class DonViTinh_DAO {
 
-    public DonViTinh_DAO() {}
+    public DonViTinh_DAO() {
+    }
 
     /** 🔹 Lấy toàn bộ đơn vị tính */
     public List<DonViTinh> layTatCaDonViTinh() {
@@ -17,14 +18,13 @@ public class DonViTinh_DAO {
         connectDB.getInstance();
         String sql = "SELECT MaDonViTinh, TenDonViTinh FROM DonViTinh ORDER BY MaDonViTinh";
 
-        try (Connection con = connectDB.getConnection();
-             Statement st = con.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
+        Connection con = connectDB.getConnection();
+        try (Statement st = con.createStatement();
+                ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
                 ds.add(new DonViTinh(
                         rs.getString("MaDonViTinh"),
-                        rs.getString("TenDonViTinh")
-                ));
+                        rs.getString("TenDonViTinh")));
             }
         } catch (SQLException e) {
             System.err.println("❌ Lỗi lấy danh sách đơn vị tính: " + e.getMessage());
@@ -37,8 +37,8 @@ public class DonViTinh_DAO {
         connectDB.getInstance();
         String sql = "INSERT INTO DonViTinh (MaDonViTinh, TenDonViTinh) VALUES (?, ?)";
 
-        try (Connection con = connectDB.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        Connection con = connectDB.getConnection();
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, dvt.getMaDonViTinh());
             ps.setString(2, dvt.getTenDonViTinh());
             return ps.executeUpdate() > 0;
@@ -53,8 +53,8 @@ public class DonViTinh_DAO {
         connectDB.getInstance();
         String sql = "UPDATE DonViTinh SET TenDonViTinh=? WHERE MaDonViTinh=?";
 
-        try (Connection con = connectDB.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        Connection con = connectDB.getConnection();
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, dvt.getTenDonViTinh());
             ps.setString(2, dvt.getMaDonViTinh());
             return ps.executeUpdate() > 0;
@@ -68,8 +68,8 @@ public class DonViTinh_DAO {
     public boolean xoaDonViTinh(String maDonViTinh) {
         connectDB.getInstance();
         String sql = "DELETE FROM DonViTinh WHERE MaDonViTinh=?";
-        try (Connection con = connectDB.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        Connection con = connectDB.getConnection();
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, maDonViTinh);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -80,19 +80,19 @@ public class DonViTinh_DAO {
             return false;
         }
     }
+
     /** 🔹 Tìm đơn vị tính theo mã */
     public DonViTinh timDonViTinhTheoMa(String maDonViTinh) {
         connectDB.getInstance();
         String sql = "SELECT MaDonViTinh, TenDonViTinh FROM DonViTinh WHERE MaDonViTinh = ?";
-        try (Connection con = connectDB.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        Connection con = connectDB.getConnection();
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, maDonViTinh);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return new DonViTinh(
-                        rs.getString("MaDonViTinh"),
-                        rs.getString("TenDonViTinh")
-                    );
+                            rs.getString("MaDonViTinh"),
+                            rs.getString("TenDonViTinh"));
                 }
             }
         } catch (SQLException e) {
@@ -105,11 +105,12 @@ public class DonViTinh_DAO {
     public String taoMaTuDong() {
         connectDB.getInstance();
         String sql = "SELECT MAX(CAST(SUBSTRING(MaDonViTinh, 5, 3) AS INT)) AS SoCuoi FROM DonViTinh";
-        try (Connection con = connectDB.getConnection();
-             Statement st = con.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
+        Connection con = connectDB.getConnection();
+        try (Statement st = con.createStatement();
+                ResultSet rs = st.executeQuery(sql)) {
             int so = 1;
-            if (rs.next()) so = rs.getInt("SoCuoi") + 1;
+            if (rs.next())
+                so = rs.getInt("SoCuoi") + 1;
             return String.format("DVT-%03d", so);
         } catch (SQLException e) {
             System.err.println("❌ Lỗi sinh mã tự động: " + e.getMessage());

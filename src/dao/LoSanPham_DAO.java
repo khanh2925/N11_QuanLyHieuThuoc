@@ -359,8 +359,8 @@ public class LoSanPham_DAO {
 	public String taoMaLoTuDong() {
 		String sql = "SELECT TOP 1 MaLo FROM LoSanPham WHERE MaLo LIKE 'LO-%' ORDER BY MaLo DESC";
 
-		try (Connection con = connectDB.getConnection();
-				PreparedStatement ps = con.prepareStatement(sql);
+		Connection con = connectDB.getConnection(); // Dùng kết nối chung
+		try (PreparedStatement ps = con.prepareStatement(sql);
 				ResultSet rs = ps.executeQuery()) {
 
 			if (rs.next()) {

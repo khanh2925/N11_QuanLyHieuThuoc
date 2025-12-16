@@ -140,7 +140,8 @@ public class QuyCachDongGoi_DAO {
 				+ "JOIN DonViTinh dvt ON qc.MaDonViTinh = dvt.MaDonViTinh "
 				+ "WHERE qc.MaSanPham = ? AND qc.DonViGoc = 1";
 
-		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+		Connection con = connectDB.getConnection();
+		try (PreparedStatement ps = con.prepareStatement(sql)) {
 
 			ps.setString(1, maSanPham);
 			try (ResultSet rs = ps.executeQuery()) {
@@ -170,7 +171,8 @@ public class QuyCachDongGoi_DAO {
 				+ "JOIN DonViTinh dvt ON qc.MaDonViTinh = dvt.MaDonViTinh " + "WHERE qc.MaSanPham = ? "
 				+ "ORDER BY qc.HeSoQuyDoi ASC"; // Sắp xếp Đơn vị gốc lên đầu
 
-		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+		Connection con = connectDB.getConnection();
+		try (PreparedStatement ps = con.prepareStatement(sql)) {
 
 			ps.setString(1, maSanPham);
 			try (ResultSet rs = ps.executeQuery()) {
@@ -233,18 +235,19 @@ public class QuyCachDongGoi_DAO {
 
 		return null;
 	}
+
 	/** 🔹 Xóa quy cách đóng gói */
-    public boolean xoaQuyCachDongGoi(String maQuyCach) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
-        String sql = "DELETE FROM QuyCachDongGoi WHERE MaQuyCach = ?";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, maQuyCach);
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
+	public boolean xoaQuyCachDongGoi(String maQuyCach) {
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
+		String sql = "DELETE FROM QuyCachDongGoi WHERE MaQuyCach = ?";
+		try (PreparedStatement ps = con.prepareStatement(sql)) {
+			ps.setString(1, maQuyCach);
+			return ps.executeUpdate() > 0;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
 
 }

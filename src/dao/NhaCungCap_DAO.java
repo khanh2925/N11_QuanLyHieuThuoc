@@ -60,7 +60,8 @@ public class NhaCungCap_DAO {
 				    VALUES (?, ?, ?, ?, ?, ?)
 				""";
 
-		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+		Connection con = connectDB.getConnection();
+		try (PreparedStatement ps = con.prepareStatement(sql)) {
 
 			ps.setString(1, ncc.getMaNhaCungCap());
 			ps.setString(2, ncc.getTenNhaCungCap());
@@ -92,7 +93,8 @@ public class NhaCungCap_DAO {
 				    WHERE MaNhaCungCap=?
 				""";
 
-		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+		Connection con = connectDB.getConnection();
+		try (PreparedStatement ps = con.prepareStatement(sql)) {
 
 			ps.setString(1, ncc.getTenNhaCungCap());
 			ps.setString(2, ncc.getSoDienThoai());

@@ -56,8 +56,8 @@ public class TaiKhoan_DAO {
 				    JOIN NhanVien nv ON tk.MaNhanVien = nv.MaNhanVien
 				""";
 
-		try (Connection con = connectDB.getConnection();
-				Statement st = con.createStatement();
+		Connection con = connectDB.getConnection();
+		try (Statement st = con.createStatement();
 				ResultSet rs = st.executeQuery(sql)) {
 
 			while (rs.next()) {
@@ -76,7 +76,8 @@ public class TaiKhoan_DAO {
 	public boolean themTaiKhoan(TaiKhoan tk) {
 		connectDB.getInstance();
 		String sql = "INSERT INTO TaiKhoan (MaTaiKhoan, TenDangNhap, MatKhau, MaNhanVien) VALUES (?, ?, ?, ?)";
-		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+		Connection con = connectDB.getConnection();
+		try (PreparedStatement ps = con.prepareStatement(sql)) {
 
 			ps.setString(1, tk.getMaTaiKhoan());
 			ps.setString(2, tk.getTenDangNhap());
@@ -99,7 +100,8 @@ public class TaiKhoan_DAO {
 			return false;
 		connectDB.getInstance();
 		String sql = "UPDATE TaiKhoan SET TenDangNhap=?, MatKhau=? WHERE MaTaiKhoan=?";
-		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+		Connection con = connectDB.getConnection();
+		try (PreparedStatement ps = con.prepareStatement(sql)) {
 
 			ps.setString(1, tk.getTenDangNhap());
 			ps.setString(2, tk.getMatKhau());
@@ -119,7 +121,8 @@ public class TaiKhoan_DAO {
 	public boolean capNhatMatKhau(String maTaiKhoan, String matKhauMoi) {
 		connectDB.getInstance();
 		String sql = "UPDATE TaiKhoan SET MatKhau = ? WHERE MaTaiKhoan = ?";
-		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+		Connection con = connectDB.getConnection();
+		try (PreparedStatement ps = con.prepareStatement(sql)) {
 
 			ps.setString(1, matKhauMoi);
 			ps.setString(2, maTaiKhoan);
@@ -135,7 +138,8 @@ public class TaiKhoan_DAO {
 	public boolean xoaTaiKhoan(String maTaiKhoan) {
 		connectDB.getInstance();
 		String sql = "DELETE FROM TaiKhoan WHERE MaTaiKhoan = ?";
-		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+		Connection con = connectDB.getConnection();
+		try (PreparedStatement ps = con.prepareStatement(sql)) {
 
 			ps.setString(1, maTaiKhoan);
 			return ps.executeUpdate() > 0;
@@ -161,7 +165,8 @@ public class TaiKhoan_DAO {
 				    WHERE tk.TenDangNhap=? AND tk.MatKhau=?
 				""";
 
-		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+		Connection con = connectDB.getConnection();
+		try (PreparedStatement ps = con.prepareStatement(sql)) {
 
 			ps.setString(1, tenDangNhap);
 			ps.setString(2, matKhau);
@@ -182,7 +187,8 @@ public class TaiKhoan_DAO {
 	public boolean kiemTraTenDangNhapTonTai(String tenDangNhap) {
 		connectDB.getInstance();
 		String sql = "SELECT 1 FROM TaiKhoan WHERE TenDangNhap = ?";
-		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+		Connection con = connectDB.getConnection();
+		try (PreparedStatement ps = con.prepareStatement(sql)) {
 
 			ps.setString(1, tenDangNhap);
 			try (ResultSet rs = ps.executeQuery()) {
@@ -206,7 +212,8 @@ public class TaiKhoan_DAO {
 				    WHERE tk.MaTaiKhoan = ?
 				""";
 
-		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+		Connection con = connectDB.getConnection();
+		try (PreparedStatement ps = con.prepareStatement(sql)) {
 
 			ps.setString(1, maTaiKhoan);
 			try (ResultSet rs = ps.executeQuery()) {
@@ -245,37 +252,39 @@ public class TaiKhoan_DAO {
 		}
 		return prefix + "0001";
 	}
-	/** * 🔹 Tìm Mã Tài Khoản dựa trên thông tin xác thực nhân viên (Quên mật khẩu)
-     * Trả về MaTaiKhoan nếu thông tin khớp, ngược lại trả về null
-     */
-    public String timTaiKhoanQuenMK(String maNV, String tenNV, String sdt, LocalDate ngaySinh) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
-        String sql = """
-            SELECT tk.MaTaiKhoan 
-            FROM TaiKhoan tk
-            JOIN NhanVien nv ON tk.MaNhanVien = nv.MaNhanVien
-            WHERE nv.MaNhanVien = ? 
-              AND nv.TenNhanVien = ? 
-              AND nv.SoDienThoai = ? 
-              AND nv.NgaySinh = ?
-        """;
-        
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, maNV);
-            stmt.setString(2, tenNV);
-            stmt.setString(3, sdt);
-            stmt.setDate(4, java.sql.Date.valueOf(ngaySinh));
-            
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getString("MaTaiKhoan");
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("❌ Lỗi tìm tài khoản quên MK: " + e.getMessage());
-        }
-        return null; // Không tìm thấy hoặc lỗi
-    }
+
+	/**
+	 * * 🔹 Tìm Mã Tài Khoản dựa trên thông tin xác thực nhân viên (Quên mật khẩu)
+	 * Trả về MaTaiKhoan nếu thông tin khớp, ngược lại trả về null
+	 */
+	public String timTaiKhoanQuenMK(String maNV, String tenNV, String sdt, LocalDate ngaySinh) {
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
+		String sql = """
+				    SELECT tk.MaTaiKhoan
+				    FROM TaiKhoan tk
+				    JOIN NhanVien nv ON tk.MaNhanVien = nv.MaNhanVien
+				    WHERE nv.MaNhanVien = ?
+				      AND nv.TenNhanVien = ?
+				      AND nv.SoDienThoai = ?
+				      AND nv.NgaySinh = ?
+				""";
+
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setString(1, maNV);
+			stmt.setString(2, tenNV);
+			stmt.setString(3, sdt);
+			stmt.setDate(4, java.sql.Date.valueOf(ngaySinh));
+
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return rs.getString("MaTaiKhoan");
+				}
+			}
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi tìm tài khoản quên MK: " + e.getMessage());
+		}
+		return null; // Không tìm thấy hoặc lỗi
+	}
 
 }
