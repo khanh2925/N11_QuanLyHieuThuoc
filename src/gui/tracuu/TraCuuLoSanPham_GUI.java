@@ -25,7 +25,7 @@ import entity.LoSanPham;
 import entity.SanPham;
 
 @SuppressWarnings("serial")
-public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, MouseListener {
+public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener {
 
 	private JPanel pnHeader;
 	private JPanel pnCenter;
@@ -43,7 +43,6 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 	private final SanPham_DAO spDao = new SanPham_DAO();
 
 	private List<LoSanPham> allLo = new ArrayList<>();
-	// private List<LoSanPham> loHetHan = new ArrayList<>(); // Removed unused field
 	private List<LoSanPham> dsDangHienThi = new ArrayList<>();
 	private TableRowSorter<DefaultTableModel> sorterLo;
 
@@ -213,7 +212,7 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 		scrollLo.setBorder(createTitledBorder("Danh sách lô sản phẩm"));
 		splitPane.setTopComponent(scrollLo);
 
-		// --- BẢNG 2 (BOTTOM): THÔNG TIN SẢN PHẨM ---
+
 		String[] colSP = { "Mã SP", "Tên sản phẩm", "Loại", "Số ĐK", "Đường dùng", "Giá bán", "Kệ bán", "Trạng thái" };
 		modelSanPham = new DefaultTableModel(colSP, 0) {
 			@Override
@@ -295,7 +294,6 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 
 
 	private void loadDuLieuLo() {
-	    // Load cache ban đầu
 	    allLo = loDao.layTatCaLoSanPham();
 	    if (allLo == null) allLo = new ArrayList<>();
 	    dsDangHienThi = new ArrayList<>(allLo);
@@ -321,7 +319,6 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 		tblLo.addMouseListener(this);
 		btnLamMoi.addActionListener(this);
 		btnTim.addActionListener(this);
-		// Xóa các listener tự động, chỉ lọc khi nhấn Tìm hoặc Enter
 		txtTimKiem.addActionListener(this); 
 	}
 
@@ -384,29 +381,7 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 		loadSanPhamCuaLoDangChon(maSP);
 	}
 
-	@Override
-	public void mousePressed(MouseEvent e) {
-		// TODO Auto-generated method stub
 
-	}
-
-	@Override
-	public void mouseReleased(MouseEvent e) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void mouseEntered(MouseEvent e) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void mouseExited(MouseEvent e) {
-		// TODO Auto-generated method stub
-
-	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
@@ -440,7 +415,7 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 
 
 	// ==============================================================================
-	// TÌM KIẾM (ĐỒNG BỘ VỚI TraCuuDonTraHang)
+	// TÌM KIẾM 
 	// ==============================================================================
 	private void xuLyTimKiem() {
 		// 1. SEARCH LOGIC (Hybrid: DB Keyword or Cache)
