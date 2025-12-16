@@ -13,18 +13,10 @@ public class HoaDon_DAO {
     // ============ CACHE LAYER ============
     // Cache toàn bộ hóa đơn (dùng chung toàn ứng dụng)
     private static List<HoaDon> cacheAllHoaDon = null;
-    private final NhanVien_DAO nhanVienDAO;
-    private final KhachHang_DAO khachHangDAO;
     private final ChiTietHoaDon_DAO chiTietHoaDonDAO;
-    private final QuyCachDongGoi_DAO quyCachDongGoiDAO;
-    private final KhuyenMai_DAO khuyenMaiDAO;
 
     public HoaDon_DAO() {
-        this.nhanVienDAO = new NhanVien_DAO();
-        this.khachHangDAO = new KhachHang_DAO();
         this.chiTietHoaDonDAO = new ChiTietHoaDon_DAO();
-        this.quyCachDongGoiDAO = new QuyCachDongGoi_DAO();
-        this.khuyenMaiDAO = new KhuyenMai_DAO();
     }
 
 
@@ -37,48 +29,72 @@ public class HoaDon_DAO {
             connectDB.getInstance();
             con = connectDB.getConnection();
 
-            String sql = "SELECT * FROM HoaDon WHERE MaHoaDon = ?";
+            String sql = """
+                SELECT 
+                    hd.MaHoaDon, hd.NgayLap, hd.TongThanhToan, hd.ThuocKeDon,
+                    -- NhanVien
+                    nv.MaNhanVien, nv.TenNhanVien, nv.QuanLy, nv.CaLam,
+                    -- KhachHang
+                    kh.MaKhachHang, kh.TenKhachHang, kh.GioiTinh, kh.SoDienThoai, kh.NgaySinh, kh.HoatDong,
+                    -- KhuyenMai
+                    km.MaKM, km.TenKM, km.GiaTri, km.HinhThuc
+                FROM HoaDon hd
+                LEFT JOIN NhanVien nv ON hd.MaNhanVien = nv.MaNhanVien
+                LEFT JOIN KhachHang kh ON hd.MaKhachHang = kh.MaKhachHang
+                LEFT JOIN KhuyenMai km ON hd.MaKM = km.MaKM
+                WHERE hd.MaHoaDon = ?
+                """;
+                
             stmt = con.prepareStatement(sql);
             stmt.setString(1, maHD);
             rs = stmt.executeQuery();
 
-            HoaDon hd = new HoaDon();
-
-            String maNV = "";
-            String maKH = "";
-            LocalDate ngayLap = null;
-            String maKM = "";
-            double tongTien = 0.0;
-            boolean thuocKeDon = false;
-
-            if (rs.next()) {
-                maNV = rs.getString("MaNhanVien");
-                maKH = rs.getString("MaKhachHang");
-                ngayLap = rs.getDate("NgayLap").toLocalDate();
-                maKM = rs.getString("MaKM");
-                tongTien = rs.getDouble("TongThanhToan");
-                thuocKeDon = rs.getBoolean("ThuocKeDon");
-
-                try {
-                    var setTongTien = HoaDon.class.getDeclaredField("tongTien");
-                    setTongTien.setAccessible(true);
-                    setTongTien.set(hd, tongTien);
-                } catch (Exception ignore) {}
-            } else {
-                return null; // Không tìm thấy thì trả về null ngay
+            if (!rs.next()) {
+                return null; // Không tìm thấy
             }
 
-            // Đóng ResultSet và Statement ngay tại đây để giải phóng kết nối
-            // trước khi gọi các DAO con (vì các DAO con cũng dùng chung connect)
+            // ========== TẠO NHANVIEN TỪ RESULTSET ==========
+            NhanVien nhanVien = new NhanVien();
+            nhanVien.setMaNhanVien(rs.getString("MaNhanVien"));
+            nhanVien.setTenNhanVien(rs.getString("TenNhanVien"));
+            nhanVien.setQuanLy(rs.getBoolean("QuanLy"));
+            nhanVien.setCaLam(rs.getInt("CaLam"));
+
+            // ========== TẠO KHACHHANG TỪ RESULTSET ==========
+            KhachHang khachHang = new KhachHang();
+            khachHang.setMaKhachHang(rs.getString("MaKhachHang"));
+            khachHang.setTenKhachHang(rs.getString("TenKhachHang"));
+            khachHang.setGioiTinh(rs.getBoolean("GioiTinh"));
+            khachHang.setSoDienThoai(rs.getString("SoDienThoai"));
+            java.sql.Date ngaySinhKH = rs.getDate("NgaySinh");
+            if (ngaySinhKH != null) {
+                khachHang.setNgaySinh(ngaySinhKH.toLocalDate());
+            }
+            khachHang.setHoatDong(rs.getBoolean("HoatDong"));
+
+            // ========== KHUYẾN MÃI ==========
+            KhuyenMai khuyenMai = null;
+            if (rs.getString("MaKM") != null) {
+                khuyenMai = new KhuyenMai();
+                khuyenMai.setMaKM(rs.getString("MaKM"));
+                khuyenMai.setTenKM(rs.getString("TenKM"));
+                khuyenMai.setGiaTri(rs.getDouble("GiaTri"));
+                // HinhThuc có thể cần xử lý enum nếu cần
+            }
+
+            // ========== TẠO HOADON TỪ RESULTSET ==========
+            LocalDate ngayLap = rs.getDate("NgayLap").toLocalDate();
+            double tongTien = rs.getDouble("TongThanhToan");
+            boolean thuocKeDon = rs.getBoolean("ThuocKeDon");
+
+            // Đóng rs, stmt trước khi gọi layDanhSachChiTietTheoMaHD
             rs.close();
             stmt.close();
 
-            // Bây giờ mới gọi các hàm tìm kiếm khác (an toàn vì stmt cũ đã đóng)
-            NhanVien nhanVien = nhanVienDAO.timNhanVienTheoMa(maNV);
-            KhachHang khachHang = khachHangDAO.timKhachHangTheoMa(maKH);
-            KhuyenMai khuyenMai = khuyenMaiDAO.timKhuyenMaiTheoMa(maKM);
+            // ========== LẤY CHI TIẾT HÓA ĐƠN ==========
             List<ChiTietHoaDon> dsCT = chiTietHoaDonDAO.layDanhSachChiTietTheoMaHD(maHD);
 
+            HoaDon hd = new HoaDon();
             hd.setMaHoaDon(maHD);
             hd.setNhanVien(nhanVien);
             hd.setKhachHang(khachHang);
@@ -86,6 +102,13 @@ public class HoaDon_DAO {
             hd.setKhuyenMai(khuyenMai);
             hd.setDanhSachChiTiet(dsCT);
             hd.setThuocKeDon(thuocKeDon);
+
+            // Set tongTien bằng reflection như code cũ
+            try {
+                var setTongTien = HoaDon.class.getDeclaredField("tongTien");
+                setTongTien.setAccessible(true);
+                setTongTien.set(hd, tongTien);
+            } catch (Exception ignore) {}
 
             return hd;
         } catch (Exception e) {
@@ -150,6 +173,7 @@ public class HoaDon_DAO {
         PreparedStatement stmtHD = null;
         PreparedStatement stmtCTHD = null;
         PreparedStatement stmtUpdateTon = null;
+        PreparedStatement stmtQC = null;
 
         try {
             con.setAutoCommit(false);
@@ -177,6 +201,10 @@ public class HoaDon_DAO {
             String sqlUpdateTon = "UPDATE LoSanPham SET SoLuongTon = SoLuongTon - ? WHERE MaLo = ? AND SoLuongTon >= ?";
             stmtUpdateTon = con.prepareStatement(sqlUpdateTon);
 
+            // ✅ Query quy cách trong cùng transaction
+            String sqlQC = "SELECT HeSoQuyDoi FROM QuyCachDongGoi WHERE MaSanPham = ? AND MaDonViTinh = ?";
+            stmtQC = con.prepareStatement(sqlQC);
+
             for (ChiTietHoaDon cthd : hd.getDanhSachChiTiet()) {
                 stmtCTHD.setString(1, hd.getMaHoaDon());
                 stmtCTHD.setString(2, cthd.getLoSanPham().getMaLo());
@@ -187,9 +215,21 @@ public class HoaDon_DAO {
                 if (cthd.getKhuyenMai() != null) stmtCTHD.setString(7, cthd.getKhuyenMai().getMaKM()); else stmtCTHD.setNull(7, Types.CHAR);
                 stmtCTHD.addBatch();
 
-                QuyCachDongGoi qc = quyCachDongGoiDAO.timQuyCachTheoSanPhamVaDonVi(cthd.getLoSanPham().getSanPham().getMaSanPham(), cthd.getDonViTinh().getMaDonViTinh());
-                if (qc == null) throw new SQLException("Không tìm thấy quy cách đóng gói");
-                double soLuongBanBase = cthd.getSoLuong() * qc.getHeSoQuyDoi();
+                // ✅ Lấy hệ số quy đổi từ trong transaction
+                stmtQC.setString(1, cthd.getLoSanPham().getSanPham().getMaSanPham());
+                stmtQC.setString(2, cthd.getDonViTinh().getMaDonViTinh());
+                ResultSet rsQC = stmtQC.executeQuery();
+                
+                double heSoQuyDoi = 1.0;
+                if (rsQC.next()) {
+                    heSoQuyDoi = rsQC.getDouble("HeSoQuyDoi");
+                } else {
+                    rsQC.close();
+                    throw new SQLException("Không tìm thấy quy cách đóng gói");
+                }
+                rsQC.close();
+                
+                double soLuongBanBase = cthd.getSoLuong() * heSoQuyDoi;
 
                 stmtUpdateTon.setDouble(1, soLuongBanBase);
                 stmtUpdateTon.setString(2, cthd.getLoSanPham().getMaLo());
@@ -213,6 +253,7 @@ public class HoaDon_DAO {
                 if (stmtHD != null) stmtHD.close();
                 if (stmtCTHD != null) stmtCTHD.close();
                 if (stmtUpdateTon != null) stmtUpdateTon.close();
+                if (stmtQC != null) stmtQC.close();
             } catch (SQLException ignore) {}
         }
     }

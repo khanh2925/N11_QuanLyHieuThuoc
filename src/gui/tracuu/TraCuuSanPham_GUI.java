@@ -470,7 +470,7 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
         cbLoai.setSelectedIndex(0);
         cbTrangThai.setSelectedIndex(0);
         
-        dsSanPhamHienTai = sanPhamDao.layTatCaSanPham(); 
+        dsSanPhamHienTai = sanPhamDao.layTatCaSanPhamVoiGia(); 
         renderBangSanPham(dsSanPhamHienTai);
         
         modelLoSanPham.setRowCount(0);
@@ -485,7 +485,7 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
         if (!tuKhoa.isEmpty()) {
             ketQuaTimKiem = sanPhamDao.timKiemSanPham(tuKhoa);
         } else {
-            ketQuaTimKiem = sanPhamDao.layTatCaSanPham();
+            ketQuaTimKiem = sanPhamDao.layTatCaSanPhamVoiGia();
         }
 
         String loaiChon = (String) cbLoai.getSelectedItem();
