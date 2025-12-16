@@ -5,7 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import database.connectDB;
 import entity.ChiTietPhieuNhap;
@@ -16,8 +18,13 @@ import enums.LoaiSanPham;
 
 public class ChiTietPhieuNhap_DAO {
 
-    public ChiTietPhieuNhap_DAO() {
-    }
+	// ============================================================
+	// 📦 CACHE - Lưu chi tiết phiếu nhập theo mã phiếu
+	// ============================================================
+	private static Map<String, List<ChiTietPhieuNhap>> cacheChiTietByPhieu = new HashMap<>();
+
+	public ChiTietPhieuNhap_DAO() {
+	}
 
     /**
      * Lấy danh sách chi tiết phiếu nhập theo mã phiếu nhập.
