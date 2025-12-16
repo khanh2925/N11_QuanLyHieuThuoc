@@ -439,66 +439,68 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 	}
 
 
-	// Thay thế logic tìm kiếm cũ
+	// ==============================================================================
+	// TÌM KIẾM (ĐỒNG BỘ VỚI TraCuuDonTraHang)
+	// ==============================================================================
 	private void xuLyTimKiem() {
-	    // 1. Xác định list nguồn
-	    List<LoSanPham> dsNguon;
-	    if (chkHetHan.isSelected()) {
-	         // Nếu check Hết hạn -> Lấy list sắp hết hạn từ DB (logic phức tạp trong DAO)
-	         dsNguon = loDao.layDanhSachLoSPToiHanSuDung();
-	    } else {
-	         // Nếu không -> Lấy từ Cache (đã load ở initData/lamMoi hoặc gọi lại)
-	    	 dsNguon = loDao.layTatCaLoSanPham();
-	    }
-	    if (dsNguon == null) dsNguon = new ArrayList<>();
+		// 1. SEARCH LOGIC (Hybrid: DB Keyword or Cache)
+		String keyword = txtTimKiem.getText().trim();
+		if (keyword.contains("Tìm theo")) keyword = "";
 
-	    // 2. Filter Keyword và Tồn kho
-	    String keyword = txtTimKiem.getText().trim().toLowerCase();
-	    if (keyword.contains("tìm theo")) keyword = ""; // Placeholder check
+		List<LoSanPham> dsNguon;
+		
+		if (!keyword.isEmpty()) {
+			// Tìm kiếm DB theo keyword (Mã Lô, Mã SP, Tên SP)
+			dsNguon = loDao.timLoSanPhamTheoKeyword(keyword);
+		} else {
+			// Không có keyword -> Lấy từ cache (đã load)
+			if (allLo == null || allLo.isEmpty()) {
+				allLo = loDao.layTatCaLoSanPham();
+			}
+			dsNguon = new ArrayList<>(allLo);
+		}
+		
+		if (dsNguon == null) dsNguon = new ArrayList<>();
 
-	    String tonKhoOpt = cbTonKho.getSelectedItem() == null ? "Tất cả" : cbTonKho.getSelectedItem().toString();
+		// 2. FILTER LOGIC (Lọc theo Tồn kho & Hết hạn trên kết quả tìm được)
+		String tonKhoOpt = cbTonKho.getSelectedItem() == null ? "Tất cả" : cbTonKho.getSelectedItem().toString();
+		boolean checkHetHan = chkHetHan.isSelected();
 
-	    List<LoSanPham> ketQua = new ArrayList<>();
-	    
-	    for (LoSanPham lo : dsNguon) {
-	        // Filter Keyword (Mã Lô hoặc Mã SP)
-	        boolean matchKey = false;
-	        if (keyword.isEmpty()) {
-	            matchKey = true;
-	        } else {
-	            String maLo = (lo.getMaLo() != null) ? lo.getMaLo().toLowerCase() : "";
-	            String maSP = (lo.getSanPham() != null && lo.getSanPham().getMaSanPham() != null) 
-	            		? lo.getSanPham().getMaSanPham().toLowerCase() : "";
-	            if (maLo.contains(keyword) || maSP.contains(keyword)) {
-	                matchKey = true;
-	            }
-	        }
+		List<LoSanPham> ketQua = new ArrayList<>();
+		
+		for (LoSanPham lo : dsNguon) {
+			// Filter Hết hạn
+			boolean matchHetHan = true;
+			if (checkHetHan) {
+				// Nếu check "Hết hạn" -> Chỉ lấy các lô tới hạn/hết hạn
+				matchHetHan = loDao.kiemTraLoToiHan(lo);
+			}
+			
+			// Filter Tồn kho
+			boolean matchTon = false;
+			int ton = lo.getSoLuongTon();
+			if (tonKhoOpt.equalsIgnoreCase("Tất cả")) {
+				matchTon = true;
+			} else if (tonKhoOpt.equalsIgnoreCase("Còn tồn")) {
+				matchTon = (ton > 0);
+			} else if (tonKhoOpt.equalsIgnoreCase("Hết hàng")) {
+				matchTon = (ton <= 0);
+			}
 
-	        // Filter Tồn kho
-	        boolean matchTon = false;
-	        int ton = lo.getSoLuongTon();
-	        if (tonKhoOpt.equalsIgnoreCase("Tất cả")) {
-	            matchTon = true;
-	        } else if (tonKhoOpt.equalsIgnoreCase("Còn tồn")) {
-	            matchTon = (ton > 0);
-	        } else if (tonKhoOpt.equalsIgnoreCase("Hết hàng")) {
-	            matchTon = (ton <= 0);
-	        }
+			if (matchHetHan && matchTon) {
+				ketQua.add(lo);
+			}
+		}
 
-	        if (matchKey && matchTon) {
-	            ketQua.add(lo);
-	        }
-	    }
-
-	    // 3. Hiển thị
-	    dsDangHienThi = ketQua;
-	    hienThiDanhSachLo(dsDangHienThi);
-	    modelSanPham.setRowCount(0);
-	    
-	    // Thông báo nếu tìm cụ thể mà không thấy
-	    if (ketQua.isEmpty() && !keyword.isEmpty()) {
-	         JOptionPane.showMessageDialog(this, "Không tìm thấy lô sản phẩm thỏa mãn điều kiện!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-	    }
+		// 3. HIỂN THỊ
+		dsDangHienThi = ketQua;
+		hienThiDanhSachLo(dsDangHienThi);
+		modelSanPham.setRowCount(0);
+		
+		// Thông báo nếu tìm cụ thể mà không thấy
+		if (ketQua.isEmpty() && !keyword.isEmpty()) {
+			 JOptionPane.showMessageDialog(this, "Không tìm thấy lô sản phẩm phù hợp!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+		}
 	}
 
 	private void hienThiDanhSachLo(List<LoSanPham> ds) {

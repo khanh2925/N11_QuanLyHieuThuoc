@@ -15,16 +15,30 @@ import entity.ChiTietPhieuHuy;
 
 public class LoSanPham_DAO {
 
+	// CACHE LAYER
+	private static List<LoSanPham> cacheAllLoSanPham = null;
+
 	public LoSanPham_DAO() {
 	}
 
 	/** Lấy toàn bộ lô sản phẩm */
 	public ArrayList<LoSanPham> layTatCaLoSanPham() {
+		// 1. Kiểm tra cache
+		if (cacheAllLoSanPham != null && !cacheAllLoSanPham.isEmpty()) {
+			return new ArrayList<>(cacheAllLoSanPham);
+		}
+
 		ArrayList<LoSanPham> danhSach = new ArrayList<>();
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 
-		String sql = "SELECT MaLo, HanSuDung, SoLuongTon, MaSanPham FROM LoSanPham";
+		String sql = """
+				SELECT
+					lo.MaLo, lo.HanSuDung, lo.SoLuongTon,
+					sp.MaSanPham, sp.TenSanPham, sp.LoaiSanPham
+				FROM LoSanPham lo
+				LEFT JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+				""";
 
 		try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
 
@@ -37,7 +51,12 @@ public class LoSanPham_DAO {
 				SanPham sp = new SanPham();
 				try {
 					sp.setMaSanPham(maSP);
-				} catch (IllegalArgumentException ignore) {
+					sp.setTenSanPham(rs.getString("TenSanPham"));
+					String loaiStr = rs.getString("LoaiSanPham");
+					if (loaiStr != null) {
+						sp.setLoaiSanPham(enums.LoaiSanPham.valueOf(loaiStr));
+					}
+				} catch (Exception ignore) {
 				}
 
 				danhSach.add(new LoSanPham(maLo, hanSuDung, soLuongTon, sp));
@@ -46,6 +65,10 @@ public class LoSanPham_DAO {
 		} catch (SQLException e) {
 			System.err.println("Lỗi lấy danh sách lô sản phẩm: " + e.getMessage());
 		}
+		
+		// 3. Update Cache
+		cacheAllLoSanPham = new ArrayList<>(danhSach);
+		
 		return danhSach;
 	}
 
@@ -64,7 +87,11 @@ public class LoSanPham_DAO {
 			stmt.setDate(2, Date.valueOf(lo.getHanSuDung()));
 			stmt.setInt(3, lo.getSoLuongTon());
 			stmt.setString(4, lo.getSanPham() != null ? lo.getSanPham().getMaSanPham() : null);
-			return stmt.executeUpdate() > 0;
+			boolean result = stmt.executeUpdate() > 0;
+			if(result && cacheAllLoSanPham != null) {
+				cacheAllLoSanPham.add(0, lo);
+			}
+			return result;
 		} catch (SQLException e) {
 			System.err.println("Lỗi thêm lô sản phẩm: " + e.getMessage());
 		}
@@ -539,6 +566,66 @@ public class LoSanPham_DAO {
 		}
 
 		return danhSach;
+	}
+
+	/** ✅ Tìm lô sản phẩm theo keyword (Mã lô hoặc Mã SP) */
+	public List<LoSanPham> timLoSanPhamTheoKeyword(String keyword) {
+		List<LoSanPham> danhSach = new ArrayList<>();
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
+
+		String sql = """
+				SELECT
+					lo.MaLo, lo.HanSuDung, lo.SoLuongTon,
+					sp.MaSanPham, sp.TenSanPham, sp.LoaiSanPham
+				FROM LoSanPham lo
+				LEFT JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+				WHERE LOWER(lo.MaLo) LIKE LOWER(?) OR LOWER(sp.MaSanPham) LIKE LOWER(?) OR LOWER(sp.TenSanPham) LIKE LOWER(?)
+				""";
+
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			String query = "%" + keyword + "%";
+			stmt.setString(1, query);
+			stmt.setString(2, query);
+			stmt.setString(3, query);
+
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					String maLo = rs.getString("MaLo");
+					LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
+					int soLuongTon = rs.getInt("SoLuongTon");
+					String maSP = rs.getString("MaSanPham");
+
+					SanPham sp = new SanPham();
+					try {
+						sp.setMaSanPham(maSP);
+						sp.setTenSanPham(rs.getString("TenSanPham"));
+						String loaiStr = rs.getString("LoaiSanPham");
+						if (loaiStr != null) {
+							sp.setLoaiSanPham(enums.LoaiSanPham.valueOf(loaiStr));
+						}
+					} catch (Exception ignore) {
+					}
+
+					danhSach.add(new LoSanPham(maLo, hanSuDung, soLuongTon, sp));
+				}
+			}
+		} catch (SQLException e) {
+			System.err.println("Lỗi tìm lô theo keyword: " + e.getMessage());
+		}
+		return danhSach;
+	}
+
+	/** ✅ Kiểm tra lô có cảnh báo hết hạn hay không (Logic lọc in-memory) */
+	public boolean kiemTraLoToiHan(LoSanPham lo) {
+		if (lo == null || lo.getSanPham() == null) return false;
+		
+		int days = soNgayCanhBaoTheoLoai(lo.getSanPham().getLoaiSanPham());
+		LocalDate today = LocalDate.now();
+		LocalDate canhBao = today.plusDays(days);
+		
+		// HanSuDung < canhBao => Tới hạn/Hết hạn
+		return lo.getHanSuDung().isBefore(canhBao);
 	}
 
 }

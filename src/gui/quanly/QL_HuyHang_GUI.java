@@ -777,6 +777,11 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 
 	        JOptionPane.showMessageDialog(this, "Xuất Excel phiếu hủy thành công!");
 
+	        // 4.8 Tự động mở file Excel sau khi xuất
+	        if (java.awt.Desktop.isDesktopSupported()) {
+	            java.awt.Desktop.getDesktop().open(file);
+	        }
+
 	    } catch (Exception ex) {
 	        ex.printStackTrace();
 	        JOptionPane.showMessageDialog(this, "Xuất Excel thất bại!");

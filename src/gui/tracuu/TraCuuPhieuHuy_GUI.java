@@ -503,7 +503,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
     }
 
     // ==============================================================================
-    // LÀM MỚI 
+    // LÀM MỚI (GIỐNG TraCuuDonTraHang_GUI)
     // ==============================================================================
     private void xuLyLamMoi() {
         // 1. Reset ô tìm kiếm + placeholder
@@ -513,20 +513,29 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         // 2. Load lại danh sách phiếu hủy từ DB
         taiDanhSachPhieuHuy();
 
-        // 3. Set ngày mặc định: 30 ngày gần nhất (giống TraCuuDonHang)
-        java.util.Calendar cal = java.util.Calendar.getInstance();
-        Date now = cal.getTime();
+        // 3. Đến ngày: Hôm nay
+        Date now = new Date();
         dateDenNgay.setDate(now);
-        
-        cal.add(java.util.Calendar.DAY_OF_MONTH, -30);
-        Date d30 = cal.getTime();
-        dateTuNgay.setDate(d30);
 
-        // 4. Trạng thái = Tất cả
+        // 4. Từ ngày: Ngày cũ nhất của phiếu hủy (nếu có)
+        if (!allPhieuHuy.isEmpty()) {
+            java.time.LocalDate oldestDate = allPhieuHuy.stream()
+                    .map(PhieuHuy::getNgayLapPhieu)
+                    .min(java.time.LocalDate::compareTo)
+                    .orElse(java.time.LocalDate.now());
+            Date fromDate = Date.from(oldestDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+            dateTuNgay.setDate(fromDate);
+        } else {
+            // Nếu không có phiếu hủy nào, đặt từ ngày là hôm nay
+            dateTuNgay.setDate(now);
+        }
+
+        // 5. Trạng thái = Tất cả
         cbTrangThai.setSelectedIndex(0);
 
-        // 5. Hiển thị có lọc theo ngày mặc định
-        xuLyTimKiem(true);
+        // 6. Hiển thị tất cả
+        loadTablePhieuHuy(allPhieuHuy);
+        modelChiTiet.setRowCount(0);
     }
 
 
