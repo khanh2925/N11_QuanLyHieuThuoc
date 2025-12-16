@@ -19,13 +19,46 @@ public class SanPham_DAO {
 	// Thêm các DAO dependency
 	private BangGia_DAO bangGiaDAO;
 	private ChiTietBangGia_DAO chiTietBangGiaDAO;
-	private ChiTietKhuyenMaiSanPham_DAO chiTietKM_DAO; // 💡 Dependency mới
+	private ChiTietKhuyenMaiSanPham_DAO chiTietKM_DAO;
+
+	// ✅ CACHE: Lưu bảng giá đang hoạt động và chi tiết để tránh N+1 query
+	private static BangGia cachedBangGiaActive = null;
+	private static List<ChiTietBangGia> cachedChiTietBangGia = null;
 
 	public SanPham_DAO() {
 		// Khởi tạo các DAO cần thiết để lấy thông tin giá bán và khuyến mãi
 		bangGiaDAO = new BangGia_DAO();
 		chiTietBangGiaDAO = new ChiTietBangGia_DAO();
-		chiTietKM_DAO = new ChiTietKhuyenMaiSanPham_DAO(); // 💡 Khởi tạo
+		chiTietKM_DAO = new ChiTietKhuyenMaiSanPham_DAO();
+	}
+
+	/** 🔄 Load và cache bảng giá đang hoạt động (gọi 1 lần thay vì mỗi SP) */
+	private void loadCacheBangGia() {
+		if (cachedBangGiaActive == null) {
+			cachedBangGiaActive = bangGiaDAO.layBangGiaDangHoatDong();
+			if (cachedBangGiaActive != null) {
+				cachedChiTietBangGia = chiTietBangGiaDAO.layChiTietTheoMaBangGia(cachedBangGiaActive.getMaBangGia());
+			}
+		}
+	}
+
+	/** � Refresh cache khi bảng giá thay đổi */
+	public static void refreshCacheBangGia() {
+		cachedBangGiaActive = null;
+		cachedChiTietBangGia = null;
+	}
+
+	/** 🔍 Tìm chi tiết bảng giá theo khoảng giá (trong cache thay vì query DB) */
+	private ChiTietBangGia timChiTietTheoKhoangGiaTrongCache(double giaNhap) {
+		if (cachedChiTietBangGia == null || cachedChiTietBangGia.isEmpty()) {
+			return null;
+		}
+		for (ChiTietBangGia ct : cachedChiTietBangGia) {
+			if (giaNhap >= ct.getGiaTu() && giaNhap <= ct.getGiaDen()) {
+				return ct;
+			}
+		}
+		return null;
 	}
 
 	/** 🔹 Lấy toàn bộ sản phẩm */
@@ -230,16 +263,16 @@ public class SanPham_DAO {
 				duongDung, rs.getDouble("GiaNhap"), rs.getString("HinhAnh"), rs.getString("KeBanSanPham"),
 				rs.getBoolean("HoatDong"));
 
-		// 💡 LẤY THÔNG TIN GIÁ BÁN THEO KHOẢNG GIÁ
+		// ✅ OPTIMIZED: Dùng cache thay vì gọi DAO mỗi lần
 		try {
-			// 1. Lấy bảng giá đang hoạt động
-			BangGia bgActive = bangGiaDAO.layBangGiaDangHoatDong();
+			// 1. Load cache nếu chưa có
+			loadCacheBangGia();
 
-			if (bgActive != null) {
+			if (cachedBangGiaActive != null) {
 				double giaNhap = sp.getGiaNhap();
 
-				// 2. Tìm chi tiết bảng giá bằng cách so khớp khoảng giá nhập
-				ChiTietBangGia ctbg = chiTietBangGiaDAO.timChiTietTheoKhoangGia(bgActive.getMaBangGia(), giaNhap);
+				// 2. Tìm chi tiết bảng giá trong cache (không query DB)
+				ChiTietBangGia ctbg = timChiTietTheoKhoangGiaTrongCache(giaNhap);
 
 				if (ctbg != null) {
 					// 3. Gán chi tiết bảng giá, kích hoạt tính toán giaBan trong entity
