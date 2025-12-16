@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
@@ -21,8 +20,6 @@ import javax.swing.border.EmptyBorder;
 
 public class GioiThieu_GUI extends JPanel {
 
-    private static final Color PRIMARY_COLOR = new Color(0, 102, 204);
-    private static final Color SECONDARY_COLOR = new Color(52, 152, 219);
     private static final Color EMPLOYEE_COLOR = new Color(46, 204, 113);
     private static final Color MANAGER_COLOR = new Color(155, 89, 182);
     private static final Color BACKGROUND_COLOR = new Color(248, 249, 252);
@@ -49,11 +46,8 @@ public class GioiThieu_GUI extends JPanel {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                Graphics2D g2d = (Graphics2D) g;
-                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                GradientPaint gradient = new GradientPaint(0, 0, PRIMARY_COLOR, getWidth(), 0, SECONDARY_COLOR);
-                g2d.setPaint(gradient);
-                g2d.fillRect(0, 0, getWidth(), getHeight());
+                g.setColor(new Color(0xE3F2F5)); // Màu nền giống TraCuuPhieuHuy
+                g.fillRect(0, 0, getWidth(), getHeight());
             }
         };
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
@@ -62,12 +56,12 @@ public class GioiThieu_GUI extends JPanel {
 
         JLabel lblTitle = new JLabel("PHẦN MỀM QUẢN LÝ HIỆU THUỐC TÂY");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        lblTitle.setForeground(Color.WHITE);
+        lblTitle.setForeground(Color.BLACK); // Chữ màu đen
         lblTitle.setAlignmentX(CENTER_ALIGNMENT);
 
         JLabel lblSubtitle = new JLabel("Giải pháp quản lý toàn diện cho nhà thuốc hiện đại");
         lblSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblSubtitle.setForeground(new Color(255, 255, 255, 200));
+        lblSubtitle.setForeground(Color.DARK_GRAY); // Chữ màu xám đậm
         lblSubtitle.setAlignmentX(CENTER_ALIGNMENT);
 
         headerPanel.add(Box.createVerticalGlue());
@@ -111,7 +105,7 @@ public class GioiThieu_GUI extends JPanel {
         JLabel lblIntro = new JLabel("<html><div style='line-height: 1.6;'>"
                 + "<p style='font-size: 16px; color: #333;'>"
                 + "Phần mềm <b>Quản lý Hiệu thuốc Tây</b> là giải pháp "
-                + "<b style='color: #0066CC;'>Nhóm N11</b> nhằm hỗ trợ các hiệu thuốc trong việc quản lý hoạt động "
+                + " nhằm hỗ trợ các hiệu thuốc trong việc quản lý hoạt động "
                 + "kinh doanh một cách hiệu quả.</p>"
                 + "<p style='font-size: 16px; color: #333; margin-top: 10px;'>"
                 + "Hệ thống cung cấp đầy đủ các tính năng từ bán hàng, quản lý kho, nhập hàng đến thống kê doanh thu, "
