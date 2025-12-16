@@ -15,8 +15,6 @@ import entity.ChiTietPhieuHuy;
 
 public class LoSanPham_DAO {
 
-	private final SanPham_DAO spDao = new SanPham_DAO();
-
 	public LoSanPham_DAO() {
 	}
 
@@ -112,38 +110,84 @@ public class LoSanPham_DAO {
 		return false;
 	}
 
-	/** Tìm lô sản phẩm chính xác theo mã */
+	/** Tìm lô sản phẩm chính xác theo mã (OPTIMIZED - dùng JOIN) */
 	public LoSanPham timLoTheoMa(String maLo) {
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 
+		// ✅ OPTIMIZED: Dùng JOIN thay vì gọi SanPham_DAO riêng
 		String sql = """
-				    SELECT MaLo, HanSuDung, SoLuongTon, MaSanPham
-				    FROM LoSanPham
-				    WHERE MaLo = ?
+				SELECT
+					lo.MaLo, lo.HanSuDung, lo.SoLuongTon,
+					sp.MaSanPham, sp.TenSanPham, sp.LoaiSanPham, sp.SoDangKy,
+					sp.DuongDung, sp.GiaNhap, sp.HinhAnh, sp.KeBanSanPham, sp.HoatDong
+				FROM LoSanPham lo
+				LEFT JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+				WHERE lo.MaLo = ?
 				""";
 
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+
+		try {
+			stmt = con.prepareStatement(sql);
 			stmt.setString(1, maLo);
+			rs = stmt.executeQuery();
 
-			LocalDate hanSuDung = null;
-			int soLuongTon = 0;
-			String maSP = "";
-			SanPham sp = new SanPham();
+			if (rs.next()) {
+				// ========== TẠO SẢN PHẨM TỪ RESULTSET ==========
+				SanPham sp = null;
+				if (rs.getString("MaSanPham") != null) {
+					sp = new SanPham();
+					sp.setMaSanPham(rs.getString("MaSanPham"));
+					sp.setTenSanPham(rs.getString("TenSanPham"));
+					sp.setGiaNhap(rs.getDouble("GiaNhap"));
 
-			try (ResultSet rs = stmt.executeQuery()) {
+					String loaiStr = rs.getString("LoaiSanPham");
+					if (loaiStr != null) {
+						try {
+							sp.setLoaiSanPham(LoaiSanPham.valueOf(loaiStr.trim().toUpperCase()));
+						} catch (Exception ignore) {
+						}
+					}
 
-				if (rs.next()) {
-					hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-					soLuongTon = rs.getInt("SoLuongTon");
-					maSP = rs.getString("MaSanPham");
+					sp.setSoDangKy(rs.getString("SoDangKy"));
+					sp.setHinhAnh(rs.getString("HinhAnh"));
+					sp.setKeBanSanPham(rs.getString("KeBanSanPham"));
+					sp.setHoatDong(rs.getBoolean("HoatDong"));
+
+					String ddStr = rs.getString("DuongDung");
+					if (ddStr != null) {
+						try {
+							sp.setDuongDung(enums.DuongDung.valueOf(ddStr.trim().toUpperCase()));
+						} catch (Exception ignore) {
+						}
+					}
 				}
 
-				sp = spDao.laySanPhamTheoMa(maSP);
+				// ========== TẠO LÔ SẢN PHẨM ==========
+				LocalDate hanSuDung = null;
+				if (rs.getDate("HanSuDung") != null) {
+					hanSuDung = rs.getDate("HanSuDung").toLocalDate();
+				}
+				int soLuongTon = rs.getInt("SoLuongTon");
+
 				return new LoSanPham(maLo, hanSuDung, soLuongTon, sp);
 			}
 		} catch (SQLException e) {
-			System.err.println("Lỗi tìm lô sản phẩm theo mã: " + e.getMessage());
+			System.err.println("❌ Lỗi tìm lô sản phẩm theo mã: " + e.getMessage());
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (stmt != null)
+					stmt.close();
+			} catch (Exception ignored) {
+			}
+			// ❗ KHÔNG đóng connection (singleton)
 		}
 		return null;
 	}
@@ -345,18 +389,18 @@ public class LoSanPham_DAO {
 		}
 
 		switch (loai) {
-		case THUOC:
-		case MY_PHAM:
-		case THUC_PHAM_BO_SUNG:
-		case SAN_PHAM_KHAC:
-			return 60;
+			case THUOC:
+			case MY_PHAM:
+			case THUC_PHAM_BO_SUNG:
+			case SAN_PHAM_KHAC:
+				return 60;
 
-		case DUNG_CU_Y_TE:
-		case SAN_PHAM_CHO_ME_VA_BE:
-			return 90;
+			case DUNG_CU_Y_TE:
+			case SAN_PHAM_CHO_ME_VA_BE:
+				return 90;
 
-		default:
-			return 60;
+			default:
+				return 60;
 		}
 	}
 
@@ -409,7 +453,6 @@ public class LoSanPham_DAO {
 		return danhSach;
 	}
 
-
 	public Map<LoaiSanPham, Integer> thongKeSoLoCanHuyTheoHSDTheoLoai() {
 		Map<LoaiSanPham, Integer> map = new LinkedHashMap<>();
 		for (LoaiSanPham l : LoaiSanPham.values())
@@ -451,51 +494,51 @@ public class LoSanPham_DAO {
 
 		return map;
 	}
-	
+
 	/** ✅ Lấy danh sách lô "tới hạn sử dụng" (cần hủy theo HSD) */
 	public List<LoSanPham> layDanhSachLoSPToiHanSuDung() {
-	    List<LoSanPham> danhSach = new ArrayList<>();
+		List<LoSanPham> danhSach = new ArrayList<>();
 
-	    connectDB.getInstance();
-	    Connection con = connectDB.getConnection();
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
 
-	    // ✅ GIỮ NGUYÊN rule như demSoLoSPToiHanSuDung(): 60/90 ngày theo loại
-	    String sql = """
-	        SELECT L.MaLo, L.HanSuDung, L.SoLuongTon, L.MaSanPham
-	        FROM LoSanPham L
-	        JOIN SanPham SP ON L.MaSanPham = SP.MaSanPham
-	        WHERE L.SoLuongTon > 0
-	          AND L.HanSuDung < DATEADD(DAY,
-	                CASE
-	                    WHEN SP.LoaiSanPham IN ('DUNG_CU_Y_TE', 'SAN_PHAM_CHO_ME_VA_BE') THEN 90
-	                    WHEN SP.LoaiSanPham IN ('THUOC', 'MY_PHAM', 'THUC_PHAM_BO_SUNG', 'SAN_PHAM_KHAC') THEN 60
-	                    ELSE 60
-	                END,
-	                CAST(GETDATE() AS DATE)
-	          )
-	        ORDER BY L.HanSuDung ASC
-	    """;
+		// ✅ GIỮ NGUYÊN rule như demSoLoSPToiHanSuDung(): 60/90 ngày theo loại
+		String sql = """
+				    SELECT L.MaLo, L.HanSuDung, L.SoLuongTon, L.MaSanPham
+				    FROM LoSanPham L
+				    JOIN SanPham SP ON L.MaSanPham = SP.MaSanPham
+				    WHERE L.SoLuongTon > 0
+				      AND L.HanSuDung < DATEADD(DAY,
+				            CASE
+				                WHEN SP.LoaiSanPham IN ('DUNG_CU_Y_TE', 'SAN_PHAM_CHO_ME_VA_BE') THEN 90
+				                WHEN SP.LoaiSanPham IN ('THUOC', 'MY_PHAM', 'THUC_PHAM_BO_SUNG', 'SAN_PHAM_KHAC') THEN 60
+				                ELSE 60
+				            END,
+				            CAST(GETDATE() AS DATE)
+				      )
+				    ORDER BY L.HanSuDung ASC
+				""";
 
-	    try (PreparedStatement stmt = con.prepareStatement(sql);
-	         ResultSet rs = stmt.executeQuery()) {
+		try (PreparedStatement stmt = con.prepareStatement(sql);
+				ResultSet rs = stmt.executeQuery()) {
 
-	        while (rs.next()) {
-	            String maLo = rs.getString("MaLo");
-	            LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
-	            int soLuongTon = rs.getInt("SoLuongTon");
-	            String maSP = rs.getString("MaSanPham");
+			while (rs.next()) {
+				String maLo = rs.getString("MaLo");
+				LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
+				int soLuongTon = rs.getInt("SoLuongTon");
+				String maSP = rs.getString("MaSanPham");
 
-	            // ✅ giống style các hàm khác: chỉ gắn SanPham theo mã, không query thêm
-	            SanPham sp = new SanPham(maSP);
+				// ✅ giống style các hàm khác: chỉ gắn SanPham theo mã, không query thêm
+				SanPham sp = new SanPham(maSP);
 
-	            danhSach.add(new LoSanPham(maLo, hanSuDung, soLuongTon, sp));
-	        }
+				danhSach.add(new LoSanPham(maLo, hanSuDung, soLuongTon, sp));
+			}
 
-	    } catch (SQLException e) {
-	        System.err.println("❌ Lỗi lấy danh sách lô tới hạn sử dụng: " + e.getMessage());
-	    }
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi lấy danh sách lô tới hạn sử dụng: " + e.getMessage());
+		}
 
-	    return danhSach;
+		return danhSach;
 	}
 
 }

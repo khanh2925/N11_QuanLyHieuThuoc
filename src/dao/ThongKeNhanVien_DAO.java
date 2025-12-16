@@ -20,7 +20,7 @@ public class ThongKeNhanVien_DAO {
         }
 
         public double getTyLeHoanTra() {
-            return soHoaDon == 0 ? 0 : ((double) soPhieuTra / soHoaDon) * 100;
+            return tongDoanhSo == 0 ? 0 : (tongTienTra / tongDoanhSo) * 100;
         }
     }
 
@@ -65,12 +65,9 @@ public KetQuaThongKe getThongKe(java.util.Date tuNgay, java.util.Date denNgay, S
         }
         
         // --- B. Thống kê TRẢ HÀNG ---
-        // Tính tổng tiền từ ChiTietPhieuTra thay vì dựa vào TongTienHoan (có thể chưa cập nhật)
-        String sqlTraHang = "SELECT COUNT(DISTINCT pt.MaPhieuTra) as SoPhieu, " +
-                            "COALESCE(SUM(ct.ThanhTienHoan), 0) as TienTra " +
+        String sqlTraHang = "SELECT COUNT(*) as SoPhieu, COALESCE(SUM(pt.TongTienHoan), 0) as TienTra " +
                             "FROM PhieuTra pt " +
                             "JOIN NhanVien nv ON pt.MaNhanVien = nv.MaNhanVien " +
-                            "LEFT JOIN ChiTietPhieuTra ct ON pt.MaPhieuTra = ct.MaPhieuTra " +
                             "WHERE pt.NgayLap BETWEEN ? AND ? " + 
                             sqlNhanVien + sqlCaLam;
                             

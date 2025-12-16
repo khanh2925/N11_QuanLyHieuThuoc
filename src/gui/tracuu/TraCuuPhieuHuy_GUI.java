@@ -1,5 +1,5 @@
 /**
- * @author Quốc Khánh cute
+ * @author Anh Khoi
  * @version 2.0
  * @since Oct 19, 2025
  *
@@ -10,10 +10,6 @@ package gui.tracuu;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.HierarchyEvent;
-import java.awt.event.HierarchyListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -62,6 +58,8 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
 
     // DATA
     private List<PhieuHuy> allPhieuHuy = new ArrayList<>();
+    // Cache danh sách hiện tại sau khi filter
+    private List<PhieuHuy> dsPhieuHuyHienTai = new ArrayList<>();
     private List<ChiTietPhieuHuy> dsCTPH;
 
     private PillButton btnLamMoi, btnTim;
@@ -75,19 +73,10 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
 
         initialize();
         addEvents();
+        setupKeyboardShortcuts(); // Thiết lập phím tắt
         initData();
 
-        //  Tự động reload mỗi khi panel được hiển thị
-        addHierarchyListener(new HierarchyListener() {
-            @Override
-            public void hierarchyChanged(HierarchyEvent e) {
-                if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
-                    if (isShowing()) {
-                        xuLyLamMoi(); // reset filter + load lại tất cả
-                    }
-                }
-            }
-        });
+
     }
 
     // ==============================================================================
@@ -117,11 +106,12 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
 
         // --- 1. Ô TÌM KIẾM TO (Bên trái) ---
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã phiếu, tên nhân viên");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã phiếu, tên nhân viên (F1 / Ctrl+F)");
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20)); // Font 20
         txtTimKiem.setBounds(25, 17, 480, 60); 
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
+        txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
         pnHeader.add(txtTimKiem);
 
         // --- 2. BỘ LỌC (Trạng thái + Ngày) ---
@@ -162,14 +152,30 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         pnHeader.add(dateDenNgay);
 
         // --- 3. CÁC NÚT CHỨC NĂNG (Bên phải) ---
-        btnTim = new PillButton("Tìm");
+        btnTim = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "TÌM KIẾM<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
+                    "</center>" +
+                "</html>"
+            );
         btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnTim.setBounds(1252, 22, 109, 50);
+        btnTim.setBounds(1252, 22, 130, 50);
+        btnTim.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã phiếu, tên nhân viên và bộ lọc ngày</html>");
         pnHeader.add(btnTim);
 
-        btnLamMoi = new PillButton("Làm mới");
-        btnLamMoi.setBounds(1373, 22, 130, 50);
+        btnLamMoi = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "LÀM MỚI<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(F5)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+        btnLamMoi.setBounds(1394, 22, 130, 50);
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
         pnHeader.add(btnLamMoi);
     }
 
@@ -347,7 +353,52 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         btnLamMoi.addActionListener(this);
         btnTim.addActionListener(this);
         txtTimKiem.addActionListener(this); 
-     
+    }
+
+    /**
+     * Thiết lập phím tắt cho màn hình Tra cứu Phiếu hủy
+     */
+    private void setupKeyboardShortcuts() {
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+
+        // F1: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
+        actionMap.put("focusTimKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+
+        // F5: Làm mới
+        inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
+        actionMap.put("lamMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyLamMoi();
+            }
+        });
+
+        // Ctrl+F: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
+        actionMap.put("timKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+        
+        // Enter: Lọc/Tìm kiếm (hoạt động ở bất kỳ đâu trong cửa sổ)
+        inputMap.put(KeyStroke.getKeyStroke("ENTER"), "enterTimKiem");
+        actionMap.put("enterTimKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyTimKiem(true);
+            }
+        });
     }
 
     @Override
@@ -440,9 +491,15 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         }
 
         // --- Load lên bảng ---
-        loadTablePhieuHuy(ds);
+        dsPhieuHuyHienTai = ds;
+        loadTablePhieuHuy(dsPhieuHuyHienTai);
         // Clear chi tiết khi tìm mới
         modelChiTiet.setRowCount(0);
+        
+        // Nếu tìm kiếm cụ thể (có nhập text) mà không thấy thì báo
+        if (ds.isEmpty() && !keyword.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không tìm thấy phiếu hủy nào!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        }
     }
 
     // ==============================================================================
@@ -451,23 +508,25 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
     private void xuLyLamMoi() {
         // 1. Reset ô tìm kiếm + placeholder
         txtTimKiem.setText("");
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã phiếu, tên nhân viên");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã phiếu, tên nhân viên (F1 / Ctrl+F)");
 
         // 2. Load lại danh sách phiếu hủy từ DB
         taiDanhSachPhieuHuy();
 
-        // 3. Set ngày mặc định       
-        dateDenNgay.setDate(null);
-        dateTuNgay.setDate(null);
-
+        // 3. Set ngày mặc định: 30 ngày gần nhất (giống TraCuuDonHang)
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        Date now = cal.getTime();
+        dateDenNgay.setDate(now);
         
+        cal.add(java.util.Calendar.DAY_OF_MONTH, -30);
+        Date d30 = cal.getTime();
+        dateTuNgay.setDate(d30);
 
         // 4. Trạng thái = Tất cả
         cbTrangThai.setSelectedIndex(0);
 
-        // 5. Hiển thị full danh sách
-        loadTablePhieuHuy(allPhieuHuy);
-        modelChiTiet.setRowCount(0);
+        // 5. Hiển thị có lọc theo ngày mặc định
+        xuLyTimKiem(true);
     }
 
 
