@@ -381,6 +381,8 @@ public class TraCuuNhanVien_GUI extends JPanel {
 		cbCaLam.setSelectedIndex(0);
 		cbTrangThai.setSelectedIndex(0);
 
+		// Refresh cache và tải lại dữ liệu từ DB
+		nvDAO.refreshCache();
 		taiDanhSachNhanVien();
 		loadTableNhanVien(danhSachGoc);
 	}
@@ -418,7 +420,7 @@ public class TraCuuNhanVien_GUI extends JPanel {
 	}
 
 	// =====================================================================
-	// XỬ LÝ TÌM KIẾM (giống đơn trả hàng)
+	// XỬ LÝ TÌM KIẾM (giống đơn hàng - hybrid cache + DB)
 	// =====================================================================
 	private void xuLyTimKiem() {
 
@@ -427,32 +429,58 @@ public class TraCuuNhanVien_GUI extends JPanel {
 		String ca = cbCaLam.getSelectedItem().toString();
 		String tt = cbTrangThai.getSelectedItem().toString();
 
-		List<NhanVien> ds = new ArrayList<>(danhSachGoc);
+		List<NhanVien> ketQua = new ArrayList<>();
 
-		// --- keyword ---
-		if (!keyword.isEmpty() && !keyword.equals(PLACEHOLDER_TIM_KIEM)) {
+		// LOGIC TỐI ƯU: Lai ghép 2 phương pháp (giống TraCuuDonHang_GUI)
+		// 1. Nếu chỉ có bộ lọc → Filter trên cache (nhanh hơn)
+		if (keyword.isEmpty() || keyword.equals(PLACEHOLDER_TIM_KIEM)) {
+			// Đảm bảo cache đã được load
+			if (danhSachGoc == null || danhSachGoc.isEmpty()) {
+				taiDanhSachNhanVien();
+			}
+			ketQua = new ArrayList<>(danhSachGoc); // Clone từ cache
+		}
+		// 2. Nếu có keyword cụ thể → Tìm kiếm trong cache (tối ưu)
+		else {
 			String kw = keyword.toLowerCase();
-			ds.removeIf(nv -> !(nv.getMaNhanVien().toLowerCase().contains(kw)
-					|| nv.getTenNhanVien().toLowerCase().contains(kw) || nv.getSoDienThoai().contains(kw)));
+			// Đảm bảo cache đã được load
+			if (danhSachGoc == null || danhSachGoc.isEmpty()) {
+				taiDanhSachNhanVien();
+			}
+			// Tìm kiếm lai ghép trên cache
+			for (NhanVien nv : danhSachGoc) {
+				if (nv.getMaNhanVien().toLowerCase().contains(kw)
+						|| nv.getTenNhanVien().toLowerCase().contains(kw)
+						|| (nv.getSoDienThoai() != null && nv.getSoDienThoai().contains(kw))) {
+					ketQua.add(nv);
+				}
+			}
 		}
 
-		// --- chức vụ ---
+		// --- Áp dụng bộ lọc: chức vụ ---
 		if (!"Tất cả".equals(cv)) {
-			ds.removeIf(nv -> (cv.equals("Quản lý") && !nv.isQuanLy()) || (cv.equals("Nhân viên") && nv.isQuanLy()));
+			ketQua.removeIf(
+					nv -> (cv.equals("Quản lý") && !nv.isQuanLy()) || (cv.equals("Nhân viên") && nv.isQuanLy()));
 		}
 
-		// --- ca làm ---
+		// --- Áp dụng bộ lọc: ca làm ---
 		if (!"Tất cả".equals(ca)) {
-			ds.removeIf(nv -> !doiCaLam(nv.getCaLam()).equals(ca));
+			ketQua.removeIf(nv -> !doiCaLam(nv.getCaLam()).equals(ca));
 		}
 
-		// --- trạng thái ---
+		// --- Áp dụng bộ lọc: trạng thái ---
 		if (!"Tất cả".equals(tt)) {
 			boolean isWorking = tt.equals("Đang làm");
-			ds.removeIf(nv -> nv.isTrangThai() != isWorking);
+			ketQua.removeIf(nv -> nv.isTrangThai() != isWorking);
 		}
 
-		loadTableNhanVien(ds);
+		loadTableNhanVien(ketQua);
+
+		// Nếu tìm kiếm cụ thể (có nhập text) mà không thấy thì báo
+		if (ketQua.isEmpty() && !keyword.isEmpty() && !keyword.equals(PLACEHOLDER_TIM_KIEM)) {
+			javax.swing.JOptionPane.showMessageDialog(this, "Không tìm thấy nhân viên nào!", "Thông báo",
+					javax.swing.JOptionPane.INFORMATION_MESSAGE);
+		}
 	}
 
 	//// =====================================================================

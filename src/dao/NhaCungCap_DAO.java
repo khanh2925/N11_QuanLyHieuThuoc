@@ -9,11 +9,21 @@ import entity.NhaCungCap;
 
 public class NhaCungCap_DAO {
 
+	// ============ CACHE LAYER ============
+	// Cache toàn bộ nhà cung cấp (dùng chung toàn ứng dụng)
+	private static List<NhaCungCap> cacheAllNhaCungCap = null;
+
 	public NhaCungCap_DAO() {
 	}
 
-	/** 🔹 Lấy toàn bộ nhà cung cấp */
+	/** 📜 Lấy toàn bộ nhà cung cấp (CÓ CACHE - TỐI ƯU) */
 	public List<NhaCungCap> layTatCaNhaCungCap() {
+		// Nếu cache đã có dữ liệu → Return cache (clone để tránh modify trực tiếp)
+		if (cacheAllNhaCungCap != null && !cacheAllNhaCungCap.isEmpty()) {
+			return new ArrayList<>(cacheAllNhaCungCap);
+		}
+
+		// Cache rỗng → Query DB và lưu vào cache
 		List<NhaCungCap> ds = new ArrayList<>();
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
@@ -35,7 +45,11 @@ public class NhaCungCap_DAO {
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi lấy danh sách nhà cung cấp: " + e.getMessage());
 		}
-		return ds;
+
+		// Lưu vào cache để lần sau không cần query nữa
+		cacheAllNhaCungCap = ds;
+
+		return new ArrayList<>(ds); // Clone để tránh modify cache
 	}
 
 	/** 🔹 Thêm nhà cung cấp mới */
@@ -55,7 +69,14 @@ public class NhaCungCap_DAO {
 			ps.setString(5, ncc.getEmail());
 			ps.setBoolean(6, ncc.isHoatDong());
 
-			return ps.executeUpdate() > 0;
+			boolean success = ps.executeUpdate() > 0;
+
+			// ✅ Cập nhật cache: Thêm NCC mới vào đầu danh sách
+			if (success && cacheAllNhaCungCap != null) {
+				cacheAllNhaCungCap.add(0, ncc);
+			}
+
+			return success;
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi thêm nhà cung cấp: " + e.getMessage());
 			return false;
@@ -225,6 +246,15 @@ public class NhaCungCap_DAO {
 		}
 
 		return ds;
+	}
+
+	/**
+	 * 🔄 Force refresh cache - Xóa cache và load lại từ DB
+	 * Dùng khi cần đồng bộ dữ liệu real-time (VD: sau khi import data)
+	 */
+	public void refreshCache() {
+		cacheAllNhaCungCap = null;
+		layTatCaNhaCungCap(); // Load lại ngay
 	}
 
 }

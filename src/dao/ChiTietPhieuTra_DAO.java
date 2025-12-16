@@ -20,14 +20,11 @@ import java.util.List;
 
 public class ChiTietPhieuTra_DAO {
 
-	private final ChiTietHoaDon_DAO chiTietHoaDonDAO;
-
 	public ChiTietPhieuTra_DAO() {
-		this.chiTietHoaDonDAO = new ChiTietHoaDon_DAO();
 	}
 
 	// ============================================================
-	// 🔍 Lấy danh sách chi tiết phiếu trả theo mã phiếu trả
+	// 🔍 Lấy danh sách chi tiết phiếu trả theo mã phiếu trả (OPTIMIZED - dùng JOIN)
 	// ============================================================
 	public List<ChiTietPhieuTra> timKiemChiTietBangMaPhieuTra(String maPhieuTra) {
 
@@ -69,68 +66,83 @@ public class ChiTietPhieuTra_DAO {
 				ORDER BY ctp.MaLo
 				""";
 
-		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+		Connection con = connectDB.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
 
+		try {
+			ps = con.prepareStatement(sql);
 			ps.setString(1, maPhieuTra);
+			rs = ps.executeQuery();
 
-			try (ResultSet rs = ps.executeQuery()) {
-				while (rs.next()) {
+			while (rs.next()) {
 
-					// ========== TẠO HÓA ĐƠN ==========
-					HoaDon hd = new HoaDon();
-					hd.setMaHoaDon(rs.getString("MaHoaDon"));
+				// ========== TẠO HÓA ĐƠN ==========
+				HoaDon hd = new HoaDon();
+				hd.setMaHoaDon(rs.getString("MaHoaDon"));
 
-					// ========== TẠO SẢN PHẨM ==========
-					SanPham sp = null;
-					if (rs.getString("MaSanPham") != null) {
-						sp = new SanPham();
-						sp.setMaSanPham(rs.getString("MaSanPham"));
-						sp.setTenSanPham(rs.getString("TenSanPham"));
-					}
-
-					// ========== TẠO LÔ ==========
-					LoSanPham lo = new LoSanPham();
-					lo.setMaLo(rs.getString("MaLo"));
-					if (rs.getDate("HanSuDung") != null)
-						lo.setHanSuDung(rs.getDate("HanSuDung").toLocalDate());
-					lo.setSoLuongTon(rs.getInt("SoLuongTon"));
-					lo.setSanPham(sp);
-
-					// ========== ĐƠN VỊ TÍNH ==========
-					DonViTinh dvt = null;
-					if (rs.getString("MaDonViTinhCT") != null) {
-						dvt = new DonViTinh();
-						dvt.setMaDonViTinh(rs.getString("MaDonViTinhCT"));
-						dvt.setTenDonViTinh(rs.getString("TenDonViTinh"));
-					}
-					// ========== KHUYẾN MÃI ==========
-					KhuyenMai km = null;
-					if (rs.getString("MaKM") != null) {
-						km = new KhuyenMai();
-						km.setMaKM(rs.getString("MaKM"));
-						km.setTenKM(rs.getString("TenKM"));
-						km.setGiaTri(rs.getDouble("GiaTri"));
-						km.setHinhThuc(HinhThucKM.valueOf(rs.getString("HinhThuc")));
-					}
-
-					// ========== ChiTietHoaDon ==========
-					ChiTietHoaDon cthd = new ChiTietHoaDon(hd, lo, rs.getInt("SoLuongHD"), dvt, rs.getDouble("GiaBan"),
-							km);
-
-					// ========== Phiếu trả ==========
-					PhieuTra pt = new PhieuTra();
-					pt.setMaPhieuTra(maPhieuTra);
-
-					// ========== ChiTietPhieuTra ==========
-					ChiTietPhieuTra ctpt = new ChiTietPhieuTra(pt, cthd, rs.getString("LyDoChiTiet"),
-							rs.getInt("SoLuong"), rs.getInt("TrangThai"));
-					ctpt.setDonViTinh(dvt);
-					ds.add(ctpt);
+				// ========== TẠO SẢN PHẨM ==========
+				SanPham sp = null;
+				if (rs.getString("MaSanPham") != null) {
+					sp = new SanPham();
+					sp.setMaSanPham(rs.getString("MaSanPham"));
+					sp.setTenSanPham(rs.getString("TenSanPham"));
 				}
+
+				// ========== TẠO LÔ ==========
+				LoSanPham lo = new LoSanPham();
+				lo.setMaLo(rs.getString("MaLo"));
+				if (rs.getDate("HanSuDung") != null)
+					lo.setHanSuDung(rs.getDate("HanSuDung").toLocalDate());
+				lo.setSoLuongTon(rs.getInt("SoLuongTon"));
+				lo.setSanPham(sp);
+
+				// ========== ĐƠN VỊ TÍNH ==========
+				DonViTinh dvt = null;
+				if (rs.getString("MaDonViTinhCT") != null) {
+					dvt = new DonViTinh();
+					dvt.setMaDonViTinh(rs.getString("MaDonViTinhCT"));
+					dvt.setTenDonViTinh(rs.getString("TenDonViTinh"));
+				}
+				// ========== KHUYẾN MÃI ==========
+				KhuyenMai km = null;
+				if (rs.getString("MaKM") != null) {
+					km = new KhuyenMai();
+					km.setMaKM(rs.getString("MaKM"));
+					km.setTenKM(rs.getString("TenKM"));
+					km.setGiaTri(rs.getDouble("GiaTri"));
+					km.setHinhThuc(HinhThucKM.valueOf(rs.getString("HinhThuc")));
+				}
+
+				// ========== ChiTietHoaDon ==========
+				ChiTietHoaDon cthd = new ChiTietHoaDon(hd, lo, rs.getInt("SoLuongHD"), dvt, rs.getDouble("GiaBan"),
+						km);
+
+				// ========== Phiếu trả ==========
+				PhieuTra pt = new PhieuTra();
+				pt.setMaPhieuTra(maPhieuTra);
+
+				// ========== ChiTietPhieuTra ==========
+				ChiTietPhieuTra ctpt = new ChiTietPhieuTra(pt, cthd, rs.getString("LyDoChiTiet"),
+						rs.getInt("SoLuong"), rs.getInt("TrangThai"));
+				ctpt.setDonViTinh(dvt);
+				ds.add(ctpt);
 			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ignored) {
+			}
+			// ❗ KHÔNG đóng connection (singleton)
 		}
 
 		return ds;
@@ -146,8 +158,11 @@ public class ChiTietPhieuTra_DAO {
 				    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 				""";
 
-		try (Connection con = connectDB.getConnection(); PreparedStatement stmt = con.prepareStatement(sql)) {
+		Connection con = connectDB.getConnection();
+		PreparedStatement stmt = null;
 
+		try {
+			stmt = con.prepareStatement(sql);
 			stmt.setString(1, ctpt.getPhieuTra().getMaPhieuTra());
 			stmt.setString(2, ctpt.getChiTietHoaDon().getHoaDon().getMaHoaDon());
 			stmt.setString(3, ctpt.getChiTietHoaDon().getLoSanPham().getMaLo());
@@ -162,6 +177,13 @@ public class ChiTietPhieuTra_DAO {
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return false;
+		} finally {
+			try {
+				if (stmt != null)
+					stmt.close();
+			} catch (Exception ignored) {
+			}
+			// ❗ KHÔNG đóng connection (singleton)
 		}
 	}
 
@@ -176,8 +198,11 @@ public class ChiTietPhieuTra_DAO {
 				    WHERE MaPhieuTra = ? AND MaHoaDon = ? AND MaLo = ? AND MaDonViTinh = ?
 				""";
 
-		try (Connection con = connectDB.getConnection(); PreparedStatement stmt = con.prepareStatement(sql)) {
+		Connection con = connectDB.getConnection();
+		PreparedStatement stmt = null;
 
+		try {
+			stmt = con.prepareStatement(sql);
 			stmt.setInt(1, trangThaiMoi);
 			stmt.setString(2, maPhieuTra);
 			stmt.setString(3, maHoaDon);
@@ -188,11 +213,19 @@ public class ChiTietPhieuTra_DAO {
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return false;
+		} finally {
+			try {
+				if (stmt != null)
+					stmt.close();
+			} catch (Exception ignored) {
+			}
+			// ❗ KHÔNG đóng connection (singleton)
 		}
 	}
 
 	// ============================================================
-	// 🔢 Tính tổng số lượng đã trả của 1 sản phẩm theo mã HĐ + mã lô
+	// 🔢 Tính tổng số lượng đã trả của 1 sản phẩm theo mã HĐ + mã lô (OPTIMIZED -
+	// dùng JOIN)
 	// ============================================================
 	public double tongSoLuongDaTra(String maHD, String maLo) {
 		String sql = """
@@ -207,18 +240,33 @@ public class ChiTietPhieuTra_DAO {
 				      AND ct.MaLo     = ?
 				""";
 
-		try (Connection con = connectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+		Connection con = connectDB.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
 
+		try {
+			ps = con.prepareStatement(sql);
 			ps.setString(1, maHD);
 			ps.setString(2, maLo);
+			rs = ps.executeQuery();
 
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					return rs.getDouble("TongGoc");
-				}
+			if (rs.next()) {
+				return rs.getDouble("TongGoc");
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ignored) {
+			}
+			// ❗ KHÔNG đóng connection (singleton)
 		}
 		return 0;
 	}
