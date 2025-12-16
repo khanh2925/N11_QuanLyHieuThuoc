@@ -363,46 +363,6 @@ private void taoPhanGiua() {
         modelSanPhamSuDung.setRowCount(0);
     }
 
-    /**
-     * Thiết lập phím tắt cho giao diện
-     */
-    private void setupKeyboardShortcuts() {
-        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        ActionMap actionMap = getActionMap();
-
-        // F1: Focus tìm kiếm
-        inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
-        actionMap.put("focusTimKiem", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                txtTimKiem.requestFocus();
-                txtTimKiem.selectAll();
-            }
-        });
-
-        // F5: Làm mới
-        inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
-        actionMap.put("lamMoi", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                xuLyLamMoi();
-            }
-        });
-
-        // Ctrl+F: Focus tìm kiếm
-        inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
-        actionMap.put("timKiem", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                txtTimKiem.requestFocus();
-                txtTimKiem.selectAll();
-            }
-        });
-
-        // Enter trên ô tìm kiếm
-        txtTimKiem.addActionListener(ev -> xuLyTimKiem());
-    }
-
     // ==============================================================================
     //                              EVENT HANDLERS
     // ==============================================================================
