@@ -118,12 +118,12 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
 
         // Trạng thái
         JLabel lblTT = new JLabel("Trạng thái:");
-        lblTT.setFont(new Font("Segoe UI", Font.PLAIN, 18)); // Font 18
+        lblTT.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
         lblTT.setBounds(530, 28, 90, 35);
         pnHeader.add(lblTT);
 
         cbTrangThai = new JComboBox<>();
-        cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 18)); // Font 18
+        cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
         cbTrangThai.setBounds(625, 28, 135, 38);
         pnHeader.add(cbTrangThai);
 
@@ -151,7 +151,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         dateDenNgay.setBounds(1080, 28, 150, 38);
         pnHeader.add(dateDenNgay);
 
-        // --- 3. CÁC NÚT CHỨC NĂNG (Bên phải) ---
+        // cac  button ---
         btnTim = new PillButton(
                 "<html>" +
                     "<center>" +
@@ -561,8 +561,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         }
     }
 
-    private void loadDuLieuPhieuHuyTheoPH() {
-        // Click phiếu hủy -> Load chi tiết
+    private void loadDuLieuPhieuHuyTheoPH() {       
         tblPhieuHuy.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 int row = tblPhieuHuy.getSelectedRow();
