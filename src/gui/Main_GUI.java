@@ -43,7 +43,7 @@ import gui.tracuu.TraCuuPhieuNhap_GUI;
 import gui.tracuu.TraCuuSanPham_GUI;
 import gui.tracuu.TraCuuLoSanPham_GUI;
 import gui.trogiup.GioiThieu_GUI;
-
+import gui.trogiup.HuongDan_GUI;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -206,6 +206,14 @@ public class Main_GUI extends JFrame {
 			addMenuButton(menuScrollContent, "Trợ giúp", "trogiup", "/resources/images/icon_tro_giup.png");
 			addSubmenuButton("trogiup", "gioithieu", "Giới thiệu", "/resources/images/icon_gioi_thieu.png",
 					new GioiThieu_GUI());
+			addSubmenuButton("trogiup", "huongdan", "Hướng dẫn", "/resources/images/icon_gioi_thieu.png",
+					() -> {
+						JOptionPane.showMessageDialog(null, 
+							"Đang mở file hướng dẫn trong trình duyệt...", 
+							"Thông báo", 
+							JOptionPane.INFORMATION_MESSAGE);
+						HuongDan_GUI.moHuongDan();
+					});
 
 
 			menuScrollContent.add(Box.createVerticalGlue());
@@ -238,6 +246,14 @@ public class Main_GUI extends JFrame {
 			addMenuButton(menuScrollContent, "Trợ giúp", "trogiup", "/resources/images/icon_tro_giup.png");
 			addSubmenuButton("trogiup", "gioithieu", "Giới thiệu", "/resources/images/icon_gioi_thieu.png",
 					new GioiThieu_GUI());
+			addSubmenuButton("trogiup", "huongdan", "Hướng dẫn", "/resources/images/icon_gioi_thieu.png",
+					() -> {
+						JOptionPane.showMessageDialog(null, 
+							"Đang mở file hướng dẫn trong trình duyệt...", 
+							"Thông báo", 
+							JOptionPane.INFORMATION_MESSAGE);
+						HuongDan_GUI.moHuongDan();
+					});
 
 			menuScrollContent.add(Box.createVerticalGlue());
 		}
@@ -726,6 +742,49 @@ public class Main_GUI extends JFrame {
 			hienThongTinNhanVien();
 		});
 		dialog.setVisible(true);
+	}
+
+	/**
+	 * Overload: Thêm nút submenu với hành động tùy chỉnh thay vì JPanel
+	 */
+	public void addSubmenuButton(String parentKey, String subKey, String text, String iconPath, Runnable action) {
+		JPanel subContainer = submenuContainers.get(parentKey);
+		if (subContainer == null) {
+			subContainer = createSubmenu(parentKey);
+		}
+
+		JButton btn = new JButton(text);
+		btn.setHorizontalAlignment(SwingConstants.LEFT);
+		btn.setPreferredSize(new Dimension(MENU_WIDTH, Math.max(36, MENU_BUTTON_HEIGHT - 16)));
+		btn.setMaximumSize(new Dimension(MENU_WIDTH, Math.max(36, MENU_BUTTON_HEIGHT - 16)));
+		btn.setFocusPainted(false);
+		btn.setContentAreaFilled(false);
+		btn.setBorder(new EmptyBorder(4, 24, 4, 8));
+
+		// Thêm icon
+		ImageIcon icon = null;
+		if (iconPath != null && !iconPath.isBlank()) {
+			URL url = getClass().getResource(iconPath);
+			if (url != null) {
+				icon = new ImageIcon(url);
+				Image scaledIcon = icon.getImage().getScaledInstance(MENU_ICON_WIDTH - 7, MENU_ICON_WIDTH - 7,
+						Image.SCALE_SMOOTH);
+				btn.setIcon(new ImageIcon(scaledIcon));
+			}
+		}
+
+		// Gắn action tùy chỉnh
+		btn.addActionListener(e -> {
+			if (action != null) {
+				action.run();
+			}
+		});
+
+		subContainer.add(btn);
+		menuContainers.put(subKey, btn);
+
+		menuPanel.revalidate();
+		menuPanel.repaint();
 	}
 
 }
