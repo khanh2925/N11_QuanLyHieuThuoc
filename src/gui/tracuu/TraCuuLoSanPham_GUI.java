@@ -25,7 +25,7 @@ import entity.LoSanPham;
 import entity.SanPham;
 
 @SuppressWarnings("serial")
-public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener {
+public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, MouseListener {
 
 	private JPanel pnHeader;
 	private JPanel pnCenter;
@@ -492,6 +492,30 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener {
 	            lo.getSoLuongTon()
 	        });
 	    }
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
