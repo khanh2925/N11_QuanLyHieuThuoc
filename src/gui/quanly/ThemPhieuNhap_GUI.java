@@ -1085,6 +1085,17 @@ private void xuLyTimNhaCungCap() {
      * Xử lý nghiệp vụ thêm 1 lô sản phẩm (thủ công)
      */
     private void xuLyThemLo() {
+        // Kiểm tra nhà cung cấp đã được chọn chưa
+        if (nhaCungCapDaChon == null) {
+            JOptionPane.showMessageDialog(this, 
+                "⚠️ Vui lòng tìm và chọn Nhà Cung Cấp trước khi thêm sản phẩm!", 
+                "Chưa chọn nhà cung cấp", 
+                JOptionPane.WARNING_MESSAGE);
+            txtTimNCC.requestFocus();
+            txtSearch.setText(""); // Xóa nội dung đã nhập
+            return;
+        }
+        
         String maSP = txtSearch.getText().trim();
         if (maSP.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng nhập Mã Sản Phẩm.", "Thông báo", JOptionPane.WARNING_MESSAGE);

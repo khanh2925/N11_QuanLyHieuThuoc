@@ -101,7 +101,11 @@ public class NhaCungCap_DAO {
 			ps.setBoolean(5, ncc.isHoatDong());
 			ps.setString(6, ncc.getMaNhaCungCap());
 
-			return ps.executeUpdate() > 0;
+			boolean result = ps.executeUpdate() > 0;
+			if (result) {
+				cacheAllNhaCungCap = null; // Xóa cache sau khi cập nhật thành công
+			}
+			return result;
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi cập nhật nhà cung cấp: " + e.getMessage());
 		}
