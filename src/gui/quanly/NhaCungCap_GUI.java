@@ -30,7 +30,7 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
     private DefaultTableModel modelNhaCungCap;
 
     // Buttons (Đã xóa btnXoa)
-    private PillButton btnThem, btnSua, btnNgungHoatDong, btnLamMoi, btnTimKiem;
+    private PillButton btnThem, btnSua, btnDoiTrangThai, btnLamMoi, btnTimKiem;
 
     // DAO
     private NhaCungCap_DAO nccDAO;
@@ -142,10 +142,11 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
                 }
                 if (validData()) {
                     NhaCungCap ncc = getFromForm();
+                    String maNCC = ncc.getMaNhaCungCap();
                     if (nccDAO.capNhatNhaCungCap(ncc)) {
                         JOptionPane.showMessageDialog(NhaCungCap_GUI.this, "Cập nhật thông tin thành công!");
                         loadDataLenBang();
-                        tblNhaCungCap.setRowSelectionInterval(row, row);
+                        chonDongTheoMa(maNCC);
                     } else {
                         JOptionPane.showMessageDialog(NhaCungCap_GUI.this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     }
@@ -153,12 +154,12 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
             }
         });
         
-        // Ctrl+D: Ngưng hoạt động
-        inputMap.put(KeyStroke.getKeyStroke("control D"), "ngungHoatDong");
-        actionMap.put("ngungHoatDong", new AbstractAction() {
+        // Ctrl+D: Đổi trạng thái hợp tác
+        inputMap.put(KeyStroke.getKeyStroke("control D"), "doiTrangThai");
+        actionMap.put("doiTrangThai", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                xuLyNgungHoatDong();
+                xuLyDoiTrangThai();
             }
         });
         
@@ -278,7 +279,7 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         p.add(txtDiaChi);
         
         p.add(createLabel("Trạng thái:", xCol2, yStart + (gap + hText) * 2));
-        cboTrangThai = new JComboBox<>(new String[]{"Hoạt động", "Ngừng hoạt động"});
+        cboTrangThai = new JComboBox<>(new String[]{"Đang hợp tác", "Ngừng hợp tác"});
         cboTrangThai.setBounds(xCol2 + wLbl, yStart + (gap + hText) * 2, wTxt, hText);
         cboTrangThai.setFont(FONT_TEXT);
         p.add(cboTrangThai);
@@ -325,19 +326,19 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         btnSua.addActionListener(this);
         gbc.gridy = 1; p.add(btnSua, gbc);
 
-        btnNgungHoatDong = new PillButton(
+        btnDoiTrangThai = new PillButton(
                 "<html>" +
                     "<center>" +
-                        "NGƯNG HĐ<br>" +
+                        "NGỪNG HT<br>" +
                         "<span style='font-size:10px; color:#888888;'>(Ctrl+D)</span>" +
                     "</center>" +
                 "</html>"
             );
-        btnNgungHoatDong.setFont(FONT_BOLD);
-        btnNgungHoatDong.setPreferredSize(new Dimension(btnW, btnH));
-        btnNgungHoatDong.setToolTipText("<html><b>Phím tắt:</b> Ctrl+D<br>Ngưng hoạt động nhà cung cấp đã chọn</html>");
-        btnNgungHoatDong.addActionListener(this);
-        gbc.gridy = 2; p.add(btnNgungHoatDong, gbc);
+        btnDoiTrangThai.setFont(FONT_BOLD);
+        btnDoiTrangThai.setPreferredSize(new Dimension(btnW, btnH));
+        btnDoiTrangThai.setToolTipText("<html><b>Phím tắt:</b> Ctrl+D<br>Đổi trạng thái hợp tác của nhà cung cấp</html>");
+        btnDoiTrangThai.addActionListener(this);
+        gbc.gridy = 2; p.add(btnDoiTrangThai, gbc);
 
         btnLamMoi = new PillButton(
                 "<html>" +
@@ -372,7 +373,7 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
-                if ("Hoạt động".equals(value)) {
+                if ("Đang hợp tác".equals(value)) {
                     lbl.setForeground(new Color(0, 128, 0));
                     lbl.setFont(FONT_BOLD);
                 } else {
@@ -426,12 +427,13 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
             }
             if (validData()) {
                 NhaCungCap ncc = getFromForm();
+                String maNCC = ncc.getMaNhaCungCap();
                 // Khi sửa, mã NCC lấy từ textfield (đã set từ bảng)
                 if (nccDAO.capNhatNhaCungCap(ncc)) {
                     JOptionPane.showMessageDialog(this, "Cập nhật thông tin thành công!");
                     loadDataLenBang();
-                    // Chọn lại dòng vừa sửa
-                    tblNhaCungCap.setRowSelectionInterval(row, row);
+                    // Tìm và chọn lại dòng vừa sửa theo mã
+                    chonDongTheoMa(maNCC);
                 } else {
                     JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
@@ -440,9 +442,9 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         
         // --- ĐÃ XÓA LOGIC NÚT XÓA ---
         
-        // --- NÚT NGƯNG HOẠT ĐỘNG ---
-        else if (o.equals(btnNgungHoatDong)) {
-            xuLyNgungHoatDong();
+        // --- NÚT ĐỔI TRẠNG THÁI ---
+        else if (o.equals(btnDoiTrangThai)) {
+            xuLyDoiTrangThai();
         }
         
         // --- NÚT LÀM MỚI ---
@@ -461,6 +463,9 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         for (NhaCungCap ncc : list) {
             themDongVaoBang(ncc);
         }
+        // Đảm bảo bảng được vẽ lại
+        tblNhaCungCap.repaint();
+        tblNhaCungCap.revalidate();
     }
 
     /**
@@ -473,7 +478,7 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
             ncc.getSoDienThoai(),
             ncc.getEmail(),
             ncc.getDiaChi(),
-            ncc.isHoatDong() ? "Hoạt động" : "Ngừng hoạt động"
+            ncc.isHoatDong() ? "Đang hợp tác" : "Ngừng hợp tác"
         });
     }
 
@@ -487,7 +492,7 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         String sdt = txtSDT.getText().trim();
         String email = txtEmail.getText().trim();
         String dc = txtDiaChi.getText().trim();
-        boolean hoatDong = cboTrangThai.getSelectedItem().equals("Hoạt động");
+        boolean hoatDong = cboTrangThai.getSelectedItem().equals("Đang hợp tác");
         
         NhaCungCap ncc = new NhaCungCap();
         // Nếu mã không rỗng (đã có trên form) thì set vào, nếu rỗng thì constructor mặc định
@@ -532,37 +537,43 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
     }
 
     /**
-     * Ngưng hoạt động nhà cung cấp
+     * Đổi trạng thái hợp tác của nhà cung cấp (toggle giữa Đang hợp tác và Ngừng hợp tác)
      */
-    private void xuLyNgungHoatDong() {
+    private void xuLyDoiTrangThai() {
         String maNCC = txtMaNCC.getText();
         if (maNCC.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn nhà cung cấp cần ngưng hoạt động!");
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn nhà cung cấp cần đổi trạng thái!");
             return;
         }
 
-        // Kiểm tra trạng thái hiện tại
-        if (cboTrangThai.getSelectedItem().equals("Ngưng hoạt động")) {
-            JOptionPane.showMessageDialog(this, "Nhà cung cấp này đã ở trạng thái ngưng hoạt động rồi.");
+        // Lấy trạng thái hiện tại từ DATABASE (không dựa vào ComboBox)
+        NhaCungCap nccHienTai = nccDAO.timNhaCungCapTheoMaHoacSDT(maNCC);
+        if (nccHienTai == null) {
+            JOptionPane.showMessageDialog(this, "Không tìm thấy nhà cung cấp trong hệ thống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
         }
+        
+        boolean dangHopTac = nccHienTai.isHoatDong();
+        String trangThaiMoi = dangHopTac ? "Ngừng hợp tác" : "Đang hợp tác";
+        String thongBao = dangHopTac 
+            ? "Nhà cung cấp này ĐANG HỢP TÁC.\nBạn có chắc chắn muốn ngưng hợp tác không?"
+            : "Nhà cung cấp này ĐANG NGỮNG HỢP TÁC.\nBạn có muốn kích hoạt lại hợp tác không?";
 
-        int confirm = JOptionPane.showConfirmDialog(this, 
-            "Nhà cung cấp này ĐANG HOẠT ĐỘNG.\nBạn có chắc chắn muốn ngưng hoạt động không?", 
-            "Cảnh báo", JOptionPane.YES_NO_OPTION);
+        int confirm = JOptionPane.showConfirmDialog(this, thongBao, "Xác nhận", JOptionPane.YES_NO_OPTION);
         
         if (confirm != JOptionPane.YES_OPTION) return;
 
-        // Lấy thông tin từ form và set trạng thái = false
-        NhaCungCap ncc = getFromForm();
-        ncc.setHoatDong(false);
+        // Đổi trạng thái (toggle)
+        nccHienTai.setHoatDong(!dangHopTac);
         
-        if (nccDAO.capNhatNhaCungCap(ncc)) {
-            JOptionPane.showMessageDialog(this, "Đã ngưng hoạt động nhà cung cấp: " + maNCC);
+        if (nccDAO.capNhatNhaCungCap(nccHienTai)) {
+            JOptionPane.showMessageDialog(this, 
+                "Đã chuyển trạng thái thành: " + trangThaiMoi + " (" + maNCC + ")");
             loadDataLenBang();
-            lamMoiForm();
+            // Tìm và chọn lại dòng vừa đổi trạng thái, cập nhật form
+            chonDongTheoMa(maNCC);
         } else {
-            JOptionPane.showMessageDialog(this, "Ngưng hoạt động thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Đổi trạng thái thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -597,6 +608,27 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         txt.selectAll();
     }
 
+    /**
+     * Tìm và chọn dòng trong bảng theo mã NCC, sau đó cập nhật form
+     */
+    private void chonDongTheoMa(String maNCC) {
+        for (int i = 0; i < modelNhaCungCap.getRowCount(); i++) {
+            if (modelNhaCungCap.getValueAt(i, 0).toString().equals(maNCC)) {
+                tblNhaCungCap.setRowSelectionInterval(i, i);
+                tblNhaCungCap.scrollRectToVisible(tblNhaCungCap.getCellRect(i, 0, true));
+                // Cập nhật form với dữ liệu mới từ bảng
+                txtMaNCC.setText(modelNhaCungCap.getValueAt(i, 0).toString());
+                txtTenNCC.setText(modelNhaCungCap.getValueAt(i, 1).toString());
+                txtSDT.setText(modelNhaCungCap.getValueAt(i, 2).toString());
+                txtEmail.setText(modelNhaCungCap.getValueAt(i, 3) != null ? modelNhaCungCap.getValueAt(i, 3).toString() : "");
+                txtDiaChi.setText(modelNhaCungCap.getValueAt(i, 4).toString());
+                String trangThai = modelNhaCungCap.getValueAt(i, 5).toString();
+                cboTrangThai.setSelectedItem(trangThai);
+                break;
+            }
+        }
+    }
+
     // ==========================================================================
     //                              UI HELPERS & EVENTS
     // ==========================================================================
@@ -612,7 +644,7 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
             txtDiaChi.setText(modelNhaCungCap.getValueAt(row, 4).toString());
             
             String trangThai = modelNhaCungCap.getValueAt(row, 5).toString();
-            cboTrangThai.setSelectedItem(trangThai.equals("Hoạt động") ? "Hoạt động" : "Ngừng hoạt động");
+            cboTrangThai.setSelectedItem(trangThai.equals("Đang hợp tác") ? "Đang hợp tác" : "Ngừng hợp tác");
         }
     }
 
