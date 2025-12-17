@@ -13,10 +13,12 @@ import java.util.List;
 
 import database.connectDB;
 import entity.ChiTietPhieuNhap;
+import entity.DonViTinh;
 import entity.LoSanPham;
 import entity.NhaCungCap;
 import entity.NhanVien;
 import entity.PhieuNhap;
+import entity.SanPham;
 
 public class PhieuNhap_DAO {
 
@@ -67,46 +69,156 @@ public class PhieuNhap_DAO {
 		return dsPhieuNhap;
 	}
 
+	// ============================================================
+	// 🔍 Tìm phiếu nhập theo mã (OPTIMIZED - dùng JOIN)
+	// ============================================================
 	public PhieuNhap timPhieuNhapTheoMa(String maPhieuNhap) {
 		PhieuNhap pn = null;
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 
-		String sql = "SELECT pn.NgayNhap, pn.TongTien, " + "nv.MaNhanVien, nv.TenNhanVien, "
-				+ "ncc.MaNhaCungCap, ncc.TenNhaCungCap " + "FROM PhieuNhap pn "
-				+ "JOIN NhanVien nv ON pn.MaNhanVien = nv.MaNhanVien "
-				+ "JOIN NhaCungCap ncc ON pn.MaNhaCungCap = ncc.MaNhaCungCap " + "WHERE pn.MaPhieuNhap = ?";
+		String sql = """
+				SELECT pn.NgayNhap, pn.TongTien,
+					nv.MaNhanVien, nv.TenNhanVien,
+					ncc.MaNhaCungCap, ncc.TenNhaCungCap
+				FROM PhieuNhap pn
+				JOIN NhanVien nv ON pn.MaNhanVien = nv.MaNhanVien
+				JOIN NhaCungCap ncc ON pn.MaNhaCungCap = ncc.MaNhaCungCap
+				WHERE pn.MaPhieuNhap = ?
+				""";
 
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.setString(1, maPhieuNhap);
+		PreparedStatement ps = null;
+		ResultSet rs = null;
 
-			try (ResultSet rs = stmt.executeQuery()) {
-				if (rs.next()) {
-					NhanVien nv = new NhanVien();
-					nv.setMaNhanVien(rs.getString("MaNhanVien"));
-					nv.setTenNhanVien(rs.getString("TenNhanVien"));
+		try {
+			ps = con.prepareStatement(sql);
+			ps.setString(1, maPhieuNhap);
+			rs = ps.executeQuery();
 
-					NhaCungCap ncc = new NhaCungCap();
-					ncc.setMaNhaCungCap(rs.getString("MaNhaCungCap"));
-					ncc.setTenNhaCungCap(rs.getString("TenNhaCungCap"));
+			if (rs.next()) {
+				NhanVien nv = new NhanVien();
+				nv.setMaNhanVien(rs.getString("MaNhanVien"));
+				nv.setTenNhanVien(rs.getString("TenNhanVien"));
 
-					pn = new PhieuNhap();
-					pn.setMaPhieuNhap(maPhieuNhap);
-					pn.setNgayNhap(rs.getDate("NgayNhap").toLocalDate());
-					pn.setNhanVien(nv);
-					pn.setNhaCungCap(ncc);
+				NhaCungCap ncc = new NhaCungCap();
+				ncc.setMaNhaCungCap(rs.getString("MaNhaCungCap"));
+				ncc.setTenNhaCungCap(rs.getString("TenNhaCungCap"));
 
-					// Lấy danh sách chi tiết
-					ChiTietPhieuNhap_DAO ctpnDAO = new ChiTietPhieuNhap_DAO();
-					List<ChiTietPhieuNhap> dsChiTiet = ctpnDAO.timKiemChiTietPhieuNhapBangMa(maPhieuNhap);
-					pn.setChiTietPhieuNhapList(dsChiTiet);
-					// Entity tự tính tổng tiền khi set list chi tiết
-				}
+				pn = new PhieuNhap();
+				pn.setMaPhieuNhap(maPhieuNhap);
+				pn.setNgayNhap(rs.getDate("NgayNhap").toLocalDate());
+				pn.setNhanVien(nv);
+				pn.setNhaCungCap(ncc);
+
+				// Đóng rs, ps trước khi gọi layChiTietPhieuNhap
+				rs.close();
+				ps.close();
+
+				// Lấy danh sách chi tiết (dùng private method với JOIN)
+				List<ChiTietPhieuNhap> dsChiTiet = layChiTietPhieuNhap(maPhieuNhap);
+				pn.setChiTietPhieuNhapList(dsChiTiet);
+				// Entity tự tính tổng tiền khi set list chi tiết
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ignored) {
+			}
+			// ❗ KHÔNG đóng connection (singleton)
 		}
 		return pn;
+	}
+
+	// ============================================================
+	// 📜 Lấy chi tiết phiếu nhập (OPTIMIZED - dùng JOIN)
+	// ============================================================
+	private List<ChiTietPhieuNhap> layChiTietPhieuNhap(String maPhieuNhap) {
+		List<ChiTietPhieuNhap> dsChiTiet = new ArrayList<>();
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
+
+		String sql = """
+				SELECT
+					ct.MaPhieuNhap, ct.SoLuongNhap, ct.DonGiaNhap, ct.ThanhTien,
+					lo.MaLo, lo.HanSuDung, lo.SoLuongTon,
+					sp.MaSanPham, sp.TenSanPham, sp.LoaiSanPham,
+					dvt.MaDonViTinh, dvt.TenDonViTinh
+				FROM ChiTietPhieuNhap ct
+				JOIN LoSanPham lo ON ct.MaLo = lo.MaLo
+				JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+				JOIN DonViTinh dvt ON ct.MaDonViTinh = dvt.MaDonViTinh
+				WHERE ct.MaPhieuNhap = ?
+				""";
+
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			ps = con.prepareStatement(sql);
+			ps.setString(1, maPhieuNhap);
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				// 1. Tạo đối tượng Sản Phẩm
+				SanPham sp = new SanPham();
+				sp.setMaSanPham(rs.getString("MaSanPham"));
+				sp.setTenSanPham(rs.getString("TenSanPham"));
+
+				String loaiStr = rs.getString("LoaiSanPham");
+				if (loaiStr != null) {
+					try {
+						sp.setLoaiSanPham(enums.LoaiSanPham.valueOf(loaiStr));
+					} catch (Exception e) {
+					}
+				}
+
+				// 2. Tạo đối tượng Lô Sản Phẩm
+				LoSanPham lo = new LoSanPham();
+				lo.setMaLo(rs.getString("MaLo"));
+				lo.setHanSuDung(rs.getDate("HanSuDung").toLocalDate());
+				lo.setSoLuongTon(rs.getInt("SoLuongTon"));
+				lo.setSanPham(sp);
+
+				// 3. Tạo đối tượng Đơn Vị Tính
+				DonViTinh dvt = new DonViTinh();
+				dvt.setMaDonViTinh(rs.getString("MaDonViTinh"));
+				dvt.setTenDonViTinh(rs.getString("TenDonViTinh"));
+
+				// 4. Tạo đối tượng Chi Tiết Phiếu Nhập
+				ChiTietPhieuNhap ct = new ChiTietPhieuNhap();
+				ct.setLoSanPham(lo);
+				ct.setDonViTinh(dvt);
+				ct.setSoLuongNhap(rs.getInt("SoLuongNhap"));
+				ct.setDonGiaNhap(rs.getDouble("DonGiaNhap"));
+				ct.capNhatThanhTien();
+
+				dsChiTiet.add(ct);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ignored) {
+			}
+			// ❗ KHÔNG đóng connection (singleton)
+		}
+
+		return dsChiTiet;
 	}
 
 	public boolean themPhieuNhap(PhieuNhap pn) {
@@ -320,10 +432,12 @@ public class PhieuNhap_DAO {
 
 		return dsPhieuNhap;
 	}
+
 	/**
 	 * Tính tổng tiền nhập hàng theo tháng (cho biểu đồ)
+	 * 
 	 * @param thang Tháng (1-12)
-	 * @param nam Năm
+	 * @param nam   Năm
 	 * @return Tổng tiền nhập hàng
 	 */
 	public double tinhTongTienNhapTheoThang(int thang, int nam) {
@@ -332,28 +446,36 @@ public class PhieuNhap_DAO {
 				FROM PhieuNhap
 				WHERE MONTH(NgayNhap) = ? AND YEAR(NgayNhap) = ?
 				""";
-		
+
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		
+
 		try {
 			ps = con.prepareStatement(sql);
 			ps.setInt(1, thang);
 			ps.setInt(2, nam);
 			rs = ps.executeQuery();
-			
+
 			if (rs.next()) {
 				return rs.getDouble("TongTienNhap");
 			}
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi tính tổng tiền nhập theo tháng: " + e.getMessage());
 		} finally {
-			try { if (rs != null) rs.close(); } catch (Exception ignored) {}
-			try { if (ps != null) ps.close(); } catch (Exception ignored) {}
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ignored) {
+			}
 		}
-		
+
 		return 0;
 	}
 
