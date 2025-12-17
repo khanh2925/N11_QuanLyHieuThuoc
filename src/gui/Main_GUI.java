@@ -42,6 +42,8 @@ import gui.tracuu.TraCuuPhieuHuy_GUI;
 import gui.tracuu.TraCuuPhieuNhap_GUI;
 import gui.tracuu.TraCuuSanPham_GUI;
 import gui.tracuu.TraCuuLoSanPham_GUI;
+import gui.trogiup.GioiThieu_GUI;
+
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -201,6 +203,10 @@ public class Main_GUI extends JFrame {
 			addMenuButton(menuScrollContent, "Quản lý khuyến mãi", "khuyenmai",
 					"/resources/images/icon_khuyen_mai.png");
 			addMenuButton(menuScrollContent, "Quản lý nhân viên", "nhanvien", "/resources/images/icon_nhan_vien.png");
+			addMenuButton(menuScrollContent, "Trợ giúp", "trogiup", "/resources/images/icon_tro_giup.png");
+			addSubmenuButton("trogiup", "gioithieu", "Giới thiệu", "/resources/images/icon_gioi_thieu.png",
+					new GioiThieu_GUI());
+
 
 			menuScrollContent.add(Box.createVerticalGlue());
 		} else {
@@ -229,6 +235,9 @@ public class Main_GUI extends JFrame {
 			addMenuButton(menuScrollContent, "Quản lý khách hàng", "khachhang",
 					"/resources/images/icon_khach_hang.png");
 			addMenuButton(menuScrollContent, "Thống kê cá nhân", "thongke", "/resources/images/icon_thong_ke.png");
+			addMenuButton(menuScrollContent, "Trợ giúp", "trogiup", "/resources/images/icon_tro_giup.png");
+			addSubmenuButton("trogiup", "gioithieu", "Giới thiệu", "/resources/images/icon_gioi_thieu.png",
+					new GioiThieu_GUI());
 
 			menuScrollContent.add(Box.createVerticalGlue());
 		}
