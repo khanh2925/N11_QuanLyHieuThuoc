@@ -55,10 +55,7 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
     private final DecimalFormat df = new DecimalFormat("#,### đ");
     private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     
-    // Cache toàn bộ dữ liệu (tải 1 lần khi khởi động/làm mới)
-    private List<HoaDon> allHoaDon;
-    
-    // Cache danh sách hiện tại sau khi filter
+    // Cache danh sách để lọc ngày
     private List<HoaDon> dsHoaDonHienTai;
 
     public TraCuuDonHang_GUI() {
@@ -66,7 +63,6 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         
         // Khởi tạo DAO
         hoaDonDao = new HoaDon_DAO();
-        allHoaDon = new ArrayList<>();
         dsHoaDonHienTai = new ArrayList<>();
         
         initialize();
@@ -382,9 +378,8 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         }
     }
 
-    // --- 1. Load dữ liệu ban đầu / Reset (Chỉ query DB lần đầu, sau đó dùng cache) ---
+    // --- 1. Load dữ liệu ban đầu / Reset ---
     private void xuLyLamMoi() {
-    	allHoaDon = hoaDonDao.layTatCaHoaDon();
         txtTimKiem.setText("");
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã hóa đơn, SĐT khách hàng");
         
@@ -395,29 +390,26 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         Date now = cal.getTime();
         dateDenNgay.setDate(now);
         
-        // Từ ngày: 30 ngày trước
+        // Từ ngày: Mùng 1 của tháng hiện tại
         cal.add(Calendar.DAY_OF_MONTH, -30);
         Date d30 = cal.getTime();
         dateTuNgay.setDate(d30);
         
-        // TỐI ƯU: Chỉ load DB lần đầu, sau đó dùng cache (giống Tra Cứu Phiếu Trả)
-        if (allHoaDon == null || allHoaDon.isEmpty()) {
-            allHoaDon = hoaDonDao.layTatCaHoaDon();
-        }
-        // Không query lại DB, chỉ reset bộ lọc và hiển thị lại từ cache
+        // Lấy tất cả từ DAO
+        dsHoaDonHienTai = hoaDonDao.layTatCaHoaDon(); 
         
-        // Render có lọc theo ngày mặc định
+        // Render có lọc theo ngày mặc định luôn cho hợp lý
         xuLyTimKiem();
     }
-    // --- 2. Tìm kiếm và Lọc (TỐI ƯU: Lai ghép Query DB + Filter Cache) ---
+
+    // --- 2. Tìm kiếm và Lọc ---
     private void xuLyTimKiem() {
         String tuKhoa = txtTimKiem.getText().trim();
         if (tuKhoa.contains("Tìm theo mã")) tuKhoa = "";
 
         List<HoaDon> ketQua = new ArrayList<>();
 
-        // LOGIC TỐI ƯU: Lai ghép 2 phương pháp
-        // 1. Nếu có keyword cụ thể → Query DB (chính xác hơn)
+        // Bước 1: Tìm theo Mã hoặc SĐT (Database) hoặc lấy hết
         if (!tuKhoa.isEmpty()) {
             if (tuKhoa.toUpperCase().startsWith("HD-")) {
                 HoaDon hd = hoaDonDao.timHoaDonTheoMa(tuKhoa);
@@ -425,18 +417,12 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
             } else {
                 ketQua = hoaDonDao.timHoaDonTheoSoDienThoai(tuKhoa);
             }
-        } 
-        // 2. Nếu chỉ lọc ngày → Filter trên cache (nhanh hơn)
-        else if (allHoaDon != null && !allHoaDon.isEmpty()) {
-            ketQua = new ArrayList<>(allHoaDon); // Clone từ cache
-        }
-        // 3. Lần đầu hoặc cache rỗng → Load all và cache lại
-        else {
-            allHoaDon = hoaDonDao.layTatCaHoaDon();
-            ketQua = new ArrayList<>(allHoaDon);
+        } else {
+            // Không nhập gì thì lấy hết (để sau đó lọc ngày)
+            ketQua = hoaDonDao.layTatCaHoaDon();
         }
 
-        // Bước 2: Lọc theo Ngày (Java Filter - áp dụng cho cả query DB và cache)
+        // Bước 2: Lọc theo Ngày (Java Filter)
         Date dTu = dateTuNgay.getDate();
         Date dDen = dateDenNgay.getDate();
 
