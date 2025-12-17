@@ -422,8 +422,14 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
             }
         });
 
-        // Enter trên ô tìm kiếm
-        txtTimThuoc.addActionListener(ev -> xuLyTimKiem());
+        // Enter: Tìm kiếm (từ bất kỳ đâu trong panel)
+        inputMap.put(KeyStroke.getKeyStroke("ENTER"), "timKiemEnter");
+        actionMap.put("timKiemEnter", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xuLyTimKiem();
+            }
+        });
     }
     @Override
     public void actionPerformed(ActionEvent e) {

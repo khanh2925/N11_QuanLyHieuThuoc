@@ -5,7 +5,7 @@ import entity.ChiTietPhieuHuy;
 import entity.DonViTinh;
 import entity.LoSanPham;
 import entity.PhieuHuy;
-import entity.DonViTinh;
+import entity.SanPham;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -16,60 +16,94 @@ public class ChiTietPhieuHuy_DAO {
 	public ChiTietPhieuHuy_DAO() {
 	}
 
-	/** 🔹 Lấy danh sách chi tiết phiếu huỷ theo mã phiếu */
+	// ============================================================
+	// 🔍 Lấy danh sách chi tiết phiếu huỷ theo mã phiếu (OPTIMIZED - dùng JOIN)
+	// ============================================================
 	public List<ChiTietPhieuHuy> timKiemChiTietPhieuHuyBangMa(String maPhieuHuy) {
-		List<ChiTietPhieuHuy> danhSachChiTiet = new ArrayList<>();
+		List<ChiTietPhieuHuy> ds = new ArrayList<>();
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 
 		String sql = """
-				    SELECT MaLo, SoLuongHuy, DonGiaNhap, LyDoChiTiet, MaDonViTinh, TrangThai
-				    FROM ChiTietPhieuHuy
-				    WHERE MaPhieuHuy = ?
+				SELECT
+					ct.MaLo, ct.SoLuongHuy, ct.DonGiaNhap, ct.LyDoChiTiet, ct.ThanhTien, ct.TrangThai,
+					ct.MaDonViTinh, dvt.TenDonViTinh,
+					lo.HanSuDung, lo.SoLuongTon,
+					sp.MaSanPham, sp.TenSanPham, sp.GiaNhap
+				FROM ChiTietPhieuHuy ct
+				LEFT JOIN DonViTinh dvt ON ct.MaDonViTinh = dvt.MaDonViTinh
+				LEFT JOIN LoSanPham lo ON ct.MaLo = lo.MaLo
+				LEFT JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+				WHERE ct.MaPhieuHuy = ?
+				ORDER BY ct.MaLo
 				""";
 
-		// 1️⃣ Đọc tất cả dữ liệu vào bộ nhớ trước
-		List<Object[]> tempData = new ArrayList<>();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
 
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.setString(1, maPhieuHuy);
-			ResultSet rs = stmt.executeQuery();
+		try {
+			ps = con.prepareStatement(sql);
+			ps.setString(1, maPhieuHuy);
+			rs = ps.executeQuery();
+
+			PhieuHuy ph = new PhieuHuy();
+			ph.setMaPhieuHuy(maPhieuHuy);
 
 			while (rs.next()) {
-				tempData.add(new Object[] { rs.getString("MaLo"), rs.getInt("SoLuongHuy"), rs.getDouble("DonGiaNhap"),
-						rs.getString("LyDoChiTiet"), rs.getString("MaDonViTinh"), rs.getInt("TrangThai") });
+				// ========== TẠO SẢN PHẨM ==========
+				SanPham sp = null;
+				if (rs.getString("MaSanPham") != null) {
+					sp = new SanPham();
+					sp.setMaSanPham(rs.getString("MaSanPham"));
+					sp.setTenSanPham(rs.getString("TenSanPham"));
+					sp.setGiaNhap(rs.getDouble("GiaNhap"));
+				}
+
+				// ========== TẠO LÔ SẢN PHẨM ==========
+				LoSanPham lo = new LoSanPham();
+				lo.setMaLo(rs.getString("MaLo"));
+				if (rs.getDate("HanSuDung") != null) {
+					lo.setHanSuDung(rs.getDate("HanSuDung").toLocalDate());
+				}
+				lo.setSoLuongTon(rs.getInt("SoLuongTon"));
+				lo.setSanPham(sp);
+
+				// ========== TẠO ĐƠN VỊ TÍNH ==========
+				DonViTinh dvt = null;
+				if (rs.getString("MaDonViTinh") != null) {
+					dvt = new DonViTinh();
+					dvt.setMaDonViTinh(rs.getString("MaDonViTinh"));
+					dvt.setTenDonViTinh(rs.getString("TenDonViTinh"));
+				}
+
+				// ========== TẠO CHI TIẾT PHIẾU HUỶ ==========
+				ChiTietPhieuHuy ct = new ChiTietPhieuHuy(ph, lo, rs.getInt("SoLuongHuy"), rs.getDouble("DonGiaNhap"),
+						rs.getString("LyDoChiTiet"), dvt, rs.getInt("TrangThai"));
+				ds.add(ct);
 			}
+
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi tìm chi tiết phiếu huỷ: " + e.getMessage());
-			return danhSachChiTiet;
-		}
-
-		// 2️⃣ Sau khi đóng ResultSet, mới gọi DAO khác
-		DonViTinh_DAO donVT_dao = new DonViTinh_DAO();
-		LoSanPham_DAO loDAO = new LoSanPham_DAO();
-		PhieuHuy ph = new PhieuHuy();
-		ph.setMaPhieuHuy(maPhieuHuy);
-
-		for (Object[] data : tempData) {
-			String maLo = (String) data[0];
-			int soLuongHuy = (int) data[1];
-			double donGiaNhap = (double) data[2];
-			String lyDo = (String) data[3];
-			String maDonViTinh = (String) data[4];
-			int trangThai = (int) data[5];
-
-			DonViTinh donVT = donVT_dao.timDonViTinhTheoMa(maDonViTinh);
-			LoSanPham lo = loDAO.timLoTheoMa(maLo);
-
-			if (lo != null) {
-				ChiTietPhieuHuy ct = new ChiTietPhieuHuy(ph, lo, soLuongHuy, donGiaNhap, lyDo, donVT, trangThai);
-				danhSachChiTiet.add(ct);
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
 			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ignored) {
+			}
+			// ❗ KHÔNG đóng connection (singleton)
 		}
 
-		return danhSachChiTiet;
+		return ds;
 	}
 
+	// ============================================================
+	// 🔄 Cập nhật trạng thái chi tiết
+	// ============================================================
 	public boolean capNhatTrangThaiChiTiet(String maPhieuHuy, String maLo, int trangThaiMoi) {
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
@@ -126,7 +160,9 @@ public class ChiTietPhieuHuy_DAO {
 		}
 	}
 
-	/** 🔹 Xoá chi tiết (và hoàn tồn nếu cần) */
+	// ============================================================
+	// 🗑️ Xoá chi tiết (và hoàn tồn nếu cần)
+	// ============================================================
 	public boolean xoaChiTietPhieuHuy(ChiTietPhieuHuy ct) {
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
@@ -169,7 +205,9 @@ public class ChiTietPhieuHuy_DAO {
 		}
 	}
 
-	/** 🔹 Trả về true nếu TẤT CẢ chi tiết của phiếu đã khác 'Chờ duyệt' */
+	// ============================================================
+	// ✅ Kiểm tra tất cả chi tiết đã xử lý chưa
+	// ============================================================
 	public boolean tatCaChiTietDaXuLy(String maPhieuHuy) {
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
@@ -180,17 +218,32 @@ public class ChiTietPhieuHuy_DAO {
 				    WHERE MaPhieuHuy = ? AND TrangThai = 1   -- 1 = Chờ duyệt
 				""";
 
-		try (PreparedStatement ps = con.prepareStatement(sql)) {
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			ps = con.prepareStatement(sql);
 			ps.setString(1, maPhieuHuy);
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					int soChoDuyet = rs.getInt(1);
-					// Nếu KHÔNG còn dòng nào 'Chờ duyệt' => mọi chi tiết đã xử lý
-					return soChoDuyet == 0;
-				}
+			rs = ps.executeQuery();
+
+			if (rs.next()) {
+				int soChoDuyet = rs.getInt(1);
+				// Nếu KHÔNG còn dòng nào 'Chờ duyệt' => mọi chi tiết đã xử lý
+				return soChoDuyet == 0;
 			}
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi kiểm tra trạng thái chi tiết PH: " + e.getMessage());
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ignored) {
+			}
 		}
 		// Lỡ lỗi gì thì coi như chưa xử lý hết
 		return false;

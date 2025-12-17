@@ -8,8 +8,8 @@ package gui.quanly;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -22,6 +22,7 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -34,10 +35,17 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 import database.connectDB;
 import component.button.PillButton;
@@ -76,7 +84,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 	private JPanel pnBtnCTPH;
 	private JSplitPane pnCenter;
 
-	private static final String TEN_NHA_THUOC = "NHÀ THUỐC HÒA AN"; // đổi tên theo nhà thuốc của bạn
+	// private static final String TEN_NHA_THUOC = "NHÀ THUỐC HÒA AN"; // đổi tên theo nhà thuốc của bạn
 
 	DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 	DecimalFormat df = new DecimalFormat("#,###đ");
@@ -114,6 +122,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 		btnXuatFile.addActionListener(this);
 		txtSearch.getDocument().addDocumentListener(this);
 
+		// Thiết lập phím tắt
+		thietLapPhimTat();
 	}
 
 	private void TaoHeader() {
@@ -125,11 +135,12 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 
 		// --- Ô TÌM KIẾM (Font 20) ---
 		txtSearch = new JTextField();
-		PlaceholderSupport.addPlaceholder(txtSearch, "Nhập mã phiếu hủy, mã sản phẩm, tên sản phẩm...");
+		PlaceholderSupport.addPlaceholder(txtSearch, "Nhập mã phiếu hủy,Tên NV (F1/Ctrl+F)");
 		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 20));
 		txtSearch.setBounds(25, 17, 500, 60);
 		txtSearch.setBorder(new RoundedBorder(20));
 		txtSearch.setBackground(Color.WHITE);
+		txtSearch.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Gõ để lọc dữ liệu theo thời gian thực</html>");
 		pnHeader.add(txtSearch);
 
 		// --- BỘ LỌC (Font 18) ---
@@ -157,14 +168,30 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 		pnHeader.add(dateDenNgay);
 
 		// --- NÚT (Font 18) ---
-		btnLamMoi = new PillButton("Làm mới");
+		btnLamMoi = new PillButton(
+			"<html>" +
+				"<center>" +
+					"LÀM MỚI<br>" +
+					"<span style='font-size:10px; color:#888888;'>(F5/Ctrl+N)</span>" +
+				"</center>" +
+			"</html>"
+		);
 		btnLamMoi.setBounds(1320, 22, 130, 50);
 		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5 hoặc Ctrl+N<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
 		pnHeader.add(btnLamMoi);
 
-		btnXuatFile = new PillButton("Xuất file");
+		btnXuatFile = new PillButton(
+			"<html>" +
+				"<center>" +
+					"XUẤT FILE<br>" +
+					"<span style='font-size:10px; color:#888888;'>(Ctrl+E)</span>" +
+				"</center>" +
+			"</html>"
+		);
 		btnXuatFile.setBounds(1465, 22, 130, 50);
 		btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnXuatFile.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất phiếu hủy đang chọn ra file Excel</html>");
 		pnHeader.add(btnXuatFile);
 	}
 
@@ -174,6 +201,49 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 		lbl.setBounds(x, y, w, h);
 		lbl.setFont(new Font("Segoe UI", Font.PLAIN, 18));
 		pnHeader.add(lbl);
+	}
+
+	/**
+	 * Thiết lập phím tắt cho các component
+	 */
+	private void thietLapPhimTat() {
+		InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+		ActionMap actionMap = getActionMap();
+
+		// F1, Ctrl+F: Focus vào ô tìm kiếm
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), "focusTimKiem");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "focusTimKiem");
+		actionMap.put("focusTimKiem", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtSearch.requestFocus();
+				txtSearch.selectAll();
+			}
+		});
+
+		// F5, Ctrl+N: Làm mới
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), "lamMoi");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK), "lamMoi");
+		actionMap.put("lamMoi", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtSearch.setText("");
+				cbTrangThai.setSelectedIndex(0);
+				dateTuNgay.setDate(null);
+				dateDenNgay.setDate(null);
+				loadDataTablePH();
+				modelCTPH.setRowCount(0);
+			}
+		});
+
+		// Ctrl+E: Xuất Excel
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK), "xuatExcel");
+		actionMap.put("xuatExcel", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				xuatExcel();
+			}
+		});
 	}
 
 	private void TaoPanelCenter() {
@@ -229,7 +299,9 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 
 		// --- Lọc theo text: cột 0 (Mã PH) và 2 (Nhân viên)
 		String text = txtSearch.getText().trim();
-		if (!text.isEmpty() && !txtSearch.getForeground().equals(Color.GRAY)) {
+		// Kiểm tra placeholder: nếu text chứa placeholder text hoặc rỗng thì bỏ qua
+		String placeholderText = "Nhập mã phiếu hủy";
+		if (!text.isEmpty() && !text.contains(placeholderText)) {
 			filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(text), 0, 2));
 		}
 
@@ -506,7 +578,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 			return;
 		}
 		if (src == btnXuatFile) {
-		    xuatExcelPhieuHuyDangChon();
+		    xuatExcel();
 		    return;
 		}
 
@@ -611,110 +683,152 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 	}
 
 	// sự kiện xuất file
-	// 🎯 Xuất EXCEL cho phiếu hủy đang chọn
-	private void xuatExcelPhieuHuyDangChon() {
-	    // 1. Kiểm tra đã chọn phiếu chưa
-	    int rowView = tblPH.getSelectedRow();
-	    if (rowView == -1) {
-	        JOptionPane.showMessageDialog(this, "Vui lòng chọn một phiếu hủy trước khi xuất file!");
-	        return;
-	    }
+	// sự kiện xuất file
+	// 🎯 Xuất EXCEL cho phiếu hủy
+	private void xuatExcel() {
+		if (modelPH.getRowCount() == 0) {
+			JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+			return;
+		}
 
-	    int rowModel = tblPH.convertRowIndexToModel(rowView);
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle("Chọn nơi lưu file Excel");
+		fileChooser.setSelectedFile(new File("DanhSachPhieuHuy_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".xlsx"));
+		fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
 
-	    // 2. Lấy thông tin phiếu hủy đang chọn
-	    String maPH      = modelPH.getValueAt(rowModel, 0).toString(); // Mã PH
-	    String ngayLap   = modelPH.getValueAt(rowModel, 1).toString(); // Ngày lập phiếu
-	    String nhanVien  = modelPH.getValueAt(rowModel, 2).toString(); // Nhân viên
-	    String tongTien  = modelPH.getValueAt(rowModel, 3).toString(); // Tổng tiền (đã format)
-	    String trangThai = modelPH.getValueAt(rowModel, 4).toString(); // Trạng thái
+		int userSelection = fileChooser.showSaveDialog(this);
+		if (userSelection != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
 
-	    // 3. Chọn nơi lưu file
-	    JFileChooser chooser = new JFileChooser();
-	    chooser.setDialogTitle("Lưu phiếu hủy Excel");
-	    chooser.setSelectedFile(new File("PhieuHuy_" + maPH + ".xlsx"));
+		File fileToSave = fileChooser.getSelectedFile();
+		if (!fileToSave.getName().endsWith(".xlsx")) {
+			fileToSave = new File(fileToSave.getAbsolutePath() + ".xlsx");
+		}
 
-	    int result = chooser.showSaveDialog(this);
-	    if (result != JFileChooser.APPROVE_OPTION) {
-	        return;
-	    }
+		try (Workbook workbook = new XSSFWorkbook()) {
+			// ===== SHEET 1: DANH SÁCH PHIẾU HỦY =====
+			Sheet sheetPH = workbook.createSheet("Danh sách phiếu hủy");
 
-	    File file = chooser.getSelectedFile();
+			// Style cho tiêu đề
+			CellStyle headerStyle = workbook.createCellStyle();
+			org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
+			headerFont.setBold(true);
+			headerFont.setFontHeightInPoints((short) 12);
+			headerFont.setColor(IndexedColors.WHITE.getIndex());
+			headerStyle.setFont(headerFont);
+			headerStyle.setFillForegroundColor(IndexedColors.DARK_TEAL.getIndex());
+			headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+			headerStyle.setAlignment(HorizontalAlignment.CENTER);
+			headerStyle.setBorderBottom(BorderStyle.THIN);
+			headerStyle.setBorderTop(BorderStyle.THIN);
+			headerStyle.setBorderLeft(BorderStyle.THIN);
+			headerStyle.setBorderRight(BorderStyle.THIN);
 
-	    // 4. Tạo file Excel
-	    try (Workbook workbook = new XSSFWorkbook()) {
-	        Sheet sheet = workbook.createSheet("PhieuHuy");
+			// Style cho dữ liệu
+			CellStyle dataStyle = workbook.createCellStyle();
+			dataStyle.setBorderBottom(BorderStyle.THIN);
+			dataStyle.setBorderTop(BorderStyle.THIN);
+			dataStyle.setBorderLeft(BorderStyle.THIN);
+			dataStyle.setBorderRight(BorderStyle.THIN);
 
-	        int rowIndex = 0;
+			// Style cho số tiền
+			CellStyle moneyStyle = workbook.createCellStyle();
+			moneyStyle.cloneStyleFrom(dataStyle);
+			moneyStyle.setAlignment(HorizontalAlignment.RIGHT);
 
-	        // 4.1 Tên nhà thuốc
-	        Row row = sheet.createRow(rowIndex++);
-	        row.createCell(0).setCellValue(TEN_NHA_THUOC);
+			// Tạo header
+			Row headerRow = sheetPH.createRow(0);
+			String[] headers = { "Mã PH", "Ngày lập phiếu", "Nhân viên", "Tổng tiền", "Trạng thái" };
+			for (int i = 0; i < headers.length; i++) {
+				Cell cell = headerRow.createCell(i);
+				cell.setCellValue(headers[i]);
+				cell.setCellStyle(headerStyle);
+			}
 
-	        // 4.2 Tiêu đề
-	        row = sheet.createRow(rowIndex++);
-	        row.createCell(0).setCellValue("PHIẾU HỦY HÀNG");
+			// Điền dữ liệu từ bảng
+			for (int row = 0; row < modelPH.getRowCount(); row++) {
+				Row dataRow = sheetPH.createRow(row + 1);
 
-	        // Dòng trống
-	        rowIndex++;
+				// Cột 0: Mã PH
+				Cell cell0 = dataRow.createCell(0);
+				cell0.setCellValue(modelPH.getValueAt(row, 0).toString());
+				cell0.setCellStyle(dataStyle);
 
-	        // 4.3 Thông tin chung phiếu hủy
-	        row = sheet.createRow(rowIndex++);
-	        row.createCell(0).setCellValue("Mã phiếu hủy:");
-	        row.createCell(1).setCellValue(maPH);
+				// Cột 1: Ngày lập
+				Cell cell1 = dataRow.createCell(1);
+				cell1.setCellValue(modelPH.getValueAt(row, 1).toString());
+				cell1.setCellStyle(dataStyle);
 
-	        row = sheet.createRow(rowIndex++);
-	        row.createCell(0).setCellValue("Ngày lập:");
-	        row.createCell(1).setCellValue(ngayLap);
+				// Cột 2: Nhân viên
+				Cell cell2 = dataRow.createCell(2);
+				cell2.setCellValue(modelPH.getValueAt(row, 2).toString());
+				cell2.setCellStyle(dataStyle);
 
-	        row = sheet.createRow(rowIndex++);
-	        row.createCell(0).setCellValue("Nhân viên lập:");
-	        row.createCell(1).setCellValue(nhanVien);
+				// Cột 3: Tổng tiền
+				Cell cell3 = dataRow.createCell(3);
+				cell3.setCellValue(modelPH.getValueAt(row, 3).toString());
+				cell3.setCellStyle(moneyStyle); // Format tiền
 
-	        row = sheet.createRow(rowIndex++);
-	        row.createCell(0).setCellValue("Trạng thái:");
-	        row.createCell(1).setCellValue(trangThai);
+				// Cột 4: Trạng thái
+				Cell cell4 = dataRow.createCell(4);
+				cell4.setCellValue(modelPH.getValueAt(row, 4).toString());
+				cell4.setCellStyle(dataStyle);
+			}
 
-	        row = sheet.createRow(rowIndex++);
-	        row.createCell(0).setCellValue("Tổng tiền:");
-	        row.createCell(1).setCellValue(tongTien);
+			// Auto-size columns
+			for (int i = 0; i < headers.length; i++) {
+				sheetPH.autoSizeColumn(i);
+			}
 
-	        // Dòng trống
-	        rowIndex++;
+			// ===== SHEET 2: CHI TIẾT PHIẾU HỦY (nếu có dòng được chọn) =====
+			if (modelCTPH.getRowCount() > 0) {
+				Sheet sheetCTPH = workbook.createSheet("Chi tiết phiếu hủy");
 
-	        // 4.4 Header chi tiết phiếu hủy
-	        row = sheet.createRow(rowIndex++);
-	        for (int c = 0; c < tblCTPH.getColumnCount(); c++) {
-	            Cell cell = row.createCell(c);
-	            cell.setCellValue(tblCTPH.getColumnName(c));
-	        }
+				// Header chi tiết
+				Row headerRowCT = sheetCTPH.createRow(0);
+				String[] headersCT = { "Mã lô", "Tên SP", "SL hủy", "Lý do", "Đơn vị tính", "Thành tiền", "Trạng thái" };
+				for (int i = 0; i < headersCT.length; i++) {
+					Cell cell = headerRowCT.createCell(i);
+					cell.setCellValue(headersCT[i]);
+					cell.setCellStyle(headerStyle);
+				}
 
-	        // 4.5 Dòng dữ liệu chi tiết
-	        for (int r = 0; r < tblCTPH.getRowCount(); r++) {
-	            Row dataRow = sheet.createRow(rowIndex++);
-	            for (int c = 0; c < tblCTPH.getColumnCount(); c++) {
-	                Object val = tblCTPH.getValueAt(r, c);
-	                dataRow.createCell(c).setCellValue(val == null ? "" : val.toString());
-	            }
-	        }
+				// Điền dữ liệu chi tiết
+				for (int row = 0; row < modelCTPH.getRowCount(); row++) {
+					Row dataRow = sheetCTPH.createRow(row + 1);
+					for (int col = 0; col < modelCTPH.getColumnCount(); col++) {
+						Cell cell = dataRow.createCell(col);
+						Object value = modelCTPH.getValueAt(row, col);
+						cell.setCellValue(value != null ? value.toString() : "");
+						cell.setCellStyle(dataStyle);
+					}
+				}
 
-	        // 4.6 Auto-size cột
-	        int totalCols = Math.max(tblCTPH.getColumnCount(), 2); // ít nhất 2 cột (thông tin)
-	        for (int i = 0; i < totalCols; i++) {
-	            sheet.autoSizeColumn(i);
-	        }
+				// Auto-size columns
+				for (int i = 0; i < headersCT.length; i++) {
+					sheetCTPH.autoSizeColumn(i);
+				}
+			}
 
-	        // 4.7 Ghi ra file
-	        try (FileOutputStream fos = new FileOutputStream(file)) {
-	            workbook.write(fos);
-	        }
+			// Ghi file
+			try (FileOutputStream fos = new FileOutputStream(fileToSave)) {
+				workbook.write(fos);
+			}
 
-	        JOptionPane.showMessageDialog(this, "Xuất Excel phiếu hủy thành công!");
+			JOptionPane.showMessageDialog(this, "Xuất Excel thành công!\nFile: " + fileToSave.getAbsolutePath(),
+					"Thành công", JOptionPane.INFORMATION_MESSAGE);
 
-	    } catch (Exception ex) {
-	        ex.printStackTrace();
-	        JOptionPane.showMessageDialog(this, "Xuất Excel thất bại!");
-	    }
+			// Mở file sau khi xuất
+			if (java.awt.Desktop.isDesktopSupported()) {
+				java.awt.Desktop.getDesktop().open(fileToSave);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(this, "Lỗi khi xuất file Excel:\n" + e.getMessage(), "Lỗi",
+					JOptionPane.ERROR_MESSAGE);
+		}
 	}
 
 

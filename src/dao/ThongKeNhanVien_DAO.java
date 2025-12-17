@@ -20,7 +20,7 @@ public class ThongKeNhanVien_DAO {
         }
 
         public double getTyLeHoanTra() {
-            return tongDoanhSo == 0 ? 0 : (tongTienTra / tongDoanhSo) * 100;
+            return soHoaDon == 0 ? 0 : ((double)(soPhieuTra) / soHoaDon) * 100;
         }
     }
 
@@ -65,8 +65,10 @@ public KetQuaThongKe getThongKe(java.util.Date tuNgay, java.util.Date denNgay, S
         }
         
         // --- B. Thống kê TRẢ HÀNG ---
-        String sqlTraHang = "SELECT COUNT(*) as SoPhieu, COALESCE(SUM(pt.TongTienHoan), 0) as TienTra " +
+        String sqlTraHang = "SELECT COUNT(DISTINCT pt.MaPhieuTra) as SoPhieu, " +
+                            "COALESCE(SUM(ct.ThanhTienHoan), 0) as TienTra " +
                             "FROM PhieuTra pt " +
+                            "LEFT JOIN ChiTietPhieuTra ct ON pt.MaPhieuTra = ct.MaPhieuTra " +
                             "JOIN NhanVien nv ON pt.MaNhanVien = nv.MaNhanVien " +
                             "WHERE pt.NgayLap BETWEEN ? AND ? " + 
                             sqlNhanVien + sqlCaLam;
@@ -181,10 +183,13 @@ public KetQuaThongKe getThongKe(java.util.Date tuNgay, java.util.Date denNgay, S
             ) Ban ON nv.MaNhanVien = Ban.MaNhanVien
             -- 2. Thống kê Trả hàng
             LEFT JOIN (
-                SELECT MaNhanVien, COUNT(*) AS SoPhieuTra, SUM(TongTienHoan) AS TienTra
-                FROM PhieuTra 
-                WHERE NgayLap BETWEEN ? AND ?
-                GROUP BY MaNhanVien
+                SELECT pt.MaNhanVien, 
+                       COUNT(DISTINCT pt.MaPhieuTra) AS SoPhieuTra, 
+                       SUM(ct.ThanhTienHoan) AS TienTra
+                FROM PhieuTra pt
+                LEFT JOIN ChiTietPhieuTra ct ON pt.MaPhieuTra = ct.MaPhieuTra
+                WHERE pt.NgayLap BETWEEN ? AND ?
+                GROUP BY pt.MaNhanVien
             ) Tra ON nv.MaNhanVien = Tra.MaNhanVien
             -- 3. Thống kê Hủy hàng
             LEFT JOIN (

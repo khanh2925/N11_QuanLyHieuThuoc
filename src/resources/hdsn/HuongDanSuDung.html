@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hướng Dẫn - Phần Mềm Quản Lý Hiệu Thuốc</title>
+    <style>
+        /* ========== RESET & BASE ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #0066cc;
+            --primary-hover: #0052a3;
+            --bg-body: #ffffff;
+            --bg-sidebar: #f6f8fa;
+            --bg-hover: #f0f3f5;
+            --text-primary: #24292f;
+            --text-secondary: #57606a;
+            --border-color: #d0d7de;
+            --code-bg: #f6f8fa;
+            --success: #1a7f37;
+            --warning: #bf8700;
+            --danger: #cf222e;
+            --info: #0969da;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--bg-body);
+        }
+
+        /* ========== LAYOUT ========== */
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ========== HEADER ========== */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: var(--bg-body);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--primary-color);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .version-badge {
+            background: var(--code-bg);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .header-spacer {
+            flex: 1;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-body);
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: var(--bg-hover);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        /* ========== SIDEBAR ========== */
+        .sidebar {
+            position: fixed;
+            top: 64px;
+            left: 0;
+            width: 280px;
+            height: calc(100vh - 64px);
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 24px 0;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .nav-section {
+            margin-bottom: 24px;
+        }
+
+        .nav-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0 16px;
+            margin-bottom: 8px;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 6px 16px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: var(--bg-hover);
+            color: var(--primary-color);
+        }
+
+        .nav-link.active {
+            background: rgba(0, 102, 204, 0.1);
+            color: var(--primary-color);
+            font-weight: 500;
+            border-left-color: var(--primary-color);
+        }
+
+        .nav-link-child {
+            padding-left: 32px;
+            font-size: 13px;
+        }
+
+        /* ========== MAIN CONTENT ========== */
+        .main {
+            margin-left: 280px;
+            margin-top: 64px;
+            flex: 1;
+            padding: 48px 64px;
+            max-width: 1200px;
+        }
+
+        /* ========== TYPOGRAPHY ========== */
+        h1 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 48px 0 16px 0;
+            color: var(--text-primary);
+            scroll-margin-top: 80px;
+        }
+
+        h2::before {
+            content: "#";
+            color: var(--primary-color);
+            margin-right: 8px;
+            font-weight: 400;
+        }
+
+        h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 32px 0 12px 0;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        ul, ol {
+            margin: 16px 0;
+            padding-left: 28px;
+            color: var(--text-secondary);
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        code {
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            color: var(--text-primary);
+        }
+
+        /* ========== COMPONENTS ========== */
+        .alert {
+            padding: 16px;
+            border-radius: 6px;
+            margin: 16px 0;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: rgba(9, 105, 218, 0.1);
+            border-color: var(--info);
+        }
+
+        .alert-warning {
+            background: rgba(191, 135, 0, 0.1);
+            border-color: var(--warning);
+        }
+
+        .alert-success {
+            background: rgba(26, 127, 55, 0.1);
+            border-color: var(--success);
+        }
+
+        .alert-danger {
+            background: rgba(207, 34, 46, 0.1);
+            border-color: var(--danger);
+        }
+
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .card {
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .feature-card {
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 20px;
+            transition: all 0.2s;
+        }
+
+        .feature-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+
+        .feature-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+
+        thead {
+            background: var(--bg-sidebar);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        td {
+            color: var(--text-secondary);
+        }
+
+        tbody tr:hover {
+            background: var(--bg-hover);
+        }
+
+        .kbd {
+            display: inline-block;
+            padding: 4px 8px;
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            box-shadow: 0 1px 0 var(--border-color);
+        }
+
+        .step-list {
+            counter-reset: step;
+            list-style: none;
+            padding: 0;
+        }
+
+        .step-list li {
+            counter-increment: step;
+            position: relative;
+            padding-left: 48px;
+            margin-bottom: 24px;
+        }
+
+        .step-list li::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 32px;
+            height: 32px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .toc {
+            background: var(--bg-sidebar);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+
+        .toc-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .toc ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .toc li {
+            margin: 6px 0;
+        }
+
+        .toc a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+
+        /* ========== FOOTER ========== */
+        .footer {
+            margin-top: 64px;
+            padding: 24px 0;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main {
+                margin-left: 0;
+                padding: 32px 24px;
+            }
+        }
+
+        @media print {
+            .header, .sidebar, .btn {
+                display: none;
+            }
+
+            .main {
+                margin: 0;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">💊</div>
+                <span>Quản Lý Hiệu Thuốc</span>
+            </div>
+            <span class="version-badge">v1.0</span>
+            <div class="header-spacer"></div>
+            <div class="header-actions">
+                <button class="btn" onclick="window.print()">🖨️ In</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <nav>
+                <div class="nav-section">
+                    <div class="nav-title">Bắt đầu</div>
+                    <a href="#gioi-thieu" class="nav-link">Giới thiệu</a>
+                    <a href="#dang-nhap" class="nav-link">Đăng nhập</a>
+                    <a href="#giao-dien" class="nav-link">Giao diện</a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-title">Nhân viên</div>
+                    <a href="#ban-hang" class="nav-link">Bán hàng</a>
+                    <a href="#tra-hang" class="nav-link">Trả hàng</a>
+                    <a href="#huy-hang" class="nav-link">Hủy hàng</a>
+                    <a href="#thong-ke-nv" class="nav-link">Thống kê</a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-title">Quản lý</div>
+                    <a href="#ql-nhanvien" class="nav-link">Nhân viên</a>
+                    <a href="#ql-sanpham" class="nav-link">Sản phẩm</a>
+                    <a href="#ql-khachhang" class="nav-link">Khách hàng</a>
+                    <a href="#ql-nhacungcap" class="nav-link">Nhà cung cấp</a>
+                    <a href="#ql-nhaphang" class="nav-link">Nhập hàng</a>
+                    <a href="#ql-banggia" class="nav-link">Bảng giá</a>
+                    <a href="#ql-khuyenmai" class="nav-link">Khuyến mãi</a>
+                    <a href="#ql-thongke" class="nav-link">Thống kê & Báo cáo</a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-title">Tra cứu</div>
+                    <a href="#tc-donhang" class="nav-link">Đơn hàng</a>
+                    <a href="#tc-sanpham" class="nav-link">Sản phẩm</a>
+                    <a href="#tc-losanpham" class="nav-link">Lô sản phẩm</a>
+                    <a href="#tc-khachhang" class="nav-link">Khách hàng</a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-title">Khác</div>
+                    <a href="#phim-tat" class="nav-link">Phím tắt</a>
+                    <a href="#luu-y" class="nav-link">Lưu ý quan trọng</a>
+                    <a href="#ho-tro" class="nav-link">Hỗ trợ</a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Giới thiệu -->
+            <section id="gioi-thieu">
+                <h1>📘 Hướng Dẫn Sử Dụng</h1>
+                <p>Tài liệu hướng dẫn đầy đủ về cách sử dụng phần mềm Quản Lý Hiệu Thuốc N11 - giải pháp toàn diện cho việc quản lý và vận hành hiệu thuốc hiện đại.</p>
+
+                <div class="toc">
+                    <div class="toc-title">📋 Nội dung chính</div>
+                    <ul>
+                        <li><a href="#dang-nhap">Đăng nhập hệ thống</a></li>
+                        <li><a href="#ban-hang">Hướng dẫn bán hàng</a></li>
+                        <li><a href="#ql-nhanvien">Quản lý nhân viên</a></li>
+                        <li><a href="#ql-sanpham">Quản lý sản phẩm</a></li>
+                        <li><a href="#phim-tat">Phím tắt hệ thống</a></li>
+                    </ul>
+                </div>
+
+                <h2 id="tinh-nang">Tính năng nổi bật</h2>
+                <div class="grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🛒</div>
+                        <div class="feature-title">Bán hàng thông minh</div>
+                        <p>Quy trình bán hàng nhanh chóng với tìm kiếm thông minh, tự động áp dụng khuyến mãi và in hóa đơn.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">📦</div>
+                        <div class="feature-title">Quản lý kho</div>
+                        <p>Theo dõi tồn kho theo lô, cảnh báo hết hạn, hết hàng và quản lý nhập hàng hiệu quả.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <div class="feature-title">Báo cáo & Thống kê</div>
+                        <p>Biểu đồ trực quan, báo cáo doanh thu chi tiết theo nhiều tiêu chí khác nhau.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <div class="feature-title">Hiệu suất cao</div>
+                        <p>Tối ưu cache, tra cứu nhanh, hỗ trợ phím tắt giúp làm việc hiệu quả hơn.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">👥</div>
+                        <div class="feature-title">Phân quyền</div>
+                        <p>Quản lý vai trò rõ ràng: Quản lý toàn quyền, Nhân viên chỉ bán hàng và tra cứu.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <div class="feature-title">Khuyến mãi linh hoạt</div>
+                        <p>Tạo chương trình khuyến mãi theo sản phẩm hoặc hóa đơn với nhiều hình thức.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Đăng nhập -->
+            <section id="dang-nhap">
+                <h2>🔐 Đăng Nhập Hệ Thống</h2>
+                <p>Để bắt đầu sử dụng phần mềm, bạn cần đăng nhập với tài khoản được cấp.</p>
+
+                <h3>Quy trình đăng nhập</h3>
+                <ol class="step-list">
+                    <li>
+                        <strong>Khởi động ứng dụng</strong>
+                        <p>Double click vào file <code>QuanLyHieuThuoc.jar</code> hoặc chạy từ IDE.</p>
+                    </li>
+                    <li>
+                        <strong>Nhập thông tin</strong>
+                        <p>Nhập Tên đăng nhập và Mật khẩu vào form đăng nhập.</p>
+                    </li>
+                    <li>
+                        <strong>Xác nhận</strong>
+                        <p>Nhấn nút "ĐĂNG NHẬP" hoặc phím <span class="kbd">Enter</span>.</p>
+                    </li>
+                </ol>
+
+                <div class="alert alert-info">
+                    <div class="alert-title">💡 Mẹo</div>
+                    <p>Chọn "Ghi nhớ đăng nhập" để lần sau không cần nhập lại thông tin.</p>
+                </div>
+
+                <h3>Tài khoản mặc định</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Vai trò</th>
+                            <th>Tên đăng nhập</th>
+                            <th>Mật khẩu</th>
+                            <th>Quyền hạn</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Quản lý</td>
+                            <td><code>admin</code></td>
+                            <td><code>admin123</code></td>
+                            <td>Toàn quyền hệ thống</td>
+                        </tr>
+                        <tr>
+                            <td>Nhân viên</td>
+                            <td><code>nhanvien01</code></td>
+                            <td><code>nv123456</code></td>
+                            <td>Bán hàng, tra cứu</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="alert alert-warning">
+                    <div class="alert-title">⚠️ Lưu ý bảo mật</div>
+                    <ul>
+                        <li>Không chia sẻ tài khoản cho người khác</li>
+                        <li>Đổi mật khẩu định kỳ</li>
+                        <li>Đăng xuất khi rời khỏi máy tính</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Giao diện -->
+            <section id="giao-dien">
+                <h2>🖥️ Giao Diện Chính</h2>
+                <p>Sau khi đăng nhập, bạn sẽ thấy giao diện chính với các thành phần:</p>
+
+                <div class="card">
+                    <div class="card-title">Các thành phần chính</div>
+                    <ul>
+                        <li><strong>Thanh menu trên:</strong> Điều hướng các chức năng chính (Bán hàng, Quản lý, Tra cứu, Thống kê...)</li>
+                        <li><strong>Khu vực làm việc:</strong> Hiển thị nội dung theo chức năng được chọn</li>
+                        <li><strong>Thanh trạng thái:</strong> Hiển thị thông tin người dùng, thời gian, trạng thái kết nối</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Bán hàng -->
+            <section id="ban-hang">
+                <h2>🛒 Bán Hàng</h2>
+                <p>Chức năng bán hàng là màn hình được sử dụng nhiều nhất, được thiết kế tối ưu cho tốc độ.</p>
+
+                <h3>Quy trình bán hàng</h3>
+                <ol class="step-list">
+                    <li>
+                        <strong>Thêm sản phẩm vào giỏ</strong>
+                        <p>Tìm kiếm sản phẩm bằng tên/mã (<span class="kbd">F1</span>) → Chọn đơn vị tính → Nhập số lượng → Nhấn "Thêm" (<span class="kbd">F4</span>)</p>
+                    </li>
+                    <li>
+                        <strong>Chọn khách hàng</strong>
+                        <p>Tìm khách hàng theo SĐT (<span class="kbd">F2</span>) hoặc chọn "Khách lẻ". Hệ thống tự động áp dụng khuyến mãi.</p>
+                    </li>
+                    <li>
+                        <strong>Thanh toán</strong>
+                        <p>Nhập tiền khách đưa → Nhấn "Thanh toán" (<span class="kbd">F9</span>) → Hệ thống tự tính tiền thừa.</p>
+                    </li>
+                    <li>
+                        <strong>In hóa đơn</strong>
+                        <p>Xem preview hóa đơn → Chọn "In" hoặc "Xuất PDF".</p>
+                    </li>
+                </ol>
+
+                <h3>Phím tắt Bán hàng</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Phím</th>
+                            <th>Chức năng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="kbd">F1</span></td>
+                            <td>Tìm kiếm sản phẩm</td>
+                        </tr>
+                        <tr>
+                            <td><span class="kbd">F2</span></td>
+                            <td>Tìm kiếm khách hàng</td>
+                        </tr>
+                        <tr>
+                            <td><span class="kbd">F4</span></td>
+                            <td>Thêm vào giỏ hàng</td>
+                        </tr>
+                        <tr>
+                            <td><span class="kbd">F5</span></td>
+                            <td>Làm mới</td>
+                        </tr>
+                        <tr>
+                            <td><span class="kbd">F9</span></td>
+                            <td>Thanh toán</td>
+                        </tr>
+                        <tr>
+                            <td><span class="kbd">Delete</span></td>
+                            <td>Xóa sản phẩm khỏi giỏ</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="alert alert-success">
+                    <div class="alert-title">✅ Mẹo tăng tốc</div>
+                    <ul>
+                        <li>Sử dụng phím tắt thay vì click chuột</li>
+                        <li>Nhập mã sản phẩm nếu đã biết (nhanh hơn tìm kiếm)</li>
+                        <li>Lưu danh sách khách hàng thường xuyên để tìm nhanh</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Trả hàng -->
+            <section id="tra-hang">
+                <h2>↩️ Trả Hàng</h2>
+                <p>Xử lý yêu cầu trả hàng của khách hàng.</p>
+
+                <ol class="step-list">
+                    <li>
+                        <strong>Tìm hóa đơn gốc</strong>
+                        <p>Nhập mã hóa đơn hoặc SĐT khách hàng để tìm hóa đơn cần trả.</p>
+                    </li>
+                    <li>
+                        <strong>Chọn sản phẩm trả</strong>
+                        <p>Chọn sản phẩm → Nhập số lượng trả → Nhập lý do.</p>
+                    </li>
+                    <li>
+                        <strong>Xác nhận</strong>
+                        <p>Kiểm tra thông tin → Nhấn "Xác nhận trả hàng" → In phiếu trả.</p>
+                    </li>
+                </ol>
+
+                <div class="alert alert-warning">
+                    <div class="alert-title">⚠️ Điều kiện trả hàng</div>
+                    <ul>
+                        <li>Trong vòng 7 ngày kể từ ngày mua</li>
+                        <li>Sản phẩm còn nguyên tem, niêm phong</li>
+                        <li>Không trả thuốc đã mở nắp/sử dụng</li>
+                        <li>Có hóa đơn hợp lệ</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Hủy hàng -->
+            <section id="huy-hang">
+                <h2>🗑️ Hủy Hàng</h2>
+                <p>Xử lý hủy sản phẩm hết hạn, hư hỏng hoặc không đạt chất lượng.</p>
+
+                <h3>Quy trình hủy hàng</h3>
+                <ul>
+                    <li>Tìm lô sản phẩm cần hủy</li>
+                    <li>Nhập số lượng hủy</li>
+                    <li>Nhập lý do chi tiết</li>
+                    <li>Chụp ảnh minh chứng (nếu có)</li>
+                    <li>Xác nhận và in phiếu hủy</li>
+                </ul>
+
+                <div class="alert alert-info">
+                    <div class="alert-title">📌 Lưu ý</div>
+                    <p>Phiếu hủy cần được Quản lý phê duyệt trước khi có hiệu lực trong hệ thống.</p>
+                </div>
+            </section>
+
+            <!-- Thống kê nhân viên -->
+            <section id="thong-ke-nv">
+                <h2>📈 Thống Kê Nhân Viên</h2>
+                <p>Xem hiệu suất bán hàng cá nhân:</p>
+                <ul>
+                    <li>Doanh thu theo ngày/tuần/tháng</li>
+                    <li>Số hóa đơn đã xử lý</li>
+                    <li>Biểu đồ tăng trưởng</li>
+                    <li>So sánh với kỳ trước</li>
+                </ul>
+            </section>
+
+            <!-- Quản lý nhân viên -->
+            <section id="ql-nhanvien">
+                <h2>👥 Quản Lý Nhân Viên</h2>
+                <p>Chức năng dành cho Quản lý để quản lý thông tin nhân viên và tài khoản.</p>
+
+                <h3>Thêm nhân viên mới</h3>
+                <ol class="step-list">
+                    <li>
+                        <strong>Nhập thông tin cơ bản</strong>
+                        <p>Họ tên, CCCD, ngày sinh, giới tính, SĐT, email, địa chỉ.</p>
+                    </li>
+                    <li>
+                        <strong>Tạo tài khoản</strong>
+                        <p>Tên đăng nhập, mật khẩu, vai trò (Quản lý/Nhân viên).</p>
+                    </li>
+                    <li>
+                        <strong>Lưu thông tin</strong>
+                        <p>Kiểm tra và nhấn "Thêm nhân viên".</p>
+                    </li>
+                </ol>
+
+                <h3>Các thao tác khác</h3>
+                <div class="card">
+                    <ul>
+                        <li><strong>Sửa thông tin:</strong> Double click vào nhân viên</li>
+                        <li><strong>Đổi mật khẩu:</strong> Chọn nhân viên → "Đổi mật khẩu"</li>
+                        <li><strong>Khóa/Mở tài khoản:</strong> Thay đổi trạng thái hoạt động</li>
+                        <li><strong>Xem lịch sử:</strong> Tab "Lịch sử hoạt động"</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Quản lý sản phẩm -->
+            <section id="ql-sanpham">
+                <h2>📦 Quản Lý Sản Phẩm</h2>
+                <p>Quản lý thông tin sản phẩm, đơn vị tính và quy cách đóng gói.</p>
+
+                <h3>Thêm sản phẩm mới</h3>
+                <div class="card">
+                    <div class="card-title">Thông tin cần nhập</div>
+                    <ul>
+                        <li>Tên sản phẩm, mã sản phẩm (tự động)</li>
+                        <li>Số đăng ký (SDK)</li>
+                        <li>Loại sản phẩm (Thuốc/TPCN/Thiết bị y tế...)</li>
+                        <li>Đường dùng (Uống/Bôi/Tiêm/Nhỏ...)</li>
+                        <li>Giá nhập mặc định</li>
+                        <li>Hình ảnh sản phẩm</li>
+                        <li>Kệ bán sản phẩm</li>
+                    </ul>
+                </div>
+
+                <h3>Quản lý đơn vị tính</h3>
+                <p>Mỗi sản phẩm có thể có nhiều đơn vị tính khác nhau (Hộp, Chai, Viên, Vỉ...) với quy cách đóng gói và hệ số quy đổi riêng.</p>
+
+                <div class="alert alert-info">
+                    <div class="alert-title">💡 Ví dụ</div>
+                    <p>Paracetamol 500mg: 1 Hộp = 10 Vỉ = 100 Viên</p>
+                </div>
+            </section>
+
+            <!-- Quản lý khách hàng -->
+            <section id="ql-khachhang">
+                <h2>👤 Quản Lý Khách Hàng</h2>
+                <ul>
+                    <li>Thêm khách hàng mới (Tên, SĐT, địa chỉ)</li>
+                    <li>Xem lịch sử mua hàng</li>
+                    <li>Áp dụng chính sách khách hàng VIP</li>
+                    <li>Cập nhật thông tin</li>
+                </ul>
+            </section>
+
+            <!-- Quản lý nhà cung cấp -->
+            <section id="ql-nhacungcap">
+                <h2>🏭 Quản Lý Nhà Cung Cấp</h2>
+                <ul>
+                    <li>Thêm NCC mới (Tên, MST, địa chỉ, liên hệ)</li>
+                    <li>Xem lịch sử giao dịch</li>
+                    <li>Quản lý công nợ</li>
+                    <li>Đánh giá chất lượng</li>
+                </ul>
+            </section>
+
+            <!-- Quản lý nhập hàng -->
+            <section id="ql-nhaphang">
+                <h2>📥 Quản Lý Nhập Hàng</h2>
+                <h3>Tạo phiếu nhập mới</h3>
+                <ol class="step-list">
+                    <li>
+                        <strong>Chọn nhà cung cấp</strong>
+                        <p>Tìm và chọn NCC từ danh sách.</p>
+                    </li>
+                    <li>
+                        <strong>Thêm sản phẩm</strong>
+                        <p>Chọn sản phẩm → Nhập số lô, HSD, số lượng, giá nhập.</p>
+                    </li>
+                    <li>
+                        <strong>Xác nhận nhập kho</strong>
+                        <p>Kiểm tra → "Nhập kho" → In phiếu nhập.</p>
+                    </li>
+                </ol>
+
+                <div class="alert alert-warning">
+                    <div class="alert-title">⚠️ Quan trọng</div>
+                    <p>Kiểm tra kỹ số lô và hạn sử dụng trước khi nhập vào hệ thống!</p>
+                </div>
+            </section>
+
+            <!-- Quản lý bảng giá -->
+            <section id="ql-banggia">
+                <h2>💰 Quản Lý Bảng Giá</h2>
+                <p>Thiết lập giá bán linh hoạt với nhiều bảng giá khác nhau.</p>
+
+                <h3>Tạo bảng giá mới</h3>
+                <ol class="step-list">
+                    <li>Tạo bảng giá với tên (VD: "Bảng giá T12/2024")</li>
+                    <li>Thêm sản phẩm vào bảng giá</li>
+                    <li>Nhập giá bán cho từng đơn vị</li>
+                    <li>Áp dụng bảng giá</li>
+                </ol>
+
+                <div class="alert alert-info">
+                    <div class="alert-title">💡 Mẹo</div>
+                    <p>Có thể tạo nhiều bảng giá (lẻ, sỉ, VIP) và chuyển đổi linh hoạt theo nhu cầu.</p>
+                </div>
+            </section>
+
+            <!-- Quản lý khuyến mãi -->
+            <section id="ql-khuyenmai">
+                <h2>🎁 Quản Lý Khuyến Mãi</h2>
+                <p>Tạo và quản lý các chương trình khuyến mãi.</p>
+
+                <h3>Các bước tạo khuyến mãi</h3>
+                <div class="card">
+                    <ul>
+                        <li><strong>Thông tin cơ bản:</strong> Tên, mô tả, thời gian áp dụng</li>
+                        <li><strong>Hình thức:</strong> Giảm % hoặc giảm số tiền cố định</li>
+                        <li><strong>Điều kiện:</strong> Áp dụng cho hóa đơn hoặc sản phẩm</li>
+                        <li><strong>Sản phẩm:</strong> Chọn danh sách SP được giảm giá</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Quản lý thống kê -->
+            <section id="ql-thongke">
+                <h2>📊 Thống Kê & Báo Cáo</h2>
+                <p>Hệ thống báo cáo đa chiều với biểu đồ trực quan.</p>
+
+                <div class="grid">
+                    <div class="feature-card">
+                        <div class="feature-title">📈 Doanh thu</div>
+                        <ul>
+                            <li>Biểu đồ theo ngày/tháng/năm</li>
+                            <li>So sánh các kỳ</li>
+                            <li>Top sản phẩm bán chạy</li>
+                            <li>Phân tích lợi nhuận</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-title">📦 Tồn kho</div>
+                        <ul>
+                            <li>Tồn kho hiện tại</li>
+                            <li>Sản phẩm sắp hết</li>
+                            <li>Sản phẩm hết hạn</li>
+                            <li>Giá trị tồn kho</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-title">👥 Nhân viên</div>
+                        <ul>
+                            <li>Doanh thu theo NV</li>
+                            <li>Số hóa đơn xử lý</li>
+                            <li>Hiệu suất làm việc</li>
+                            <li>Xếp hạng xuất sắc</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tra cứu đơn hàng -->
+            <section id="tc-donhang">
+                <h2>🔍 Tra Cứu Đơn Hàng</h2>
+                <p>Tìm kiếm và xem lại thông tin hóa đơn.</p>
+
+                <h3>Cách tìm kiếm</h3>
+                <ul>
+                    <li>Theo mã hóa đơn (HD-YYYYMMDD-XXXX)</li>
+                    <li>Theo SĐT khách hàng</li>
+                    <li>Theo khoảng thời gian</li>
+                    <li>Theo nhân viên bán</li>
+                </ul>
+
+                <h3>Thao tác</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Phím</th>
+                            <th>Chức năng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="kbd">F1</span></td>
+                            <td>Tìm kiếm</td>
+                        </tr>
+                        <tr>
+                            <td><span class="kbd">F3</span></td>
+                            <td>Xem chi tiết</td>
+                        </tr>
+                        <tr>
+                            <td><span class="kbd">F5</span></td>
+                            <td>Làm mới</td>
+                        </tr>
+                        <tr>
+                            <td><span class="kbd">Double Click</span></td>
+                            <td>Xem hóa đơn</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Tra cứu sản phẩm -->
+            <section id="tc-sanpham">
+                <h2>🔍 Tra Cứu Sản Phẩm</h2>
+                <ul>
+                    <li>Tìm theo tên/mã sản phẩm</li>
+                    <li>Lọc theo loại sản phẩm</li>
+                    <li>Lọc theo trạng thái tồn kho</li>
+                    <li>Xem chi tiết: giá, tồn, lô hàng</li>
+                </ul>
+            </section>
+
+            <!-- Tra cứu lô sản phẩm -->
+            <section id="tc-losanpham">
+                <h2>🔍 Tra Cứu Lô Sản Phẩm</h2>
+                <p>Xem thông tin chi tiết từng lô hàng:</p>
+                <ul>
+                    <li>Số lô và hạn sử dụng</li>
+                    <li>Số lượng tồn</li>
+                    <li>Giá nhập</li>
+                    <li>Nhà cung cấp</li>
+                    <li>Ngày nhập kho</li>
+                </ul>
+            </section>
+
+            <!-- Tra cứu khách hàng -->
+            <section id="tc-khachhang">
+                <h2>🔍 Tra Cứu Khách Hàng</h2>
+                <ul>
+                    <li>Tìm theo SĐT/tên</li>
+                    <li>Lịch sử mua hàng</li>
+                    <li>Tổng giá trị đã mua</li>
+                    <li>Điểm tích lũy (nếu có)</li>
+                </ul>
+            </section>
+
+            <!-- Phím tắt -->
+            <section id="phim-tat">
+                <h2>⌨️ Phím Tắt Hệ Thống</h2>
+                <p>Sử dụng phím tắt để tăng tốc độ làm việc.</p>
+
+                <h3>Phím tắt chung</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Phím</th>
+                            <th>Chức năng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="kbd">F1</span> / <span class="kbd">Ctrl+F</span></td>
+                            <td>Tìm kiếm</td>
+                        </tr>
+                        <tr>
+                            <td><span class="kbd">F5</span></td>
+                            <td>Làm mới dữ liệu</td>
+                        </tr>
+                        <tr>
+                            <td><span class="kbd">ESC</span></td>
+                            <td>Đóng cửa sổ/Dialog</td>
+                        </tr>
+                        <tr>
+                            <td><span class="kbd">Ctrl+L</span></td>
+                            <td>Đăng xuất</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Bán hàng</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Phím</th>
+                            <th>Chức năng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="kbd">F1</span></td>
+                            <td>Tìm sản phẩm</td>
+                        </tr>
+                        <tr>
+                            <td><span class="kbd">F2</span></td>
+                            <td>Tìm khách hàng</td>
+                        </tr>
+                        <tr>
+                            <td><span class="kbd">F4</span></td>
+                            <td>Thêm vào giỏ</td>
+                        </tr>
+                        <tr>
+                            <td><span class="kbd">F9</span></td>
+                            <td>Thanh toán</td>
+                        </tr>
+                        <tr>
+                            <td><span class="kbd">Delete</span></td>
+                            <td>Xóa khỏi giỏ</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Lưu ý -->
+            <section id="luu-y">
+                <h2>⚠️ Lưu Ý Quan Trọng</h2>
+
+                <h3>🔒 Bảo mật</h3>
+                <div class="alert alert-danger">
+                    <ul>
+                        <li>Không chia sẻ tài khoản</li>
+                        <li>Đổi mật khẩu định kỳ</li>
+                        <li>Đăng xuất khi rời máy</li>
+                        <li>Không cài phần mềm lạ</li>
+                    </ul>
+                </div>
+
+                <h3>💾 Sao lưu dữ liệu</h3>
+                <div class="alert alert-warning">
+                    <div class="alert-title">Quan trọng</div>
+                    <ul>
+                        <li><strong>Hàng ngày:</strong> Backup tự động vào <code>backup/</code></li>
+                        <li><strong>Hàng tuần:</strong> Backup thủ công ra ổ ngoài</li>
+                        <li><strong>Hàng tháng:</strong> Lưu cloud</li>
+                    </ul>
+                </div>
+
+                <h3>📦 Quản lý tồn kho</h3>
+                <ul>
+                    <li>Kiểm tra hàng sắp hết hàng ngày</li>
+                    <li>Cảnh báo hết hạn trước 1 tháng</li>
+                    <li>Kiểm kê định kỳ</li>
+                    <li>Xử lý hàng tồn > 6 tháng</li>
+                </ul>
+
+                <h3>🐛 Xử lý lỗi</h3>
+                <ol class="step-list">
+                    <li>Làm mới (<span class="kbd">F5</span>)</li>
+                    <li>Đăng xuất và đăng nhập lại</li>
+                    <li>Khởi động lại ứng dụng</li>
+                    <li>Liên hệ hỗ trợ kỹ thuật</li>
+                </ol>
+            </section>
+
+            <!-- Hỗ trợ -->
+            <section id="ho-tro">
+                <h2>📞 Hỗ Trợ</h2>
+                <div class="grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔧</div>
+                        <div class="feature-title">Hỗ trợ kỹ thuật</div>
+                        <p>Email: support@hieuthuocn11.com</p>
+                        <p>Hotline: 1900-xxxx</p>
+                        <p>Thời gian: 8h-22h</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">📚</div>
+                        <div class="feature-title">Tài liệu</div>
+                        <p>Video hướng dẫn</p>
+                        <p>FAQ - Câu hỏi thường gặp</p>
+                        <p>Release Notes</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">💬</div>
+                        <div class="feature-title">Cộng đồng</div>
+                        <p>Facebook Group</p>
+                        <p>Zalo: 0xxx-xxx-xxx</p>
+                        <p>Forum</p>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <div class="alert-title">📋 Thông tin phiên bản</div>
+                    <p><strong>Phiên bản:</strong> v1.0.0</p>
+                    <p><strong>Ngày phát hành:</strong> 15/12/2025</p>
+                    <p><strong>Tương thích:</strong> Windows 10/11, Java 8+</p>
+                    <p><strong>Database:</strong> SQL Server 2019+</p>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <p><strong>© 2025 Nhóm N11 - Phần Mềm Quản Lý Hiệu Thuốc</strong></p>
+                <p>Email: support@hieuthuocn11.com | Hotline: 1900-xxxx</p>
+                <p style="margin-top: 8px; font-style: italic;">"Giải pháp toàn diện cho quản lý hiệu thuốc hiện đại"</p>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        // Smooth scroll for navigation
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Active navigation highlighting
+        function updateActiveNav() {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 100;
+                if (window.pageYOffset >= sectionTop) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveNav);
+        window.addEventListener('load', updateActiveNav);
+
+        // Mobile menu toggle (if needed)
+        const toggleSidebar = () => {
+            document.querySelector('.sidebar').classList.toggle('open');
+        };
+    </script>
+</body>
+</html>

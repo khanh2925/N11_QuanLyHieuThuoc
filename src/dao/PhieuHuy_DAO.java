@@ -11,70 +11,64 @@ import java.util.List;
 
 public class PhieuHuy_DAO {
 
-	// ============ CACHE LAYER ============
-	// Cache toàn bộ phiếu hủy (dùng chung toàn ứng dụng)
+	// CACHE LAYER
 	private static List<PhieuHuy> cacheAllPhieuHuy = null;
 
-	/** 🔹 Lấy tất cả phiếu huỷ (kèm chi tiết, entity tự tính tongTien) - CÓ CACHE */
+	public PhieuHuy_DAO() {
+	}
+
+	// ============================================================
+	// 📜 Lấy tất cả phiếu huỷ (OPTIMIZED - dùng JOIN, CÓ CACHE)
+	// ============================================================
 	public List<PhieuHuy> layTatCaPhieuHuy() {
-		// Nếu cache đã có dữ liệu → Return cache (clone để tránh modify trực tiếp)
+		// 1. Kiểm tra cache
 		if (cacheAllPhieuHuy != null && !cacheAllPhieuHuy.isEmpty()) {
 			return new ArrayList<>(cacheAllPhieuHuy);
 		}
-		
-		// Cache rỗng → Query DB và lưu vào cache
+
+		// 2. Nếu không có cache -> Query DB với JOIN
 		List<PhieuHuy> list = new ArrayList<>();
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 
-		NhanVien_DAO nhanVienDAO = new NhanVien_DAO();
-		ChiTietPhieuHuy_DAO chiTietDAO = new ChiTietPhieuHuy_DAO();
-
 		String sql = """
-				    SELECT MaPhieuHuy, NgayLapPhieu, MaNhanVien, TrangThai
-				    FROM PhieuHuy
-				    ORDER BY NgayLapPhieu DESC, MaPhieuHuy DESC
+				SELECT
+					ph.MaPhieuHuy, ph.NgayLapPhieu, ph.TrangThai, ph.TongTien,
+					nv.MaNhanVien, nv.TenNhanVien, nv.QuanLy, nv.CaLam
+				FROM PhieuHuy ph
+				LEFT JOIN NhanVien nv ON ph.MaNhanVien = nv.MaNhanVien
+				ORDER BY ph.NgayLapPhieu DESC, ph.MaPhieuHuy DESC
 				""";
 
-		Statement st = null;
+		PreparedStatement ps = null;
 		ResultSet rs = null;
 
-		try {
-			st = con.createStatement();
-			rs = st.executeQuery(sql);
+		// Tạm lưu danh sách phiếu huỷ (chưa có chi tiết)
+		List<PhieuHuyTemp> tempList = new ArrayList<>();
 
-			// Đọc tất cả mã phiếu trước
-			List<String> dsMa = new ArrayList<>();
-			List<LocalDate> dsNgay = new ArrayList<>();
-			List<String> dsMaNV = new ArrayList<>();
-			List<Boolean> dsTrangThai = new ArrayList<>();
+		try {
+			ps = con.prepareStatement(sql);
+			rs = ps.executeQuery();
 
 			while (rs.next()) {
-				dsMa.add(rs.getString("MaPhieuHuy"));
-				dsNgay.add(rs.getDate("NgayLapPhieu").toLocalDate());
-				dsMaNV.add(rs.getString("MaNhanVien"));
-				dsTrangThai.add(rs.getBoolean("TrangThai"));
-			}
-
-			// Đóng ResultSet và Statement
-			rs.close();
-			st.close();
-
-			// Load chi tiết sau
-			for (int i = 0; i < dsMa.size(); i++) {
+				// ========== TẠO NHANVIEN ==========
 				NhanVien nv = null;
-				ArrayList<NhanVien> dsNV = nhanVienDAO.timNhanVien(dsMaNV.get(i));
-				if (!dsNV.isEmpty())
-					nv = dsNV.get(0);
+				if (rs.getString("MaNhanVien") != null) {
+					nv = new NhanVien();
+					nv.setMaNhanVien(rs.getString("MaNhanVien"));
+					nv.setTenNhanVien(rs.getString("TenNhanVien"));
+					nv.setQuanLy(rs.getBoolean("QuanLy"));
+					nv.setCaLam(rs.getInt("CaLam"));
+				}
 
-				PhieuHuy ph = new PhieuHuy(dsMa.get(i), dsNgay.get(i), nv, dsTrangThai.get(i));
-				ph.setChiTietPhieuHuyList(chiTietDAO.timKiemChiTietPhieuHuyBangMa(dsMa.get(i)));
-				ph.capNhatTongTienTheoChiTiet();
-				list.add(ph);
+				// ========== LƯU TẠM ==========
+				PhieuHuyTemp temp = new PhieuHuyTemp();
+				temp.maPhieuHuy = rs.getString("MaPhieuHuy");
+				temp.ngayLapPhieu = rs.getDate("NgayLapPhieu").toLocalDate();
+				temp.trangThai = rs.getBoolean("TrangThai");
+				temp.nv = nv;
+				tempList.add(temp);
 			}
-			
-			// Lưu vào cache để lần sau không cần query nữa
-			cacheAllPhieuHuy = list;
 
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -85,42 +79,160 @@ public class PhieuHuy_DAO {
 			} catch (SQLException ignored) {
 			}
 			try {
-				if (st != null)
-					st.close();
+				if (ps != null)
+					ps.close();
 			} catch (SQLException ignored) {
 			}
+			// ❗ KHÔNG đóng connection (singleton)
 		}
-		return new ArrayList<>(list); // Clone để tránh modify cache
+
+		// 2.2. Sau khi đóng ResultSet, lấy chi tiết cho từng phiếu
+		for (PhieuHuyTemp temp : tempList) {
+			PhieuHuy ph = new PhieuHuy(temp.maPhieuHuy, temp.ngayLapPhieu, temp.nv, temp.trangThai);
+			ph.setChiTietPhieuHuyList(layChiTietPhieuHuy(temp.maPhieuHuy));
+			ph.capNhatTongTienTheoChiTiet();
+			list.add(ph);
+		}
+
+		// 3. Lưu vào cache
+		cacheAllPhieuHuy = list;
+
+		return new ArrayList<>(list);
 	}
-	/** � Đếm số phiếu hủy chưa duyệt (cho Dashboard) */
+
+	// Class tạm để lưu thông tin phiếu huỷ
+	private static class PhieuHuyTemp {
+		String maPhieuHuy;
+		LocalDate ngayLapPhieu;
+		boolean trangThai;
+		NhanVien nv;
+	}
+
+	// ============================================================
+	// 📜 Lấy chi tiết phiếu huỷ (OPTIMIZED - dùng JOIN)
+	// ============================================================
+	private List<ChiTietPhieuHuy> layChiTietPhieuHuy(String maPhieuHuy) {
+		List<ChiTietPhieuHuy> ds = new ArrayList<>();
+
+		String sql = """
+				SELECT
+					ct.MaLo, ct.SoLuongHuy, ct.DonGiaNhap, ct.LyDoChiTiet, ct.ThanhTien, ct.TrangThai,
+					ct.MaDonViTinh, dvt.TenDonViTinh,
+					lo.HanSuDung, lo.SoLuongTon,
+					sp.MaSanPham, sp.TenSanPham, sp.GiaNhap
+				FROM ChiTietPhieuHuy ct
+				LEFT JOIN DonViTinh dvt ON ct.MaDonViTinh = dvt.MaDonViTinh
+				LEFT JOIN LoSanPham lo ON ct.MaLo = lo.MaLo
+				LEFT JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham
+				WHERE ct.MaPhieuHuy = ?
+				ORDER BY ct.MaLo
+				""";
+
+		Connection con = connectDB.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			ps = con.prepareStatement(sql);
+			ps.setString(1, maPhieuHuy);
+			rs = ps.executeQuery();
+
+			PhieuHuy ph = new PhieuHuy();
+			ph.setMaPhieuHuy(maPhieuHuy);
+
+			while (rs.next()) {
+				// ========== TẠO SẢN PHẨM ==========
+				SanPham sp = null;
+				if (rs.getString("MaSanPham") != null) {
+					sp = new SanPham();
+					sp.setMaSanPham(rs.getString("MaSanPham"));
+					sp.setTenSanPham(rs.getString("TenSanPham"));
+					sp.setGiaNhap(rs.getDouble("GiaNhap"));
+				}
+
+				// ========== TẠO LÔ SẢN PHẨM ==========
+				LoSanPham lo = new LoSanPham();
+				lo.setMaLo(rs.getString("MaLo"));
+				if (rs.getDate("HanSuDung") != null) {
+					lo.setHanSuDung(rs.getDate("HanSuDung").toLocalDate());
+				}
+				lo.setSoLuongTon(rs.getInt("SoLuongTon"));
+				lo.setSanPham(sp);
+
+				// ========== TẠO ĐƠN VỊ TÍNH ==========
+				DonViTinh dvt = null;
+				if (rs.getString("MaDonViTinh") != null) {
+					dvt = new DonViTinh();
+					dvt.setMaDonViTinh(rs.getString("MaDonViTinh"));
+					dvt.setTenDonViTinh(rs.getString("TenDonViTinh"));
+				}
+
+				// ========== TẠO CHI TIẾT PHIẾU HUỶ ==========
+				ChiTietPhieuHuy ct = new ChiTietPhieuHuy(ph, lo, rs.getInt("SoLuongHuy"), rs.getDouble("DonGiaNhap"),
+						rs.getString("LyDoChiTiet"), dvt, rs.getInt("TrangThai"));
+				ds.add(ct);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ignored) {
+			}
+			// ❗ KHÔNG đóng connection (singleton)
+		}
+
+		return ds;
+	}
+
+	// ============================================================
+	// 🔔 Đếm số phiếu hủy chưa duyệt (cho Dashboard)
+	// ============================================================
 	public int demPhieuHuyChuaDuyet() {
 		String sql = "SELECT COUNT(*) AS SoLuong FROM PhieuHuy WHERE TrangThai = 0";
-		
+
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 		Statement st = null;
 		ResultSet rs = null;
-		
+
 		try {
 			st = con.createStatement();
 			rs = st.executeQuery(sql);
-			
+
 			if (rs.next()) {
 				return rs.getInt("SoLuong");
 			}
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi đếm phiếu hủy chưa duyệt: " + e.getMessage());
 		} finally {
-			try { if (rs != null) rs.close(); } catch (Exception ignored) {}
-			try { if (st != null) st.close(); } catch (Exception ignored) {}
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (st != null)
+					st.close();
+			} catch (Exception ignored) {
+			}
 		}
-		
+
 		return 0;
 	}
+
 	/**
 	 * Tính tổng tiền hủy hàng theo tháng (cho biểu đồ)
+	 * 
 	 * @param thang Tháng (1-12)
-	 * @param nam Năm
+	 * @param nam   Năm
 	 * @return Tổng tiền hàng bị hủy
 	 */
 	public double tinhTongTienHuyTheoThang(int thang, int nam) {
@@ -129,77 +241,113 @@ public class PhieuHuy_DAO {
 				FROM PhieuHuy
 				WHERE MONTH(NgayLapPhieu) = ? AND YEAR(NgayLapPhieu) = ?
 				""";
-		
+
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		
+
 		try {
 			ps = con.prepareStatement(sql);
 			ps.setInt(1, thang);
 			ps.setInt(2, nam);
 			rs = ps.executeQuery();
-			
+
 			if (rs.next()) {
 				return rs.getDouble("TongTienHuy");
 			}
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi tính tổng tiền hủy theo tháng: " + e.getMessage());
 		} finally {
-			try { if (rs != null) rs.close(); } catch (Exception ignored) {}
-			try { if (ps != null) ps.close(); } catch (Exception ignored) {}
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ignored) {
+			}
 		}
-		
+
 		return 0;
 	}
-	/** 🔹 Lấy phiếu huỷ theo mã (kèm chi tiết, entity tự tính tongTien) */
+
+	// ============================================================
+	// 🔍 Lấy phiếu huỷ theo mã (OPTIMIZED - dùng JOIN)
+	// ============================================================
 	public PhieuHuy layTheoMa(String maPhieuHuy) {
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 
-		NhanVien_DAO nhanVienDAO = new NhanVien_DAO();
-		ChiTietPhieuHuy_DAO chiTietDAO = new ChiTietPhieuHuy_DAO();
-
 		String sql = """
-				    SELECT MaPhieuHuy, NgayLapPhieu, MaNhanVien, TrangThai
-				    FROM PhieuHuy WHERE MaPhieuHuy = ?
+				SELECT
+					ph.MaPhieuHuy, ph.NgayLapPhieu, ph.TrangThai, ph.TongTien,
+					nv.MaNhanVien, nv.TenNhanVien, nv.QuanLy, nv.CaLam
+				FROM PhieuHuy ph
+				LEFT JOIN NhanVien nv ON ph.MaNhanVien = nv.MaNhanVien
+				WHERE ph.MaPhieuHuy = ?
 				""";
 
-		try (PreparedStatement ps = con.prepareStatement(sql)) {
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			ps = con.prepareStatement(sql);
 			ps.setString(1, maPhieuHuy);
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					LocalDate ngay = rs.getDate("NgayLapPhieu").toLocalDate();
-					String maNV = rs.getString("MaNhanVien");
-					boolean trangThai = rs.getBoolean("TrangThai");
+			rs = ps.executeQuery();
 
-					NhanVien nv = null;
-					ArrayList<NhanVien> dsNV = nhanVienDAO.timNhanVien(maNV);
-					if (!dsNV.isEmpty())
-						nv = dsNV.get(0);
-
-					PhieuHuy ph = new PhieuHuy(maPhieuHuy, ngay, nv, trangThai);
-					ph.setChiTietPhieuHuyList(chiTietDAO.timKiemChiTietPhieuHuyBangMa(maPhieuHuy));
-					ph.capNhatTongTienTheoChiTiet(); // tính trên entity
-					return ph;
+			if (rs.next()) {
+				// ========== TẠO NHANVIEN ==========
+				NhanVien nv = null;
+				if (rs.getString("MaNhanVien") != null) {
+					nv = new NhanVien();
+					nv.setMaNhanVien(rs.getString("MaNhanVien"));
+					nv.setTenNhanVien(rs.getString("TenNhanVien"));
+					nv.setQuanLy(rs.getBoolean("QuanLy"));
+					nv.setCaLam(rs.getInt("CaLam"));
 				}
+
+				LocalDate ngay = rs.getDate("NgayLapPhieu").toLocalDate();
+				boolean trangThai = rs.getBoolean("TrangThai");
+
+				// Đóng rs, ps trước khi gọi layChiTietPhieuHuy
+				rs.close();
+				ps.close();
+
+				PhieuHuy ph = new PhieuHuy(maPhieuHuy, ngay, nv, trangThai);
+				ph.setChiTietPhieuHuyList(layChiTietPhieuHuy(maPhieuHuy));
+				ph.capNhatTongTienTheoChiTiet();
+				return ph;
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ignored) {
+			}
 		}
 		return null;
 	}
 
-	/** 🔹 Lấy danh sách chi tiết theo mã phiếu */
+	// ============================================================
+	// 📜 Lấy danh sách chi tiết theo mã phiếu (public method)
+	// ============================================================
 	public List<ChiTietPhieuHuy> layChiTietTheoMaPhieu(String maPhieuHuy) {
-		return new ChiTietPhieuHuy_DAO().timKiemChiTietPhieuHuyBangMa(maPhieuHuy);
+		return layChiTietPhieuHuy(maPhieuHuy);
 	}
 
-	/**
-	 * 🔹 Thêm phiếu huỷ + chi tiết (Transaction) – KHÔNG lưu TongTienHuy vì bảng
-	 * không có cột này
-	 */
+	// ============================================================
+	// ➕ Thêm phiếu huỷ + chi tiết (Transaction)
+	// ============================================================
 	public boolean themPhieuHuy(PhieuHuy ph) {
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
@@ -250,12 +398,12 @@ public class PhieuHuy_DAO {
 			}
 
 			con.commit();
-			
-			// ✅ Cập nhật cache: Thêm phiếu hủy mới vào đầu danh sách
+
+			// ✅ Update Cache: Thêm vào đầu danh sách
 			if (cacheAllPhieuHuy != null) {
-				cacheAllPhieuHuy.add(0, ph); // Thêm vào đầu (mới nhất)
+				cacheAllPhieuHuy.add(0, ph);
 			}
-			
+
 			return true;
 
 		} catch (SQLException e) {
@@ -275,19 +423,30 @@ public class PhieuHuy_DAO {
 		}
 	}
 
-	/** 🔹 Cập nhật trạng thái phiếu (true=đã duyệt, false=chờ duyệt) */
+	// ============================================================
+	// 🔄 Cập nhật trạng thái phiếu (true=đã duyệt, false=chờ duyệt)
+	// ============================================================
 	public boolean capNhatTrangThai(String maPhieuHuy, boolean trangThaiMoi) {
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 
 		String sql = "UPDATE PhieuHuy SET TrangThai = ? WHERE MaPhieuHuy = ?";
-		try (PreparedStatement ps = con.prepareStatement(sql)) {
+		PreparedStatement ps = null;
+
+		try {
+			ps = con.prepareStatement(sql);
 			ps.setBoolean(1, trangThaiMoi);
 			ps.setString(2, maPhieuHuy);
 			return ps.executeUpdate() > 0;
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return false;
+		} finally {
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ignored) {
+			}
 		}
 	}
 
@@ -313,19 +472,35 @@ public class PhieuHuy_DAO {
 		String prefix = "PH-" + date + "-";
 
 		String sql = "SELECT COUNT(*) FROM PhieuHuy WHERE MaPhieuHuy LIKE ?";
-		try (PreparedStatement ps = con.prepareStatement(sql)) {
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			ps = con.prepareStatement(sql);
 			ps.setString(1, prefix + "%");
-			try (ResultSet rs = ps.executeQuery()) {
-				int count = rs.next() ? rs.getInt(1) : 0;
-				return String.format("%s%04d", prefix, count + 1);
-			}
+			rs = ps.executeQuery();
+			int count = rs.next() ? rs.getInt(1) : 0;
+			return String.format("%s%04d", prefix, count + 1);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return prefix + "0001";
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ignored) {
+			}
 		}
 	}
 
-	/** 🔹 Xoá phiếu huỷ (xoá cả chi tiết) */
+	// ============================================================
+	// 🗑️ Xoá phiếu huỷ (xoá cả chi tiết)
+	// ============================================================
 	public boolean xoa(String maPhieuHuy) {
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
@@ -347,12 +522,6 @@ public class PhieuHuy_DAO {
 			}
 
 			con.commit();
-			
-			// ✅ Cập nhật cache: Xóa phiếu hủy khỏi cache
-			if (cacheAllPhieuHuy != null) {
-				cacheAllPhieuHuy.removeIf(ph -> ph.getMaPhieuHuy().equals(maPhieuHuy));
-			}
-			
 			return true;
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -369,13 +538,14 @@ public class PhieuHuy_DAO {
 		}
 	}
 
-	/** Trả về true nếu mọi ChiTietPhieuHuy của phiếu đều KHÁC 'Chờ duyệt' */
+	// ============================================================
+	// ✅ Kiểm tra trạng thái phiếu (tất cả chi tiết đã xử lý chưa)
+	// ============================================================
 	public boolean checkTrangThai(String maPhieuHuy) {
-		ChiTietPhieuHuy_DAO ctDao = new ChiTietPhieuHuy_DAO();
-		List<ChiTietPhieuHuy> ds = ctDao.timKiemChiTietPhieuHuyBangMa(maPhieuHuy); // :contentReference[oaicite:4]{index=4}
+		List<ChiTietPhieuHuy> ds = layChiTietPhieuHuy(maPhieuHuy);
 
 		for (ChiTietPhieuHuy ct : ds) {
-			if (ct.getTrangThai() == ChiTietPhieuHuy.CHO_DUYET) { // 1 = Chờ duyệt :contentReference[oaicite:5]{index=5}
+			if (ct.getTrangThai() == ChiTietPhieuHuy.CHO_DUYET) { // 1 = Chờ duyệt
 				return false;
 			}
 		}
@@ -389,79 +559,46 @@ public class PhieuHuy_DAO {
 		}
 		return false;
 	}
+
 	// Đếm số PH của nhân viên đã lập trong ngày hiện tại.
 	public int demSoPhieuHuyHomNayCuaNhanVien(String maNhanVien) {
-	    connectDB.getInstance();
-	    Connection con = connectDB.getConnection();
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
 
-	    String sql = """
-	        SELECT COUNT(*) AS SoLuong
-	        FROM PhieuHuy
-	        WHERE MaNhanVien = ?
-	          AND CAST(NgayLapPhieu AS DATE) = CAST(GETDATE() AS DATE)
-	    """;
+		String sql = """
+				SELECT COUNT(*) AS SoLuong
+				FROM PhieuHuy
+				WHERE MaNhanVien = ?
+				  AND CAST(NgayLapPhieu AS DATE) = CAST(GETDATE() AS DATE)
+				""";
 
-	    try (PreparedStatement ps = con.prepareStatement(sql)) {
-	        ps.setString(1, maNhanVien);
+		PreparedStatement ps = null;
+		ResultSet rs = null;
 
-	        try (ResultSet rs = ps.executeQuery()) {
-	            if (rs.next()) {
-	                return rs.getInt("SoLuong");
-	            }
-	        }
-	    } catch (SQLException e) {
-	        System.err.println("❌ Lỗi đếm số phiếu huỷ hôm nay của nhân viên: " + e.getMessage());
-	    }
+		try {
+			ps = con.prepareStatement(sql);
+			ps.setString(1, maNhanVien);
+			rs = ps.executeQuery();
 
-	    return 0;
-	}
-	
-	/**
-	 * 🔄 Force refresh cache - Xóa cache và load lại từ DB
-	 * Dùng khi cần đồng bộ dữ liệu real-time (VD: sau khi import data)
-	 */
-	public void refreshCache() {
-		cacheAllPhieuHuy = null;
-		layTatCaPhieuHuy(); // Load lại ngay
-	}
-	
-	/**
-	 * 📄 Lấy danh sách phiếu hủy từ cache (không query DB)
-	 * @return Danh sách phiếu hủy trong cache, hoặc null nếu chưa load
-	 */
-	public List<PhieuHuy> layCacheTam() {
-		if (cacheAllPhieuHuy == null) {
-			return null;
+			if (rs.next()) {
+				return rs.getInt("SoLuong");
+			}
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi đếm số phiếu huỷ hôm nay của nhân viên: " + e.getMessage());
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+			} catch (Exception ignored) {
+			}
+			try {
+				if (ps != null)
+					ps.close();
+			} catch (Exception ignored) {
+			}
 		}
-		return new ArrayList<>(cacheAllPhieuHuy);
-	}
-	
-	/**
-	 * 📝 Thêm phiếu hủy vào cache tạm (chưa lưu DB)
-	 * @param ph Phiếu hủy cần thêm
-	 */
-	public void themVaoCacheTam(PhieuHuy ph) {
-		if (cacheAllPhieuHuy == null) {
-			cacheAllPhieuHuy = new ArrayList<>();
-		}
-		cacheAllPhieuHuy.add(0, ph);
-	}
-	
-	/**
-	 * ❌ Xóa phiếu hủy khỏi cache tạm
-	 * @param maPhieuHuy Mã phiếu hủy cần xóa
-	 */
-	public void xoaKhoiCacheTam(String maPhieuHuy) {
-		if (cacheAllPhieuHuy != null) {
-			cacheAllPhieuHuy.removeIf(ph -> ph.getMaPhieuHuy().equals(maPhieuHuy));
-		}
-	}
-	
-	/**
-	 * 🗑️ Xóa toàn bộ cache tạm
-	 */
-	public void xoaCacheTam() {
-		cacheAllPhieuHuy = null;
+
+		return 0;
 	}
 
 }

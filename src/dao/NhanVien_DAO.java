@@ -4,16 +4,27 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 import database.connectDB;
 import entity.NhanVien;
 
 public class NhanVien_DAO {
 
+	// ============ CACHE LAYER ============
+	// Cache toàn bộ nhân viên (dùng chung toàn ứng dụng)
+	private static List<NhanVien> cacheAllNhanVien = null;
+
 	public NhanVien_DAO() {
 	}
 
-	/** 🔹 Lấy toàn bộ nhân viên */
+	/** 📜 Lấy toàn bộ nhân viên (CÓ CACHE - TỐI ƯU) */
 	public ArrayList<NhanVien> layTatCaNhanVien() {
+		// Nếu cache đã có dữ liệu → Return cache (clone để tránh modify trực tiếp)
+		if (cacheAllNhanVien != null && !cacheAllNhanVien.isEmpty()) {
+			return new ArrayList<>(cacheAllNhanVien);
+		}
+
+		// Cache rỗng → Query DB và lưu vào cache
 		ArrayList<NhanVien> danhSach = new ArrayList<>();
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
@@ -29,7 +40,11 @@ public class NhanVien_DAO {
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi lấy danh sách nhân viên: " + e.getMessage());
 		}
-		return danhSach;
+
+		// Lưu vào cache để lần sau không cần query nữa
+		cacheAllNhanVien = danhSach;
+
+		return new ArrayList<>(danhSach); // Clone để tránh modify cache
 	}
 
 	/** 🔹 Thêm nhân viên mới */
@@ -52,7 +67,14 @@ public class NhanVien_DAO {
 			stmt.setBoolean(7, nv.isQuanLy());
 			stmt.setInt(8, nv.getCaLam());
 			stmt.setBoolean(9, nv.isTrangThai());
-			return stmt.executeUpdate() > 0;
+			boolean success = stmt.executeUpdate() > 0;
+
+			// ✅ Cập nhật cache: Thêm nhân viên mới vào đầu danh sách
+			if (success && cacheAllNhanVien != null) {
+				cacheAllNhanVien.add(0, nv);
+			}
+
+			return success;
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi thêm nhân viên: " + e.getMessage());
 		}
@@ -214,6 +236,36 @@ public class NhanVien_DAO {
 		}
 
 		return prefix + "0001";
+	}
+
+	/**
+	 * 🔄 Force refresh cache - Xóa cache và load lại từ DB
+	 * Dùng khi cần đồng bộ dữ liệu real-time (VD: sau khi import data)
+	 */
+	public void refreshCache() {
+		cacheAllNhanVien = null;
+		layTatCaNhanVien(); // Load lại ngay
+	}
+
+	/**
+	 * 🔍 Tìm nhân viên theo SĐT (từ cache - tối ưu)
+	 */
+	public List<NhanVien> timNhanVienTheoSoDienThoai(String soDienThoai) {
+		List<NhanVien> ketQua = new ArrayList<>();
+
+		// Đảm bảo cache đã được load
+		if (cacheAllNhanVien == null || cacheAllNhanVien.isEmpty()) {
+			layTatCaNhanVien();
+		}
+
+		// Tìm từ cache
+		for (NhanVien nv : cacheAllNhanVien) {
+			if (nv.getSoDienThoai() != null && nv.getSoDienThoai().contains(soDienThoai)) {
+				ketQua.add(nv);
+			}
+		}
+
+		return ketQua;
 	}
 
 }

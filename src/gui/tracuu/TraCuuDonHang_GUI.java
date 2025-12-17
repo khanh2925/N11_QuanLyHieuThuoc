@@ -343,7 +343,7 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
 
         // F3: Xem hóa đơn
         inputMap.put(KeyStroke.getKeyStroke("F3"), "xemHoaDon");
-        actionMap.put("xemHoaDonF3", new AbstractAction() {
+        actionMap.put("xemHoaDon", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 xuLyXemHoaDon();
