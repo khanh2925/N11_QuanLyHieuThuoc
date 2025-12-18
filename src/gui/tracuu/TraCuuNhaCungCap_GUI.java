@@ -206,7 +206,7 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 	private void taoCenter() {
 		pnCenter = new JPanel(new BorderLayout());
 		pnCenter.setBackground(Color.WHITE);
-		pnCenter.setBorder(new EmptyBorder(5, 10, 10, 10));
+		pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
 
 		JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 		splitPane.setDividerLocation(400);
@@ -222,6 +222,25 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 		};
 
 		tblNhaCungCap = setupTable(modelNCC);
+
+		// Custom Renderer cho cột Trạng thái (Xanh/Đỏ)
+		tblNhaCungCap.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
+			@Override
+			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+					boolean hasFocus, int row, int column) {
+				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
+						column);
+				lbl.setHorizontalAlignment(SwingConstants.CENTER);
+				if ("Đang hoạt động".equals(value)) {
+					lbl.setForeground(new Color(0, 128, 0));
+					lbl.setFont(new Font("Segoe UI", Font.BOLD, 16));
+				} else {
+					lbl.setForeground(Color.RED);
+					lbl.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+				}
+				return lbl;
+			}
+		});
 
 		JScrollPane scrollNCC = new JScrollPane(tblNhaCungCap);
 		scrollNCC.setBorder(createTitledBorder("Danh sách nhà cung cấp"));
