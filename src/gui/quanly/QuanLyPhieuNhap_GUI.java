@@ -60,7 +60,7 @@ import gui.dialog.ChonLo_Dialog;
 import gui.dialog.ThemLo_Dialog;
 
 
-public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Serializable{
+public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Serializable{
     private JPanel pnDanhSachDon;
     private JTextField txtSearch;
     private JTextField txtTimNCC;
@@ -98,7 +98,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
     /**
      * Constructor chính
      */
-    public ThemPhieuNhap_GUI(JFrame frame) {
+    public QuanLyPhieuNhap_GUI(JFrame frame) {
         this.mainFrame = frame;
 
         TaiKhoan taiKhoanDangNhap = Session.getInstance().getTaiKhoanDangNhap();
@@ -139,7 +139,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
     /**
      * Constructor mặc định
      */
-    public ThemPhieuNhap_GUI() {
+    public QuanLyPhieuNhap_GUI() {
         this.mainFrame = null; // Không có frame chính khi test
 
         NhanVien_DAO nhanVienDAO_Test = new NhanVien_DAO();
@@ -535,7 +535,7 @@ public class ThemPhieuNhap_GUI extends JPanel implements ActionListener, Seriali
             @Override
             public void actionPerformed(ActionEvent e) {
                 int choice = JOptionPane.showConfirmDialog(
-                    ThemPhieuNhap_GUI.this,
+                    QuanLyPhieuNhap_GUI.this,
                     "Bạn có chắc muốn xóa tất cả dữ liệu và làm mới không?",
                     "Xác nhận làm mới",
                     JOptionPane.YES_NO_OPTION,
@@ -1040,29 +1040,38 @@ private void xuLyTimNhaCungCap() {
             datLaiThongTinNCC(); 
             return;
         }
+        
+        // BƯỚC 1: Tìm nhà cung cấp trong CSDL
         NhaCungCap ncc = nhaCungCapDAO.timNhaCungCapTheoMaHoacSDT(keyword);
-
-        if (ncc != null) {
-            if (!ncc.isHoatDong()) {
-                JOptionPane.showMessageDialog(this, 
-                    "Nhà cung cấp '" + ncc.getTenNhaCungCap() + "' đã ngừng hợp tác.\nVui lòng chọn nhà cung cấp khác!", 
-                    "Cảnh báo", 
-                    JOptionPane.WARNING_MESSAGE);
-                
-
-                datLaiThongTinNCC();
-                
-                txtTimNCC.selectAll();
-                txtTimNCC.requestFocus();
-            } else {
-                capNhatThongTinNCC(ncc);
-            }
-        } else {
+        
+        // BƯỚC 2: Kiểm tra nhà cung cấp có tồn tại không
+        if (ncc == null) {
+            JOptionPane.showMessageDialog(this, 
+                "❌ Không tìm thấy nhà cung cấp với số điện thoại: " + keyword + "\nVui lòng kiểm tra lại!", 
+                "Không tìm thấy", 
+                JOptionPane.ERROR_MESSAGE);
+            
             datLaiThongTinNCC();
-            txtTenNCC.setText("Không tìm thấy nhà cung cấp");
-            txtTenNCC.setForeground(Color.RED);
-            txtTimNCC.setForeground(Color.RED);
+            txtTimNCC.setText("");
+            txtTimNCC.requestFocus();
+            return;
         }
+        
+        // BƯỚC 3: Kiểm tra trạng thái hoạt động của nhà cung cấp
+        if (!ncc.isHoatDong()) {
+            JOptionPane.showMessageDialog(this, 
+                "⚠️ Nhà cung cấp '" + ncc.getTenNhaCungCap() + "' đã ngừng hợp tác.\nVui lòng chọn nhà cung cấp khác!", 
+                "Nhà cung cấp ngừng hoạt động", 
+                JOptionPane.WARNING_MESSAGE);
+            
+            datLaiThongTinNCC();
+            txtTimNCC.selectAll();
+            txtTimNCC.requestFocus();
+            return;
+        }
+        
+        // BƯỚC 4: Nhà cung cấp hợp lệ - Cập nhật thông tin lên giao diện
+        capNhatThongTinNCC(ncc);
     }
 
     /**
@@ -1098,7 +1107,10 @@ private void xuLyTimNhaCungCap() {
         
         String maSP = txtSearch.getText().trim();
         if (maSP.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập Mã Sản Phẩm.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, 
+                    "Không tìm thấy sản phẩm phù hợp với mã sản phẩm đã nhập: " + maSP + "\nVui lòng nhập lại mã sản phẩm khác!", 
+                    "Không tìm thấy", 
+                    JOptionPane.ERROR_MESSAGE);
             txtSearch.requestFocus();
             return;
         }
@@ -1770,11 +1782,11 @@ private void xuLyTimNhaCungCap() {
     }
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
-			JFrame frame = new JFrame("Quản Lý Khuyến Mãi");
+			JFrame frame = new JFrame("Nhập Phiếu");
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			frame.setSize(1500, 850);
 			frame.setLocationRelativeTo(null);
-			frame.setContentPane(new ThemPhieuNhap_GUI());
+			frame.setContentPane(new QuanLyPhieuNhap_GUI());
 			frame.setVisible(true);
 		});
 	}
