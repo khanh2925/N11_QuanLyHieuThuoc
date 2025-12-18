@@ -104,7 +104,7 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		pnHeader.setBackground(new Color(0xE3F2F5));
 
 		txtTimKiem = new JTextField();
-		PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm khuyến mãi... (F1 / Ctrl+F)");
+		PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm KM theo mã, tên chương trình (F1 / Ctrl+F)");
 		txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
 		txtTimKiem.setBounds(25, 17, 500, 60);
 		txtTimKiem.setBorder(new RoundedBorder(20));
@@ -343,6 +343,29 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 			}
 		};
 		tblKhuyenMai = setupTable(modelKhuyenMai);
+
+		// Thêm renderer màu cho cột Trạng thái (cột 7)
+		tblKhuyenMai.getColumnModel().getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
+			@Override
+			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+					boolean hasFocus, int row, int column) {
+				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
+						column);
+				lbl.setHorizontalAlignment(SwingConstants.CENTER);
+				String status = String.valueOf(value);
+				if ("Đang hoạt động".equals(status)) {
+					lbl.setForeground(new Color(0x2E7D32)); // Xanh lá đậm
+					lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
+				} else if ("Hết hạn".equals(status) || "Tạm ngưng".equals(status)) {
+					lbl.setForeground(Color.RED);
+					lbl.setFont(new Font("Segoe UI", Font.ITALIC, 14));
+				} else {
+					lbl.setForeground(new Color(255, 140, 0)); // Cam
+					lbl.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+				}
+				return lbl;
+			}
+		});
 
 		// Event Click
 		tblKhuyenMai.addMouseListener(new MouseAdapter() {
