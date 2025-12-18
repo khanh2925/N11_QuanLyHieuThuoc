@@ -130,21 +130,21 @@ public class TraCuuNhanVien_GUI extends JPanel {
 		PlaceholderSupport.addPlaceholder(txtTimKiem, PLACEHOLDER_TIM_KIEM);
 		txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20));
 		txtTimKiem.setBorder(new RoundedBorder(20));
-		txtTimKiem.setBounds(25, 17, 350, 60);
+		txtTimKiem.setBounds(25, 17, 480, 60);
 		txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
 		pnHeader.add(txtTimKiem);
 
-		addFilterLabel("Chức vụ:", 390, 28, 80, 35);
+		addFilterLabel("Chức vụ:", 525, 28, 70, 35);
 		cbChucVu = new JComboBox<>(new String[] { "Tất cả", "Quản lý", "Nhân viên" });
-		setupCombo(cbChucVu, 470, 28, 140, 38);
+		setupCombo(cbChucVu, 605, 28, 105, 35);
 
-		addFilterLabel("Ca làm:", 620, 28, 70, 35);
+		addFilterLabel("Ca làm:", 720, 28, 70, 35);
 		cbCaLam = new JComboBox<>(new String[] { "Tất cả", "Sáng", "Chiều", "Tối" });
-		setupCombo(cbCaLam, 690, 28, 130, 38);
+		setupCombo(cbCaLam, 790, 28, 105, 35);
 
-		addFilterLabel("Trạng thái:", 830, 28, 90, 35);
+		addFilterLabel("Trạng thái:", 905, 28, 90, 35);
 		cbTrangThai = new JComboBox<>(new String[] { "Tất cả", "Đang làm", "Đã nghỉ" });
-		setupCombo(cbTrangThai, 920, 28, 140, 38);
+		setupCombo(cbTrangThai, 1005, 28, 105, 35);
 
 		// Nút Tìm kiếm
 		btnTim = new PillButton(
@@ -155,7 +155,7 @@ public class TraCuuNhanVien_GUI extends JPanel {
 						"</center>" +
 						"</html>");
 		btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnTim.setBounds(1080, 22, 130, 50);
+		btnTim.setBounds(1135, 22, 130, 50);
 		btnTim.setToolTipText(
 				"<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã, tên và bộ lọc</html>");
 		pnHeader.add(btnTim);
@@ -169,7 +169,7 @@ public class TraCuuNhanVien_GUI extends JPanel {
 						"</center>" +
 						"</html>");
 		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnLamMoi.setBounds(1220, 22, 130, 50);
+		btnLamMoi.setBounds(1275, 22, 130, 50);
 		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
 		pnHeader.add(btnLamMoi);
 
@@ -182,7 +182,7 @@ public class TraCuuNhanVien_GUI extends JPanel {
 						"</center>" +
 						"</html>");
 		btnXuatExcel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnXuatExcel.setBounds(1360, 22, 150, 50);
+		btnXuatExcel.setBounds(1415, 22, 180, 50);
 		btnXuatExcel.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất dữ liệu ra file Excel</html>");
 		pnHeader.add(btnXuatExcel);
 	}
