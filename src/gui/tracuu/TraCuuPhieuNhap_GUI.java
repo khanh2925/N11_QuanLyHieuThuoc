@@ -224,20 +224,22 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
     private JTable thietLapBang(DefaultTableModel model) {
         JTable table = new JTable(model);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        table.setRowHeight(30);
+        table.setRowHeight(35);
         table.setSelectionBackground(new Color(0xC8E6C9));
+        table.setGridColor(new Color(230, 230, 230));
 
         JTableHeader header = table.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 16));
         header.setBackground(new Color(33, 150, 243));
         header.setForeground(Color.WHITE);
+        header.setPreferredSize(new Dimension(100, 40));
         return table;
     }
 
     private TitledBorder taoVienTieuDe(String title) {
         return BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
-                TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 16), Color.DARK_GRAY);
+                TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 18), Color.DARK_GRAY);
     }
 
     private void dangKySuKien() {
@@ -391,7 +393,7 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
 
     private void xuLyTimKiem() {
         String keyword = txtTimKiem.getText().trim();
-        if (keyword.equals("Tìm theo mã PN, tên nhân viên, nhà cung cấp...")) {
+        if (keyword.equals("Tìm theo mã PN, tên nhân viên, nhà cung cấp...(F1 / Ctrl+F)")) {
             keyword = "";
         }
 
@@ -431,7 +433,7 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
 
     private void xuLyLamMoi() {
         txtTimKiem.setText("");
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã PN, tên nhân viên, nhà cung cấp...");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã PN, tên nhân viên, nhà cung cấp...(F1 / Ctrl+F)");
         dateTuNgay.setDate(java.sql.Date.valueOf(LocalDate.now().minusDays(30)));
         dateDenNgay.setDate(new Date());
         taiDuLieuPhieuNhap();
@@ -564,9 +566,9 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
         table.getColumnModel().getColumn(4).setCellRenderer(rightRenderer); // Đơn giá
         table.getColumnModel().getColumn(5).setCellRenderer(rightRenderer); // Thành tiền
 
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
-        table.setRowHeight(25);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 16));
+        table.setRowHeight(35);
 
         JScrollPane scrollTable = new JScrollPane(table);
         centerPanel.add(scrollTable);

@@ -19,6 +19,7 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
@@ -222,6 +223,38 @@ public class TraCuuNhanVien_GUI extends JPanel {
 		};
 
 		tblNhanVien = setupTable(modelNhanVien);
+		
+		// Căn lề các cột
+		DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+		center.setHorizontalAlignment(SwingConstants.CENTER);
+		
+		// Căn giữa các cột: STT, Mã NV, Giới tính, Ngày sinh, SĐT, Chức vụ, Ca, Trạng thái
+		tblNhanVien.getColumnModel().getColumn(0).setCellRenderer(center); // STT
+		tblNhanVien.getColumnModel().getColumn(1).setCellRenderer(center); // Mã NV
+		// Cột 2 (Họ tên) để mặc định căn trái
+		tblNhanVien.getColumnModel().getColumn(3).setCellRenderer(center); // Giới tính
+		tblNhanVien.getColumnModel().getColumn(4).setCellRenderer(center); // Ngày sinh
+		tblNhanVien.getColumnModel().getColumn(5).setCellRenderer(center); // SĐT
+		tblNhanVien.getColumnModel().getColumn(6).setCellRenderer(center); // Chức vụ
+		tblNhanVien.getColumnModel().getColumn(7).setCellRenderer(center); // Ca
+		tblNhanVien.getColumnModel().getColumn(8).setCellRenderer(center); // Trạng thái
+		
+		// Render màu cho Trạng thái
+		tblNhanVien.getColumnModel().getColumn(8).setCellRenderer(new DefaultTableCellRenderer() {
+			@Override
+			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, 
+					boolean hasFocus, int row, int column) {
+				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+				lbl.setHorizontalAlignment(SwingConstants.CENTER);
+				lbl.setFont(new Font("Segoe UI", Font.BOLD, 16));
+				if ("Đang làm".equals(value)) {
+					lbl.setForeground(new Color(0x2E7D32)); // Xanh lá
+				} else {
+					lbl.setForeground(Color.RED); // Đỏ
+				}
+				return lbl;
+			}
+		});
 
 		JScrollPane scrollNV = new JScrollPane(tblNhanVien);
 		scrollNV.setBorder(createTitledBorder("Danh sách nhân viên"));
@@ -242,11 +275,33 @@ public class TraCuuNhanVien_GUI extends JPanel {
 				0);
 
 		tblLichSuBan = setupTable(modelBan);
+		
+		// Căn lề cho bảng bán hàng
+		DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+		center.setHorizontalAlignment(SwingConstants.CENTER);
+		DefaultTableCellRenderer right = new DefaultTableCellRenderer();
+		right.setHorizontalAlignment(SwingConstants.RIGHT);
+		
+		tblLichSuBan.getColumnModel().getColumn(0).setCellRenderer(center); // STT
+		tblLichSuBan.getColumnModel().getColumn(1).setCellRenderer(center); // Mã hóa đơn
+		tblLichSuBan.getColumnModel().getColumn(2).setCellRenderer(center); // Ngày lập
+		// Cột 3 (Khách hàng) để mặc định
+		tblLichSuBan.getColumnModel().getColumn(4).setCellRenderer(right); // Tổng tiền
+		
 		tabChiTiet.add("Lịch sử bán hàng", new JScrollPane(tblLichSuBan));
+		
 		modelTra = new DefaultTableModel(
 				new String[] { "STT", "Mã phiếu trả", "Ngày lập", "Khách hàng", "Tổng tiền", "Trạng thái" }, 0);
 
 		tblLichSuTra = setupTable(modelTra);
+		
+		// Căn lề cho bảng trả hàng
+		tblLichSuTra.getColumnModel().getColumn(0).setCellRenderer(center); // STT
+		tblLichSuTra.getColumnModel().getColumn(1).setCellRenderer(center); // Mã phiếu trả
+		tblLichSuTra.getColumnModel().getColumn(2).setCellRenderer(center); // Ngày lập
+		// Cột 3 (Khách hàng) để mặc định
+		tblLichSuTra.getColumnModel().getColumn(4).setCellRenderer(right); // Tổng tiền
+		tblLichSuTra.getColumnModel().getColumn(5).setCellRenderer(center); // Trạng thái
 
 		tabChiTiet.add("Lịch sử trả hàng", new JScrollPane(tblLichSuTra));
 
@@ -254,6 +309,14 @@ public class TraCuuNhanVien_GUI extends JPanel {
 				new String[] { "STT", "Mã phiếu hủy", "Ngày lập", "Nhân viên lập", "Trạng thái", "Tổng tiền" }, 0);
 
 		tblLichSuHuy = setupTable(modelHuy);
+		
+		// Căn lề cho bảng hủy hàng
+		tblLichSuHuy.getColumnModel().getColumn(0).setCellRenderer(center); // STT
+		tblLichSuHuy.getColumnModel().getColumn(1).setCellRenderer(center); // Mã phiếu hủy
+		tblLichSuHuy.getColumnModel().getColumn(2).setCellRenderer(center); // Ngày lập
+		// Cột 3 (Nhân viên lập) để mặc định
+		tblLichSuHuy.getColumnModel().getColumn(4).setCellRenderer(center); // Trạng thái
+		tblLichSuHuy.getColumnModel().getColumn(5).setCellRenderer(right); // Tổng tiền
 
 		tabChiTiet.add("Lịch sử hủy hàng", new JScrollPane(tblLichSuHuy));
 	}

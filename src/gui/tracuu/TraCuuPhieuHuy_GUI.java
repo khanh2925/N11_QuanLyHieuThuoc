@@ -173,7 +173,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
                     "</center>" +
                 "</html>"
             );
-        btnLamMoi.setBounds(1255, 22, 115, 50);
+        btnLamMoi.setBounds(1265, 22, 130, 50);
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
         pnHeader.add(btnLamMoi);
@@ -185,7 +185,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
 						"<span style='font-size:10px; color:#888888;'>(F3)</span>" +
 						"</center>" +
 						"</html>");
-        btnXemPhieuHuy.setBounds(1380, 22, 180, 50);
+        btnXemPhieuHuy.setBounds(1410, 22, 175, 50);
 		btnXemPhieuHuy.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnXemPhieuHuy.setToolTipText("<html><b>Phím tắt:</b> F3<br>Xem chi tiết phiếu hủy đang chọn</html>");
 		pnHeader.add(btnXemPhieuHuy);

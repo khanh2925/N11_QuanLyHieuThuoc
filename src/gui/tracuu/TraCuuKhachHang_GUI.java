@@ -281,13 +281,15 @@ public class TraCuuKhachHang_GUI extends JPanel {
     private JTable setupTable(DefaultTableModel model) {
         JTable table = new JTable(model);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        table.setRowHeight(28);
+        table.setRowHeight(35);
         table.setSelectionBackground(new Color(0xC8E6C9)); // Màu xanh nhạt khi chọn
+        table.setGridColor(new Color(230, 230, 230));
         
         JTableHeader header = table.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 16));
         header.setBackground(new Color(33, 150, 243)); // Màu xanh header
         header.setForeground(Color.WHITE);
+        header.setPreferredSize(new Dimension(100, 40));
         return table;
     }
     
@@ -311,7 +313,7 @@ public class TraCuuKhachHang_GUI extends JPanel {
     private TitledBorder createTitledBorder(String title) {
         return BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
-            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 16), Color.DARK_GRAY
+            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 18), Color.DARK_GRAY
         );
     }
 
