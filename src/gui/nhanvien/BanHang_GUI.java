@@ -61,6 +61,7 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 	private JTextField txtTienThua;
 	private JTextField txtTenKhachHang;
 	private JButton btnBanHang;
+	private JButton btnHuyDon;
 	private JTextField txtGiamSPValue;
 	private JTextField txtGiamHDValue;
 
@@ -387,6 +388,34 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 		btnBanHang.setAlignmentX(Component.CENTER_ALIGNMENT);
 		btnBanHang.addActionListener(this);
 		pnRight.add(btnBanHang);
+		
+		
+		pnRight.add(Box.createVerticalStrut(8));
+		
+		// ==== LINK HUỶ ĐƠN (NHẸ NHÀNG) ====
+		btnHuyDon = new JButton("Huỷ đơn (F4)");
+		btnHuyDon.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		btnHuyDon.setForeground(new Color(120, 120, 120)); // Màu xám nhẹ
+		btnHuyDon.setBackground(new Color(250, 250, 250)); // Nền xám rất nhạt
+		btnHuyDon.setFocusPainted(false);
+		btnHuyDon.setBorder(null);
+		btnHuyDon.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnHuyDon.setMaximumSize(new Dimension(200, 30));
+		btnHuyDon.setAlignmentX(Component.CENTER_ALIGNMENT);
+		btnHuyDon.addActionListener(this);
+		
+		// Hover effect nhẹ
+		btnHuyDon.addMouseListener(new java.awt.event.MouseAdapter() {
+			public void mouseEntered(java.awt.event.MouseEvent evt) {
+				btnHuyDon.setForeground(new Color(220, 53, 69)); // Đỏ khi hover
+				btnHuyDon.setBackground(new Color(255, 245, 245));
+			}
+			public void mouseExited(java.awt.event.MouseEvent evt) {
+				btnHuyDon.setForeground(new Color(120, 120, 120));
+				btnHuyDon.setBackground(new Color(250, 250, 250));
+			}
+		});
+		pnRight.add(btnHuyDon);
 
 		return pnRight;
 	}
@@ -526,7 +555,40 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 			xuLyTimThuoc();
 		} else if (e.getSource() == btnBanHang) {
 			xuLyBanHang();
+		} else if (e.getSource() == btnHuyDon) {
+			xuLyHuyDon();
 		}
+	}
+	
+	/**
+	 * Xử lý khi nhấn nút Huỷ đơn - Reset toàn bộ form bán hàng
+	 */
+	private void xuLyHuyDon() {
+		// Nếu đơn hàng trống thì không cần confirm
+		if (dsItem == null || dsItem.isEmpty()) {
+			JOptionPane.showMessageDialog(this, 
+				"Đơn hàng đang trống!", 
+				"Thông báo",
+				JOptionPane.INFORMATION_MESSAGE);
+			txtTimThuoc.requestFocus();
+			return;
+		}
+		
+		// Confirm trước khi huỷ
+		int confirm = JOptionPane.showConfirmDialog(this,
+			"Bạn có chắc muốn huỷ toàn bộ đơn hàng hiện tại?", 
+			"Xác nhận huỷ đơn",
+			JOptionPane.YES_NO_OPTION,
+			JOptionPane.WARNING_MESSAGE);
+		
+		if (confirm == JOptionPane.YES_OPTION) {
+			lamMoiSauKhiBanThanhCong();
+			JOptionPane.showMessageDialog(this, 
+				"Đã huỷ đơn hàng thành công!", 
+				"Thông báo",
+				JOptionPane.INFORMATION_MESSAGE);
+		}
+	
 	}
 
 	private void xuLyBanHang() {
@@ -744,7 +806,9 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 	// ================= XỬ LÝ TÌM THUỐC ==================
 	private void xuLyTimThuoc() {
 		String tuKhoa = txtTimThuoc.getText().trim();
-		if (tuKhoa.isEmpty()) {
+		
+		// Kiểm tra xem có phải placeholder không
+		if (tuKhoa.isEmpty() || tuKhoa.equals(PLACEHOLDER_TIM_THUOC)) {
 			JOptionPane.showMessageDialog(this, "Vui lòng nhập số đăng ký hoặc mã sản phẩm!");
 			return;
 		}
@@ -792,6 +856,13 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 			double giaGoc = sp.getGiaBan() * qc.getHeSoQuyDoi();
 			giaArr[i] = giaGoc - giaGoc * qc.getTiLeGiam();
 			heSoArr[i] = qc.getHeSoQuyDoi();
+			// Debug: In ra giá để kiểm tra
+			System.out.println("DEBUG - Đơn vị: " + donViArr[i] + 
+			                   " | Giá bán SP: " + sp.getGiaBan() + 
+			                   " | Hệ số: " + qc.getHeSoQuyDoi() +
+			                   " | Giá gốc: " + giaGoc +
+			                   " | Tỉ lệ giảm: " + qc.getTiLeGiam() +
+			                   " | Giá cuối: " + giaArr[i]);
 		}
 
 		// ===== KM theo SP =====
