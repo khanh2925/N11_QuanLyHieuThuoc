@@ -28,9 +28,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
+import javax.swing.InputMap;
+
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -40,6 +44,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.SwingConstants;
@@ -76,10 +81,12 @@ import entity.Session;
 public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListener {
 
 	private static final long serialVersionUID = 1L;
+	private static final String PLACEHOLDER_TIM_KIEM = "Tìm theo mã phiếu, tên KH hoặc SĐT... (F1 / Ctrl+F)";
+
 	private JPanel pnPhieuTra;
 	private JPanel pnHeader;
 	private JPanel pnCTPT;
-	private JButton btnXuatFile;
+	private PillButton btnXuatFile;
 	private JTextField txtSearch;
 	private DefaultTableModel modelPT;
 	private JTable tblPT;
@@ -141,6 +148,8 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 		tblCTPT.addMouseListener(this);
 		tblPT.addMouseListener(this);
 
+		setupKeyboardShortcuts(); // Thiết lập phím tắt
+
 	}
 
 	private void TaoHeader() {
@@ -150,64 +159,137 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 		pnHeader.setBackground(new Color(0xE3F2F5));
 		add(pnHeader, BorderLayout.NORTH);
 
-		// --- Ô TÌM KIẾM (Font 20) ---
+		// --- 1. Ô TÌM KIẾM (Font 20) ---
 		txtSearch = new JTextField();
-		PlaceholderSupport.addPlaceholder(txtSearch, "Tìm kiếm phiếu trả...");
-		txtSearch.setToolTipText("Tìm kiếm theo: Mã phiếu trả, Tên khách hàng, SĐT khách hàng, Tên người trả");
+		PlaceholderSupport.addPlaceholder(txtSearch, PLACEHOLDER_TIM_KIEM);
 		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 20));
-		txtSearch.setBounds(25, 17, 400, 60);
+		txtSearch.setBounds(25, 17, 480, 60);
 		txtSearch.setBorder(new RoundedBorder(20));
 		txtSearch.setBackground(Color.WHITE);
+		txtSearch.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
 		pnHeader.add(txtSearch);
 
-		// --- NÚT TÌM KIẾM (Kế bên thanh tìm kiếm) ---
-		btnTimKiem = new PillButton("Tìm kiếm");
-		btnTimKiem.setBounds(435, 22, 120, 50);
-		btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		pnHeader.add(btnTimKiem);
+		// --- 2. BỘ LỌC NGÀY ---
+		// Từ ngày
+		addFilterLabel("Từ:", 525, 28, 35, 35);
+		dateTuNgay = new JDateChooser();
+		dateTuNgay.setDateFormatString("dd/MM/yyyy");
+		dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+		dateTuNgay.setBounds(560, 28, 140, 38);
+		pnHeader.add(dateTuNgay);
 
-		// --- BỘ LỌC (Font 18) ---
-		// 1. Trạng thái ComboBox
-		addFilterLabel("Trạng thái:", 575, 28, 90, 35);
+		// Đến ngày
+		addFilterLabel("Đến:", 710, 28, 40, 35);
+		dateDenNgay = new JDateChooser();
+		dateDenNgay.setDateFormatString("dd/MM/yyyy");
+		dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+		dateDenNgay.setBounds(750, 28, 140, 38);
+		pnHeader.add(dateDenNgay);
+
+		// --- 3. TRẠNG THÁI ---
+		addFilterLabel("Trạng thái:", 905, 28, 85, 35);
 		cbTrangThai = new JComboBox<>(new String[] { "Tất cả", "Đã duyệt", "Chờ duyệt" });
-		cbTrangThai.setBounds(665, 28, 140, 38);
+		cbTrangThai.setBounds(990, 28, 130, 38);
 		cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 18));
 		pnHeader.add(cbTrangThai);
 
-		// 2. Từ ngày
-		addFilterLabel("Từ ngày:", 820, 28, 75, 35);
-		dateTuNgay = new JDateChooser();
-		dateTuNgay.setDateFormatString("dd/MM/yyyy");
-		dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		dateTuNgay.setBounds(895, 28, 150, 38);
-		pnHeader.add(dateTuNgay);
+		// --- 4. CÁC NÚT CHỨC NĂNG ---
+		btnTimKiem = new PillButton(
+				"<html>" +
+						"<center>" +
+						"TÌM KIẾM<br>" +
+						"<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
+						"</center>" +
+						"</html>");
+		btnTimKiem.setBounds(1135, 22, 130, 50);
+		btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnTimKiem.setToolTipText(
+				"<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã phiếu, SĐT và bộ lọc</html>");
+		pnHeader.add(btnTimKiem);
 
-		// 3. Đến ngày
-		addFilterLabel("Đến:", 1060, 28, 45, 35);
-		dateDenNgay = new JDateChooser();
-		dateDenNgay.setDateFormatString("dd/MM/yyyy");
-		dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		dateDenNgay.setBounds(1105, 28, 150, 38);
-		pnHeader.add(dateDenNgay);
-
-		// --- NÚT (Font 18) ---
-		btnLamMoi = new PillButton("Làm mới");
-		btnLamMoi.setBounds(1370, 22, 120, 50);
+		btnLamMoi = new PillButton(
+				"<html>" +
+						"<center>" +
+						"LÀM MỚI<br>" +
+						"<span style='font-size:10px; color:#888888;'>(F5)</span>" +
+						"</center>" +
+						"</html>");
+		btnLamMoi.setBounds(1275, 22, 130, 50);
 		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
 		pnHeader.add(btnLamMoi);
 
-		btnXuatFile = new PillButton("Xuất file");
-		btnXuatFile.setBounds(1500, 22, 120, 50);
+		btnXuatFile = new PillButton(
+				"<html>" +
+						"<center>" +
+						"XUẤT FILE<br>" +
+						"<span style='font-size:10px; color:#888888;'>(F8)</span>" +
+						"</center>" +
+						"</html>");
+		btnXuatFile.setBounds(1415, 22, 180, 50);
 		btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnXuatFile.setToolTipText("<html><b>Phím tắt:</b> F8<br>Xuất danh sách phiếu trả ra file Excel</html>");
 		pnHeader.add(btnXuatFile);
 	}
 
-	// Helper tạo label (Font 18)
+	// Helper tạo label (Font 16)
 	private void addFilterLabel(String text, int x, int y, int w, int h) {
 		JLabel lbl = new JLabel(text);
 		lbl.setBounds(x, y, w, h);
-		lbl.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		lbl.setFont(new Font("Segoe UI", Font.PLAIN, 16));
 		pnHeader.add(lbl);
+	}
+
+	/**
+	 * Thiết lập phím tắt cho màn hình Quản lý trả hàng
+	 */
+	private void setupKeyboardShortcuts() {
+		InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+		ActionMap actionMap = getActionMap();
+
+		// F1: Focus tìm kiếm
+		inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
+		actionMap.put("focusTimKiem", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtSearch.requestFocus();
+				txtSearch.selectAll();
+			}
+		});
+
+		// F5: Làm mới
+		inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
+		actionMap.put("lamMoi", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtSearch.setText("");
+				PlaceholderSupport.addPlaceholder(txtSearch, PLACEHOLDER_TIM_KIEM);
+				cbTrangThai.setSelectedIndex(0);
+				dateTuNgay.setDate(null);
+				dateDenNgay.setDate(null);
+				loadDataTablePT();
+				modelCTPT.setRowCount(0);
+			}
+		});
+
+		// Ctrl+F: Focus tìm kiếm
+		inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
+		actionMap.put("timKiem", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtSearch.requestFocus();
+				txtSearch.selectAll();
+			}
+		});
+
+		// F8: Xuất file Excel
+		inputMap.put(KeyStroke.getKeyStroke("F8"), "xuatFile");
+		actionMap.put("xuatFile", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				xuatExcel();
+			}
+		});
 	}
 
 	// Helper method để loại bỏ dấu tiếng Việt
@@ -251,9 +333,12 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 
 		btnNhapKho = new PillButton("Nhập lại kho");
 		btnNhapKho.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnNhapKho
+				.setToolTipText("<html><b>Nhập lại kho</b><br>Nhập hàng trả về kho sau khi kiểm tra chất lượng</html>");
 
 		btnHuyHang = new PillButton("Hủy hàng");
 		btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnHuyHang.setToolTipText("<html><b>Hủy hàng</b><br>Hủy hàng trả không đạt chất lượng</html>");
 
 		pnBtnCTPT.add(btnNhapKho);
 		pnBtnCTPT.add(btnHuyHang);
@@ -624,6 +709,7 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 		}
 		if (src == btnLamMoi) {
 			txtSearch.setText("");
+			PlaceholderSupport.addPlaceholder(txtSearch, PLACEHOLDER_TIM_KIEM);
 			cbTrangThai.setSelectedIndex(0);
 			dateTuNgay.setDate(null);
 			dateDenNgay.setDate(null);
@@ -693,7 +779,7 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 		if (kq != null && kq.startsWith("OK")) {
 			// ✅ Cập nhật lại GUI
 			modelCTPT.setValueAt("Huỷ hàng", selectRowCT, 7);
-			
+
 			// Hiển thị thông báo có mã phiếu huỷ nếu được tạo
 			if (kq.contains("|")) {
 				String maPhieuHuy = kq.split("\\|")[1];
@@ -842,7 +928,8 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setDialogTitle("Chọn nơi lưu file Excel");
-		fileChooser.setSelectedFile(new File("DanhSachPhieuTra_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".xlsx"));
+		fileChooser.setSelectedFile(new File(
+				"DanhSachPhieuTra_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".xlsx"));
 		fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
 
 		int userSelection = fileChooser.showSaveDialog(this);
@@ -888,7 +975,7 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 
 			// Tạo header
 			Row headerRow = sheetPT.createRow(0);
-			String[] headers = {"Mã PT", "Khách hàng", "Ngày lập", "Người trả", "Trạng thái", "Tổng tiền hoàn"};
+			String[] headers = { "Mã PT", "Khách hàng", "Ngày lập", "Người trả", "Trạng thái", "Tổng tiền hoàn" };
 			for (int i = 0; i < headers.length; i++) {
 				Cell cell = headerRow.createCell(i);
 				cell.setCellValue(headers[i]);
@@ -898,7 +985,7 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			// Điền dữ liệu từ bảng (bỏ cột SĐT ẩn)
 			for (int row = 0; row < modelPT.getRowCount(); row++) {
 				Row dataRow = sheetPT.createRow(row + 1);
-				
+
 				// Cột 0: Mã PT
 				Cell cell0 = dataRow.createCell(0);
 				cell0.setCellValue(modelPT.getValueAt(row, 0).toString());
@@ -941,7 +1028,8 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 
 				// Header chi tiết
 				Row headerRowCT = sheetCTPT.createRow(0);
-				String[] headersCT = {"Mã hóa đơn", "Mã lô", "Tên SP", "Hạn dùng", "SL trả", "Lý do", "Đơn vị tính", "Trạng thái"};
+				String[] headersCT = { "Mã hóa đơn", "Mã lô", "Tên SP", "Hạn dùng", "SL trả", "Lý do", "Đơn vị tính",
+						"Trạng thái" };
 				for (int i = 0; i < headersCT.length; i++) {
 					Cell cell = headerRowCT.createCell(i);
 					cell.setCellValue(headersCT[i]);
@@ -970,9 +1058,9 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 				workbook.write(fos);
 			}
 
-			JOptionPane.showMessageDialog(this, 
-				"Xuất Excel thành công!\nFile: " + fileToSave.getAbsolutePath(), 
-				"Thành công", JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(this,
+					"Xuất Excel thành công!\nFile: " + fileToSave.getAbsolutePath(),
+					"Thành công", JOptionPane.INFORMATION_MESSAGE);
 
 			// Mở file sau khi xuất
 			if (java.awt.Desktop.isDesktopSupported()) {
@@ -981,9 +1069,9 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			JOptionPane.showMessageDialog(this, 
-				"Lỗi khi xuất file Excel:\n" + e.getMessage(), 
-				"Lỗi", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this,
+					"Lỗi khi xuất file Excel:\n" + e.getMessage(),
+					"Lỗi", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
