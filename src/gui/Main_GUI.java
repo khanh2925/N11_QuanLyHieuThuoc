@@ -42,8 +42,7 @@ import gui.tracuu.TraCuuPhieuHuy_GUI;
 import gui.tracuu.TraCuuPhieuNhap_GUI;
 import gui.tracuu.TraCuuSanPham_GUI;
 import gui.tracuu.TraCuuLoSanPham_GUI;
-import gui.trogiup.GioiThieu_GUI;
-import gui.trogiup.HuongDan_GUI;
+import gui.trogiup.*;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
