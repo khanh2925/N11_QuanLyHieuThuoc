@@ -110,10 +110,10 @@ public class ChiTietPhieuHuy_DAO {
 
 		String sqlUpdateTrangThai = "UPDATE ChiTietPhieuHuy SET TrangThai = ? WHERE MaPhieuHuy = ? AND MaLo = ?";
 
-		// ❗ CHỈ cập nhật tồn khi TRẠNG THÁI MỚI = 2 (hủy hàng)
-		String sqlCapNhatTon = """
+		// ✅ SQL cộng lại tồn kho (dùng khi TỪ CHỐI HỦY - vì đã trừ khi tạo phiếu)
+		String sqlCongTon = """
 				    UPDATE LoSanPham SET SoLuongTon =
-				        SoLuongTon - (SELECT SoLuongHuy
+				        SoLuongTon + (SELECT SoLuongHuy
 				                      FROM ChiTietPhieuHuy
 				                      WHERE MaPhieuHuy=? AND MaLo=?)
 				    WHERE MaLo = ?
@@ -130,17 +130,17 @@ public class ChiTietPhieuHuy_DAO {
 				ps.executeUpdate();
 			}
 
-			// 2️⃣ Chỉ khi trạng thái mới = 2 (HỦY HÀNG) mới trừ tồn
-			if (trangThaiMoi == 2) {
-				try (PreparedStatement psTon = con.prepareStatement(sqlCapNhatTon)) {
+			// 2️⃣ Nếu trạng thái mới = 2 (HỦY HÀNG) → KHÔNG làm gì (đã trừ tồn khi tạo phiếu)
+
+			// 3️⃣ Nếu trạng thái mới = 3 (TỪ CHỐI HỦY) → CỘNG LẠI TỒN KHO
+			if (trangThaiMoi == 3) {
+				try (PreparedStatement psTon = con.prepareStatement(sqlCongTon)) {
 					psTon.setString(1, maPhieuHuy);
 					psTon.setString(2, maLo);
 					psTon.setString(3, maLo);
 					psTon.executeUpdate();
 				}
 			}
-
-			// 3️⃣ Nếu trạng thái = 3 (TỪ CHỐI) → ❌ KHÔNG cập nhật tồn
 
 			con.commit();
 			return true;
@@ -179,8 +179,10 @@ public class ChiTietPhieuHuy_DAO {
 				ps.executeUpdate();
 			}
 
-			// Nếu chi tiết đã trừ tồn (trạng thái = 2) thì cộng lại
-			if (ct.getTrangThai() == 2) {
+			// ✅ Cộng lại tồn kho nếu trạng thái là 1 (Chờ duyệt) hoặc 2 (Hủy hàng)
+			// Vì tồn kho đã bị trừ khi tạo phiếu hủy
+			// Không cộng nếu trạng thái = 3 (Từ chối) vì đã cộng lại khi từ chối
+			if (ct.getTrangThai() == 1 || ct.getTrangThai() == 2) {
 				try (PreparedStatement psTon = con.prepareStatement(sqlUpdate)) {
 					psTon.setInt(1, ct.getSoLuongHuy());
 					psTon.setString(2, ct.getLoSanPham().getMaLo());
