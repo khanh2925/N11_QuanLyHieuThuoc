@@ -202,14 +202,8 @@ public class Main_GUI extends JFrame {
 			addMenuButton(menuScrollContent, "Trợ giúp", "trogiup", "/resources/images/icon_tro_giup.png");
 						addSubmenuButton("trogiup", "gioithieu", "Giới thiệu", "/resources/images/icon_gioi_thieu.png",
 					() -> GioiThieu_GUI.moGioiThieu());
-			addSubmenuButton("trogiup", "huongdan", "Hướng dẫn", "/resources/images/icon_gioi_thieu.png",
-					() -> {
-						JOptionPane.showMessageDialog(null, 
-							"Đang mở file hướng dẫn trong trình duyệt...", 
-							"Thông báo", 
-							JOptionPane.INFORMATION_MESSAGE);
-						HuongDan_GUI.moHuongDan();
-					});
+						addSubmenuButton("trogiup", "huongdan", "Hướng dẫn", "/resources/images/icon_gioi_thieu.png",
+								new HuongDan_GUI(true)); // true = QL
 
 
 			menuScrollContent.add(Box.createVerticalGlue());
@@ -242,14 +236,8 @@ public class Main_GUI extends JFrame {
 			addMenuButton(menuScrollContent, "Trợ giúp", "trogiup", "/resources/images/icon_tro_giup.png");
 						addSubmenuButton("trogiup", "gioithieu", "Giới thiệu", "/resources/images/icon_gioi_thieu.png",
 					() -> GioiThieu_GUI.moGioiThieu());
-			addSubmenuButton("trogiup", "huongdan", "Hướng dẫn", "/resources/images/icon_gioi_thieu.png",
-					() -> {
-						JOptionPane.showMessageDialog(null, 
-							"Đang mở file hướng dẫn trong trình duyệt...", 
-							"Thông báo", 
-							JOptionPane.INFORMATION_MESSAGE);
-						HuongDan_GUI.moHuongDan();
-					});
+						addSubmenuButton("trogiup", "huongdan", "Hướng dẫn", "/resources/images/icon_gioi_thieu.png",
+								new HuongDan_GUI(false)); // false = Nhân viên
 
 			menuScrollContent.add(Box.createVerticalGlue());
 		}

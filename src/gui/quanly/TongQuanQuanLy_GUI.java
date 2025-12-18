@@ -11,7 +11,7 @@
  *   + Khách hàng mới
  *   + Đơn trả cần duyệt (có thể click)
  *   + Đơn hủy cần duyệt (có thể click)
- * - Biểu đồ đường hiển thị 5 đường xu hướng 6 tháng gần nhất:
+ * - Biểu đồ cột nhóm hiển thị 5 chỉ số xu hướng 3 tháng gần nhất:
  *   + Doanh thu (xanh dương)
  *   + Tiền nhập hàng (tím)
  *   + Tiền trả hàng (cam)
@@ -39,7 +39,8 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 
 import component.border.RoundedBorder;
-import component.chart.BieuDoDuongJFreeChart;
+import component.chart.BieuDoCotGroup;
+import component.chart.DuLieuBieuDoCot;
 import dao.HoaDon_DAO;
 import dao.KhachHang_DAO;
 import dao.ThongKe_DAO;
@@ -62,7 +63,7 @@ public class TongQuanQuanLy_GUI extends JPanel implements ActionListener, MouseL
     
     // Panel chứa Biểu đồ
     private JPanel pnChartArea;
-    private BieuDoDuongJFreeChart bieuDoDuong;
+    private BieuDoCotGroup bieuDoCot;
     
     // DAOs
     private HoaDon_DAO hoaDonDAO;
@@ -156,16 +157,23 @@ public class TongQuanQuanLy_GUI extends JPanel implements ActionListener, MouseL
 
     
     /**
-     * Load dữ liệu cho biểu đồ đường - 5 đường: Doanh thu, Tiền nhập, Tiền trả, Tiền hủy, Lợi nhuận
+     * Load dữ liệu cho biểu đồ cột - 5 chỉ số: Doanh thu, Tiền nhập, Tiền trả, Tiền hủy, Lợi nhuận
      */
     private void loadChartData() {
         LocalDate today = LocalDate.now();
         int namHienTai = today.getYear();
         int thangHienTai = today.getMonthValue();
         
+        // Định nghĩa màu sắc cho 5 series
+        Color mauDoanhThu = new Color(54, 162, 235);   // Xanh dương
+        Color mauTienNhap = new Color(153, 102, 255);  // Tím
+        Color mauTienTra = new Color(255, 159, 64);    // Cam
+        Color mauTienHuy = new Color(255, 99, 132);    // Đỏ
+        Color mauLoiNhuan = new Color(75, 192, 192);   // Xanh lá
+        
         try {
-            // Load dữ liệu 6 tháng gần nhất
-            for (int i = 5; i >= 0; i--) {
+            // Load dữ liệu 3 tháng gần nhất
+            for (int i = 2; i >= 0; i--) {
                 int thang = thangHienTai - i;
                 int nam = namHienTai;
                 
@@ -184,15 +192,13 @@ public class TongQuanQuanLy_GUI extends JPanel implements ActionListener, MouseL
                 double tienHuy = phieuHuyDAO.tinhTongTienHuyTheoThang(thang, nam);
                 double loiNhuan = thongKeDAO.tinhLoiNhuanChinhXacTheoThang(thang, nam);
                 
-                // Thêm vào biểu đồ - 5 đường
-                bieuDoDuong.themDuLieu("Doanh thu", labelThang, doanhThu);
-                bieuDoDuong.themDuLieu("Tiền nhập", labelThang, tienNhap);
-                bieuDoDuong.themDuLieu("Tiền trả", labelThang, tienTra);
-                bieuDoDuong.themDuLieu("Tiền hủy", labelThang, tienHuy);
-                bieuDoDuong.themDuLieu("Lợi nhuận", labelThang, loiNhuan);
+                // Thêm vào biểu đồ - 5 cột với màu riêng
+                bieuDoCot.themDuLieu(new DuLieuBieuDoCot(labelThang, "Doanh thu", doanhThu, mauDoanhThu));
+                bieuDoCot.themDuLieu(new DuLieuBieuDoCot(labelThang, "Tiền nhập", tienNhap, mauTienNhap));
+                bieuDoCot.themDuLieu(new DuLieuBieuDoCot(labelThang, "Tiền trả", tienTra, mauTienTra));
+                bieuDoCot.themDuLieu(new DuLieuBieuDoCot(labelThang, "Tiền hủy", tienHuy, mauTienHuy));
+                bieuDoCot.themDuLieu(new DuLieuBieuDoCot(labelThang, "Lợi nhuận", loiNhuan, mauLoiNhuan));
             }
-            
-            bieuDoDuong.capNhatBieuDo();
             
         } catch (Exception e) {
             System.err.println("❌ Lỗi load dữ liệu biểu đồ: " + e.getMessage());
@@ -212,7 +218,7 @@ public class TongQuanQuanLy_GUI extends JPanel implements ActionListener, MouseL
         add(pnHeader, BorderLayout.NORTH);
         pnHeader.setLayout(new BorderLayout(0, 0));
         
-        JLabel lblTongQuan = new JLabel("Tổng Quan Bán Hàng");
+        JLabel lblTongQuan = new JLabel("Tổng Quan");
         lblTongQuan.setHorizontalAlignment(SwingConstants.CENTER);
         lblTongQuan.setForeground(new Color(0, 51, 102));
         lblTongQuan.setFont(new Font("Segoe UI", Font.BOLD, 36)); 
@@ -268,16 +274,19 @@ public class TongQuanQuanLy_GUI extends JPanel implements ActionListener, MouseL
         pnChartArea = new JPanel();
         pnChartArea.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(new Color(0, 51, 102)), 
-            "Biểu đồ Xu hướng Doanh Thu - Nhập - Trả - Hủy - Lợi Nhuận", 
+            "Biểu đồ Xu hướng 3 Tháng Gần Nhất", 
             TitledBorder.LEFT, TitledBorder.TOP, 
             new Font("Segoe UI", Font.BOLD, 18), mauChu
         ));
         pnChartArea.setBackground(Color.WHITE); 
         pnChartArea.setLayout(new BorderLayout());
         
-        // Tạo biểu đồ đường
-        bieuDoDuong = new BieuDoDuongJFreeChart();
-        pnChartArea.add(bieuDoDuong, BorderLayout.CENTER);
+        // Tạo biểu đồ cột nhóm
+        bieuDoCot = new BieuDoCotGroup();
+        bieuDoCot.setTieuDeBieuDo("So sánh Doanh thu - Nhập - Trả - Hủy - Lợi nhuận");
+        bieuDoCot.setTieuDeTrucX("Tháng");
+        bieuDoCot.setTieuDeTrucY("Số tiền (VNĐ)");
+        pnChartArea.add(bieuDoCot, BorderLayout.CENTER);
 
         pnChartArea.setPreferredSize(new Dimension(Integer.MAX_VALUE, 600)); 
         pnCenter.add(pnChartArea);
@@ -389,7 +398,7 @@ public class TongQuanQuanLy_GUI extends JPanel implements ActionListener, MouseL
      */
     public void refreshDashboard() {
         // Xóa dữ liệu biểu đồ cũ
-        bieuDoDuong.xoaDuLieu();
+        bieuDoCot.xoaToanBoDuLieu();
         
         // Load lại dữ liệu mới
         loadRealData();
