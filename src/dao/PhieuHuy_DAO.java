@@ -346,7 +346,7 @@ public class PhieuHuy_DAO {
 	}
 
 	// ============================================================
-	// ➕ Thêm phiếu huỷ + chi tiết (Transaction)
+	// ➕ Thêm phiếu huỷ + chi tiết (Transaction) + TRỪ TỒN KHO
 	// ============================================================
 	public boolean themPhieuHuy(PhieuHuy ph) {
 		connectDB.getInstance();
@@ -360,6 +360,9 @@ public class PhieuHuy_DAO {
 
 		// ✅ Thêm cột MaDonViTinh
 		String sqlCT = "INSERT INTO ChiTietPhieuHuy (MaPhieuHuy, MaLo, SoLuongHuy, LyDoChiTiet, DonGiaNhap, ThanhTien, MaDonViTinh, TrangThai) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+		// ✅ SQL trừ tồn kho
+		String sqlTruTon = "UPDATE LoSanPham SET SoLuongTon = SoLuongTon - ? WHERE MaLo = ?";
 
 		try {
 			con.setAutoCommit(false);
@@ -395,6 +398,16 @@ public class PhieuHuy_DAO {
 					psCT.addBatch();
 				}
 				psCT.executeBatch();
+			}
+
+			// 3️⃣ ✅ TRỪ TỒN KHO ngay khi tạo phiếu hủy
+			try (PreparedStatement psTon = con.prepareStatement(sqlTruTon)) {
+				for (ChiTietPhieuHuy ct : ph.getChiTietPhieuHuyList()) {
+					psTon.setInt(1, ct.getSoLuongHuy());
+					psTon.setString(2, ct.getLoSanPham().getMaLo());
+					psTon.addBatch();
+				}
+				psTon.executeBatch();
 			}
 
 			con.commit();

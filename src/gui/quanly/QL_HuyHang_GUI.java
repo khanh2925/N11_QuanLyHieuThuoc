@@ -636,6 +636,11 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy đã ở trạng thái đã hủy!!");
 			return;
 		}
+		// Không cho phép chuyển từ "Đã từ chối hủy" sang "Hủy hàng"
+		if (trangThai.trim().equals("Đã từ chối hủy")) {
+			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy đã bị từ chối, không thể chuyển sang trạng thái hủy hàng!");
+			return;
+		}
 		String maPH = modelPH.getValueAt(selectRowPH, 0).toString();
 		String maLo = modelCTPH.getValueAt(selectRowCT, 0).toString();
 
