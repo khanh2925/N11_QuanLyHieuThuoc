@@ -750,6 +750,10 @@ public class PhieuTra_DAO {
 			}
 
 			con.commit();
+
+			// ✅ Xóa cache sau khi cập nhật thành công
+			cacheAllPhieuTra = null;
+
 			return (maPhieuHuyDuocTao != null) ? "OK|" + maPhieuHuyDuocTao : "OK";
 
 		} catch (Exception e) {

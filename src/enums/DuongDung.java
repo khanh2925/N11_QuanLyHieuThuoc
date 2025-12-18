@@ -10,18 +10,19 @@ public enum DuongDung {
     DAT("Đặt"),
     DAN("Dán");
 
-    private final String moTa;
+    private final String tenDuongDung;
 
-    DuongDung(String moTa) {
-        this.moTa = moTa;
+    DuongDung(String tenDuongDung) {
+        this.tenDuongDung = tenDuongDung;
     }
 
-    public String getMoTa() {
-        return moTa;
+
+    public String getTenDuongDung() {
+        return tenDuongDung;
     }
 
     @Override
     public String toString() {
-        return moTa; // tiện cho comboBox hiển thị tiếng Việt
+        return tenDuongDung; // tiện cho comboBox hiển thị tiếng Việt
     }
 }

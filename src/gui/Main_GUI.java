@@ -11,8 +11,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import entity.NhanVien;
-import entity.Session;
-import gui.dialog.ThongTinCaNhan_Dialog;
 import gui.nhanvien.BanHang_GUI;
 import gui.nhanvien.HuyHangNhanVien_GUI;
 import gui.nhanvien.ThongKeNhanVien_GUI;
@@ -42,10 +40,9 @@ import gui.tracuu.TraCuuPhieuHuy_GUI;
 import gui.tracuu.TraCuuPhieuNhap_GUI;
 import gui.tracuu.TraCuuSanPham_GUI;
 import gui.tracuu.TraCuuLoSanPham_GUI;
+import gui.trogiup.*;
 
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.*;
 
@@ -179,8 +176,8 @@ public class Main_GUI extends JFrame {
 			addSubmenuButton("tracuu", "tracuubanggia", "Bảng giá", "/resources/images/icon_bang_gia.png",
 					new TraCuuBangGia_GUI());
 			addSubmenuButton("tracuu", "tracuulo", "Lô sản phẩm",
-					"/resources/images/icon_san_pham.png",
-					new TraCuuLoSanPham_GUI());
+			        "/resources/images/icon_san_pham.png",
+			        new TraCuuLoSanPham_GUI());
 
 			addMenuButton(menuScrollContent, "Quản lý phiếu nhập", "nhaphang", "/resources/images/icon_nhap_hang.png");
 			addMenuButton(menuScrollContent, "Quản lý xuất huỷ", "xuathuy", "/resources/images/icon_xuat_huy.png");
@@ -201,6 +198,12 @@ public class Main_GUI extends JFrame {
 			addMenuButton(menuScrollContent, "Quản lý khuyến mãi", "khuyenmai",
 					"/resources/images/icon_khuyen_mai.png");
 			addMenuButton(menuScrollContent, "Quản lý nhân viên", "nhanvien", "/resources/images/icon_nhan_vien.png");
+			addMenuButton(menuScrollContent, "Trợ giúp", "trogiup", "/resources/images/icon_tro_giup.png");
+						addSubmenuButton("trogiup", "gioithieu", "Giới thiệu", "/resources/images/icon_gioi_thieu.png",
+					() -> GioiThieu_GUI.moGioiThieu());
+						addSubmenuButton("trogiup", "huongdan", "Hướng dẫn", "/resources/images/icon_gioi_thieu.png",
+								new HuongDan_GUI(true)); // true = QL
+
 
 			menuScrollContent.add(Box.createVerticalGlue());
 		} else {
@@ -223,12 +226,17 @@ public class Main_GUI extends JFrame {
 			addSubmenuButton("tracuu", "tracuukhachhang", "Khách hàng", "/resources/images/icon_khach_hang.png",
 					new TraCuuKhachHang_GUI());
 			addSubmenuButton("tracuu", "tracuulo", "Lô sản phẩm",
-					"/resources/images/icon_san_pham.png",
-					new TraCuuLoSanPham_GUI());
+			        "/resources/images/icon_san_pham.png",
+			        new TraCuuLoSanPham_GUI());
 
 			addMenuButton(menuScrollContent, "Quản lý khách hàng", "khachhang",
 					"/resources/images/icon_khach_hang.png");
 			addMenuButton(menuScrollContent, "Thống kê cá nhân", "thongke", "/resources/images/icon_thong_ke.png");
+			addMenuButton(menuScrollContent, "Trợ giúp", "trogiup", "/resources/images/icon_tro_giup.png");
+						addSubmenuButton("trogiup", "gioithieu", "Giới thiệu", "/resources/images/icon_gioi_thieu.png",
+					() -> GioiThieu_GUI.moGioiThieu());
+						addSubmenuButton("trogiup", "huongdan", "Hướng dẫn", "/resources/images/icon_gioi_thieu.png",
+								new HuongDan_GUI(false)); // false = Nhân viên
 
 			menuScrollContent.add(Box.createVerticalGlue());
 		}
@@ -314,25 +322,6 @@ public class Main_GUI extends JFrame {
 		lblUserTop = new JLabel("Chưa đăng nhập");
 		lblUserTop.setFont(new Font("SansSerif", Font.BOLD, 14));
 		lblUserTop.setAlignmentX(Component.LEFT_ALIGNMENT);
-		lblUserTop.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		lblUserTop.setToolTipText("Click để xem/chỉnh sửa thông tin cá nhân");
-		lblUserTop.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				moThongTinCaNhan();
-			}
-
-			@Override
-			public void mouseEntered(MouseEvent e) {
-				lblUserTop.setText(
-						"<html><u>" + nvDangNhap.getMaNhanVien() + " - " + nvDangNhap.getTenNhanVien() + "</u></html>");
-			}
-
-			@Override
-			public void mouseExited(MouseEvent e) {
-				hienThongTinNhanVien();
-			}
-		});
 		bottomPanel.add(lblUserTop);
 		bottomPanel.add(Box.createVerticalStrut(8));
 
@@ -418,8 +407,8 @@ public class Main_GUI extends JFrame {
 				dashboardQL.refreshDashboard();
 			}
 			if (dashboardNV != null) {
-
-				dashboardNV.refreshDashboard();
+				
+				 dashboardNV.refreshDashboard();
 			}
 		}
 
@@ -700,23 +689,49 @@ public class Main_GUI extends JFrame {
 		// Sẽ gọi getHoTen() (xem mục #2)
 		lblUserTop.setText(nvDangNhap.getMaNhanVien() + " - " + nvDangNhap.getTenNhanVien());
 	}
+	
 
 	/**
-	 * Mở dialog thông tin cá nhân để xem/chỉnh sửa thông tin nhân viên đang đăng
-	 * nhập
+	 * Overload: Thêm nút submenu với hành động tùy chỉnh thay vì JPanel
 	 */
-	private void moThongTinCaNhan() {
-		if (nvDangNhap == null) {
-			JOptionPane.showMessageDialog(this, "Chưa đăng nhập!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-			return;
+	public void addSubmenuButton(String parentKey, String subKey, String text, String iconPath, Runnable action) {
+		JPanel subContainer = submenuContainers.get(parentKey);
+		if (subContainer == null) {
+			subContainer = createSubmenu(parentKey);
 		}
-		ThongTinCaNhan_Dialog dialog = new ThongTinCaNhan_Dialog(this, () -> {
-			// Callback: refresh thông tin sau khi cập nhật
-			// Lấy lại thông tin nhân viên từ Session (đã được cập nhật trong dialog)
-			nvDangNhap = Session.getInstance().getTaiKhoanDangNhap().getNhanVien();
-			hienThongTinNhanVien();
+
+		JButton btn = new JButton(text);
+		btn.setHorizontalAlignment(SwingConstants.LEFT);
+		btn.setPreferredSize(new Dimension(MENU_WIDTH, Math.max(36, MENU_BUTTON_HEIGHT - 16)));
+		btn.setMaximumSize(new Dimension(MENU_WIDTH, Math.max(36, MENU_BUTTON_HEIGHT - 16)));
+		btn.setFocusPainted(false);
+		btn.setContentAreaFilled(false);
+		btn.setBorder(new EmptyBorder(4, 24, 4, 8));
+
+		// Thêm icon
+		ImageIcon icon = null;
+		if (iconPath != null && !iconPath.isBlank()) {
+			URL url = getClass().getResource(iconPath);
+			if (url != null) {
+				icon = new ImageIcon(url);
+				Image scaledIcon = icon.getImage().getScaledInstance(MENU_ICON_WIDTH - 7, MENU_ICON_WIDTH - 7,
+						Image.SCALE_SMOOTH);
+				btn.setIcon(new ImageIcon(scaledIcon));
+			}
+		}
+
+		// Gắn action tùy chỉnh
+		btn.addActionListener(e -> {
+			if (action != null) {
+				action.run();
+			}
 		});
-		dialog.setVisible(true);
+
+		subContainer.add(btn);
+		menuContainers.put(subKey, btn);
+
+		menuPanel.revalidate();
+		menuPanel.repaint();
 	}
 
 }

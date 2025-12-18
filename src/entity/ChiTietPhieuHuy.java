@@ -15,8 +15,8 @@ public class ChiTietPhieuHuy {
 
     // ===== CONSTANTS =====
     public static final int CHO_DUYET = 1;
-    public static final int TU_CHOI = 3;
     public static final int HUY_HANG = 2;
+    public static final int TU_CHOI = 3;
 
     // ===== CONSTRUCTORS =====
     public ChiTietPhieuHuy() {}

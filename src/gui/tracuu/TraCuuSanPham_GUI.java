@@ -466,7 +466,7 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
 
     private void xuLyLamMoi() {
         txtTimThuoc.setText("");
-        PlaceholderSupport.addPlaceholder(txtTimThuoc, "Nhập tên thuốc, mã SP, số đăng ký...");
+        PlaceholderSupport.addPlaceholder(txtTimThuoc, "Nhập tên thuốc, mã SP, số đăng ký... (F1 / Ctrl+F)");
         cbLoai.setSelectedIndex(0);
         cbTrangThai.setSelectedIndex(0);
         
@@ -521,7 +521,7 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
             // --- SỬA ĐỔI 3: Hiển thị getTenLoai() lên bảng ---
             String loaiText = sp.getLoaiSanPham() != null ? sp.getLoaiSanPham().getTenLoai() : "";
             
-            String duongDungText = sp.getDuongDung() != null ? sp.getDuongDung().name() : ""; 
+            String duongDungText = sp.getDuongDung() != null ? sp.getDuongDung().getTenDuongDung() : "Không xác định"; 
             
             double giaBanGoc = sp.getGiaBan(); 
 

@@ -11,13 +11,22 @@ import java.util.List;
 
 public class PhieuHuy_DAO {
 
+	// CACHE LAYER
+	private static List<PhieuHuy> cacheAllPhieuHuy = null;
+
 	public PhieuHuy_DAO() {
 	}
 
 	// ============================================================
-	// 📜 Lấy tất cả phiếu huỷ (OPTIMIZED - dùng JOIN)
+	// 📜 Lấy tất cả phiếu huỷ (OPTIMIZED - dùng JOIN, CÓ CACHE)
 	// ============================================================
 	public List<PhieuHuy> layTatCaPhieuHuy() {
+		// 1. Kiểm tra cache
+		if (cacheAllPhieuHuy != null && !cacheAllPhieuHuy.isEmpty()) {
+			return new ArrayList<>(cacheAllPhieuHuy);
+		}
+
+		// 2. Nếu không có cache -> Query DB với JOIN
 		List<PhieuHuy> list = new ArrayList<>();
 		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
@@ -77,7 +86,7 @@ public class PhieuHuy_DAO {
 			// ❗ KHÔNG đóng connection (singleton)
 		}
 
-		// Sau khi đóng ResultSet, lấy chi tiết cho từng phiếu
+		// 2.2. Sau khi đóng ResultSet, lấy chi tiết cho từng phiếu
 		for (PhieuHuyTemp temp : tempList) {
 			PhieuHuy ph = new PhieuHuy(temp.maPhieuHuy, temp.ngayLapPhieu, temp.nv, temp.trangThai);
 			ph.setChiTietPhieuHuyList(layChiTietPhieuHuy(temp.maPhieuHuy));
@@ -85,7 +94,10 @@ public class PhieuHuy_DAO {
 			list.add(ph);
 		}
 
-		return list;
+		// 3. Lưu vào cache
+		cacheAllPhieuHuy = list;
+
+		return new ArrayList<>(list);
 	}
 
 	// Class tạm để lưu thông tin phiếu huỷ
@@ -334,7 +346,7 @@ public class PhieuHuy_DAO {
 	}
 
 	// ============================================================
-	// ➕ Thêm phiếu huỷ + chi tiết (Transaction)
+	// ➕ Thêm phiếu huỷ + chi tiết (Transaction) + TRỪ TỒN KHO
 	// ============================================================
 	public boolean themPhieuHuy(PhieuHuy ph) {
 		connectDB.getInstance();
@@ -348,6 +360,9 @@ public class PhieuHuy_DAO {
 
 		// ✅ Thêm cột MaDonViTinh
 		String sqlCT = "INSERT INTO ChiTietPhieuHuy (MaPhieuHuy, MaLo, SoLuongHuy, LyDoChiTiet, DonGiaNhap, ThanhTien, MaDonViTinh, TrangThai) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+		// ✅ SQL trừ tồn kho
+		String sqlTruTon = "UPDATE LoSanPham SET SoLuongTon = SoLuongTon - ? WHERE MaLo = ?";
 
 		try {
 			con.setAutoCommit(false);
@@ -385,7 +400,23 @@ public class PhieuHuy_DAO {
 				psCT.executeBatch();
 			}
 
+			// 3️⃣ ✅ TRỪ TỒN KHO ngay khi tạo phiếu hủy
+			try (PreparedStatement psTon = con.prepareStatement(sqlTruTon)) {
+				for (ChiTietPhieuHuy ct : ph.getChiTietPhieuHuyList()) {
+					psTon.setInt(1, ct.getSoLuongHuy());
+					psTon.setString(2, ct.getLoSanPham().getMaLo());
+					psTon.addBatch();
+				}
+				psTon.executeBatch();
+			}
+
 			con.commit();
+
+			// ✅ Update Cache: Thêm vào đầu danh sách
+			if (cacheAllPhieuHuy != null) {
+				cacheAllPhieuHuy.add(0, ph);
+			}
+
 			return true;
 
 		} catch (SQLException e) {

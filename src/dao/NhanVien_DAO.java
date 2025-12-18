@@ -102,7 +102,14 @@ public class NhanVien_DAO {
 			stmt.setInt(7, nv.getCaLam());
 			stmt.setBoolean(8, nv.isTrangThai());
 			stmt.setString(9, nv.getMaNhanVien());
-			return stmt.executeUpdate() > 0;
+			boolean success = stmt.executeUpdate() > 0;
+
+			// ✅ Xóa cache sau khi cập nhật thành công để load lại dữ liệu mới
+			if (success) {
+				cacheAllNhanVien = null;
+			}
+
+			return success;
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi cập nhật nhân viên: " + e.getMessage());
 		}
@@ -185,7 +192,14 @@ public class NhanVien_DAO {
 		try (PreparedStatement stmt = con.prepareStatement(sql)) {
 			stmt.setBoolean(1, trangThai);
 			stmt.setString(2, maNhanVien);
-			return stmt.executeUpdate() > 0;
+			boolean success = stmt.executeUpdate() > 0;
+
+			// ✅ Xóa cache sau khi cập nhật thành công
+			if (success) {
+				cacheAllNhanVien = null;
+			}
+
+			return success;
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi cập nhật trạng thái nhân viên: " + e.getMessage());
 		}

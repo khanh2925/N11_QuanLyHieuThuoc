@@ -343,7 +343,7 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
 
         // F3: Xem hóa đơn
         inputMap.put(KeyStroke.getKeyStroke("F3"), "xemHoaDon");
-        actionMap.put("xemHoaDonF3", new AbstractAction() {
+        actionMap.put("xemHoaDon", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 xuLyXemHoaDon();
@@ -386,7 +386,7 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
     private void xuLyLamMoi() {
     	allHoaDon = hoaDonDao.layTatCaHoaDon();
         txtTimKiem.setText("");
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã hóa đơn, SĐT khách hàng");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã hóa đơn, SĐT khách hàng (F1 / Ctrl+F)");
         
         // --- CHỌN NGÀY MẶC ĐỊNH ---
         Calendar cal = Calendar.getInstance();

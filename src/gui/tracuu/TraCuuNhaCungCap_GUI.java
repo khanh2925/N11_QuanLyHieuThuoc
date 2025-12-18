@@ -155,7 +155,7 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 						"<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
 						"</center>" +
 						"</html>");
-		btnTimKiem.setBounds(830, 22, 130, 50);
+		btnTimKiem.setBounds(1135, 22, 130, 50);
 		btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnTimKiem.setToolTipText(
 				"<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã, tên và trạng thái</html>");
@@ -168,7 +168,7 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 						"<span style='font-size:10px; color:#888888;'>(F5)</span>" +
 						"</center>" +
 						"</html>");
-		btnLamMoi.setBounds(970, 22, 130, 50);
+		btnLamMoi.setBounds(1275, 22, 130, 50);
 		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
 		pnHeader.add(btnLamMoi);
@@ -181,7 +181,7 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 						"<span style='font-size:10px; color:#888888;'>(Ctrl+E)</span>" +
 						"</center>" +
 						"</html>");
-		btnXuatExcel.setBounds(1110, 22, 150, 50);
+		btnXuatExcel.setBounds(1415, 22, 180, 50);
 		btnXuatExcel.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnXuatExcel.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất dữ liệu ra file Excel</html>");
 		pnHeader.add(btnXuatExcel);
