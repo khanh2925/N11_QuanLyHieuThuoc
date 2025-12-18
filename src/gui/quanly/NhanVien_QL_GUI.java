@@ -8,7 +8,7 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
+
 import java.util.List;
 import java.util.ArrayList;
 
@@ -16,6 +16,8 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.*;
+
+import com.toedter.calendar.JDateChooser;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -42,7 +44,8 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 	private JSplitPane splitPane;
 
 	// Form nhập liệu
-	private JTextField txtMaNV, txtTenNV, txtSDT, txtDiaChi, txtNgaySinh;
+	private JTextField txtMaNV, txtTenNV, txtSDT, txtDiaChi;
+	private JDateChooser dateNgaySinh;
 	private JComboBox<String> cboGioiTinh, cboChucVu, cboCaLam, cboTrangThai;
 	private JLabel lblHinhAnh;
 	private JButton btnChonAnh;
@@ -215,9 +218,11 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		p.add(txtTenNV);
 
 		p.add(createLabel("Ngày sinh:", xCol2, yStart));
-		txtNgaySinh = createTextField(xCol2 + wLbl, yStart, wTxt);
-		PlaceholderSupport.addPlaceholder(txtNgaySinh, "dd/MM/yyyy");
-		p.add(txtNgaySinh);
+		dateNgaySinh = new JDateChooser();
+		dateNgaySinh.setDateFormatString("dd/MM/yyyy");
+		dateNgaySinh.setFont(FONT_TEXT);
+		dateNgaySinh.setBounds(xCol2 + wLbl, yStart, wTxt, hText);
+		p.add(dateNgaySinh);
 
 		// ===== HÀNG 3 =====
 		yStart += hText + gap;
@@ -509,8 +514,11 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		txtMaNV.setText(nv.getMaNhanVien());
 		txtTenNV.setText(nv.getTenNhanVien());
 		cboGioiTinh.setSelectedItem(nv.isGioiTinh() ? "Nam" : "Nữ");
-		txtNgaySinh.setText(formatNgay(nv.getNgaySinh()));
-		txtNgaySinh.setForeground(Color.BLACK);
+		if (nv.getNgaySinh() != null) {
+			dateNgaySinh.setDate(java.sql.Date.valueOf(nv.getNgaySinh()));
+		} else {
+			dateNgaySinh.setDate(null);
+		}
 		txtSDT.setText(nv.getSoDienThoai());
 		txtDiaChi.setText(nv.getDiaChi());
 		cboChucVu.setSelectedItem(nv.isQuanLy() ? "Quản lý" : "Nhân viên");
@@ -660,23 +668,19 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		}
 
 		// 3. Ngày sinh
-		String strNgaySinh = txtNgaySinh.getText().trim();
-		if (strNgaySinh.isEmpty()) {
-			showErrorAndFocus(txtNgaySinh, "Ngày sinh không được bỏ trống!", JOptionPane.WARNING_MESSAGE);
+		if (dateNgaySinh.getDate() == null) {
+			JOptionPane.showMessageDialog(this, "Ngày sinh không được bỏ trống!", "Thông báo",
+					JOptionPane.WARNING_MESSAGE);
+			dateNgaySinh.requestFocus();
 			return null;
 		}
-
-		LocalDate ngaySinh;
-		try {
-			ngaySinh = LocalDate.parse(strNgaySinh, dfDate);
-		} catch (DateTimeParseException e) {
-			showErrorAndFocus(txtNgaySinh, "Ngày sinh không đúng định dạng dd/MM/yyyy!", JOptionPane.ERROR_MESSAGE);
-			return null;
-		}
+		LocalDate ngaySinh = dateNgaySinh.getDate().toInstant()
+				.atZone(java.time.ZoneId.systemDefault()).toLocalDate();
 
 		int age = Period.between(ngaySinh, LocalDate.now()).getYears();
 		if (age < 18) {
-			showErrorAndFocus(txtNgaySinh, "Nhân viên phải đủ 18 tuổi!", JOptionPane.WARNING_MESSAGE);
+			JOptionPane.showMessageDialog(this, "Nhân viên phải đủ 18 tuổi!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+			dateNgaySinh.requestFocus();
 			return null;
 		}
 
@@ -733,7 +737,7 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		txtMaNV.setEditable(false);
 
 		txtTenNV.setText("");
-		txtNgaySinh.setText("");
+		dateNgaySinh.setDate(null);
 		txtSDT.setText("");
 		txtDiaChi.setText("");
 		cboGioiTinh.setSelectedIndex(0);
