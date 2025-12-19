@@ -746,13 +746,75 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
                             continue; // Bỏ qua dòng trống
                         }
 
+                        // ===== VALIDATION DỮ LIỆU ĐẦU VÀO =====
                         if (maSP.isEmpty() || tenDVT_Excel.isEmpty() || hsd == null) {
                             throw new Exception("Mã SP, HSD, hoặc Tên ĐVT không được rỗng.");
                         }
 
-                        SanPham sp = sanPhamDAO.laySanPhamTheoMa(maSP);
+                        // Validate Mã SP (regex: SP-xxxxxx)
+                        if (!maSP.matches("^SP-\\d{6}$")) {
+                            throw new Exception("Mã SP không hợp lệ. Định dạng: SP-xxxxxx (VD: SP-000001)");
+                        }
+
+                        // Validate số lượng nhập phải > 0 (theo ChiTietPhieuNhap)
+                        if (soLuong <= 0) {
+                            throw new Exception("Số lượng nhập phải lớn hơn 0. Giá trị hiện tại: " + soLuong);
+                        }
+
+                        // Validate đơn giá nhập phải > 0 (theo ChiTietPhieuNhap)
+                        if (donGia_Excel <= 0) {
+                            throw new Exception("Đơn giá nhập phải lớn hơn 0. Giá trị hiện tại: " + donGia_Excel);
+                        }
+
+                        final SanPham sp = sanPhamDAO.laySanPhamTheoMa(maSP);
                         if (sp == null) {
                             throw new Exception("Không tìm thấy Mã SP: " + maSP);
+                        }
+
+                        // Validate hạn sử dụng (sau khi đã lấy được sản phẩm để hiển thị tên)
+                        if (hsd.isBefore(LocalDate.now().minusYears(50))) {
+                            throw new Exception(String.format("Sản phẩm '%s' (Mã: %s): HSD không hợp lệ (quá xa trong quá khứ). Ngày: %s", 
+                                sp.getTenSanPham(), maSP, hsd.format(fmtDate)));
+                        }
+                        
+                        // Kiểm tra HSD đã hết hạn
+                        if (hsd.isBefore(LocalDate.now())) {
+                            throw new Exception(String.format("Sản phẩm '%s' (Mã: %s): Hạn sử dụng đã hết hạn. Ngày: %s", 
+                                sp.getTenSanPham(), maSP, hsd.format(fmtDate)));
+                        }
+                        
+                        // Cảnh báo nếu HSD sắp hết hạn (trong vòng 3 tháng) - HỎI NGƯỜI DÙNG
+                        if (hsd.isBefore(LocalDate.now().plusMonths(3))) {
+                            final LocalDate finalHsd = hsd;
+                            final String finalMaSP = maSP;
+                            final int finalSoLuong = soLuong;
+                            final double finalDonGia = donGia_Excel;
+                            final String finalTenDVT = tenDVT_Excel;
+                            
+                            // Hiển thị dialog xác nhận trên EDT thread
+                            final boolean[] shouldContinue = {false};
+                            SwingUtilities.invokeAndWait(() -> {
+                                int option = JOptionPane.showConfirmDialog(
+                                    QuanLyPhieuNhap_GUI.this,
+                                    String.format("⚠️ CẢNH BÁO: Sản phẩm sắp hết hạn!\n\n" +
+                                        "Sản phẩm: %s (Mã: %s)\n" +
+                                        "Hạn sử dụng: %s\n" +
+                                        "Còn lại: %d ngày\n\n" +
+                                        "Bạn có chắc chắn muốn nhập sản phẩm này không?",
+                                        sp.getTenSanPham(), finalMaSP, finalHsd.format(fmtDate),
+                                        java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), finalHsd)),
+                                    "Cảnh báo HSD sắp hết hạn",
+                                    JOptionPane.YES_NO_OPTION,
+                                    JOptionPane.WARNING_MESSAGE);
+                                shouldContinue[0] = (option == JOptionPane.YES_OPTION);
+                            });
+                            
+                            if (!shouldContinue[0]) {
+                                // Người dùng chọn Không → Bỏ qua lô này, không thêm vào, không tăng fail count
+                                errorMessages.append(String.format("⏭️ Đã bỏ qua: Sản phẩm '%s' (Mã: %s) có HSD sắp hết hạn (%s)\n",
+                                    sp.getTenSanPham(), finalMaSP, finalHsd.format(fmtDate)));
+                                continue; // Skip lô này
+                            }
                         }
 
                         QuyCachDongGoi qc_goc = quyCachDAO.timQuyCachGocTheoSanPham(sp.getMaSanPham());

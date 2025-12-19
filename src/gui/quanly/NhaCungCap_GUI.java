@@ -183,7 +183,7 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         pnHeader.setBackground(new Color(0xE3F2F5));
 
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Nhập mã hoặc số điện thoại NCC...");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm NCC theo mã hoặc SĐT... (F1 / Ctrl+F)");
         
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
         txtTimKiem.setBounds(25, 17, 500, 60);
@@ -196,7 +196,7 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         btnTimKiem = new PillButton(
                 "<html>" +
                         "<center>" +
-                            "Tìm Kiếm<br>" +
+                            "TÌM KIẾM<br>" +
                             "<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
                         "</center>" +
                     "</html>"
@@ -329,7 +329,7 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         btnDoiTrangThai = new PillButton(
                 "<html>" +
                     "<center>" +
-                        "NGỪNG HT<br>" +
+                        "ĐỔI TT<br>" +
                         "<span style='font-size:10px; color:#888888;'>(Ctrl+D)</span>" +
                     "</center>" +
                 "</html>"
@@ -463,6 +463,8 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         for (NhaCungCap ncc : list) {
             themDongVaoBang(ncc);
         }
+        // Thông báo cho bảng rằng dữ liệu đã thay đổi
+        modelNhaCungCap.fireTableDataChanged();
         // Đảm bảo bảng được vẽ lại
         tblNhaCungCap.repaint();
         tblNhaCungCap.revalidate();

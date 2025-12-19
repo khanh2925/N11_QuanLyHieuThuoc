@@ -330,8 +330,39 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
                     throw new Exception("Vui lòng chọn Hạn Sử Dụng.");
                 }
                 LocalDate hsd = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                if (hsd.isBefore(LocalDate.now().plusDays(30))) {
-                    throw new Exception("Hạn sử dụng phải lớn hơn 30 ngày kể từ hôm nay.");
+                
+                // Kiểm tra HSD đã hết hạn
+                if (hsd.isBefore(LocalDate.now())) {
+                    String tenSP = sanPham.getTenSanPham();
+                    String maSP = sanPham.getMaSanPham();
+                    String ngayHSD = hsd.format(fmtDate);
+                    JOptionPane.showMessageDialog(this,
+                        String.format("Sản phẩm '%s' (Mã: %s) có HSD %s đã hết hạn!\nKhông thể nhập lô này.",
+                            tenSP, maSP, ngayHSD),
+                        "Lỗi - HSD Hết Hạn",
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                // Cảnh báo nếu HSD dưới 3 tháng
+                if (hsd.isBefore(LocalDate.now().plusMonths(3))) {
+                    String tenSP = sanPham.getTenSanPham();
+                    String maSP = sanPham.getMaSanPham();
+                    String ngayHSD = hsd.format(fmtDate);
+                    long soNgayConLai = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), hsd);
+                    
+                    int choice = JOptionPane.showConfirmDialog(this,
+                        String.format("⚠ Sản phẩm '%s' (Mã: %s)\n" +
+                                      "Hạn sử dụng: %s (còn %d ngày)\n\n" +
+                                      "HSD sắp hết (dưới 3 tháng). Bạn có chắc muốn nhập không?",
+                            tenSP, maSP, ngayHSD, soNgayConLai),
+                        "Cảnh báo - HSD Gần Hết",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE);
+                    
+                    if (choice != JOptionPane.YES_OPTION) {
+                        return; // Người dùng chọn NO → không lưu
+                    }
                 }
 
                 QuyCachDongGoi qcDaChon = (QuyCachDongGoi) cmbQuyCachMoi.getSelectedItem();
