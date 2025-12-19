@@ -2,6 +2,7 @@ package gui.nhanvien;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -20,7 +21,7 @@ import javax.swing.ActionMap;
 import javax.swing.JComponent;
 import java.awt.KeyboardFocusManager;
 
-import component.button.PillButton;
+import component.button.TaoButtonNhanh;
 import component.input.TaoJtextNhanh;
 import component.label.TaoLabelNhanh;
 import dao.ChiTietHoaDon_DAO;
@@ -50,9 +51,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.*;
+import java.awt.Cursor;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
@@ -74,8 +75,8 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 	private JTextField txtNguoiBan;
 	private JTextField txtMaHoaDon;
 	private JTextArea txtGhiChuGiamGia;
-	private PillButton btnTraHang;
-	private PillButton btnHuy;
+	private JButton btnTraHang;
+	private JButton btnHuy;
 
 	private final HoaDon_DAO hoaDonDAO;
 	private final ChiTietHoaDon_DAO cthdDAO;
@@ -256,24 +257,45 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 		pnRight.add(txtGhiChuGiamGia);
 		pnRight.add(Box.createVerticalStrut(20));
 
-		// ==== Nút ====
-		btnTraHang = new PillButton("<html><center>Trả hàng<br>(Ctrl+Enter)</center></html>");
-		btnTraHang.setMaximumSize(new Dimension(140, 50));
-		btnTraHang.setPreferredSize(new Dimension(140, 50));
+		// ==== NÚT TRẢ HÀNG (GIỐNG BÁN HÀNG) ====
+		btnTraHang = TaoButtonNhanh.banHang();
+		btnTraHang.setText(
+				"<html>" +
+						"<center>" +
+						"TRẢ HÀNG<br>" +
+						"<span style='font-size:10px; color:#888888;'>(Ctrl + Enter)</span>" +
+						"</center>" +
+						"</html>");
+		btnTraHang.setAlignmentX(Component.CENTER_ALIGNMENT);
 		btnTraHang.setToolTipText("Xác nhận trả hàng (Ctrl+Enter)");
+		pnRight.add(btnTraHang);
 
-		btnHuy = new PillButton("<html><center>Huỷ bỏ<br>(F4)</center></html>");
-		btnHuy.setMaximumSize(new Dimension(140, 50));
-		btnHuy.setPreferredSize(new Dimension(140, 50));
-		btnHuy.setToolTipText("Huỷ bỏ và làm mới (F4)");
+		pnRight.add(Box.createVerticalStrut(8));
 
-		JPanel pnBtn = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
-		pnBtn.setOpaque(false);
-		pnBtn.add(btnTraHang);
-		pnBtn.add(btnHuy);
+		// ==== LINK LÀM MỚI (NHẸ NHÀNG - GIỐNG BÁN HÀNG) ====
+		btnHuy = new JButton("Làm mới (F4)");
+		btnHuy.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		btnHuy.setForeground(new Color(120, 120, 120)); // Màu xám nhẹ
+		btnHuy.setBackground(new Color(250, 250, 250)); // Nền xám rất nhạt
+		btnHuy.setFocusPainted(false);
+		btnHuy.setBorder(null);
+		btnHuy.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnHuy.setMaximumSize(new Dimension(200, 30));
+		btnHuy.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-		pnRight.add(pnBtn);
-		pnRight.add(Box.createVerticalStrut(15));
+		// Hover effect nhẹ
+		btnHuy.addMouseListener(new java.awt.event.MouseAdapter() {
+			public void mouseEntered(java.awt.event.MouseEvent evt) {
+				btnHuy.setForeground(new Color(220, 53, 69)); // Đỏ khi hover
+				btnHuy.setBackground(new Color(255, 245, 245));
+			}
+
+			public void mouseExited(java.awt.event.MouseEvent evt) {
+				btnHuy.setForeground(new Color(120, 120, 120));
+				btnHuy.setBackground(new Color(250, 250, 250));
+			}
+		});
+		pnRight.add(btnHuy);
 
 		txtTimKH.addActionListener(this);
 		btnTraHang.addActionListener(this);

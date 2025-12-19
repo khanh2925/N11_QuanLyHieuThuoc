@@ -395,15 +395,12 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
                     hinhThucHienThi = "Giảm %";
                 } else if (km.getHinhThuc() == HinhThucKM.GIAM_GIA_TIEN) {
                     hinhThucHienThi = "Giảm tiền";
-                } else if (km.getHinhThuc() == HinhThucKM.TANG_THEM) {
-                    hinhThucHienThi = "Tặng quà";
-                }
+                } 
             }
 
             // Lọc theo hình thức
             if (locHinhThuc.equals("Giảm tiền") && km.getHinhThuc() != HinhThucKM.GIAM_GIA_TIEN) continue;
             if (locHinhThuc.equals("Giảm %") && km.getHinhThuc() != HinhThucKM.GIAM_GIA_PHAN_TRAM) continue;
-            if (locHinhThuc.equals("Tặng quà") && km.getHinhThuc() != HinhThucKM.TANG_THEM) continue;
 
             LocalDate now = LocalDate.now();
             String trangThaiHienThi;

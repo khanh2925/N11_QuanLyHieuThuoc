@@ -6,6 +6,7 @@ import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DecimalFormat;
@@ -38,6 +39,7 @@ import javax.swing.table.*;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -174,7 +176,7 @@ public class TraCuuNhanVien_GUI extends JPanel {
 		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
 		pnHeader.add(btnLamMoi);
 
-		// Nút Xuất Excel
+		// Nút Xuất Excel (Gộp cả 2 chức năng: Danh sách + Chi tiết)
 		btnXuatExcel = new PillButton(
 				"<html>" +
 						"<center>" +
@@ -183,8 +185,8 @@ public class TraCuuNhanVien_GUI extends JPanel {
 						"</center>" +
 						"</html>");
 		btnXuatExcel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnXuatExcel.setBounds(1415, 22, 180, 50);
-		btnXuatExcel.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất dữ liệu ra file Excel</html>");
+		btnXuatExcel.setBounds(1420, 22, 180, 50);
+		btnXuatExcel.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất danh sách và lịch sử chi tiết ra Excel</html>");
 		pnHeader.add(btnXuatExcel);
 	}
 
@@ -224,14 +226,13 @@ public class TraCuuNhanVien_GUI extends JPanel {
 
 		tblNhanVien = setupTable(modelNhanVien);
 		
-		// Căn lề các cột
+		// Căn chỉnh dữ liệu
 		DefaultTableCellRenderer center = new DefaultTableCellRenderer();
 		center.setHorizontalAlignment(SwingConstants.CENTER);
 		
-		// Căn giữa các cột: STT, Mã NV, Giới tính, Ngày sinh, SĐT, Chức vụ, Ca, Trạng thái
 		tblNhanVien.getColumnModel().getColumn(0).setCellRenderer(center); // STT
 		tblNhanVien.getColumnModel().getColumn(1).setCellRenderer(center); // Mã NV
-		// Cột 2 (Họ tên) để mặc định căn trái
+		// Cột 2 (Họ tên) để mặc định LEFT - văn bản
 		tblNhanVien.getColumnModel().getColumn(3).setCellRenderer(center); // Giới tính
 		tblNhanVien.getColumnModel().getColumn(4).setCellRenderer(center); // Ngày sinh
 		tblNhanVien.getColumnModel().getColumn(5).setCellRenderer(center); // SĐT
@@ -276,7 +277,7 @@ public class TraCuuNhanVien_GUI extends JPanel {
 
 		tblLichSuBan = setupTable(modelBan);
 		
-		// Căn lề cho bảng bán hàng
+		// Căn chỉnh dữ liệu
 		DefaultTableCellRenderer center = new DefaultTableCellRenderer();
 		center.setHorizontalAlignment(SwingConstants.CENTER);
 		DefaultTableCellRenderer right = new DefaultTableCellRenderer();
@@ -285,8 +286,8 @@ public class TraCuuNhanVien_GUI extends JPanel {
 		tblLichSuBan.getColumnModel().getColumn(0).setCellRenderer(center); // STT
 		tblLichSuBan.getColumnModel().getColumn(1).setCellRenderer(center); // Mã hóa đơn
 		tblLichSuBan.getColumnModel().getColumn(2).setCellRenderer(center); // Ngày lập
-		// Cột 3 (Khách hàng) để mặc định
-		tblLichSuBan.getColumnModel().getColumn(4).setCellRenderer(right); // Tổng tiền
+		// Cột 3 (Khách hàng) để mặc định LEFT - văn bản
+		tblLichSuBan.getColumnModel().getColumn(4).setCellRenderer(right);  // Tổng tiền
 		
 		tabChiTiet.add("Lịch sử bán hàng", new JScrollPane(tblLichSuBan));
 		
@@ -295,12 +296,12 @@ public class TraCuuNhanVien_GUI extends JPanel {
 
 		tblLichSuTra = setupTable(modelTra);
 		
-		// Căn lề cho bảng trả hàng
+		// Căn chỉnh dữ liệu
 		tblLichSuTra.getColumnModel().getColumn(0).setCellRenderer(center); // STT
 		tblLichSuTra.getColumnModel().getColumn(1).setCellRenderer(center); // Mã phiếu trả
 		tblLichSuTra.getColumnModel().getColumn(2).setCellRenderer(center); // Ngày lập
-		// Cột 3 (Khách hàng) để mặc định
-		tblLichSuTra.getColumnModel().getColumn(4).setCellRenderer(right); // Tổng tiền
+		// Cột 3 (Khách hàng) để mặc định LEFT - văn bản
+		tblLichSuTra.getColumnModel().getColumn(4).setCellRenderer(right);  // Tổng tiền
 		tblLichSuTra.getColumnModel().getColumn(5).setCellRenderer(center); // Trạng thái
 
 		tabChiTiet.add("Lịch sử trả hàng", new JScrollPane(tblLichSuTra));
@@ -310,13 +311,13 @@ public class TraCuuNhanVien_GUI extends JPanel {
 
 		tblLichSuHuy = setupTable(modelHuy);
 		
-		// Căn lề cho bảng hủy hàng
+		// Căn chỉnh dữ liệu
 		tblLichSuHuy.getColumnModel().getColumn(0).setCellRenderer(center); // STT
 		tblLichSuHuy.getColumnModel().getColumn(1).setCellRenderer(center); // Mã phiếu hủy
 		tblLichSuHuy.getColumnModel().getColumn(2).setCellRenderer(center); // Ngày lập
-		// Cột 3 (Nhân viên lập) để mặc định
+		// Cột 3 (Nhân viên lập) để mặc định LEFT - văn bản
 		tblLichSuHuy.getColumnModel().getColumn(4).setCellRenderer(center); // Trạng thái
-		tblLichSuHuy.getColumnModel().getColumn(5).setCellRenderer(right); // Tổng tiền
+		tblLichSuHuy.getColumnModel().getColumn(5).setCellRenderer(right);  // Tổng tiền
 
 		tabChiTiet.add("Lịch sử hủy hàng", new JScrollPane(tblLichSuHuy));
 	}
@@ -378,7 +379,7 @@ public class TraCuuNhanVien_GUI extends JPanel {
 		// cbTrangThai.addActionListener(e -> locTheoBoLoc());
 
 		btnLamMoi.addActionListener(e -> xuLyLamMoi());
-		btnXuatExcel.addActionListener(e -> xuatExcel());
+		btnXuatExcel.addActionListener(e -> xuatExcelDayDu());
 		// Khi chọn 1 nhân viên → load lịch sử
 		tblNhanVien.getSelectionModel().addListSelectionListener(e -> {
 			if (!e.getValueIsAdjusting()) {
@@ -426,12 +427,12 @@ public class TraCuuNhanVien_GUI extends JPanel {
 			}
 		});
 
-		// Ctrl+E: Xuất Excel
+		// Ctrl+E: Xuất Excel đầy đủ (Danh sách + Chi tiết)
 		inputMap.put(KeyStroke.getKeyStroke("control E"), "xuatExcel");
 		actionMap.put("xuatExcel", new AbstractAction() {
 			@Override
-			public void actionPerformed(java.awt.event.ActionEvent e) {
-				xuatExcel();
+			public void actionPerformed(ActionEvent e) {
+				xuatExcelDayDu();
 			}
 		});
 	}
@@ -653,13 +654,54 @@ public class TraCuuNhanVien_GUI extends JPanel {
 	}
 
 	/**
-	 * Xuất dữ liệu ra file Excel
+	 * Xuất Excel đầy đủ: Danh sách nhân viên + Lịch sử chi tiết (nếu có chọn)
+	 */
+	private void xuatExcelDayDu() {
+		// Thực hiện xuất danh sách trước
+		xuatExcel();
+		
+		int selectedRow = tblNhanVien.getSelectedRow();
+		if (selectedRow != -1) {
+			// Kiểm tra có dữ liệu trong các tab không
+			if (modelBan.getRowCount() > 0 || modelTra.getRowCount() > 0 || modelHuy.getRowCount() > 0) {
+				int choice = JOptionPane.showConfirmDialog(this,
+						"Bạn có muốn xuất thêm lịch sử chi tiết của nhân viên đang chọn không?",
+						"Xuất lịch sử chi tiết",
+						JOptionPane.YES_NO_OPTION,
+						JOptionPane.QUESTION_MESSAGE);
+				if (choice == JOptionPane.YES_OPTION) {
+					xuatExcelChiTiet();
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Xuất dữ liệu ra file Excel (Xuất theo dòng được chọn hoặc toàn bộ nếu không chọn)
 	 */
 	private void xuatExcel() {
 		if (modelNhanVien.getRowCount() == 0) {
 			JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất!",
 					"Thông báo", JOptionPane.WARNING_MESSAGE);
 			return;
+		}
+
+		// Lấy danh sách dòng được chọn
+		int[] selectedRows = tblNhanVien.getSelectedRows();
+		int[] rowsToExport;
+		String thongTinXuat;
+		
+		if (selectedRows.length > 0) {
+			// Có chọn dòng → xuất các dòng đã chọn
+			rowsToExport = selectedRows;
+			thongTinXuat = "Số lượng: " + selectedRows.length + " nhân viên được chọn";
+		} else {
+			// Không chọn dòng nào → xuất toàn bộ
+			rowsToExport = new int[modelNhanVien.getRowCount()];
+			for (int i = 0; i < rowsToExport.length; i++) {
+				rowsToExport[i] = i;
+			}
+			thongTinXuat = "Tổng số: " + rowsToExport.length + " nhân viên";
 		}
 
 		try {
@@ -697,24 +739,28 @@ public class TraCuuNhanVien_GUI extends JPanel {
 				titleStyle.setFont(titleFont);
 				titleCell.setCellStyle(titleStyle);
 
-				// Thông tin ngày xuất
+				// Thông tin ngày xuất và số lượng
 				Row periodRow = sheet.createRow(1);
 				periodRow.createCell(0).setCellValue(
 						"Ngày xuất: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+				
+				Row infoRow = sheet.createRow(2);
+				infoRow.createCell(0).setCellValue(thongTinXuat);
 
 				// Header row
-				Row headerRow = sheet.createRow(3);
+				Row headerRow = sheet.createRow(4);
 				for (int i = 0; i < modelNhanVien.getColumnCount(); i++) {
 					Cell cell = headerRow.createCell(i);
 					cell.setCellValue(modelNhanVien.getColumnName(i));
 					cell.setCellStyle(headerStyle);
 				}
 
-				// Data rows
-				for (int row = 0; row < modelNhanVien.getRowCount(); row++) {
-					Row dataRow = sheet.createRow(row + 4);
+				// Data rows - chỉ xuất các dòng được chọn hoặc toàn bộ
+				int excelRowIndex = 5;
+				for (int tableRow : rowsToExport) {
+					Row dataRow = sheet.createRow(excelRowIndex++);
 					for (int col = 0; col < modelNhanVien.getColumnCount(); col++) {
-						Object value = modelNhanVien.getValueAt(row, col);
+						Object value = modelNhanVien.getValueAt(tableRow, col);
 						dataRow.createCell(col).setCellValue(value != null ? value.toString() : "");
 					}
 				}
@@ -731,7 +777,211 @@ public class TraCuuNhanVien_GUI extends JPanel {
 				workbook.close();
 
 				JOptionPane.showMessageDialog(this,
-						"Xuất Excel thành công!\nFile: " + file.getAbsolutePath(),
+						"Xuất Excel thành công!\n" + thongTinXuat + "\nFile: " + file.getAbsolutePath(),
+						"Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+				// Mở file
+				Desktop.getDesktop().open(file);
+			}
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, "Lỗi xuất Excel: " + e.getMessage(),
+					"Lỗi", JOptionPane.ERROR_MESSAGE);
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Xuất chi tiết lịch sử (Bán, Trả, Hủy) của nhân viên được chọn ra Excel
+	 */
+	private void xuatExcelChiTiet() {
+		int selectedRow = tblNhanVien.getSelectedRow();
+		if (selectedRow == -1) {
+			JOptionPane.showMessageDialog(this, 
+					"Vui lòng chọn một nhân viên để xuất lịch sử chi tiết!",
+					"Thông báo", JOptionPane.WARNING_MESSAGE);
+			return;
+		}
+
+		// Kiểm tra có dữ liệu trong các tab không
+		if (modelBan.getRowCount() == 0 && modelTra.getRowCount() == 0 && modelHuy.getRowCount() == 0) {
+			JOptionPane.showMessageDialog(this, 
+					"Nhân viên này chưa có lịch sử bán/trả/hủy hàng!",
+					"Thông báo", JOptionPane.WARNING_MESSAGE);
+			return;
+		}
+
+		String maNV = tblNhanVien.getValueAt(selectedRow, 1).toString();
+		String tenNV = tblNhanVien.getValueAt(selectedRow, 2).toString();
+
+		try {
+			JFileChooser fileChooser = new JFileChooser();
+			fileChooser.setDialogTitle("Chọn nơi lưu file Excel");
+			fileChooser.setSelectedFile(new File("LichSuNhanVien_" + maNV + ".xlsx"));
+			fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files", "xlsx"));
+
+			if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+				File file = fileChooser.getSelectedFile();
+				if (!file.getName().endsWith(".xlsx")) {
+					file = new File(file.getAbsolutePath() + ".xlsx");
+				}
+
+				XSSFWorkbook workbook = new XSSFWorkbook();
+
+				// Style cho header
+				CellStyle headerStyle = workbook.createCellStyle();
+				XSSFFont headerFont = workbook.createFont();
+				headerFont.setBold(true);
+				headerFont.setColor(IndexedColors.WHITE.getIndex());
+				headerStyle.setFont(headerFont);
+				headerStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+				headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+				headerStyle.setAlignment(HorizontalAlignment.CENTER);
+
+				// Style cho tiêu đề
+				CellStyle titleStyle = workbook.createCellStyle();
+				XSSFFont titleFont = workbook.createFont();
+				titleFont.setBold(true);
+				titleFont.setFontHeightInPoints((short) 16);
+				titleStyle.setFont(titleFont);
+
+				// ===== SHEET 1: LỊCH SỬ BÁN HÀNG =====
+				if (modelBan.getRowCount() > 0) {
+					Sheet sheetBan = workbook.createSheet("Lịch sử bán hàng");
+
+					// Tiêu đề
+					Row titleRow = sheetBan.createRow(0);
+					Cell titleCell = titleRow.createCell(0);
+					titleCell.setCellValue("LỊCH SỬ BÁN HÀNG - " + tenNV + " (" + maNV + ")");
+					titleCell.setCellStyle(titleStyle);
+
+					// Ngày xuất
+					Row dateRow = sheetBan.createRow(1);
+					dateRow.createCell(0).setCellValue(
+							"Ngày xuất: " + LocalDate.now().format(dtf));
+					
+					Row countRow = sheetBan.createRow(2);
+					countRow.createCell(0).setCellValue("Số lượng: " + modelBan.getRowCount() + " hóa đơn");
+
+					// Header
+					Row headerRow = sheetBan.createRow(4);
+					for (int i = 0; i < modelBan.getColumnCount(); i++) {
+						Cell cell = headerRow.createCell(i);
+						cell.setCellValue(modelBan.getColumnName(i));
+						cell.setCellStyle(headerStyle);
+					}
+
+					// Data
+					for (int row = 0; row < modelBan.getRowCount(); row++) {
+						Row dataRow = sheetBan.createRow(row + 5);
+						for (int col = 0; col < modelBan.getColumnCount(); col++) {
+							Object value = modelBan.getValueAt(row, col);
+							dataRow.createCell(col).setCellValue(value != null ? value.toString() : "");
+						}
+					}
+
+					// Auto-size
+					for (int i = 0; i < modelBan.getColumnCount(); i++) {
+						sheetBan.autoSizeColumn(i);
+					}
+				}
+
+				// ===== SHEET 2: LỊCH SỬ TRẢ HÀNG =====
+				if (modelTra.getRowCount() > 0) {
+					Sheet sheetTra = workbook.createSheet("Lịch sử trả hàng");
+
+					// Tiêu đề
+					Row titleRow = sheetTra.createRow(0);
+					Cell titleCell = titleRow.createCell(0);
+					titleCell.setCellValue("LỊCH SỬ TRẢ HÀNG - " + tenNV + " (" + maNV + ")");
+					titleCell.setCellStyle(titleStyle);
+
+					// Ngày xuất
+					Row dateRow = sheetTra.createRow(1);
+					dateRow.createCell(0).setCellValue(
+							"Ngày xuất: " + LocalDate.now().format(dtf));
+					
+					Row countRow = sheetTra.createRow(2);
+					countRow.createCell(0).setCellValue("Số lượng: " + modelTra.getRowCount() + " phiếu trả");
+
+					// Header
+					Row headerRow = sheetTra.createRow(4);
+					for (int i = 0; i < modelTra.getColumnCount(); i++) {
+						Cell cell = headerRow.createCell(i);
+						cell.setCellValue(modelTra.getColumnName(i));
+						cell.setCellStyle(headerStyle);
+					}
+
+					// Data
+					for (int row = 0; row < modelTra.getRowCount(); row++) {
+						Row dataRow = sheetTra.createRow(row + 5);
+						for (int col = 0; col < modelTra.getColumnCount(); col++) {
+							Object value = modelTra.getValueAt(row, col);
+							dataRow.createCell(col).setCellValue(value != null ? value.toString() : "");
+						}
+					}
+
+					// Auto-size
+					for (int i = 0; i < modelTra.getColumnCount(); i++) {
+						sheetTra.autoSizeColumn(i);
+					}
+				}
+
+				// ===== SHEET 3: LỊCH SỬ HỦY HÀNG =====
+				if (modelHuy.getRowCount() > 0) {
+					Sheet sheetHuy = workbook.createSheet("Lịch sử hủy hàng");
+
+					// Tiêu đề
+					Row titleRow = sheetHuy.createRow(0);
+					Cell titleCell = titleRow.createCell(0);
+					titleCell.setCellValue("LỊCH SỬ HỦY HÀNG - " + tenNV + " (" + maNV + ")");
+					titleCell.setCellStyle(titleStyle);
+
+					// Ngày xuất
+					Row dateRow = sheetHuy.createRow(1);
+					dateRow.createCell(0).setCellValue(
+							"Ngày xuất: " + LocalDate.now().format(dtf));
+					
+					Row countRow = sheetHuy.createRow(2);
+					countRow.createCell(0).setCellValue("Số lượng: " + modelHuy.getRowCount() + " phiếu hủy");
+
+					// Header
+					Row headerRow = sheetHuy.createRow(4);
+					for (int i = 0; i < modelHuy.getColumnCount(); i++) {
+						Cell cell = headerRow.createCell(i);
+						cell.setCellValue(modelHuy.getColumnName(i));
+						cell.setCellStyle(headerStyle);
+					}
+
+					// Data
+					for (int row = 0; row < modelHuy.getRowCount(); row++) {
+						Row dataRow = sheetHuy.createRow(row + 5);
+						for (int col = 0; col < modelHuy.getColumnCount(); col++) {
+							Object value = modelHuy.getValueAt(row, col);
+							dataRow.createCell(col).setCellValue(value != null ? value.toString() : "");
+						}
+					}
+
+					// Auto-size
+					for (int i = 0; i < modelHuy.getColumnCount(); i++) {
+						sheetHuy.autoSizeColumn(i);
+					}
+				}
+
+				// Write file
+				try (FileOutputStream fos = new FileOutputStream(file)) {
+					workbook.write(fos);
+				}
+				workbook.close();
+
+				int totalSheets = (modelBan.getRowCount() > 0 ? 1 : 0) + 
+								  (modelTra.getRowCount() > 0 ? 1 : 0) + 
+								  (modelHuy.getRowCount() > 0 ? 1 : 0);
+
+				JOptionPane.showMessageDialog(this,
+						"Xuất Excel thành công!\n" +
+						"Nhân viên: " + tenNV + " (" + maNV + ")\n" +
+						"Số sheet: " + totalSheets + "\n" +
+						"File: " + file.getAbsolutePath(),
 						"Thành công", JOptionPane.INFORMATION_MESSAGE);
 
 				// Mở file

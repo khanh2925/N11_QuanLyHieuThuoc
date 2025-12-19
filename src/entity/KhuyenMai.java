@@ -34,7 +34,6 @@ public class KhuyenMai {
 		setGiaTri(giaTri);
 		setDieuKienApDungHoaDon(dieuKienApDungHoaDon);
 		setSoLuongKhuyenMai(soLuongKhuyenMai);
-		apDungRangBuocLoaiKM();
 	}
 
 	public KhuyenMai(String makm) {
@@ -108,7 +107,6 @@ public class KhuyenMai {
 
 	public void setKhuyenMaiHoaDon(boolean khuyenMaiHoaDon) {
 		this.khuyenMaiHoaDon = khuyenMaiHoaDon;
-		apDungRangBuocLoaiKM();
 	}
 
 	public HinhThucKM getHinhThuc() {
@@ -119,7 +117,6 @@ public class KhuyenMai {
 		if (hinhThuc == null)
 			throw new IllegalArgumentException("Hình thức khuyến mãi không được null.");
 		this.hinhThuc = hinhThuc;
-		apDungRangBuocLoaiKM();
 	}
 
 	public double getGiaTri() {
@@ -155,14 +152,6 @@ public class KhuyenMai {
 		// nếu hết số lượng → tự dừng hoạt động
 		if (this.soLuongKhuyenMai == 0)
 			this.trangThai = false;
-	}
-
-	// ===== RÀNG BUỘC NGHIỆP VỤ =====
-	private void apDungRangBuocLoaiKM() {
-		if (hinhThuc == null)
-			return;
-		if (khuyenMaiHoaDon && hinhThuc == HinhThucKM.TANG_THEM)
-			throw new IllegalArgumentException("Khuyến mãi hóa đơn không thể có hình thức 'TẶNG THÊM'.");
 	}
 
 	// ===== UTILS =====

@@ -349,5 +349,3 @@ public class HuongDan_GUI extends JPanel {
     }
 
 }
-
-

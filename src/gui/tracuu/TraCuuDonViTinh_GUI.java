@@ -1,30 +1,22 @@
 package gui.tracuu;
 
+import component.border.RoundedBorder;
+import component.button.PillButton;
+import component.input.PlaceholderSupport;
+import dao.DonViTinh_DAO;
+import dao.QuyCachDongGoi_DAO;
+import entity.DonViTinh;
+import entity.QuyCachDongGoi;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import javax.swing.AbstractAction;
-import javax.swing.InputMap;
-import javax.swing.ActionMap;
-import javax.swing.KeyStroke;
-import javax.swing.JComponent;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
-
-import component.button.PillButton;
-import component.input.PlaceholderSupport;
-import component.border.RoundedBorder;
-import dao.DonViTinh_DAO;
-import dao.QuyCachDongGoi_DAO;
-import entity.DonViTinh;
-import entity.QuyCachDongGoi;
 
 @SuppressWarnings("serial")
 public class TraCuuDonViTinh_GUI extends JPanel implements ActionListener, MouseListener {
@@ -90,7 +82,7 @@ public class TraCuuDonViTinh_GUI extends JPanel implements ActionListener, Mouse
         // --- Ô TÌM KIẾM ---
         txtTimKiem = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm mã hoặc tên đơn vị tính... (F1 / Ctrl+F)");
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20));
         txtTimKiem.setBounds(25, 17, 480, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
@@ -141,12 +133,16 @@ private void taoPhanGiua() {
         };
         tblDonViTinh = thietLapBang(modelDonViTinh);
         
-        // Căn giữa
+        // Căn chỉnh dữ liệu
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
-        for (int i = 0; i < tblDonViTinh.getColumnCount(); i++) {
-            tblDonViTinh.getColumnModel().getColumn(i).setCellRenderer(center);
-        }
+        DefaultTableCellRenderer right = new DefaultTableCellRenderer();
+        right.setHorizontalAlignment(SwingConstants.RIGHT);
+        
+        tblDonViTinh.getColumnModel().getColumn(0).setCellRenderer(center);  // STT
+        tblDonViTinh.getColumnModel().getColumn(1).setCellRenderer(center);  // Mã Đơn Vị
+        // Cột 2 (Tên Đơn Vị Tính) để mặc định LEFT
+        tblDonViTinh.getColumnModel().getColumn(3).setCellRenderer(right);   // Số lượng sản phẩm
 
         JScrollPane scrollDVT = new JScrollPane(tblDonViTinh);
         scrollDVT.setBorder(taoVienTieuDe("Danh mục Đơn vị tính"));
@@ -173,11 +169,11 @@ private void taoPhanGiua() {
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
         
-        tblSanPhamSuDung.getColumnModel().getColumn(0).setCellRenderer(center);
-        tblSanPhamSuDung.getColumnModel().getColumn(1).setCellRenderer(center);
-        // Tên sản phẩm để mặc định (Left)
-        tblSanPhamSuDung.getColumnModel().getColumn(3).setCellRenderer(center);
-        tblSanPhamSuDung.getColumnModel().getColumn(4).setCellRenderer(center);
+        tblSanPhamSuDung.getColumnModel().getColumn(0).setCellRenderer(center);  // STT
+        tblSanPhamSuDung.getColumnModel().getColumn(1).setCellRenderer(center);  // Mã Sản Phẩm
+        // Cột 2 (Tên Sản Phẩm) để mặc định LEFT
+        tblSanPhamSuDung.getColumnModel().getColumn(3).setCellRenderer(center);  // Vai trò đơn vị
+        tblSanPhamSuDung.getColumnModel().getColumn(4).setCellRenderer(center);  // Quy đổi
         
         return new JScrollPane(tblSanPhamSuDung);
     }

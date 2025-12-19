@@ -179,15 +179,21 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
 
         tblPhieuNhap = thietLapBang(modelPhieuNhap);
 
-        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
-        center.setHorizontalAlignment(SwingConstants.CENTER);
-        DefaultTableCellRenderer right = new DefaultTableCellRenderer();
-        right.setHorizontalAlignment(SwingConstants.RIGHT);
+        // Tạo renderer theo chuẩn UX
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+        DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
+        leftRenderer.setHorizontalAlignment(SwingConstants.LEFT);
+        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+        rightRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
 
-        tblPhieuNhap.getColumnModel().getColumn(0).setCellRenderer(center);
-        tblPhieuNhap.getColumnModel().getColumn(1).setCellRenderer(center);
-        tblPhieuNhap.getColumnModel().getColumn(2).setCellRenderer(center);
-        tblPhieuNhap.getColumnModel().getColumn(5).setCellRenderer(right);
+        // Áp dụng căn chỉnh cho bảng Phiếu Nhập
+        tblPhieuNhap.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);  // STT - Giữa
+        tblPhieuNhap.getColumnModel().getColumn(1).setCellRenderer(centerRenderer);  // Mã phiếu nhập - Giữa
+        tblPhieuNhap.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);  // Ngày lập - Giữa
+        tblPhieuNhap.getColumnModel().getColumn(3).setCellRenderer(leftRenderer);    // Nhân viên - Trái
+        tblPhieuNhap.getColumnModel().getColumn(4).setCellRenderer(leftRenderer);    // Nhà cung cấp - Trái
+        tblPhieuNhap.getColumnModel().getColumn(5).setCellRenderer(rightRenderer);   // Tổng tiền - Phải
 
         tblPhieuNhap.getColumnModel().getColumn(0).setPreferredWidth(50);
         tblPhieuNhap.getColumnModel().getColumn(4).setPreferredWidth(250);
@@ -206,13 +212,15 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
 
         tblChiTiet = thietLapBang(modelChiTiet);
 
-        tblChiTiet.getColumnModel().getColumn(0).setCellRenderer(center);
-        tblChiTiet.getColumnModel().getColumn(1).setCellRenderer(center);
-        tblChiTiet.getColumnModel().getColumn(2).setCellRenderer(center);
-        tblChiTiet.getColumnModel().getColumn(4).setCellRenderer(center);
-        tblChiTiet.getColumnModel().getColumn(5).setCellRenderer(center);
-        tblChiTiet.getColumnModel().getColumn(6).setCellRenderer(right);
-        tblChiTiet.getColumnModel().getColumn(7).setCellRenderer(right);
+        // Áp dụng căn chỉnh cho bảng Chi Tiết
+        tblChiTiet.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);  // STT - Giữa
+        tblChiTiet.getColumnModel().getColumn(1).setCellRenderer(centerRenderer);  // Mã Lô - Giữa
+        tblChiTiet.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);  // Mã SP - Giữa
+        tblChiTiet.getColumnModel().getColumn(3).setCellRenderer(leftRenderer);    // Tên sản phẩm - Trái
+        tblChiTiet.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);  // ĐVT - Giữa
+        tblChiTiet.getColumnModel().getColumn(5).setCellRenderer(rightRenderer);   // Số lượng - Phải
+        tblChiTiet.getColumnModel().getColumn(6).setCellRenderer(rightRenderer);   // Đơn giá nhập - Phải
+        tblChiTiet.getColumnModel().getColumn(7).setCellRenderer(rightRenderer);   // Thành tiền - Phải
 
         tblChiTiet.getColumnModel().getColumn(3).setPreferredWidth(250);
 
