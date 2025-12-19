@@ -86,69 +86,53 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
         pnHeader.setPreferredSize(new Dimension(1073, 94));
         pnHeader.setBackground(new Color(0xE3F2F5));
 
-        // Ô tìm kiếm
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã KM, tên chương trình... (F1 / Ctrl+F)");
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã KM, tên chương trình...");
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
         txtTimKiem.setBounds(25, 17, 480, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
-        txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
+        txtTimKiem.setBackground(Color.WHITE);
         pnHeader.add(txtTimKiem);
 
-        // Filter: Loại KM
-        addFilterLabel("Loại KM:", 525, 28, 70, 35);
+        JLabel lblLoai = new JLabel("Loại KM:");
+        lblLoai.setBounds(550, 28, 70, 35);
+        lblLoai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        pnHeader.add(lblLoai);
+
         cbLoaiKM = new JComboBox<>(new String[]{"Tất cả", "Theo hóa đơn", "Theo sản phẩm"});
-        setupCombo(cbLoaiKM, 605, 28, 140, 35);
+        cbLoaiKM.setBounds(620, 28, 140, 38);
+        cbLoaiKM.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        pnHeader.add(cbLoaiKM);
 
-        // Filter: Hình thức
-        addFilterLabel("Hình thức:", 755, 28, 90, 35);
+        JLabel lblHinhThuc = new JLabel("Hình thức:");
+        lblHinhThuc.setBounds(780, 28, 80, 35);
+        lblHinhThuc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        pnHeader.add(lblHinhThuc);
+
         cbHinhThuc = new JComboBox<>(new String[]{"Tất cả", "Giảm tiền", "Giảm %"});
-        setupCombo(cbHinhThuc, 845, 28, 120, 35);
+        cbHinhThuc.setBounds(860, 28, 120, 38);
+        cbHinhThuc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        pnHeader.add(cbHinhThuc);
 
-        // Filter: Trạng thái
-        addFilterLabel("Trạng thái:", 975, 28, 90, 35);
+        JLabel lblTrangThai = new JLabel("Trạng thái:");
+        lblTrangThai.setBounds(1000, 28, 80, 35);
+        lblTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        pnHeader.add(lblTrangThai);
+
         cbTrangThai = new JComboBox<>(new String[]{"Tất cả", "Đang chạy", "Sắp chạy", "Đã kết thúc"});
-        setupCombo(cbTrangThai, 1075, 28, 150, 35);
+        cbTrangThai.setBounds(1080, 28, 120, 38);
+        cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        pnHeader.add(cbTrangThai);
 
-        // Nút Tìm kiếm
-        btnTim = new PillButton(
-                "<html>" +
-                        "<center>" +
-                        "TÌM KIẾM<br>" +
-                        "<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
-                        "</center>" +
-                        "</html>");
+        btnTim = new PillButton("<html><center>TÌM KIẾM<br><span style='font-size:10px; color:#888888;'>(Enter)</span></center></html>");
+        btnTim.setBounds(1230, 22, 120, 50);
         btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnTim.setBounds(1250, 22, 130, 50);
-        btnTim.setToolTipText(
-                "<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã, tên và bộ lọc</html>");
         pnHeader.add(btnTim);
 
-        // Nút Làm mới
-        btnLamMoi = new PillButton(
-                "<html>" +
-                        "<center>" +
-                        "LÀM MỚI<br>" +
-                        "<span style='font-size:10px; color:#888888;'>(F5)</span>" +
-                        "</center>" +
-                        "</html>");
+        btnLamMoi = new PillButton("<html><center>LÀM MỚI<br><span style='font-size:10px; color:#888888;'>(F5)</span></center></html>");
+        btnLamMoi.setBounds(1374, 22, 120, 50);
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnLamMoi.setBounds(1390, 22, 130, 50);
-        btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
         pnHeader.add(btnLamMoi);
-    }
-
-    private void addFilterLabel(String text, int x, int y, int w, int h) {
-        JLabel lbl = new JLabel(text);
-        lbl.setBounds(x, y, w, h);
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        pnHeader.add(lbl);
-    }
-
-    private void setupCombo(JComboBox<?> cb, int x, int y, int w, int h) {
-        cb.setBounds(x, y, w, h);
-        cb.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        pnHeader.add(cb);
     }
 
     private void taoPhanGiua() {
@@ -291,7 +275,7 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
      */
     private void xuLyLamMoi() {
         txtTimKiem.setText("");
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã KM, tên chương trình... (F1 / Ctrl+F)");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã KM, tên chương trình...");
         cbLoaiKM.setSelectedIndex(0);
         cbHinhThuc.setSelectedIndex(0);
         cbTrangThai.setSelectedIndex(0);
@@ -388,22 +372,12 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
             if (locLoai.equals("Theo hóa đơn") && !km.isKhuyenMaiHoaDon()) continue;
             if (locLoai.equals("Theo sản phẩm") && km.isKhuyenMaiHoaDon()) continue;
 
-            // Xác định hình thức khuyến mãi
-            String hinhThucHienThi = "Không xác định";
-            if (km.getHinhThuc() != null) {
-                if (km.getHinhThuc() == HinhThucKM.GIAM_GIA_PHAN_TRAM) {
-                    hinhThucHienThi = "Giảm %";
-                } else if (km.getHinhThuc() == HinhThucKM.GIAM_GIA_TIEN) {
-                    hinhThucHienThi = "Giảm tiền";
-                } else if (km.getHinhThuc() == HinhThucKM.TANG_THEM) {
-                    hinhThucHienThi = "Tặng quà";
-                }
-            }
+            String hinhThucHienThi = "";
+            if (km.getHinhThuc() == HinhThucKM.GIAM_GIA_PHAN_TRAM) hinhThucHienThi = "Giảm %";
+            else if (km.getHinhThuc() == HinhThucKM.GIAM_GIA_TIEN) hinhThucHienThi = "Giảm tiền";
 
-            // Lọc theo hình thức
             if (locHinhThuc.equals("Giảm tiền") && km.getHinhThuc() != HinhThucKM.GIAM_GIA_TIEN) continue;
             if (locHinhThuc.equals("Giảm %") && km.getHinhThuc() != HinhThucKM.GIAM_GIA_PHAN_TRAM) continue;
-            if (locHinhThuc.equals("Tặng quà") && km.getHinhThuc() != HinhThucKM.TANG_THEM) continue;
 
             LocalDate now = LocalDate.now();
             String trangThaiHienThi;
