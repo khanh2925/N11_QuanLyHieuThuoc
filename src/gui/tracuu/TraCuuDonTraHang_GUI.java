@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.HierarchyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -114,6 +115,7 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 
 		addEvents();
 		setupKeyboardShortcuts(); // Thiết lập phím tắt
+		addFocusOnShow(); // Focus vào ô tìm kiếm khi hiển thị panel
 		initData();
 	}
 
@@ -260,6 +262,7 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 		right.setHorizontalAlignment(SwingConstants.RIGHT);
 
 		tblPhieuTra.getColumnModel().getColumn(0).setCellRenderer(center);
+		tblPhieuTra.getColumnModel().getColumn(1).setCellRenderer(center);
 		tblPhieuTra.getColumnModel().getColumn(4).setCellRenderer(center);
 		tblPhieuTra.getColumnModel().getColumn(5).setCellRenderer(right);
 
@@ -270,6 +273,7 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 
 				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
 						column);
+				setHorizontalAlignment(SwingConstants.CENTER);
 				lbl.setFont(lbl.getFont().deriveFont(Font.BOLD));
 				if ("Đã duyệt".equals(value)) {
 					lbl.setForeground(new Color(0x2E7D32));
@@ -293,6 +297,7 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 					boolean hasFocus, int row, int column) {
 				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
 						column);
+				setHorizontalAlignment(SwingConstants.CENTER);
 				if ("Nhập lại hàng".equals(value)) {
 					lbl.setForeground(new Color(0x2E7D32));
 					lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
@@ -432,6 +437,17 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				xuLyXemPhieuTra();
+			}
+		});
+	}
+
+	private void addFocusOnShow() {
+		addHierarchyListener(e -> {
+			if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+				SwingUtilities.invokeLater(() -> {
+					txtTimKiem.requestFocusInWindow();
+					txtTimKiem.selectAll();
+				});
 			}
 		});
 	}
@@ -596,6 +612,7 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 		// Áp dụng bộ lọc ngày mặc định
 		xuLyTimKiem();
 		modelChiTiet.setRowCount(0);
+		txtTimKiem.requestFocus();
 	}
 
 	// ==============================================================================
@@ -638,11 +655,11 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 
 	private String trangThaiCTText(int t) {
 		return switch (t) {
-			case 0 -> "Chờ duyệt";
-			case 1 -> "Nhập lại hàng"; // Format giống QLTraHang_GUI
-			case 2 -> "Huỷ hàng"; // Format giống QLTraHang_GUI
-			case 3 -> "Chuyển NCC";
-			default -> "Không xác định";
+		case 0 -> "Chờ duyệt";
+		case 1 -> "Nhập lại hàng"; // Format giống QLTraHang_GUI
+		case 2 -> "Huỷ hàng"; // Format giống QLTraHang_GUI
+		case 3 -> "Chuyển NCC";
+		default -> "Không xác định";
 		};
 	}
 
