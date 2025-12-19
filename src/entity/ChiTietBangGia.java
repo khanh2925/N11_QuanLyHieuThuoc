@@ -5,7 +5,6 @@ import java.util.Objects;
 public class ChiTietBangGia {
 
     private BangGia bangGia;
-    // ĐÃ LOẠI BỎ: private SanPham sanPham; 
     private double giaTu;
     private double giaDen;
     private double tiLe; // Ví dụ: 1.2 = giá bán = giá nhập * 1.2
@@ -32,7 +31,6 @@ public class ChiTietBangGia {
         this.bangGia = bangGia;
     }
 
-    // ĐÃ LOẠI BỎ: getSanPham() và setSanPham()
 
     public double getGiaTu() {
         return giaTu;

@@ -291,7 +291,7 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
      */
     private void xuLyLamMoi() {
         txtTimKiem.setText("");
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã KM, tên chương trình...");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã KM, tên chương trình... (F1 / Ctrl+F)");
         cbLoaiKM.setSelectedIndex(0);
         cbHinhThuc.setSelectedIndex(0);
         cbTrangThai.setSelectedIndex(0);
