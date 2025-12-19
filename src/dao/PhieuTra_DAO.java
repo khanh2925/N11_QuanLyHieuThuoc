@@ -327,7 +327,7 @@ public class PhieuTra_DAO {
 		ResultSet rs = null;
 
 		// Tạm lưu danh sách phiếu trả (chưa có chi tiết)
-		List<PhieuTraTemp> tempList = new ArrayList<>();
+		List<PhieuTra> headers = new ArrayList<>();
 
 		try {
 			ps = con.prepareStatement(sql);
@@ -354,13 +354,14 @@ public class PhieuTra_DAO {
 				kh.setHoatDong(rs.getBoolean("HoatDong"));
 
 				// ========== LƯU TẠM ==========
-				PhieuTraTemp temp = new PhieuTraTemp();
-				temp.maPT = rs.getString("MaPhieuTra");
-				temp.ngayLap = rs.getDate("NgayLap").toLocalDate();
-				temp.daDuyet = rs.getBoolean("DaDuyet");
-				temp.nv = nv;
-				temp.kh = kh;
-				tempList.add(temp);
+				PhieuTra pt = new PhieuTra();
+				pt.setMaPhieuTra(rs.getString("MaPhieuTra"));
+				pt.setNgayLap(rs.getDate("NgayLap").toLocalDate());
+				pt.setTrangThai(rs.getBoolean("DaDuyet"));
+				pt.setNhanVien(nv);
+				pt.setKhachHang(kh);
+
+				headers.add(pt);
 			}
 
 		} catch (Exception e) {
@@ -380,9 +381,10 @@ public class PhieuTra_DAO {
 		}
 
 		// 2.2. Sau khi đóng ResultSet, lấy chi tiết cho từng phiếu
-		for (PhieuTraTemp temp : tempList) {
-			List<ChiTietPhieuTra> dsCT = layChiTietPhieuTra(temp.maPT);
-			PhieuTra pt = new PhieuTra(temp.maPT, temp.kh, temp.nv, temp.ngayLap, temp.daDuyet, dsCT);
+		for (PhieuTra pt : headers) {
+			List<ChiTietPhieuTra> dsCT = layChiTietPhieuTra(pt.getMaPhieuTra());
+			pt.setChiTietPhieuTraList(dsCT);
+			// setChiTietPhieuTraList đã gọi capNhatTongTienHoan()
 			ketQua.add(pt);
 		}
 
@@ -390,15 +392,6 @@ public class PhieuTra_DAO {
 		cacheAllPhieuTra = ketQua;
 
 		return new ArrayList<>(ketQua);
-	}
-
-	// Class tạm để lưu thông tin phiếu trả
-	private static class PhieuTraTemp {
-		String maPT;
-		LocalDate ngayLap;
-		boolean daDuyet;
-		NhanVien nv;
-		KhachHang kh;
 	}
 
 	// ============================================================
@@ -1084,7 +1077,7 @@ public class PhieuTra_DAO {
 		ResultSet rs = null;
 
 		// Tạm lưu danh sách phiếu trả (chưa có chi tiết)
-		List<PhieuTraTemp> tempList = new ArrayList<>();
+		List<PhieuTra> headers = new ArrayList<>();
 
 		try {
 			ps = con.prepareStatement(sql);
@@ -1112,13 +1105,14 @@ public class PhieuTra_DAO {
 				kh.setHoatDong(rs.getBoolean("HoatDong"));
 
 				// ========== LƯU TẠM ==========
-				PhieuTraTemp temp = new PhieuTraTemp();
-				temp.maPT = rs.getString("MaPhieuTra");
-				temp.ngayLap = rs.getDate("NgayLap").toLocalDate();
-				temp.daDuyet = rs.getBoolean("DaDuyet");
-				temp.nv = nv;
-				temp.kh = kh;
-				tempList.add(temp);
+				PhieuTra pt = new PhieuTra();
+				pt.setMaPhieuTra(rs.getString("MaPhieuTra"));
+				pt.setNgayLap(rs.getDate("NgayLap").toLocalDate());
+				pt.setTrangThai(rs.getBoolean("DaDuyet"));
+				pt.setNhanVien(nv);
+				pt.setKhachHang(kh);
+
+				headers.add(pt);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -1136,9 +1130,9 @@ public class PhieuTra_DAO {
 		}
 
 		// Sau khi đóng ResultSet, lấy chi tiết cho từng phiếu
-		for (PhieuTraTemp temp : tempList) {
-			List<ChiTietPhieuTra> dsCT = layChiTietPhieuTra(temp.maPT);
-			PhieuTra pt = new PhieuTra(temp.maPT, temp.kh, temp.nv, temp.ngayLap, temp.daDuyet, dsCT);
+		for (PhieuTra pt : headers) {
+			List<ChiTietPhieuTra> dsCT = layChiTietPhieuTra(pt.getMaPhieuTra());
+			pt.setChiTietPhieuTraList(dsCT);
 			ds.add(pt);
 		}
 
@@ -1179,6 +1173,8 @@ public class PhieuTra_DAO {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 
+		List<PhieuTra> headers = new ArrayList<>();
+
 		try {
 			ps = con.prepareStatement(sql);
 			ps.setString(1, keyword + "%"); // Mã phiếu: prefix match (PT-2025%)
@@ -1211,30 +1207,15 @@ public class PhieuTra_DAO {
 				LocalDate ngayLap = rs.getDate("NgayLap").toLocalDate();
 				boolean daDuyet = rs.getBoolean("DaDuyet");
 
-				// Tạo PhieuTra cơ bản (không có chiTietPhieuTraList để tránh validate lỗi)
+				// Tạo PhieuTra cơ bản
 				PhieuTra pt = new PhieuTra();
 				pt.setMaPhieuTra(maPT);
 				pt.setKhachHang(kh);
 				pt.setNhanVien(nv);
 				pt.setNgayLap(ngayLap);
-				// Set daDuyet trực tiếp để tránh logic phụ trong setter
-				try {
-					java.lang.reflect.Field f = PhieuTra.class.getDeclaredField("daDuyet");
-					f.setAccessible(true);
-					f.set(pt, daDuyet);
-				} catch (Exception ignored) {
-					// Fallback nếu reflection fail
-				}
+				pt.setTrangThai(daDuyet);
 
-				// Set tongTienHoan từ DB (đã tính sẵn)
-				try {
-					java.lang.reflect.Field f = PhieuTra.class.getDeclaredField("tongTienHoan");
-					f.setAccessible(true);
-					f.set(pt, rs.getDouble("TongTienHoan"));
-				} catch (Exception ignored) {
-				}
-
-				ds.add(pt);
+				headers.add(pt);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -1249,6 +1230,13 @@ public class PhieuTra_DAO {
 					ps.close();
 			} catch (Exception ignored) {
 			}
+		}
+
+		// Sau khi đóng ResultSet, lấy chi tiết cho từng phiếu
+		for (PhieuTra pt : headers) {
+			List<ChiTietPhieuTra> dsCT = layChiTietPhieuTra(pt.getMaPhieuTra());
+			pt.setChiTietPhieuTraList(dsCT);
+			ds.add(pt);
 		}
 
 		return ds;

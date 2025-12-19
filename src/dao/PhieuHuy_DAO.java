@@ -44,7 +44,7 @@ public class PhieuHuy_DAO {
 		ResultSet rs = null;
 
 		// Tạm lưu danh sách phiếu huỷ (chưa có chi tiết)
-		List<PhieuHuyTemp> tempList = new ArrayList<>();
+		List<PhieuHuy> headers = new ArrayList<>();
 
 		try {
 			ps = con.prepareStatement(sql);
@@ -62,12 +62,11 @@ public class PhieuHuy_DAO {
 				}
 
 				// ========== LƯU TẠM ==========
-				PhieuHuyTemp temp = new PhieuHuyTemp();
-				temp.maPhieuHuy = rs.getString("MaPhieuHuy");
-				temp.ngayLapPhieu = rs.getDate("NgayLapPhieu").toLocalDate();
-				temp.trangThai = rs.getBoolean("TrangThai");
-				temp.nv = nv;
-				tempList.add(temp);
+				PhieuHuy ph = new PhieuHuy(rs.getString("MaPhieuHuy"),
+						rs.getDate("NgayLapPhieu").toLocalDate(),
+						nv,
+						rs.getBoolean("TrangThai"));
+				headers.add(ph);
 			}
 
 		} catch (SQLException e) {
@@ -87,9 +86,8 @@ public class PhieuHuy_DAO {
 		}
 
 		// 2.2. Sau khi đóng ResultSet, lấy chi tiết cho từng phiếu
-		for (PhieuHuyTemp temp : tempList) {
-			PhieuHuy ph = new PhieuHuy(temp.maPhieuHuy, temp.ngayLapPhieu, temp.nv, temp.trangThai);
-			ph.setChiTietPhieuHuyList(layChiTietPhieuHuy(temp.maPhieuHuy));
+		for (PhieuHuy ph : headers) {
+			ph.setChiTietPhieuHuyList(layChiTietPhieuHuy(ph.getMaPhieuHuy()));
 			ph.capNhatTongTienTheoChiTiet();
 			list.add(ph);
 		}
@@ -98,14 +96,6 @@ public class PhieuHuy_DAO {
 		cacheAllPhieuHuy = list;
 
 		return new ArrayList<>(list);
-	}
-
-	// Class tạm để lưu thông tin phiếu huỷ
-	private static class PhieuHuyTemp {
-		String maPhieuHuy;
-		LocalDate ngayLapPhieu;
-		boolean trangThai;
-		NhanVien nv;
 	}
 
 	// ============================================================
