@@ -62,6 +62,7 @@ import dao.PhieuNhap_DAO;
 import dao.SanPham_DAO;
 import entity.NhaCungCap;
 import entity.PhieuNhap;
+import enums.LoaiSanPham;
 
 /**
  * @author Thanh Kha
@@ -223,20 +224,26 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 
 		tblNhaCungCap = setupTable(modelNCC);
 
-		// Custom Renderer cho cột Trạng thái (Xanh/Đỏ)
+		// Căn chỉnh cột cho bảng nhà cung cấp: STT căn giữa, còn lại căn trái
+		DefaultTableCellRenderer centerNCC = new DefaultTableCellRenderer();
+		centerNCC.setHorizontalAlignment(SwingConstants.CENTER);
+		tblNhaCungCap.getColumnModel().getColumn(0).setCellRenderer(centerNCC); // STT căn giữa
+
+		// Custom Renderer cho cột Trạng thái (Xanh đậm/Đỏ nghiêng) - giống
+		// TraCuuDonTraHang
 		tblNhaCungCap.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 					boolean hasFocus, int row, int column) {
 				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
 						column);
-				lbl.setHorizontalAlignment(SwingConstants.CENTER);
+				lbl.setFont(lbl.getFont().deriveFont(Font.BOLD));
 				if ("Đang hoạt động".equals(value)) {
-					lbl.setForeground(new Color(0, 128, 0));
-					lbl.setFont(new Font("Segoe UI", Font.BOLD, 16));
+					lbl.setForeground(new Color(0x2E7D32)); // Xanh đậm
+					lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
 				} else {
 					lbl.setForeground(Color.RED);
-					lbl.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+					lbl.setFont(new Font("Segoe UI", Font.ITALIC, 15)); // Đỏ nghiêng
 				}
 				return lbl;
 			}
@@ -269,18 +276,16 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 
 		tblLichSuNhapHang = setupTable(modelLichSu); // ✅ Gán table
 
-		DefaultTableCellRenderer center = new DefaultTableCellRenderer();
-		center.setHorizontalAlignment(SwingConstants.CENTER);
-		DefaultTableCellRenderer right = new DefaultTableCellRenderer();
-		right.setHorizontalAlignment(SwingConstants.RIGHT);
+		// Căn chỉnh cột: STT, Ngày căn giữa; Tổng tiền căn phải; còn lại căn trái
+		DefaultTableCellRenderer centerLS = new DefaultTableCellRenderer();
+		centerLS.setHorizontalAlignment(SwingConstants.CENTER);
+		DefaultTableCellRenderer rightLS = new DefaultTableCellRenderer();
+		rightLS.setHorizontalAlignment(SwingConstants.RIGHT);
 
-		for (int i = 0; i < tblLichSuNhapHang.getColumnCount(); i++) {
-			if (i == 3) { // Cột Tổng tiền
-				tblLichSuNhapHang.getColumnModel().getColumn(i).setCellRenderer(right);
-			} else {
-				tblLichSuNhapHang.getColumnModel().getColumn(i).setCellRenderer(center);
-			}
-		}
+		tblLichSuNhapHang.getColumnModel().getColumn(0).setCellRenderer(centerLS); // STT căn giữa
+		tblLichSuNhapHang.getColumnModel().getColumn(2).setCellRenderer(centerLS); // Ngày căn giữa
+		tblLichSuNhapHang.getColumnModel().getColumn(3).setCellRenderer(rightLS); // Tổng tiền căn phải
+		// Cột 1 (Mã phiếu nhập) và 4 (Nhân viên) mặc định căn trái
 
 		return new JScrollPane(tblLichSuNhapHang);
 	}
@@ -302,9 +307,7 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 		right.setHorizontalAlignment(SwingConstants.RIGHT);
 
 		tblSanPhamCungCap.getColumnModel().getColumn(0).setCellRenderer(center); // STT
-		tblSanPhamCungCap.getColumnModel().getColumn(1).setCellRenderer(center); // Mã SP
-		tblSanPhamCungCap.getColumnModel().getColumn(3).setCellRenderer(center); // Loại
-		tblSanPhamCungCap.getColumnModel().getColumn(4).setCellRenderer(center); // Số lần
+		tblSanPhamCungCap.getColumnModel().getColumn(4).setCellRenderer(right); // Số lần
 		tblSanPhamCungCap.getColumnModel().getColumn(5).setCellRenderer(right); // Tổng SL
 
 		return new JScrollPane(tblSanPhamCungCap);
@@ -540,11 +543,7 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 			}
 		});
 
-		// Căn giữa 2 cột đầu
-		DefaultTableCellRenderer center = new DefaultTableCellRenderer();
-		center.setHorizontalAlignment(SwingConstants.CENTER);
-		table.getColumnModel().getColumn(0).setCellRenderer(center);
-		table.getColumnModel().getColumn(1).setCellRenderer(center);
+		// Không căn chỉnh mặc định ở đây, để từng bảng tự thiết lập alignment riêng
 
 		return table;
 	}
@@ -599,7 +598,7 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 			Object[] data = entry.getValue();
 
 			modelSanPham.addRow(new Object[] { stt++, maSP, data[0], // Tên SP
-					data[1], // Loại
+					LoaiSanPham.valueOf((String) data[1]), // Loại
 					data[2], // Số lần nhập
 					data[3] // Tổng SL
 			});
