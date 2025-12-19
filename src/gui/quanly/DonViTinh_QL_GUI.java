@@ -59,6 +59,9 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
 
         // 3. LOAD DATA
         loadDataLenBang();
+        
+        // 4. THIẾT LẬP PHÍM TẮT
+        setupKeyboardShortcuts();
     }
 
     // ======================================================================
@@ -71,18 +74,28 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
 
         // Ô tìm kiếm
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên đơn vị tính...");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên đơn vị tính... (F1 / Ctrl+F)");
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
         txtTimKiem.setBounds(25, 17, 500, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
         txtTimKiem.setForeground(Color.GRAY);
+        txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
+        txtTimKiem.addActionListener(e -> xuLyTimKiem());
         pnHeader.add(txtTimKiem);
 
         // Nút Tìm kiếm
-        btnTimKiem = new PillButton("Tìm kiếm");
-        btnTimKiem.setBounds(540, 22, 130, 50);
+        btnTimKiem = new PillButton(
+                "<html>" +
+                        "<center>" +
+                        "TÌM KIẾM<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
+                        "</center>" +
+                        "</html>");
+        btnTimKiem.setBounds(560, 22, 180, 50);
         btnTimKiem.setFont(FONT_BOLD);
+        btnTimKiem.setToolTipText(
+                "<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo tên đơn vị tính</html>");
         btnTimKiem.addActionListener(e -> xuLyTimKiem());
         pnHeader.add(btnTimKiem);
     }
@@ -119,7 +132,7 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
 
         // --- SPLIT PANE ---
         splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pnTopWrapper, pnTable);
-        splitPane.setDividerLocation(250);
+        splitPane.setDividerLocation(400);
         splitPane.setResizeWeight(0.0);
         
         pnCenter.add(splitPane, BorderLayout.CENTER);
@@ -159,27 +172,55 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         int btnH = 45;
         int btnW = 140;
 
-        btnThem = new PillButton("Thêm");
+        btnThem = new PillButton(
+                "<html>" +
+                        "<center>" +
+                        "THÊM<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Ctrl+N)</span>" +
+                        "</center>" +
+                        "</html>");
         btnThem.setFont(FONT_BOLD);
         btnThem.setPreferredSize(new Dimension(btnW, btnH));
+        btnThem.setToolTipText("<html><b>Phím tắt:</b> Ctrl+N<br>Thêm đơn vị tính mới</html>");
         btnThem.addActionListener(this);
         gbc.gridy = 0; p.add(btnThem, gbc);
 
-        btnSua = new PillButton("Cập nhật");
+        btnSua = new PillButton(
+                "<html>" +
+                        "<center>" +
+                        "CẬP NHẬT<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Ctrl+U)</span>" +
+                        "</center>" +
+                        "</html>");
         btnSua.setFont(FONT_BOLD);
         btnSua.setPreferredSize(new Dimension(btnW, btnH));
+        btnSua.setToolTipText("<html><b>Phím tắt:</b> Ctrl+U<br>Cập nhật thông tin đơn vị tính đang chọn</html>");
         btnSua.addActionListener(this);
         gbc.gridy = 1; p.add(btnSua, gbc);
 
-        btnXoa = new PillButton("Xóa");
+        btnXoa = new PillButton(
+                "<html>" +
+                        "<center>" +
+                        "XÓA<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Ctrl+D)</span>" +
+                        "</center>" +
+                        "</html>");
         btnXoa.setFont(FONT_BOLD);
         btnXoa.setPreferredSize(new Dimension(btnW, btnH));
+        btnXoa.setToolTipText("<html><b>Phím tắt:</b> Ctrl+D<br>Xóa đơn vị tính đang chọn</html>");
         btnXoa.addActionListener(this);
         gbc.gridy = 2; p.add(btnXoa, gbc);
 
-        btnLamMoi = new PillButton("Làm mới");
+        btnLamMoi = new PillButton(
+                "<html>" +
+                        "<center>" +
+                        "LÀM MỚI<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(F5)</span>" +
+                        "</center>" +
+                        "</html>");
         btnLamMoi.setFont(FONT_BOLD);
         btnLamMoi.setPreferredSize(new Dimension(btnW, btnH));
+        btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới form nhập liệu</html>");
         btnLamMoi.addActionListener(this);
         gbc.gridy = 3; p.add(btnLamMoi, gbc);
     }
@@ -198,8 +239,7 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         left.setHorizontalAlignment(JLabel.LEFT);
 
         tblDonViTinh.getColumnModel().getColumn(0).setCellRenderer(center);
-        tblDonViTinh.getColumnModel().getColumn(1).setCellRenderer(left);
-        
+        tblDonViTinh.getColumnModel().getColumn(1).setCellRenderer(center);       
         tblDonViTinh.getColumnModel().getColumn(0).setPreferredWidth(200);
         
         // Click: đổ dữ liệu lên form
@@ -223,9 +263,7 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         txtMaDVT.setEditable(false);
     }
 
-    // ======================================================================
-    //                          LÀM VIỆC VỚI DAO
-    // ======================================================================
+
     /** Load dữ liệu từ DB lên bảng */
     private void loadDataLenBang() {
         modelDonViTinh.setRowCount(0);
@@ -434,6 +472,71 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
             BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
             TitledBorder.LEFT, TitledBorder.TOP, FONT_BOLD, Color.DARK_GRAY
         );
+    }
+    
+    /**
+     * Thiết lập phím tắt cho màn hình Quản lý Đơn vị tính
+     */
+    private void setupKeyboardShortcuts() {
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+
+        // F1: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
+        actionMap.put("focusTimKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+
+        // F5: Làm mới
+        inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
+        actionMap.put("lamMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                lamMoiForm();
+                loadDataLenBang();
+            }
+        });
+
+        // Ctrl+F: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
+        actionMap.put("timKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+
+        // Ctrl+N: Thêm
+        inputMap.put(KeyStroke.getKeyStroke("control N"), "themDVT");
+        actionMap.put("themDVT", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                themDonViTinh();
+            }
+        });
+
+        // Ctrl+U: Cập nhật
+        inputMap.put(KeyStroke.getKeyStroke("control U"), "capNhatDVT");
+        actionMap.put("capNhatDVT", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                suaDonViTinh();
+            }
+        });
+
+        // Ctrl+D: Xóa
+        inputMap.put(KeyStroke.getKeyStroke("control D"), "xoaDVT");
+        actionMap.put("xoaDVT", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                xoaDonViTinh();
+            }
+        });
     }
     
     // Test riêng màn hình
