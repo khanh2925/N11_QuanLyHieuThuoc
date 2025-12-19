@@ -718,7 +718,7 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 		pt.setKhachHang(hd.getKhachHang());
 		pt.setNhanVien(Session.getInstance().getTaiKhoanDangNhap().getNhanVien());
 		pt.setNgayLap(today);
-		pt.setDaDuyet(false);
+		pt.setTrangThai(false);
 
 		List<ChiTietPhieuTra> dsCT = new ArrayList<>();
 

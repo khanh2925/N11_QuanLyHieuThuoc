@@ -34,9 +34,15 @@ public class BangGia_DAO {
 			return new ArrayList<>(cacheAllBangGia);
 		}
 
-		// 2. Nếu không có cache -> Query DB
+		// 2. Nếu không có cache -> Query DB với JOIN để lấy tên nhân viên
 		List<BangGia> ketQua = new ArrayList<>();
-		String sql = "SELECT * FROM BangGia ORDER BY NgayApDung DESC";
+		String sql = """
+				SELECT bg.MaBangGia, bg.TenBangGia, bg.NgayApDung, bg.HoatDong,
+				       bg.MaNhanVien, nv.TenNhanVien
+				FROM BangGia bg
+				LEFT JOIN NhanVien nv ON bg.MaNhanVien = nv.MaNhanVien
+				ORDER BY bg.NgayApDung DESC
+				""";
 
 		Connection con = connectDB.getConnection();
 		Statement st = null;
@@ -86,8 +92,14 @@ public class BangGia_DAO {
 			}
 		}
 
-		// Nếu chưa có cache, query DB
-		String sql = "SELECT * FROM BangGia WHERE HoatDong = 1";
+		// Nếu chưa có cache, query DB với JOIN
+		String sql = """
+				SELECT bg.MaBangGia, bg.TenBangGia, bg.NgayApDung, bg.HoatDong,
+				       bg.MaNhanVien, nv.TenNhanVien
+				FROM BangGia bg
+				LEFT JOIN NhanVien nv ON bg.MaNhanVien = nv.MaNhanVien
+				WHERE bg.HoatDong = 1
+				""";
 
 		Connection con = connectDB.getConnection();
 		Statement st = null;
@@ -131,8 +143,14 @@ public class BangGia_DAO {
 			}
 		}
 
-		// Nếu chưa có cache, query DB
-		String sql = "SELECT * FROM BangGia WHERE MaBangGia = ?";
+		// Nếu chưa có cache, query DB với JOIN
+		String sql = """
+				SELECT bg.MaBangGia, bg.TenBangGia, bg.NgayApDung, bg.HoatDong,
+				       bg.MaNhanVien, nv.TenNhanVien
+				FROM BangGia bg
+				LEFT JOIN NhanVien nv ON bg.MaNhanVien = nv.MaNhanVien
+				WHERE bg.MaBangGia = ?
+				""";
 
 		Connection con = connectDB.getConnection();
 		PreparedStatement ps = null;
@@ -440,7 +458,11 @@ public class BangGia_DAO {
 		LocalDate ngay = rs.getDate("NgayApDung").toLocalDate();
 		boolean hoatDong = rs.getBoolean("HoatDong");
 
-		NhanVien nv = new NhanVien(rs.getString("MaNhanVien"));
+		// Lấy thông tin nhân viên từ JOIN
+		String maNV = rs.getString("MaNhanVien");
+		String tenNV = rs.getString("TenNhanVien");
+		NhanVien nv = new NhanVien(maNV, tenNV);
+		
 		return new BangGia(ma, nv, ten, ngay, hoatDong);
 	}
 

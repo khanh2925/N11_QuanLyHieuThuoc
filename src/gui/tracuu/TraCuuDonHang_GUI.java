@@ -235,7 +235,7 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         tblChiTiet.getColumnModel().getColumn(0).setCellRenderer(center); // STT
         tblChiTiet.getColumnModel().getColumn(1).setCellRenderer(center); // Mã SP
         tblChiTiet.getColumnModel().getColumn(3).setCellRenderer(center); // Đơn vị
-        tblChiTiet.getColumnModel().getColumn(4).setCellRenderer(center); // SL
+        tblChiTiet.getColumnModel().getColumn(4).setCellRenderer(right);  // Số lượng
         tblChiTiet.getColumnModel().getColumn(5).setCellRenderer(right);  // Đơn giá
         tblChiTiet.getColumnModel().getColumn(6).setCellRenderer(right);  // Thành tiền
 

@@ -11,24 +11,24 @@ public class PhieuTra {
 	private KhachHang khachHang;
 	private NhanVien nhanVien;
 	private LocalDate ngayLap;
-	private boolean daDuyet;
+	private boolean trangThai;
 	private double tongTienHoan;
 	private List<ChiTietPhieuTra> chiTietPhieuTraList;
 
 	public PhieuTra() {
 		this.chiTietPhieuTraList = new ArrayList<>();
 		this.ngayLap = LocalDate.now();
-		this.daDuyet = false;
+		this.trangThai = false;
 		this.tongTienHoan = 0;
 	}
 
-	public PhieuTra(String maPhieuTra, KhachHang khachHang, NhanVien nhanVien, LocalDate ngayLap, boolean daDuyet,
+	public PhieuTra(String maPhieuTra, KhachHang khachHang, NhanVien nhanVien, LocalDate ngayLap, boolean trangThai,
 			List<ChiTietPhieuTra> chiTietPhieuTraList) {
 		setMaPhieuTra(maPhieuTra);
 		setKhachHang(khachHang);
 		setNhanVien(nhanVien);
 		setNgayLap(ngayLap);
-		setDaDuyet(daDuyet);
+		setTrangThai(trangThai);
 		setChiTietPhieuTraList(chiTietPhieuTraList);
 		capNhatTongTienHoan();
 	}
@@ -82,14 +82,14 @@ public class PhieuTra {
 		this.ngayLap = ngayLap;
 	}
 
-	public boolean isDaDuyet() {
-		return daDuyet;
+	public boolean isTrangThai() {
+		return trangThai;
 	}
 
 	/** ✅ Khi duyệt phiếu → tự trừ điểm KH (nếu có) */
-	public void setDaDuyet(boolean daDuyet) {
-		this.daDuyet = daDuyet;
-		if (daDuyet && khachHang != null) {
+	public void setTrangThai(boolean trangThai) {
+		this.trangThai = trangThai;
+		if (trangThai && khachHang != null) {
 			capNhatTongTienHoan();
 //			khachHang.truDiemTheoPhieuTra(this);
 		}
@@ -130,7 +130,7 @@ public class PhieuTra {
 
 	
 	public String getTrangThaiText() {
-		return daDuyet ? "Đã duyệt" : "Đang chờ duyệt";
+		return trangThai ? "Đã duyệt" : "Đang chờ duyệt";
 	}
 
 	// ===== OVERRIDES =====

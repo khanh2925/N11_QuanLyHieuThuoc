@@ -35,7 +35,7 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
     private JButton btnChonAnh;
     private String duongDanAnhHienTai = "icon_anh_sp_null.png";
 
-    private PillButton btnThem, btnSua, btnLamMoi, btnNgungHoatDong;
+    private PillButton btnThem, btnSua, btnLamMoi;
     
     private JTextField txtTimKiem;
     private PillButton btnTimKiem;
@@ -48,6 +48,8 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
 
     private SanPham_DAO sanPhamDAO;
     private QuyCachDongGoi_DAO quyCachDAO;
+    
+    private List<SanPham> danhSachSanPham; // Cache danh sách
 
     private final DecimalFormat df = new DecimalFormat("#,###");
     private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 16);
@@ -72,7 +74,10 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         taoPhanGiua();
         add(pnCenter, BorderLayout.CENTER);
 
-        taiDuLieuSanPham();
+        // Không load data ngay, chỉ load khi panel được hiển thị
+        SwingUtilities.invokeLater(() -> {
+            taiDuLieuSanPham();
+        });
         xoaTrangForm();
         
         // Thiết lập phím tắt
@@ -135,7 +140,9 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
                     SanPham sp = layThongTinTuForm();
                     if (sanPhamDAO.themSanPham(sp)) {
                         JOptionPane.showMessageDialog(QuanLySanPham_GUI.this, "Thêm sản phẩm thành công!");
-                        taiDuLieuSanPham();
+                        // Cập nhật cache thay vì reload từ DB
+                        danhSachSanPham.add(sp);
+                        hienThiDanhSach(danhSachSanPham);
                         
                         // ⚠️ RÀNG BUỘC: Sản phẩm mới phải có đơn vị gốc
                         kiemTraVaYeuCauThemDonViGoc(sp.getMaSanPham());
@@ -158,7 +165,14 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
                         SanPham sp = layThongTinTuForm();
                         if (sanPhamDAO.capNhatSanPham(sp)) {
                             JOptionPane.showMessageDialog(QuanLySanPham_GUI.this, "Cập nhật thành công!");
-                            taiDuLieuSanPham();
+                            // Cập nhật cache
+                            for (int i = 0; i < danhSachSanPham.size(); i++) {
+                                if (danhSachSanPham.get(i).getMaSanPham().equals(sp.getMaSanPham())) {
+                                    danhSachSanPham.set(i, sp);
+                                    break;
+                                }
+                            }
+                            hienThiDanhSach(danhSachSanPham);
                             xoaTrangForm();
                         }
                     }
@@ -168,7 +182,9 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
                         SanPham sp = layThongTinTuForm();
                         if (sanPhamDAO.themSanPham(sp)) {
                             JOptionPane.showMessageDialog(QuanLySanPham_GUI.this, "Thêm thành công!");
-                            taiDuLieuSanPham();
+                            // Cập nhật cache
+                            danhSachSanPham.add(sp);
+                            hienThiDanhSach(danhSachSanPham);
                             xoaTrangForm();
                         }
                     }
@@ -189,7 +205,14 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
                     SanPham sp = layThongTinTuForm();
                     if (sanPhamDAO.capNhatSanPham(sp)) {
                         JOptionPane.showMessageDialog(QuanLySanPham_GUI.this, "Cập nhật thành công!");
-                        taiDuLieuSanPham();
+                        // Cập nhật cache
+                        for (int i = 0; i < danhSachSanPham.size(); i++) {
+                            if (danhSachSanPham.get(i).getMaSanPham().equals(sp.getMaSanPham())) {
+                                danhSachSanPham.set(i, sp);
+                                break;
+                            }
+                        }
+                        hienThiDanhSach(danhSachSanPham);
                         xoaTrangForm();
                     }
                 }
@@ -242,7 +265,7 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         pnHeader.setBackground(new Color(0xE3F2F5));
 
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã, tên thuốc, số đăng ký...");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã, tên thuốc...(F1 / Ctrl+F)");
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
         txtTimKiem.setBounds(25, 17, 500, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
@@ -345,23 +368,25 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         yStart += hText + gap;
         p.add(taoNhan("Loại SP:", xStart, yStart));
         cboLoaiSP = new JComboBox<>();
-        for (LoaiSanPham l : LoaiSanPham.values()) cboLoaiSP.addItem(l.name());
+        for (LoaiSanPham l : LoaiSanPham.values()) cboLoaiSP.addItem(l.getTenLoai());
         cboLoaiSP.setBounds(xStart + wLbl, yStart, wTxt, hText);
         cboLoaiSP.setFont(FONT_TEXT);
         p.add(cboLoaiSP);
         
         p.add(taoNhan("Số ĐK:", xCol2, yStart));
         txtSoDK = taoTruongNhap(xCol2 + wLbl, yStart, wTxt);
+        PlaceholderSupport.addPlaceholder(txtSoDK, "Nhập số đăng ký");
         p.add(txtSoDK);
 
         yStart += hText + gap;
         p.add(taoNhan("Giá nhập:", xStart, yStart));
         txtGiaNhap = taoTruongNhap(xStart + wLbl, yStart, wTxt);
+        PlaceholderSupport.addPlaceholder(txtGiaNhap, "Nhập giá nhập");
         p.add(txtGiaNhap);
 
         p.add(taoNhan("Đường dùng:", xCol2, yStart));
         cboDuongDung = new JComboBox<>();
-        for (DuongDung d : DuongDung.values()) cboDuongDung.addItem(d.name());
+        for (DuongDung d : DuongDung.values()) cboDuongDung.addItem(d.getTenDuongDung());
         cboDuongDung.setBounds(xCol2 + wLbl, yStart, wTxt, hText);
         cboDuongDung.setFont(FONT_TEXT);
         p.add(cboDuongDung);
@@ -369,6 +394,7 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         yStart += hText + gap;
         p.add(taoNhan("Kệ bán:", xStart, yStart));
         txtKeBan = taoTruongNhap(xStart + wLbl, yStart, wTxt);
+        PlaceholderSupport.addPlaceholder(txtKeBan, "Nhập vị trí kệ bán");
         p.add(txtKeBan);
         
         JLabel lblGiaBan = taoNhan("Giá bán:", xCol2, yStart);
@@ -423,21 +449,6 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         gbc.gridy=1; 
         p.add(btnSua, gbc);
         
-        btnNgungHoatDong = new PillButton(
-                "<html>" +
-                    "<center>" +
-                        "NGƯNG HĐ<br>" +
-                        "<span style='font-size:10px; color:#888888;'>(Ctrl+D)</span>" +
-                    "</center>" +
-                "</html>"
-            );
-        btnNgungHoatDong.setFont(FONT_BOLD);
-        btnNgungHoatDong.setPreferredSize(new Dimension(w, h));
-        btnNgungHoatDong.setToolTipText("<html><b>Phím tắt:</b> Ctrl+D<br>Ngừng/Kích hoạt sản phẩm đã chọn</html>");
-        btnNgungHoatDong.addActionListener(this);
-        gbc.gridy=2; 
-        p.add(btnNgungHoatDong, gbc);
-        
         btnLamMoi = new PillButton(
                 "<html>" +
                     "<center>" +
@@ -448,26 +459,38 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
             );
         btnLamMoi.setFont(FONT_BOLD);
         btnLamMoi.setPreferredSize(new Dimension(w, h));
-        btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5 hoặc Ctrl+N<br>Làm mới toàn bộ dữ liệu</html>");
+        btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu</html>");
         btnLamMoi.addActionListener(this);
-        gbc.gridy=3; 
+        gbc.gridy=2; 
         p.add(btnLamMoi, gbc);
     }
 
     private void taoBangSanPham(JPanel p) {
-        String[] cols = {"Mã SP", "Tên sản phẩm", "Loại", "Số ĐK", "Đường dùng", "Giá nhập", "Giá bán", "Kệ bán", "Trạng thái"};
+        String[] cols = {"STT", "Mã SP", "Tên sản phẩm", "Loại", "Số ĐK", "Đường dùng", "Giá nhập", "Giá bán", "Kệ bán", "Trạng thái"};
         modelSanPham = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         tblSanPham = thietLapBang(modelSanPham);
         
         TableColumnModel cm = tblSanPham.getColumnModel();
-        cm.getColumn(0).setPreferredWidth(100); 
-        cm.getColumn(1).setPreferredWidth(250);
-        cm.getColumn(5).setCellRenderer(new RightAlignRenderer());
-        cm.getColumn(6).setCellRenderer(new RightAlignRenderer());
+        cm.getColumn(0).setPreferredWidth(50); // STT
+        cm.getColumn(1).setPreferredWidth(100); // Mã SP
+        cm.getColumn(2).setPreferredWidth(250); // Tên SP
         
-        cm.getColumn(8).setCellRenderer(new DefaultTableCellRenderer() {
+        // Căn giữa cho STT, Mã SP, Số ĐK, Kệ bán, Trạng thái
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        cm.getColumn(0).setCellRenderer(centerRenderer); // STT
+        cm.getColumn(1).setCellRenderer(centerRenderer); // Mã SP
+        cm.getColumn(4).setCellRenderer(centerRenderer); // Số ĐK
+        cm.getColumn(8).setCellRenderer(centerRenderer); // Kệ bán
+        
+        // Căn phải cho giá nhập và giá bán
+        cm.getColumn(6).setCellRenderer(new RightAlignRenderer());
+        cm.getColumn(7).setCellRenderer(new RightAlignRenderer());
+        
+        // Trạng thái với màu và bold
+        cm.getColumn(9).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable t, Object v, boolean s, boolean f, int r, int c) {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(t, v, s, f, r, c);
@@ -489,12 +512,13 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         btnThemQC = new PillButton(
                 "<html>" +
                     "<center>" +
-                        "Thêm quy cách<br>" +
+                        "THÊM QUY CÁCH<br>" +
                         "<span style='font-size:9px; color:#888888;'>(F7)</span>" +
                     "</center>" +
                 "</html>"
             );
-        btnThemQC.setPreferredSize(new Dimension(150, 40));
+        btnThemQC.setPreferredSize(new Dimension(170, 40));
+        btnThemQC.setFont(FONT_BOLD);
         btnThemQC.setToolTipText("<html><b>Phím tắt:</b> F7<br>Thêm quy cách đóng gói mới</html>");
         btnThemQC.addActionListener(this);
         pnToolBar.add(btnThemQC);
@@ -502,12 +526,13 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         btnSuaQC = new PillButton(
                 "<html>" +
                     "<center>" +
-                        "Sửa quy cách<br>" +
+                        "SỬA QUY CÁCH<br>" +
                         "<span style='font-size:9px; color:#888888;'>(F9)</span>" +
                     "</center>" +
                 "</html>"
             );
-        btnSuaQC.setPreferredSize(new Dimension(150, 40));
+        btnSuaQC.setPreferredSize(new Dimension(165, 40));
+        btnSuaQC.setFont(FONT_BOLD);
         btnSuaQC.setToolTipText("<html><b>Phím tắt:</b> F9<br>Sửa quy cách đã chọn</html>");
         btnSuaQC.addActionListener(this);
         pnToolBar.add(btnSuaQC);
@@ -515,29 +540,41 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         btnXoaQC = new PillButton(
                 "<html>" +
                     "<center>" +
-                        "Xóa quy cách<br>" +
+                        "XÓA QUY CÁCH<br>" +
                         "<span style='font-size:9px; color:#888888;'>(F8)</span>" +
                     "</center>" +
                 "</html>"
             );
-        btnXoaQC.setPreferredSize(new Dimension(150, 40));
+        btnXoaQC.setPreferredSize(new Dimension(165, 40));
+        btnXoaQC.setFont(FONT_BOLD);
         btnXoaQC.setToolTipText("<html><b>Phím tắt:</b> F8<br>Xóa quy cách đã chọn</html>");
         btnXoaQC.addActionListener(this);
         pnToolBar.add(btnXoaQC);
         
         p.add(pnToolBar, BorderLayout.NORTH);
         
-        String[] cols = {"Mã quy cách", "Đơn vị tính", "Hệ số quy đổi", "Tỉ lệ giảm", "Là gốc", "Giá bán"};
+        String[] cols = {"STT", "Mã quy cách", "Đơn vị tính", "Hệ số quy đổi", "Tỉ lệ giảm", "Là gốc", "Giá bán"};
         modelQuyCach = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         tblQuyCach = thietLapBang(modelQuyCach);
         
+        TableColumnModel cm = tblQuyCach.getColumnModel();
+        cm.getColumn(0).setPreferredWidth(50); // STT
+        
+        // Căn giữa cho STT, Mã quy cách, Là gốc
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        cm.getColumn(0).setCellRenderer(centerRenderer); // STT
+        cm.getColumn(1).setCellRenderer(centerRenderer); // Mã quy cách
+        cm.getColumn(5).setCellRenderer(centerRenderer); // Là gốc
+        
+        // Căn phải cho các cột số
         DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
         rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
-        tblQuyCach.getColumnModel().getColumn(2).setCellRenderer(rightRenderer);
-        tblQuyCach.getColumnModel().getColumn(3).setCellRenderer(rightRenderer);
-        tblQuyCach.getColumnModel().getColumn(5).setCellRenderer(rightRenderer);
+        cm.getColumn(3).setCellRenderer(rightRenderer); // Hệ số quy đổi
+        cm.getColumn(4).setCellRenderer(rightRenderer); // Tỉ lệ giảm
+        cm.getColumn(6).setCellRenderer(rightRenderer); // Giá bán
 
         p.add(new JScrollPane(tblQuyCach), BorderLayout.CENTER);
     }
@@ -551,7 +588,9 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
                 SanPham sp = layThongTinTuForm();
                 if (sanPhamDAO.themSanPham(sp)) {
                     JOptionPane.showMessageDialog(this, "Thêm sản phẩm thành công!");
-                    taiDuLieuSanPham();
+                    // Cập nhật cache thay vì reload từ DB
+                    danhSachSanPham.add(sp);
+                    hienThiDanhSach(danhSachSanPham);
                     
                     // ⚠️ RÀNG BUỘC: Sản phẩm mới phải có đơn vị gốc
                     kiemTraVaYeuCauThemDonViGoc(sp.getMaSanPham());
@@ -569,7 +608,14 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
                 SanPham sp = layThongTinTuForm();
                 if (sanPhamDAO.capNhatSanPham(sp)) {
                     JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-                    taiDuLieuSanPham();
+                    // Cập nhật cache thay vì reload từ DB
+                    for (int i = 0; i < danhSachSanPham.size(); i++) {
+                        if (danhSachSanPham.get(i).getMaSanPham().equals(sp.getMaSanPham())) {
+                            danhSachSanPham.set(i, sp);
+                            break;
+                        }
+                    }
+                    hienThiDanhSach(danhSachSanPham);
                     xoaTrangForm();
                 } else {
                     JOptionPane.showMessageDialog(this, "Cập nhật thất bại!");
@@ -578,9 +624,6 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         }
         else if (o.equals(btnLamMoi)) {
             xoaTrangForm();
-        }
-        else if (o.equals(btnNgungHoatDong)) {
-            xuLyNgungHoatDong();
         }
         else if (o.equals(btnChonAnh)) {
             chonHinhAnh();
@@ -715,7 +758,7 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
             return;
         }
         String maSP = txtMaSP.getText();
-        String maQC = tblQuyCach.getValueAt(row, 0).toString();
+        String maQC = tblQuyCach.getValueAt(row, 1).toString(); // Cột 1 vì đã có STT ở cột 0
         new QuyCachDongGoi_Dialog(this, maSP, maQC).setVisible(true);
     }
 
@@ -725,8 +768,8 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
             JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng quy cách cần xóa!");
             return;
         }
-        String maQC = tblQuyCach.getValueAt(row, 0).toString();
-        String isGoc = tblQuyCach.getValueAt(row, 4).toString();
+        String maQC = tblQuyCach.getValueAt(row, 1).toString(); // Cột 1 vì đã có STT ở cột 0
+        String isGoc = tblQuyCach.getValueAt(row, 5).toString(); // Cột 5 vì đã có STT
 
         if (isGoc.equals("Có")) {
             JOptionPane.showMessageDialog(this, "Không thể xóa Đơn vị gốc! Hãy thiết lập đơn vị khác làm gốc trước.");
@@ -776,7 +819,14 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
             sp.setHoatDong(!sp.isHoatDong());
             if (sanPhamDAO.capNhatSanPham(sp)) {
                 JOptionPane.showMessageDialog(this, "Cập nhật trạng thái thành công!");
-                taiDuLieuSanPham();
+                // Cập nhật cache
+                for (int i = 0; i < danhSachSanPham.size(); i++) {
+                    if (danhSachSanPham.get(i).getMaSanPham().equals(sp.getMaSanPham())) {
+                        danhSachSanPham.set(i, sp);
+                        break;
+                    }
+                }
+                hienThiDanhSach(danhSachSanPham);
                 hienThiThongTinSanPham(row);
             } else {
                 JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -804,14 +854,20 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
     }
 
     private void taiDuLieuSanPham() {
+        danhSachSanPham = sanPhamDAO.layTatCaSanPham();
+        hienThiDanhSach(danhSachSanPham);
+    }
+    
+    private void hienThiDanhSach(List<SanPham> ds) {
         modelSanPham.setRowCount(0);
-        List<SanPham> ds = sanPhamDAO.layTatCaSanPham();
+        int stt = 1;
         for (SanPham sp : ds) {
             modelSanPham.addRow(new Object[] {
+                stt++,
                 sp.getMaSanPham(), sp.getTenSanPham(),
                 sp.getLoaiSanPham() != null ? sp.getLoaiSanPham().getTenLoai() : "",
                 sp.getSoDangKy(),
-                sp.getDuongDung() != null ? sp.getDuongDung().getTenDuongDung() : "Không xác định",
+                sp.getDuongDung() != null ? sp.getDuongDung().getTenDuongDung() : "Khác",
                 df.format(sp.getGiaNhap()), 
                 df.format(sp.getGiaBan()),
                 sp.getKeBanSanPham(),
@@ -822,24 +878,47 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
 
     private void hienThiThongTinSanPham(int row) {
         if (row < 0) return;
-        String ma = tblSanPham.getValueAt(row, 0).toString();
-        SanPham sp = sanPhamDAO.laySanPhamTheoMa(ma);
+        String ma = tblSanPham.getValueAt(row, 1).toString(); // Cột 1 vì đã có STT ở cột 0
+        
+        // Lấy từ cache thay vì query DB
+        SanPham sp = null;
+        for (SanPham s : danhSachSanPham) {
+            if (s.getMaSanPham().equals(ma)) {
+                sp = s;
+                break;
+            }
+        }
 
         if (sp != null) {
             txtMaSP.setText(sp.getMaSanPham());
+            
             txtTenSP.setText(sp.getTenSanPham());
-            if(sp.getLoaiSanPham() != null) cboLoaiSP.setSelectedItem(sp.getLoaiSanPham().name());
-            if(sp.getDuongDung() != null) cboDuongDung.setSelectedItem(sp.getDuongDung().name());
+            txtTenSP.setForeground(Color.BLACK);
+            
+            if(sp.getLoaiSanPham() != null) cboLoaiSP.setSelectedItem(sp.getLoaiSanPham().getTenLoai());
+            if(sp.getDuongDung() != null) cboDuongDung.setSelectedItem(sp.getDuongDung().getTenDuongDung());
+            
             txtSoDK.setText(sp.getSoDangKy());
+            txtSoDK.setForeground(Color.BLACK);
+            
             txtGiaNhap.setText(String.valueOf((long)sp.getGiaNhap()));
+            txtGiaNhap.setForeground(Color.BLACK);
+            
             txtGiaBan.setText(df.format(sp.getGiaBan()));
+            
             txtKeBan.setText(sp.getKeBanSanPham());
+            txtKeBan.setForeground(Color.BLACK);
+            
             cboTrangThai.setSelectedItem(sp.isHoatDong() ? "Đang bán" : "Ngừng bán");
             
             datHinhAnh(sp.getHinhAnh());
             duongDanAnhHienTai = sp.getHinhAnh();
             
             taiDuLieuQuyCach(ma);
+            
+            // Disable nút Thêm, Enable nút Cập nhật khi có selection
+            btnThem.setEnabled(false);
+            btnSua.setEnabled(true);
         }
     }
 
@@ -851,10 +930,12 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         double giaBanSP = (spFull != null) ? spFull.getGiaBan() : 0;
 
         if(listQC != null) {
+            int stt = 1;
             for(QuyCachDongGoi qc : listQC) {
                 double giaBanQuyCach = (giaBanSP * qc.getHeSoQuyDoi()) * (1 - qc.getTiLeGiam());
                 
                 modelQuyCach.addRow(new Object[] {
+                    stt++,
                     qc.getMaQuyCach(),
                     qc.getDonViTinh().getTenDonViTinh(),
                     qc.getHeSoQuyDoi(),
@@ -869,8 +950,27 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
     private SanPham layThongTinTuForm() {
         String ma = txtMaSP.getText();
         String ten = txtTenSP.getText().trim();
-        LoaiSanPham loai = LoaiSanPham.valueOf(cboLoaiSP.getSelectedItem().toString());
-        DuongDung dd = DuongDung.valueOf(cboDuongDung.getSelectedItem().toString());
+        
+        // Tìm LoaiSanPham từ tên tiếng Việt
+        String tenLoaiSP = cboLoaiSP.getSelectedItem().toString();
+        LoaiSanPham loai = null;
+        for (LoaiSanPham l : LoaiSanPham.values()) {
+            if (l.getTenLoai().equals(tenLoaiSP)) {
+                loai = l;
+                break;
+            }
+        }
+        
+        // Tìm DuongDung từ tên tiếng Việt
+        String tenDuongDung = cboDuongDung.getSelectedItem().toString();
+        DuongDung dd = null;
+        for (DuongDung d : DuongDung.values()) {
+            if (d.getTenDuongDung().equals(tenDuongDung)) {
+                dd = d;
+                break;
+            }
+        }
+        
         String soDK = txtSoDK.getText().trim();
         String ke = txtKeBan.getText().trim();
         boolean hd = cboTrangThai.getSelectedItem().equals("Đang bán");
@@ -900,11 +1000,16 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
 
     private void xoaTrangForm() {
         taoMaSanPhamTuDong();
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã, tên thuốc...(F1 / Ctrl+F)");
         txtTenSP.setText("");
+        PlaceholderSupport.addPlaceholder(txtTenSP, "Nhập tên sản phẩm (F2)");
         txtSoDK.setText("");
+        PlaceholderSupport.addPlaceholder(txtSoDK, "Nhập số đăng ký");
         txtGiaNhap.setText("");
+        PlaceholderSupport.addPlaceholder(txtGiaNhap, "Nhập giá nhập");
         txtGiaBan.setText("");
         txtKeBan.setText("");
+        PlaceholderSupport.addPlaceholder(txtKeBan, "Nhập vị trí kệ bán");
         cboLoaiSP.setSelectedIndex(0);
         cboDuongDung.setSelectedIndex(0);
         cboTrangThai.setSelectedIndex(0);
@@ -914,28 +1019,32 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         txtTenSP.requestFocus();
         tblSanPham.clearSelection();
         modelQuyCach.setRowCount(0);
+        
+        // Enable nút Thêm, Disable nút Cập nhật khi không có selection
+        btnThem.setEnabled(true);
+        btnSua.setEnabled(false);
     }
 
     private void timKiemSanPham() {
         String key = txtTimKiem.getText().trim();
         if(key.isEmpty()) {
-            taiDuLieuSanPham();
+            hienThiDanhSach(danhSachSanPham);
             return;
         }
-        ArrayList<SanPham> ds = sanPhamDAO.timKiemSanPham(key);
-        modelSanPham.setRowCount(0);
-        for (SanPham sp : ds) {
-            modelSanPham.addRow(new Object[] {
-                sp.getMaSanPham(), sp.getTenSanPham(),
-                sp.getLoaiSanPham() != null ? sp.getLoaiSanPham().getTenLoai() : "",
-                sp.getSoDangKy(),
-                sp.getDuongDung() != null ? sp.getDuongDung().getTenDuongDung() : "Không xác định",
-                df.format(sp.getGiaNhap()), 
-                df.format(sp.getGiaBan()),
-                sp.getKeBanSanPham(),
-                sp.isHoatDong() ? "Đang bán" : "Ngừng bán"
-            });
+        
+        // Tìm kiếm từ cache
+        List<SanPham> ketQua = new ArrayList<>();
+        String keyLower = key.toLowerCase();
+        
+        for (SanPham sp : danhSachSanPham) {
+            if (sp.getMaSanPham().toLowerCase().contains(keyLower) ||
+                sp.getTenSanPham().toLowerCase().contains(keyLower) ||
+                (sp.getSoDangKy() != null && sp.getSoDangKy().toLowerCase().contains(keyLower))) {
+                ketQua.add(sp);
+            }
         }
+        
+        hienThiDanhSach(ketQua);
     }
 
     private void chonHinhAnh() {
@@ -1000,13 +1109,7 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         txt.setBounds(x, y, w, 35);
         return txt;
     }
-    private PillButton taoNutBam(String text, int w, int h) {
-        PillButton btn = new PillButton(text);
-        btn.setFont(FONT_BOLD);
-        btn.setPreferredSize(new Dimension(w, h));
-        btn.addActionListener(this);
-        return btn;
-    }
+
     private JTable thietLapBang(DefaultTableModel model) {
         JTable table = new JTable(model);
         table.setFont(FONT_TEXT);
