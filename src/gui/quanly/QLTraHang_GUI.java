@@ -14,6 +14,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.event.HierarchyEvent;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -55,7 +56,6 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
-import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
 
 import org.apache.poi.ss.usermodel.BorderStyle;
@@ -110,6 +110,10 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 	private TableRowSorter<DefaultTableModel> sorter;
 	private JPanel pnBtnCTPT;
 	private JSplitPane pnCenter;
+	// Font & Color
+	private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 16);
+	private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 16);
+	private final Color COLOR_PRIMARY = new Color(33, 150, 243);
 
 	DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 	DecimalFormat df = new DecimalFormat("#,###đ");
@@ -151,7 +155,7 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 		tblPT.addMouseListener(this);
 
 		setupKeyboardShortcuts(); // Thiết lập phím tắt
-
+		addFocusOnShow(); // Focus vào ô tìm kiếm khi panel được hiển thị
 	}
 
 	private void TaoHeader() {
@@ -477,10 +481,6 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 		tblCTPT = setupTable(modelCTPT);
 		scrCTPT = new JScrollPane(tblCTPT);
 
-		// ===== Format chung (giữ nguyên style cũ của bạn) =====
-		formatTable(tblPT);
-		formatTable(tblCTPT);
-
 		tblPT.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tblPT.getSelectionModel().addListSelectionListener(e -> {
 			if (!e.getValueIsAdjusting()) {
@@ -500,26 +500,18 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 
 	private JTable setupTable(DefaultTableModel model) {
 		JTable table = new JTable(model);
-		table.setFont(new Font("Segoe UI", Font.PLAIN, 16)); // Font 16
-		table.setRowHeight(35); // Cao 35
-		table.setSelectionBackground(new Color(0xC8E6C9));
+		table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+		table.setRowHeight(35);
 		table.setGridColor(new Color(230, 230, 230));
+		table.setSelectionBackground(new Color(0xC8E6C9));
+		table.setSelectionForeground(Color.BLACK);
 
 		JTableHeader header = table.getTableHeader();
 		header.setFont(new Font("Segoe UI", Font.BOLD, 16));
 		header.setBackground(new Color(33, 150, 243));
 		header.setForeground(Color.WHITE);
+		header.setPreferredSize(new Dimension(100, 40));
 		return table;
-	}
-
-	private void formatTable(JTable table) {
-		table.getTableHeader().setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		table.getTableHeader().setBorder(null);
-
-		table.setRowHeight(28);
-		table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		table.setSelectionBackground(new Color(180, 205, 230));
-		table.setShowGrid(false);
 	}
 
 	private void configureTableRenderers() {
@@ -534,20 +526,24 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 		DefaultTableCellRenderer right = new DefaultTableCellRenderer();
 		right.setHorizontalAlignment(SwingConstants.RIGHT);
 
-		tblPT.getColumnModel().getColumn(0).setCellRenderer(center);
-		tblPT.getColumnModel().getColumn(4).setCellRenderer(center);
-		tblPT.getColumnModel().getColumn(7).setCellRenderer(right);
+		tblPT.getColumnModel().getColumn(0).setCellRenderer(center); // STT
+		tblPT.getColumnModel().getColumn(1).setCellRenderer(center); // Mã PT
+		tblPT.getColumnModel().getColumn(4).setCellRenderer(center); // Ngày lập
+		tblPT.getColumnModel().getColumn(7).setCellRenderer(right); // Tổng tiền
 
-		tblCTPT.getColumnModel().getColumn(0).setCellRenderer(center);
-		tblCTPT.getColumnModel().getColumn(4).setCellRenderer(center);
-		tblCTPT.getColumnModel().getColumn(5).setCellRenderer(right);
+		tblCTPT.getColumnModel().getColumn(0).setCellRenderer(center); // STT
+		tblCTPT.getColumnModel().getColumn(1).setCellRenderer(center); // Mã hóa đơn
+		tblCTPT.getColumnModel().getColumn(4).setCellRenderer(center); // Hạn dùng
+		tblCTPT.getColumnModel().getColumn(5).setCellRenderer(right); // SL trả
 
+		// Cột trạng thái phiếu trả - căn giữa + màu sắc
 		tblPT.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 					boolean hasFocus, int row, int column) {
 				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
 						column);
+				lbl.setHorizontalAlignment(SwingConstants.CENTER); // Căn giữa
 				if ("Đã duyệt".equals(value)) {
 					lbl.setForeground(new Color(0x2E7D32));
 					lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
@@ -558,12 +554,14 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 				return lbl;
 			}
 		});
+		// Cột trạng thái chi tiết - căn giữa + màu sắc
 		tblCTPT.getColumnModel().getColumn(8).setCellRenderer(new DefaultTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 					boolean hasFocus, int row, int column) {
 				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
 						column);
+				lbl.setHorizontalAlignment(SwingConstants.CENTER); // Căn giữa
 				if ("Nhập lại hàng".equals(value)) {
 					lbl.setForeground(new Color(0x2E7D32));
 					lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
@@ -774,6 +772,7 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			dateDenNgay.setDate(null);
 			loadDataTablePT();
 			modelCTPT.setRowCount(0);
+			txtSearch.requestFocus(); // Focus vào ô tìm kiếm sau khi làm mới
 			return;
 		}
 		if (src == btnNhapKho) {
@@ -1133,6 +1132,20 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			JOptionPane.showMessageDialog(this, "Lỗi khi xuất file Excel:\n" + e.getMessage(), "Lỗi",
 					JOptionPane.ERROR_MESSAGE);
 		}
+	}
+
+	/**
+	 * Auto focus vào ô tìm kiếm khi panel được hiển thị (giống KhuyenMai_GUI)
+	 */
+	private void addFocusOnShow() {
+		addHierarchyListener(e -> {
+			if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+				SwingUtilities.invokeLater(() -> {
+					txtSearch.requestFocusInWindow();
+					txtSearch.selectAll();
+				});
+			}
+		});
 	}
 
 }
