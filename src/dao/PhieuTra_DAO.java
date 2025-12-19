@@ -669,8 +669,11 @@ public class PhieuTra_DAO {
 				ctHuy.setSoLuongHuy(soLuongTra);
 				ctHuy.setDonGiaNhap(donGiaNhap);
 				ctHuy.setDonViTinh(dvt);
-				ctHuy.setLyDoChiTiet(
-						lyDoHuy != null && !lyDoHuy.isEmpty() ? lyDoHuy : "Huỷ từ phiếu trả " + maPhieuTra);
+				// ✅ FIX: LUÔN ghi mã phiếu trả vào LyDoChiTiet để có thể tìm kiếm sau này
+				String lyDoFinal = (lyDoHuy != null && !lyDoHuy.isEmpty())
+						? lyDoHuy + " (Huỷ từ phiếu trả " + maPhieuTra + ")"
+						: "Huỷ từ phiếu trả " + maPhieuTra;
+				ctHuy.setLyDoChiTiet(lyDoFinal);
 				ctHuy.capNhatThanhTien();
 				ctHuy.setTrangThai(2); // 2 = Đã hủy
 
@@ -872,22 +875,23 @@ public class PhieuTra_DAO {
 	}
 
 	// ============================================================
-	// 🔍 Tìm phiếu huỷ của phiếu trả này (dựa vào các lô trong phiếu trả)
+	// 🔍 Tìm phiếu huỷ của phiếu trả này (dựa vào mã phiếu trả trong LyDoChiTiet)
 	// ============================================================
 	private String timPhieuHuyTheoPhieuTra(Connection con, String maPhieuTra) {
-		// Tìm phiếu huỷ có chi tiết với MaLo trùng với các lô trong phiếu trả này
+		// ✅ FIX: Tìm phiếu huỷ có chi tiết với LyDoChiTiet chứa mã phiếu trả này
+		// Điều này đảm bảo mỗi phiếu trả sẽ có đúng 1 phiếu huỷ liên kết
 		String sql = """
 				SELECT TOP 1 ph.MaPhieuHuy
 				FROM PhieuHuy ph
 				INNER JOIN ChiTietPhieuHuy ctph ON ph.MaPhieuHuy = ctph.MaPhieuHuy
-				WHERE ctph.MaLo IN (
-					SELECT MaLo FROM ChiTietPhieuTra WHERE MaPhieuTra = ?
-				)
+				WHERE ctph.LyDoChiTiet LIKE ?
 				ORDER BY ph.MaPhieuHuy DESC
 				""";
 
 		try (PreparedStatement ps = con.prepareStatement(sql)) {
-			ps.setString(1, maPhieuTra);
+			// Tìm các chi tiết có LyDoChiTiet chứa mã phiếu trả (ví dụ: "Huỷ từ phiếu trả
+			// PT-20240216-0001")
+			ps.setString(1, "%phiếu trả " + maPhieuTra + "%");
 			try (ResultSet rs = ps.executeQuery()) {
 				if (rs.next()) {
 					return rs.getString("MaPhieuHuy");
@@ -919,18 +923,62 @@ public class PhieuTra_DAO {
 	}
 
 	// ============================================================
-	// ➕ Thêm chi tiết phiếu huỷ (trong cùng connection)
+	// ➕ Thêm hoặc cập nhật chi tiết phiếu huỷ (trong cùng connection)
 	// ============================================================
 	private boolean themChiTietPhieuHuy(Connection con, ChiTietPhieuHuy ct) {
-		String sql = """
+		String maPhieuHuy = ct.getPhieuHuy().getMaPhieuHuy();
+		String maLo = ct.getLoSanPham().getMaLo();
+
+		// ✅ FIX: Kiểm tra xem chi tiết đã tồn tại chưa (tránh duplicate PK_CTPH)
+		String sqlCheck = """
+				SELECT SoLuongHuy, ThanhTien FROM ChiTietPhieuHuy
+				WHERE MaPhieuHuy = ? AND MaLo = ?
+				""";
+
+		try (PreparedStatement psCheck = con.prepareStatement(sqlCheck)) {
+			psCheck.setString(1, maPhieuHuy);
+			psCheck.setString(2, maLo);
+
+			try (ResultSet rs = psCheck.executeQuery()) {
+				if (rs.next()) {
+					// ✅ Chi tiết đã tồn tại → UPDATE (cộng thêm số lượng)
+					int soLuongCu = rs.getInt("SoLuongHuy");
+					double thanhTienCu = rs.getDouble("ThanhTien");
+
+					int soLuongMoi = soLuongCu + ct.getSoLuongHuy();
+					double thanhTienMoi = thanhTienCu + ct.getThanhTien();
+
+					String sqlUpdate = """
+							UPDATE ChiTietPhieuHuy
+							SET SoLuongHuy = ?, ThanhTien = ?, LyDoChiTiet = CONCAT(LyDoChiTiet, '; ', ?)
+							WHERE MaPhieuHuy = ? AND MaLo = ?
+							""";
+
+					try (PreparedStatement psUpdate = con.prepareStatement(sqlUpdate)) {
+						psUpdate.setInt(1, soLuongMoi);
+						psUpdate.setDouble(2, thanhTienMoi);
+						psUpdate.setString(3, ct.getLyDoChiTiet());
+						psUpdate.setString(4, maPhieuHuy);
+						psUpdate.setString(5, maLo);
+						return psUpdate.executeUpdate() > 0;
+					}
+				}
+			}
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi kiểm tra chi tiết phiếu huỷ: " + e.getMessage());
+			return false;
+		}
+
+		// ❌ Chi tiết chưa tồn tại → INSERT mới
+		String sqlInsert = """
 				INSERT INTO ChiTietPhieuHuy
 				(MaPhieuHuy, MaLo, SoLuongHuy, LyDoChiTiet, DonGiaNhap, ThanhTien, MaDonViTinh, TrangThai)
 				VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 				""";
 
-		try (PreparedStatement ps = con.prepareStatement(sql)) {
-			ps.setString(1, ct.getPhieuHuy().getMaPhieuHuy());
-			ps.setString(2, ct.getLoSanPham().getMaLo());
+		try (PreparedStatement ps = con.prepareStatement(sqlInsert)) {
+			ps.setString(1, maPhieuHuy);
+			ps.setString(2, maLo);
 			ps.setInt(3, ct.getSoLuongHuy());
 			ps.setString(4, ct.getLyDoChiTiet());
 			ps.setDouble(5, ct.getDonGiaNhap());
