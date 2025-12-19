@@ -833,7 +833,8 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 
 		// ===== 2. Tên khuyến mãi =====
 		String ten = txtTenKM.getText().trim();
-		if (ten.isEmpty()) {
+		// Kiểm tra placeholder (foreground = GRAY) hoặc text rỗng
+		if (ten.isEmpty() || txtTenKM.getForeground().equals(Color.GRAY)) {
 			showErrorAndFocus(txtTenKM, "Tên khuyến mãi không được bỏ trống!", JOptionPane.WARNING_MESSAGE);
 			return null;
 		}
@@ -863,13 +864,6 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 			JOptionPane.showMessageDialog(this, "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!", "Cảnh báo",
 					JOptionPane.WARNING_MESSAGE);
 			dateNgayKT.requestFocus();
-			return null;
-		}
-
-		if (isThemMoi && ngayBD.isBefore(LocalDate.now())) {
-			JOptionPane.showMessageDialog(this, "Ngày bắt đầu phải từ hôm nay trở đi!", "Cảnh báo",
-					JOptionPane.WARNING_MESSAGE);
-			dateNgayBD.requestFocus();
 			return null;
 		}
 
@@ -949,12 +943,17 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 
 	private double parseDoubleField(JTextField txt, String fieldName) {
 		String s = txt.getText().trim().replace(".", "").replace(",", "");
-		if (s.isEmpty())
+		if (s.isEmpty() || txt.getForeground().equals(Color.GRAY))
 			return 0;
 		try {
 			return Double.parseDouble(s);
 		} catch (NumberFormatException e) {
-			throw new IllegalArgumentException(fieldName + " không hợp lệ.");
+			// ✅ Focus vào ô có lỗi trước khi throw exception
+			SwingUtilities.invokeLater(() -> {
+				txt.requestFocus();
+				txt.selectAll();
+			});
+			throw new IllegalArgumentException(fieldName + " không hợp lệ. Vui lòng nhập số.");
 		}
 	}
 

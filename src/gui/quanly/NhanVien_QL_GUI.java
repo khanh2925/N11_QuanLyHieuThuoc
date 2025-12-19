@@ -615,9 +615,9 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 			}
 		}
 
-		// 2. Tên NV
+		// 2. Tên NV - kiểm tra cả placeholder
 		String ten = txtTenNV.getText().trim();
-		if (ten.isEmpty()) {
+		if (ten.isEmpty() || txtTenNV.getForeground().equals(Color.GRAY)) {
 			showErrorAndFocus(txtTenNV, "Tên nhân viên không được bỏ trống!", JOptionPane.WARNING_MESSAGE);
 			return null;
 		}
@@ -641,9 +641,9 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		// 4. Giới tính
 		boolean gioiTinh = "Nam".equals(cboGioiTinh.getSelectedItem());
 
-		// 5. SĐT
+		// 5. SĐT - kiểm tra cả placeholder
 		String sdt = txtSDT.getText().trim();
-		if (sdt.isEmpty()) {
+		if (sdt.isEmpty() || txtSDT.getForeground().equals(Color.GRAY)) {
 			showErrorAndFocus(txtSDT, "Số điện thoại không được bỏ trống!", JOptionPane.WARNING_MESSAGE);
 			return null;
 		}
@@ -652,9 +652,9 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 			return null;
 		}
 
-		// 6. Địa chỉ
+		// 6. Địa chỉ - kiểm tra cả placeholder
 		String diaChi = txtDiaChi.getText().trim();
-		if (diaChi.isEmpty()) {
+		if (diaChi.isEmpty() || txtDiaChi.getForeground().equals(Color.GRAY)) {
 			showErrorAndFocus(txtDiaChi, "Địa chỉ không được bỏ trống!", JOptionPane.WARNING_MESSAGE);
 			return null;
 		}

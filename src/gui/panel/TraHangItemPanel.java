@@ -38,6 +38,8 @@ public class TraHangItemPanel extends JPanel {
 	private JTextField txtThanhTien;
 	private JButton btnXoa;
 	private JTextField txtLyDo;
+	private JLabel lblDaTra; // Số lượng đã trả trước đó
+	private int soLuongDaTraTruocDo = 0; // Số lượng đã trả (quy về gốc)
 
 	public ItemTraHang getItem() {
 		return this.item;
@@ -56,9 +58,14 @@ public class TraHangItemPanel extends JPanel {
 	private JLabel lblQuyDoi;
 
 	public TraHangItemPanel(ItemTraHang item, int stt, Listener listener, String anhPath) {
+		this(item, stt, listener, anhPath, 0);
+	}
+
+	public TraHangItemPanel(ItemTraHang item, int stt, Listener listener, String anhPath, int soLuongDaTra) {
 		this.item = item;
 		this.listener = listener;
 		this.anhPath = anhPath;
+		this.soLuongDaTraTruocDo = soLuongDaTra;
 
 		initGUI(stt);
 		updateUIValue();
@@ -138,14 +145,21 @@ public class TraHangItemPanel extends JPanel {
 		}
 
 		add(cboDonViTinh);
+
+		Box lblBox = Box.createVerticalBox();
+		
 		lblQuyDoi = new JLabel();
 		lblQuyDoi.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 		lblQuyDoi.setPreferredSize(new Dimension(70, 30));
-		add(Box.createHorizontalStrut(3));
-		add(lblQuyDoi);
-
-		add(Box.createHorizontalStrut(5));
-
+		lblBox.add(lblQuyDoi);
+		
+		// Label hiển thị số lượng đã trả trước đó (nằm dưới combobox)
+		lblDaTra = new JLabel();
+		lblDaTra.setFont(new Font("Segoe UI", Font.ITALIC, 12));
+		lblDaTra.setForeground(new Color(0xE65100)); // Màu cam
+		lblBox.add(lblDaTra);
+		
+		add(lblBox);
 		// ===== SỐ LƯỢNG TRẢ (+/-) =====
 		Box soLuongBox = Box.createHorizontalBox();
 		soLuongBox.setMaximumSize(new Dimension(140, 30));
@@ -259,6 +273,10 @@ public class TraHangItemPanel extends JPanel {
 				item.setSoLuongTra(sl - 1);
 				updateUIValue();
 				listener.onUpdate(item);
+			} else {
+				JOptionPane.showMessageDialog(this,
+						"Số lượng trả không thể nhỏ hơn 1!",
+						"Cảnh báo", JOptionPane.WARNING_MESSAGE);
 			}
 		});
 
@@ -421,6 +439,8 @@ public class TraHangItemPanel extends JPanel {
 				if (dvMoi.equals(qc.getDonViTinh().getTenDonViTinh())) {
 					item.applyQuyCach(qc);
 
+					// Cập nhật giá bán và thành tiền ngay sau khi đổi DVT
+					updateUIValue();
 					listener.onUpdate(item);
 					break;
 				}
@@ -451,7 +471,35 @@ public class TraHangItemPanel extends JPanel {
 		// Số lượng gốc được mua
 		int muaGoc = item.getSoLuongMuaGoc();
 
-		if (tongTraGoc > muaGoc) {
+		// Số lượng còn có thể trả = đã mua - đã trả trước đó
+		int conLai = muaGoc - soLuongDaTraTruocDo;
+
+		if (tongTraGoc > conLai) {
+			// Tìm đơn vị gốc để hiển thị
+			String dvGoc = item.getDonViTinh();
+			if (item.getDsQuyCach() != null) {
+				for (QuyCachDongGoi qc : item.getDsQuyCach()) {
+					if (qc.getHeSoQuyDoi() == 1) {
+						dvGoc = qc.getDonViTinh().getTenDonViTinh();
+						break;
+					}
+				}
+			}
+
+			String msg = String.format(
+					"Vượt quá số lượng cho phép!\n\n" +
+							"Sản phẩm: %s\n" +
+							"Lô: %s\n" +
+							"Đã mua: %d %s\n" +
+							"Đã trả trước đó: %d %s\n" +
+							"Còn có thể trả: %d %s\n" +
+							"Số lượng bạn đang trả: %d %s",
+					item.getTenSanPham(), item.getMaLo(),
+					muaGoc, dvGoc,
+					soLuongDaTraTruocDo, dvGoc,
+					conLai, dvGoc,
+					tongTraGoc, dvGoc);
+			JOptionPane.showMessageDialog(this, msg, "Vượt số lượng", JOptionPane.WARNING_MESSAGE);
 			return false;
 		}
 
@@ -461,10 +509,23 @@ public class TraHangItemPanel extends JPanel {
 	private void nhapSL() {
 		int slCu = item.getSoLuongTra();
 		try {
-			int slMoi = Integer.parseInt(txtSoLuongTra.getText().trim());
+			String input = txtSoLuongTra.getText().trim();
+
+			// Kiểm tra số hợp lệ
+			if (!input.matches("\\d+")) {
+				JOptionPane.showMessageDialog(this,
+						"Số lượng phải là số nguyên dương!",
+						"Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+				txtSoLuongTra.setText(String.valueOf(slCu));
+				return;
+			}
+
+			int slMoi = Integer.parseInt(input);
+
 			if (slMoi <= 0) {
-				JOptionPane.showMessageDialog(null, "Số lượng trả phải lớn hơn 0!", "Số lượng không hợp lệ",
-						JOptionPane.WARNING_MESSAGE);
+				JOptionPane.showMessageDialog(this,
+						"Số lượng trả phải lớn hơn 0!",
+						"Số lượng không hợp lệ", JOptionPane.WARNING_MESSAGE);
 				txtSoLuongTra.setText(String.valueOf(slCu));
 				return;
 			}
@@ -473,10 +534,17 @@ public class TraHangItemPanel extends JPanel {
 
 			if (!kiemTraTraVuotGioiHan()) {
 				item.setSoLuongTra(slCu);
+				txtSoLuongTra.setText(String.valueOf(slCu));
+				return;
 			}
 
-		} catch (Exception ex) {
+		} catch (NumberFormatException ex) {
+			JOptionPane.showMessageDialog(this,
+					"Số lượng không hợp lệ! Vui lòng nhập số nguyên.",
+					"Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
 			item.setSoLuongTra(slCu);
+			txtSoLuongTra.setText(String.valueOf(slCu));
+			return;
 		}
 
 		updateUIValue();
@@ -508,6 +576,24 @@ public class TraHangItemPanel extends JPanel {
 				}
 			}
 			lblQuyDoi.setText("x" + heSo + " " + dvGoc);
+		}
+
+		// Cập nhật label "Đã trả"
+		if (soLuongDaTraTruocDo > 0) {
+			String dvGoc = item.getDonViTinh();
+			if (item.getDsQuyCach() != null) {
+				for (QuyCachDongGoi qc : item.getDsQuyCach()) {
+					if (qc.getHeSoQuyDoi() == 1) {
+						dvGoc = qc.getDonViTinh().getTenDonViTinh();
+						break;
+					}
+				}
+			}
+			lblDaTra.setText("(Đã trả: " + soLuongDaTraTruocDo + " " + dvGoc + ")");
+			lblDaTra.setVisible(true);
+		} else {
+			lblDaTra.setText("");
+			lblDaTra.setVisible(false);
 		}
 
 		// notify gui cha để update tiền

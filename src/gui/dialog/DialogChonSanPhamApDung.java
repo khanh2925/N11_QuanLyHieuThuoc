@@ -52,7 +52,7 @@ public class DialogChonSanPhamApDung extends JDialog {
 		pnNhapMa.add(new JLabel("Nhập mã SP:"));
 
 		txtNhapMa = new JTextField(20);
-//		PlaceholderSupport.addPlaceholder(txtNhapMa, "Nhập mã sản phẩm...");
+		PlaceholderSupport.addPlaceholder(txtNhapMa, "Nhập mã sản phẩm...");
 		pnNhapMa.add(txtNhapMa);
 
 		txtNhapMa.addActionListener(e -> xuLyNhapMa());
@@ -79,7 +79,7 @@ public class DialogChonSanPhamApDung extends JDialog {
 		JPanel pnTim = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		pnTim.add(new JLabel("Tìm kiếm:"));
 		txtTimKiem = new JTextField(25);
-//		PlaceholderSupport.addPlaceholder(txtTimKiem, PLACEHOLDER_TIM_KIEM);
+		PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã hoặc tên sản phẩm...");
 		pnTim.add(txtTimKiem);
 		txtTimKiem.addActionListener(e -> loadSanPham());
 

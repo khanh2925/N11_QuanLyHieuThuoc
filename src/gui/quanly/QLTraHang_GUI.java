@@ -20,8 +20,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.File;
-import java.io.FileOutputStream;
+
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -37,7 +36,7 @@ import javax.swing.InputMap;
 
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
+
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -52,22 +51,11 @@ import javax.swing.RowFilter;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
-import javax.swing.filechooser.FileNameExtensionFilter;
+
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableRowSorter;
-
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.FillPatternType;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
-import org.apache.poi.ss.usermodel.IndexedColors;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.toedter.calendar.JDateChooser;
 
@@ -75,9 +63,13 @@ import component.border.RoundedBorder;
 import dao.ChiTietPhieuTra_DAO;
 import dao.PhieuTra_DAO;
 import entity.ChiTietPhieuTra;
+import entity.LoSanPham;
 import entity.NhanVien;
 import entity.PhieuTra;
 import entity.Session;
+import dao.LoSanPham_DAO;
+import dao.QuyCachDongGoi_DAO;
+import entity.QuyCachDongGoi;
 import gui.dialog.PhieuTraPreviewDialog;
 
 public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListener {
@@ -88,7 +80,7 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 	private JPanel pnPhieuTra;
 	private JPanel pnHeader;
 	private JPanel pnCTPT;
-	private PillButton btnXuatFile;
+
 	private JTextField txtSearch;
 	private DefaultTableModel modelPT;
 	private JTable tblPT;
@@ -150,7 +142,6 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 		btnLamMoi.addActionListener(this);
 		btnNhapKho.addActionListener(this);
 		btnHuyHang.addActionListener(this);
-		btnXuatFile.addActionListener(this);
 		tblCTPT.addMouseListener(this);
 		tblPT.addMouseListener(this);
 
@@ -215,12 +206,6 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
 		pnHeader.add(btnLamMoi);
 
-		btnXuatFile = new PillButton("<html>" + "<center>" + "XUẤT FILE<br>"
-				+ "<span style='font-size:10px; color:#888888;'>(F8)</span>" + "</center>" + "</html>");
-		btnXuatFile.setBounds(1415, 22, 180, 50);
-		btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnXuatFile.setToolTipText("<html><b>Phím tắt:</b> F8<br>Xuất danh sách phiếu trả ra file Excel</html>");
-		pnHeader.add(btnXuatFile);
 	}
 
 	// Helper tạo label (Font 16)
@@ -270,15 +255,6 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			public void actionPerformed(ActionEvent e) {
 				txtSearch.requestFocus();
 				txtSearch.selectAll();
-			}
-		});
-
-		// F8: Xuất file Excel
-		inputMap.put(KeyStroke.getKeyStroke("F8"), "xuatFile");
-		actionMap.put("xuatFile", new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				xuatExcel();
 			}
 		});
 
@@ -783,10 +759,7 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			HuyHang();
 			return;
 		}
-		if (src == btnXuatFile) {
-			xuatExcel();
-			return;
-		}
+
 	}
 
 	// sự kiện hủy hàng
@@ -840,17 +813,26 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			modelCTPT.setValueAt("Huỷ hàng", selectRowCT, 8);
 
 			// Hiển thị thông báo có mã phiếu huỷ nếu được tạo
+			String tenSP = modelCTPT.getValueAt(selectRowCT, 3).toString(); // Cột 3: Tên SP
 			if (kq.contains("|")) {
 				String maPhieuHuy = kq.split("\\|")[1];
-				JOptionPane.showMessageDialog(null, "Hủy hàng thành công!\nĐã thêm vào phiếu huỷ: " + maPhieuHuy);
+				String thongBao = String.format(
+						"Huỷ hàng thành công!\n\n" +
+								"Sản phẩm: %s\n" +
+								"Lô: %s\n" +
+								"Phiếu huỷ: %s\n\n" +
+								"✅ Phiếu huỷ và chi tiết đã được duyệt tự động.",
+						tenSP, maLo, maPhieuHuy);
+				JOptionPane.showMessageDialog(this, thongBao, "Thành công", JOptionPane.INFORMATION_MESSAGE);
 			} else {
-				JOptionPane.showMessageDialog(null, "Hủy hàng thành công");
+				JOptionPane.showMessageDialog(this, "Huỷ hàng thành công!\n\n✅ Phiếu huỷ đã được duyệt tự động.",
+						"Thành công", JOptionPane.INFORMATION_MESSAGE);
 			}
 
 			// Cập nhật trạng thái phiếu nếu cần
 			capNhatTrangThaiPhieuSauKhiCapNhatCTPT(maPT);
 		} else {
-			JOptionPane.showMessageDialog(null, "Hủy hàng thất bại");
+			JOptionPane.showMessageDialog(this, "Huỷ hàng thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
 		}
 
 	}
@@ -900,19 +882,60 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			}
 		}
 
+		// ✅ Lấy thông tin lô sản phẩm TRƯỚC khi cập nhật để hiển thị tồn kho
+		LoSanPham_DAO loSanPham_dao = new LoSanPham_DAO();
+		LoSanPham loSanPham = loSanPham_dao.timLoTheoMa(maLo);
+
+		int tonKhoTruoc = 0;
+		String tenDonViGoc = "đơn vị";
+		String tenSP = modelCTPT.getValueAt(selectRowCT, 3).toString(); // Cột 3: Tên SP
+		int soLuongTra = 0;
+
+		// Lấy thông tin từ lô sản phẩm
+		if (loSanPham != null) {
+			tonKhoTruoc = loSanPham.getSoLuongTon();
+
+			// 🔍 Tìm đơn vị gốc của sản phẩm
+			QuyCachDongGoi_DAO qcDAO = new QuyCachDongGoi_DAO();
+			QuyCachDongGoi qcGoc = qcDAO.timQuyCachGocTheoSanPham(loSanPham.getSanPham().getMaSanPham());
+			if (qcGoc != null && qcGoc.getDonViTinh() != null) {
+				tenDonViGoc = qcGoc.getDonViTinh().getTenDonViTinh();
+			}
+		}
+
+		// Lấy số lượng và đơn vị gốc từ chi tiết phiếu trả
+		for (ChiTietPhieuTra ct : dsCTPhieuTra) {
+			if (ct.getChiTietHoaDon().getHoaDon().getMaHoaDon().equals(maHD)
+					&& ct.getChiTietHoaDon().getLoSanPham().getMaLo().equals(maLo)) {
+				soLuongTra = ct.getSoLuong();
+				break;
+			}
+		}
+
 		// Gọi DAO: 1 = Nhập lại kho
 		String kq = pt_dao.capNhatTrangThai_GiaoDich(maPT, maHD, maLo, maDVT, nv, 1);
 
 		if (kq != null && kq.startsWith("OK")) {
 			// ✅ Cập nhật lại GUI - cột 8 (do thêm STT)
 			modelCTPT.setValueAt("Nhập lại hàng", selectRowCT, 8);
-			JOptionPane.showMessageDialog(null, "Nhập lại kho thành công");
+
+			// ✅ Hiển thị thông báo chi tiết về số lượng tăng với tồn kho
+			int tonKhoSau = tonKhoTruoc + soLuongTra;
+
+			String thongBao = String.format(
+					"Nhập kho thành công!\n\n" +
+							"Sản phẩm: %s\n" +
+							"Lô: %s\n" +
+							"Tồn kho: %d + %d = %d (%s)",
+					tenSP, maLo, tonKhoTruoc, soLuongTra, tonKhoSau, tenDonViGoc);
+
+			JOptionPane.showMessageDialog(this, thongBao, "Thành công", JOptionPane.INFORMATION_MESSAGE);
 
 			// Cập nhật trạng thái phiếu nếu cần
 			capNhatTrangThaiPhieuSauKhiCapNhatCTPT(maPT);
 
 		} else {
-			JOptionPane.showMessageDialog(null, "Nhập lại kho thất bại");
+			JOptionPane.showMessageDialog(this, "Nhập lại kho thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
@@ -974,163 +997,6 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
-		}
-	}
-
-	/**
-	 * Xuất danh sách phiếu trả ra file Excel
-	 */
-	private void xuatExcel() {
-		if (modelPT.getRowCount() == 0) {
-			JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất!", "Thông báo", JOptionPane.WARNING_MESSAGE);
-			return;
-		}
-
-		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle("Chọn nơi lưu file Excel");
-		fileChooser.setSelectedFile(new File(
-				"DanhSachPhieuTra_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".xlsx"));
-		fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
-
-		int userSelection = fileChooser.showSaveDialog(this);
-		if (userSelection != JFileChooser.APPROVE_OPTION) {
-			return;
-		}
-
-		File fileToSave = fileChooser.getSelectedFile();
-		if (!fileToSave.getName().endsWith(".xlsx")) {
-			fileToSave = new File(fileToSave.getAbsolutePath() + ".xlsx");
-		}
-
-		try (Workbook workbook = new XSSFWorkbook()) {
-			// ===== SHEET 1: DANH SÁCH PHIẾU TRẢ =====
-			Sheet sheetPT = workbook.createSheet("Danh sách phiếu trả");
-
-			// Style cho tiêu đề
-			CellStyle headerStyle = workbook.createCellStyle();
-			org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
-			headerFont.setBold(true);
-			headerFont.setFontHeightInPoints((short) 12);
-			headerFont.setColor(IndexedColors.WHITE.getIndex());
-			headerStyle.setFont(headerFont);
-			headerStyle.setFillForegroundColor(IndexedColors.DARK_TEAL.getIndex());
-			headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-			headerStyle.setAlignment(HorizontalAlignment.CENTER);
-			headerStyle.setBorderBottom(BorderStyle.THIN);
-			headerStyle.setBorderTop(BorderStyle.THIN);
-			headerStyle.setBorderLeft(BorderStyle.THIN);
-			headerStyle.setBorderRight(BorderStyle.THIN);
-
-			// Style cho dữ liệu
-			CellStyle dataStyle = workbook.createCellStyle();
-			dataStyle.setBorderBottom(BorderStyle.THIN);
-			dataStyle.setBorderTop(BorderStyle.THIN);
-			dataStyle.setBorderLeft(BorderStyle.THIN);
-			dataStyle.setBorderRight(BorderStyle.THIN);
-
-			// Style cho số tiền
-			CellStyle moneyStyle = workbook.createCellStyle();
-			moneyStyle.cloneStyleFrom(dataStyle);
-			moneyStyle.setAlignment(HorizontalAlignment.RIGHT);
-
-			// Tạo header
-			Row headerRow = sheetPT.createRow(0);
-			String[] headers = { "Mã PT", "Khách hàng", "Ngày lập", "Người trả", "Trạng thái", "Tổng tiền hoàn" };
-			for (int i = 0; i < headers.length; i++) {
-				Cell cell = headerRow.createCell(i);
-				cell.setCellValue(headers[i]);
-				cell.setCellStyle(headerStyle);
-			}
-
-			// Điền dữ liệu từ bảng (bỏ cột STT và SĐT ẩn)
-			for (int row = 0; row < modelPT.getRowCount(); row++) {
-				Row dataRow = sheetPT.createRow(row + 1);
-
-				// Cột 0: Mã PT (từ cột 1 trong model vì cột 0 là STT)
-				Cell cell0 = dataRow.createCell(0);
-				cell0.setCellValue(modelPT.getValueAt(row, 1).toString());
-				cell0.setCellStyle(dataStyle);
-
-				// Cột 1: Khách hàng (cột 2)
-				Cell cell1 = dataRow.createCell(1);
-				cell1.setCellValue(modelPT.getValueAt(row, 2).toString());
-				cell1.setCellStyle(dataStyle);
-
-				// Cột 2: Ngày lập (bỏ qua cột 3 - SĐT ẩn, lấy cột 4)
-				Cell cell2 = dataRow.createCell(2);
-				cell2.setCellValue(modelPT.getValueAt(row, 4).toString());
-				cell2.setCellStyle(dataStyle);
-
-				// Cột 3: Người trả (cột 5)
-				Cell cell3 = dataRow.createCell(3);
-				cell3.setCellValue(modelPT.getValueAt(row, 5).toString());
-				cell3.setCellStyle(dataStyle);
-
-				// Cột 4: Trạng thái (cột 6)
-				Cell cell4 = dataRow.createCell(4);
-				cell4.setCellValue(modelPT.getValueAt(row, 6).toString());
-				cell4.setCellStyle(dataStyle);
-
-				// Cột 5: Tổng tiền hoàn (cột 7)
-				Cell cell5 = dataRow.createCell(5);
-				cell5.setCellValue(modelPT.getValueAt(row, 7).toString());
-				cell5.setCellStyle(moneyStyle);
-			}
-
-			// Auto-size columns
-			for (int i = 0; i < headers.length; i++) {
-				sheetPT.autoSizeColumn(i);
-			}
-
-			// ===== SHEET 2: CHI TIẾT PHIẾU TRẢ (nếu có dòng được chọn) =====
-			if (modelCTPT.getRowCount() > 0) {
-				Sheet sheetCTPT = workbook.createSheet("Chi tiết phiếu trả");
-
-				// Header chi tiết (không bao gồm STT)
-				Row headerRowCT = sheetCTPT.createRow(0);
-				String[] headersCT = { "Mã hóa đơn", "Mã lô", "Tên SP", "Hạn dùng", "SL trả", "Lý do", "Đơn vị tính",
-						"Trạng thái" };
-				for (int i = 0; i < headersCT.length; i++) {
-					Cell cell = headerRowCT.createCell(i);
-					cell.setCellValue(headersCT[i]);
-					cell.setCellStyle(headerStyle);
-				}
-
-				// Điền dữ liệu chi tiết (bỏ cột 0 - STT)
-				for (int row = 0; row < modelCTPT.getRowCount(); row++) {
-					Row dataRow = sheetCTPT.createRow(row + 1);
-					// Bắt đầu từ cột 1 trong model (bỏ STT), ghi ra cột 0 trong Excel
-					for (int col = 1; col < modelCTPT.getColumnCount(); col++) {
-						Cell cell = dataRow.createCell(col - 1); // Dịch cột -1
-						Object value = modelCTPT.getValueAt(row, col);
-						cell.setCellValue(value != null ? value.toString() : "");
-						cell.setCellStyle(dataStyle);
-					}
-				}
-
-				// Auto-size columns
-				for (int i = 0; i < headersCT.length; i++) {
-					sheetCTPT.autoSizeColumn(i);
-				}
-			}
-
-			// Ghi file
-			try (FileOutputStream fos = new FileOutputStream(fileToSave)) {
-				workbook.write(fos);
-			}
-
-			JOptionPane.showMessageDialog(this, "Xuất Excel thành công!\nFile: " + fileToSave.getAbsolutePath(),
-					"Thành công", JOptionPane.INFORMATION_MESSAGE);
-
-			// Mở file sau khi xuất
-			if (java.awt.Desktop.isDesktopSupported()) {
-				java.awt.Desktop.getDesktop().open(fileToSave);
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			JOptionPane.showMessageDialog(this, "Lỗi khi xuất file Excel:\n" + e.getMessage(), "Lỗi",
-					JOptionPane.ERROR_MESSAGE);
 		}
 	}
 

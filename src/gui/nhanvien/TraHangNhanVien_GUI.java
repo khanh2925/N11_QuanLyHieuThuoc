@@ -98,7 +98,7 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 
 		// Thiết lập phím tắt
 		setupKeyboardShortcuts();
-		addFocusOnShow(); 
+		addFocusOnShow();
 	}
 
 	private void initialize() {
@@ -303,9 +303,11 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 		String maHD = txtTimHoaDon.getText().trim();
 
 		if (!maHD.matches(REGEX_MA_HOA_DON)) {
-			JOptionPane.showMessageDialog(this, "❌ Mã hoá đơn không đúng định dạng!\n\n"
-					+ "Định dạng hợp lệ: HD-YYYYMMDD-XXXX\n" + "Ví dụ: HD-20250210-0001", "Sai định dạng mã hóa đơn",
-					JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this,
+					"Mã hoá đơn không đúng định dạng!\n\n"
+							+ "Định dạng hợp lệ: HD-YYYYMMDD-XXXX\n"
+							+ "Ví dụ: HD-20250210-0001",
+					"Sai định dạng mã hóa đơn", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 
@@ -319,19 +321,25 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 	private void xuLyTimHDTheoSDTKH() {
 		String sdt = txtTimKH.getText().trim();
 		if (sdt.isEmpty() || !sdt.matches("0\\d{9}")) {
-			JOptionPane.showMessageDialog(this, "Vui lòng nhập SĐT hợp lệ (10 số).");
+			JOptionPane.showMessageDialog(this,
+					"Vui lòng nhập SĐT hợp lệ (10 số, bắt đầu bằng 0).",
+					"SĐT không hợp lệ", JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 
 		KhachHang kh = new KhachHang_DAO().timKhachHangTheoSoDienThoai(sdt);
 		if (kh == null) {
-			JOptionPane.showMessageDialog(this, "Không tìm thấy khách hàng!");
+			JOptionPane.showMessageDialog(this,
+					"Không tìm thấy khách hàng với SĐT: " + sdt,
+					"Không tìm thấy", JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 
 		List<HoaDon> ds = hoaDonDAO.timHoaDonTheoSoDienThoai(sdt);
 		if (ds.isEmpty()) {
-			JOptionPane.showMessageDialog(this, "Khách hàng chưa có hóa đơn.");
+			JOptionPane.showMessageDialog(this,
+					"Khách hàng chưa có hóa đơn nào.",
+					"Thông báo", JOptionPane.INFORMATION_MESSAGE);
 			return;
 		}
 
@@ -396,13 +404,21 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 	private void hienThiChiTietHoaDon(String maHD) {
 		HoaDon hd = hoaDonDAO.timHoaDonTheoMa(maHD);
 		if (hd == null) {
-			JOptionPane.showMessageDialog(this, "Không tìm thấy hóa đơn!");
+			JOptionPane.showMessageDialog(this,
+					"Không tìm thấy hóa đơn với mã: " + maHD,
+					"Không tìm thấy", JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 
 		long days = ChronoUnit.DAYS.between(hd.getNgayLap(), today);
 		if (days > MAX_RETURN_DAYS) {
-			JOptionPane.showMessageDialog(this, "Hoá đơn đã quá " + MAX_RETURN_DAYS + " ngày - không thể trả!");
+			JOptionPane.showMessageDialog(this,
+					"Hoá đơn đã quá " + MAX_RETURN_DAYS + " ngày - không thể trả hàng!\n\n"
+							+ "Ngày lập hoá đơn: "
+							+ hd.getNgayLap().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) + "\n"
+							+ "Số ngày đã trôi qua: " + days + " ngày",
+					"Hết hạn trả hàng", JOptionPane.WARNING_MESSAGE);
+			resetForm(); // Reset form không load dữ liệu
 			return;
 		}
 
@@ -415,7 +431,7 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 		List<ChiTietHoaDon> dsChon = dlg.getDsSanPhamDuocChon();
 
 		if (dsChon.isEmpty()) {
-			resetForm();
+			// Người dùng đóng dialog không chọn gì -> không reset form, chỉ return
 			return;
 		}
 
@@ -445,12 +461,16 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 			List<QuyCachDongGoi> dsQuyCach = qcdgDAO.layDanhSachQuyCachTheoSanPham(sp.getMaSanPham());
 			if (dsQuyCach == null || dsQuyCach.isEmpty()) {
 				// fallback: không có quy cách → vẫn tạo item như cũ (1 DVT)
+				// Lấy số lượng đã trả trước đó
+				int daTraTruoc = (int) ctptDAO.tongSoLuongDaTra(maHD, maLo);
+
 				ItemTraHang item = new ItemTraHang(maLo, sp.getTenSanPham(), ctDau.getDonViTinh().getTenDonViTinh(),
 						ctDau.getGiaBan(), (int) ctDau.getSoLuong(), ctDau);
 
 				dsTraHang.add(item);
 
 				String anh = sp.getHinhAnh();
+				final int daTra = daTraTruoc;
 				TraHangItemPanel pnl = new TraHangItemPanel(item, stt++, new TraHangItemPanel.Listener() {
 					@Override
 					public void onUpdate(ItemTraHang i) {
@@ -473,7 +493,7 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 						dsTraHang.add(itemMoi);
 
 						TraHangItemPanel pnlClone = new TraHangItemPanel(itemMoi, pnDanhSachDon.getComponentCount(),
-								this, anh);
+								this, anh, daTra);
 
 						pnDanhSachDon.add(pnlClone);
 						pnDanhSachDon.add(Box.createVerticalStrut(5));
@@ -485,7 +505,7 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 						capNhatTongTienTra();
 						capNhatSTT();
 					}
-				}, anh);
+				}, anh, daTra);
 
 				pnDanhSachDon.add(pnl);
 				pnDanhSachDon.add(Box.createVerticalStrut(5));
@@ -507,6 +527,9 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 			// Chọn quy cách mặc định: đơn vị có hệ số quy đổi lớn nhất nhưng <= SL mua
 			QuyCachDongGoi qcMacDinh = chonQuyCachMacDinh(dsQuyCach, tongMuaGoc);
 
+			// Lấy số lượng đã trả trước đó (quy về gốc)
+			int daTraTruoc = (int) ctptDAO.tongSoLuongDaTra(maHD, maLo);
+
 			// Tạo ItemTraHang theo quy đổi
 			// Tạo ItemTraHang theo quy đổi (gom tất cả CTHD theo lô)
 			ItemTraHang item = new ItemTraHang(maLo, sp.getTenSanPham(), dsTheoLo, // list ChiTietHoaDon của lô này
@@ -515,6 +538,7 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 			dsTraHang.add(item);
 
 			String anh = sp.getHinhAnh();
+			final int daTra = daTraTruoc;
 
 			TraHangItemPanel pnl = new TraHangItemPanel(item, stt++, new TraHangItemPanel.Listener() {
 				@Override
@@ -539,7 +563,7 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 					// phân bổ lại số lượng mua sau khi clone
 					reallocateSoLuongMua();
 
-					TraHangItemPanel pnlClone = new TraHangItemPanel(itemMoi, dsTraHang.size(), this, anh);
+					TraHangItemPanel pnlClone = new TraHangItemPanel(itemMoi, dsTraHang.size(), this, anh, daTra);
 					pnDanhSachDon.add(pnlClone);
 					pnDanhSachDon.add(Box.createVerticalStrut(5));
 
@@ -548,7 +572,7 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 					capNhatTongTienTra();
 				}
 
-			}, anh);
+			}, anh, daTra);
 
 			pnDanhSachDon.add(pnl);
 			pnDanhSachDon.add(Box.createVerticalStrut(5));
@@ -652,7 +676,9 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 	private void xuLyTraHang(ActionEvent e) {
 
 		if (dsTraHang.isEmpty()) {
-			JOptionPane.showMessageDialog(this, "Không có sản phẩm để trả!");
+			JOptionPane.showMessageDialog(this,
+					"Không có sản phẩm để trả!",
+					"Thông báo", JOptionPane.INFORMATION_MESSAGE);
 			txtTimHoaDon.requestFocus();
 			return;
 		}
@@ -754,7 +780,9 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 
 		boolean ok = ptDAO.themPhieuTraVaChiTiet(pt, dsCT);
 		if (!ok) {
-			JOptionPane.showMessageDialog(this, "Không thể lưu phiếu trả!");
+			JOptionPane.showMessageDialog(this,
+					"Không thể lưu phiếu trả! Vui lòng thử lại.",
+					"Lỗi", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 
