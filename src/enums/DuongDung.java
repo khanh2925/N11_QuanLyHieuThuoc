@@ -1,6 +1,7 @@
 package enums;
 
 public enum DuongDung {
+	Khac("Không xác định"),
     UONG("Uống"),
     TIEM("Tiêm"),
     NHO("Nhỏ"),
