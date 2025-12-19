@@ -115,7 +115,7 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		txtTimKiem = new JTextField();
 		PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã, tên, số điện thoại... (F1 / Ctrl+F)");
 		txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
-		txtTimKiem.setBounds(25, 17, 520, 60);
+		txtTimKiem.setBounds(25, 17, 500, 60);
 		txtTimKiem.setBorder(new RoundedBorder(20));
 		txtTimKiem.setBackground(Color.WHITE);
 		txtTimKiem.setForeground(Color.GRAY);
@@ -131,7 +131,7 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 						"<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
 						"</center>" +
 						"</html>");
-		btnTimKiem.setBounds(560, 22, 130, 50);
+		btnTimKiem.setBounds(540, 22, 130, 50);
 		btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnTimKiem.setToolTipText(
 				"<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã, tên và bộ lọc</html>");
@@ -146,7 +146,7 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 						"<span style='font-size:10px; color:#888888;'>(Ctrl+E)</span>" +
 						"</center>" +
 						"</html>");
-		btnXuatExcel.setBounds(705, 22, 150, 50);
+		btnXuatExcel.setBounds(685, 22, 150, 50);
 		btnXuatExcel.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnXuatExcel.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất dữ liệu ra file Excel</html>");
 		btnXuatExcel.addActionListener(e -> xuatExcel());
