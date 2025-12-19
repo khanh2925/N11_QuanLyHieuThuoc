@@ -226,14 +226,18 @@ public class TraCuuKhachHang_GUI extends JPanel {
         }
         tblKhachHang.getColumnModel().getColumn(2).setPreferredWidth(200); 
         
-        // Render Trạng thái
         tblKhachHang.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
-                if ("Hoạt động".equals(value)) lbl.setForeground(new Color(0x2E7D32)); // Xanh lá
-                else lbl.setForeground(Color.RED);
+                if ("Hoạt động".equals(value)) {
+                    lbl.setForeground(new Color(0x2E7D32)); // Xanh lá
+                    lbl.setFont(new Font("Segoe UI", Font.BOLD, 16));
+                } else {
+                    lbl.setForeground(Color.RED);
+                    lbl.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+                }
                 return lbl;
             }
         });
@@ -301,13 +305,13 @@ public class TraCuuKhachHang_GUI extends JPanel {
         right.setHorizontalAlignment(SwingConstants.RIGHT);
         
         int lastCol = table.getColumnCount() - 1;
+        // Căn giữa các cột trừ cột 3 (Nhân viên bán / Lý do trả)
         for (int i=0; i<lastCol; i++) {
-            if (i!=3) // Cột tên/lý do có thể để left, ở đây để center
+            if (i!=3) // Cột 3 để căn trái (văn bản)
                 table.getColumnModel().getColumn(i).setCellRenderer(center);
         }
-        // 2 cột cuối thường là tiền/điểm
-        table.getColumnModel().getColumn(lastCol).setCellRenderer(right); 
-        if (lastCol > 0) table.getColumnModel().getColumn(lastCol-1).setCellRenderer(right);
+        // Cột cuối (tiền) căn phải
+        table.getColumnModel().getColumn(lastCol).setCellRenderer(right);
     }
 
     private TitledBorder createTitledBorder(String title) {

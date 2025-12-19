@@ -17,7 +17,7 @@ public enum LoaiSanPham {
     MY_PHAM("Mỹ phẩm"),
     DUNG_CU_Y_TE("Dụng cụ y tế"),
     SAN_PHAM_CHO_ME_VA_BE("SP cho mẹ và bé"),
-    SAN_PHAM_KHAC("Sản phẩm khác");
+    SAN_PHAM_KHAC("Khác");
 
     private final String tenLoai;
 
