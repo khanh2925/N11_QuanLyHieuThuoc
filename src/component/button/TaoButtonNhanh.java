@@ -22,4 +22,11 @@ public class TaoButtonNhanh {
         btn.setFont(new Font("Segoe UI", Font.BOLD, 23));
         return btn;
     }
+
+    public static PillButton huyHang() {
+        PillButton btn = new PillButton("Tạo phiếu huỷ");
+        btn.setMaximumSize(new Dimension(300, 70));
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 23));
+        return btn;
+    }
 }

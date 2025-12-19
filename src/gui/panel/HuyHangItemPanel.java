@@ -206,7 +206,7 @@ public class HuyHangItemPanel extends JPanel {
 		btnXoa.setContentAreaFilled(false);
 		btnXoa.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		try {
-			ImageIcon icon = new ImageIcon(getClass().getResource("/images/bin.png"));
+			ImageIcon icon = new ImageIcon(getClass().getResource("/resources/images/bin.png"));
 			btnXoa.setIcon(new ImageIcon(icon.getImage().getScaledInstance(22, 22, Image.SCALE_SMOOTH)));
 		} catch (Exception ignored) {
 		}
