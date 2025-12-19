@@ -662,7 +662,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 
 		if (src == btnHSD) {
 			// Mở dialog chọn lô theo HSD (gần hết hạn)
-			MoDialogChonLo("", "HSD"); // keyword giờ không dùng nữa trong HSD
+			MoDialogChonLo("", "HSD"); 
 			return;
 		}
 	}

@@ -412,10 +412,13 @@ public class PhieuHuy_DAO {
 
 			con.commit();
 
-			// ✅ Update Cache: Thêm vào đầu danh sách
+			// ✅ Update Cache PhieuHuy: Thêm vào đầu danh sách
 			if (cacheAllPhieuHuy != null) {
 				cacheAllPhieuHuy.add(0, ph);
 			}
+
+			// ✅ Xóa cache LoSanPham vì đã thay đổi tồn kho
+			LoSanPham_DAO.clearCache();
 
 			return true;
 
@@ -551,9 +554,8 @@ public class PhieuHuy_DAO {
 		}
 	}
 
-	// ============================================================
-	// ✅ Kiểm tra trạng thái phiếu (tất cả chi tiết đã xử lý chưa)
-	// ============================================================
+
+
 	public boolean checkTrangThai(String maPhieuHuy) {
 		List<ChiTietPhieuHuy> ds = layChiTietPhieuHuy(maPhieuHuy);
 
