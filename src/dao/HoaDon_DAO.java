@@ -27,7 +27,9 @@ public class HoaDon_DAO {
                 	hd.MaHoaDon, hd.NgayLap, hd.TongThanhToan, hd.SoTienGiamKhuyenMai, hd.ThuocKeDon,
                 	nv.MaNhanVien, nv.TenNhanVien, nv.QuanLy, nv.CaLam,
                 	kh.MaKhachHang, kh.TenKhachHang, kh.GioiTinh, kh.SoDienThoai, kh.NgaySinh, kh.HoatDong,
-                	km.MaKM, km.TenKM, km.GiaTri AS GiaTriKM, km.HinhThuc AS HinhThucKM, km.NgayBatDau, km.NgayKetThuc, km.TrangThai AS TrangThaiKM
+                    km.MaKM, km.TenKM, km.GiaTri AS GiaTriKM, km.HinhThuc AS HinhThucKM,
+                    km.KhuyenMaiHoaDon, km.DieuKienApDungHoaDon, km.SoLuongKhuyenMai,
+                    km.NgayBatDau, km.NgayKetThuc, km.TrangThai AS TrangThaiKM
                 FROM HoaDon hd
                 JOIN NhanVien nv ON hd.MaNhanVien = nv.MaNhanVien
                 JOIN KhachHang kh ON hd.MaKhachHang = kh.MaKhachHang
@@ -70,6 +72,9 @@ public class HoaDon_DAO {
                     km.setMaKM(rs.getString("MaKM"));
                     km.setTenKM(rs.getString("TenKM"));
                     km.setGiaTri(rs.getDouble("GiaTriKM"));
+                    km.setKhuyenMaiHoaDon(rs.getBoolean("KhuyenMaiHoaDon"));
+                    km.setDieuKienApDungHoaDon(rs.getDouble("DieuKienApDungHoaDon"));
+                    km.setSoLuongKhuyenMai(rs.getInt("SoLuongKhuyenMai"));
                     if (rs.getString("HinhThucKM") != null) {
                         km.setHinhThuc(HinhThucKM.valueOf(rs.getString("HinhThucKM")));
                     }
@@ -246,7 +251,9 @@ public class HoaDon_DAO {
                 	hd.MaHoaDon, hd.NgayLap, hd.TongThanhToan, hd.SoTienGiamKhuyenMai, hd.ThuocKeDon,
                 	nv.MaNhanVien, nv.TenNhanVien, nv.QuanLy, nv.CaLam,
                 	kh.MaKhachHang, kh.TenKhachHang, kh.GioiTinh, kh.SoDienThoai, kh.NgaySinh, kh.HoatDong,
-                	km.MaKM, km.TenKM, km.GiaTri AS GiaTriKM, km.HinhThuc AS HinhThucKM, km.NgayBatDau, km.NgayKetThuc, km.TrangThai AS TrangThaiKM
+                    km.MaKM, km.TenKM, km.GiaTri AS GiaTriKM, km.HinhThuc AS HinhThucKM,
+                    km.KhuyenMaiHoaDon, km.DieuKienApDungHoaDon, km.SoLuongKhuyenMai,
+                    km.NgayBatDau, km.NgayKetThuc, km.TrangThai AS TrangThaiKM
                 FROM HoaDon hd
                 JOIN NhanVien nv ON hd.MaNhanVien = nv.MaNhanVien
                 JOIN KhachHang kh ON hd.MaKhachHang = kh.MaKhachHang
@@ -291,6 +298,9 @@ public class HoaDon_DAO {
                     km.setMaKM(rs.getString("MaKM"));
                     km.setTenKM(rs.getString("TenKM"));
                     km.setGiaTri(rs.getDouble("GiaTriKM"));
+                    km.setKhuyenMaiHoaDon(rs.getBoolean("KhuyenMaiHoaDon"));
+                    km.setDieuKienApDungHoaDon(rs.getDouble("DieuKienApDungHoaDon"));
+                    km.setSoLuongKhuyenMai(rs.getInt("SoLuongKhuyenMai"));
                     if (rs.getString("HinhThucKM") != null) {
                         km.setHinhThuc(HinhThucKM.valueOf(rs.getString("HinhThucKM")));
                     }
@@ -523,7 +533,9 @@ public class HoaDon_DAO {
                 	hd.MaHoaDon, hd.NgayLap, hd.TongThanhToan, hd.SoTienGiamKhuyenMai, hd.ThuocKeDon,
                 	nv.MaNhanVien, nv.TenNhanVien, nv.QuanLy, nv.CaLam,
                 	kh.MaKhachHang, kh.TenKhachHang, kh.GioiTinh, kh.SoDienThoai, kh.NgaySinh, kh.HoatDong,
-                	km.MaKM, km.TenKM, km.GiaTri AS GiaTriKM, km.HinhThuc AS HinhThucKM, km.NgayBatDau, km.NgayKetThuc, km.TrangThai AS TrangThaiKM
+                    km.MaKM, km.TenKM, km.GiaTri AS GiaTriKM, km.HinhThuc AS HinhThucKM,
+                    km.KhuyenMaiHoaDon, km.DieuKienApDungHoaDon, km.SoLuongKhuyenMai,
+                    km.NgayBatDau, km.NgayKetThuc, km.TrangThai AS TrangThaiKM
                 FROM HoaDon hd
                 JOIN NhanVien nv ON hd.MaNhanVien = nv.MaNhanVien
                 JOIN KhachHang kh ON hd.MaKhachHang = kh.MaKhachHang
@@ -570,6 +582,9 @@ public class HoaDon_DAO {
                     km.setMaKM(rs.getString("MaKM"));
                     km.setTenKM(rs.getString("TenKM"));
                     km.setGiaTri(rs.getDouble("GiaTriKM"));
+                    km.setKhuyenMaiHoaDon(rs.getBoolean("KhuyenMaiHoaDon"));
+                    km.setDieuKienApDungHoaDon(rs.getDouble("DieuKienApDungHoaDon"));
+                    km.setSoLuongKhuyenMai(rs.getInt("SoLuongKhuyenMai"));
                     if (rs.getString("HinhThucKM") != null) {
                         km.setHinhThuc(HinhThucKM.valueOf(rs.getString("HinhThucKM")));
                     }
