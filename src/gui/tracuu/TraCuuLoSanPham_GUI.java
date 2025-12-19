@@ -221,12 +221,7 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 		tblSanPham = setupTable(modelSanPham);
 
 		tblSanPham.getColumnModel().getColumn(0).setCellRenderer(center);
-		tblSanPham.getColumnModel().getColumn(2).setCellRenderer(center);
-		tblSanPham.getColumnModel().getColumn(3).setCellRenderer(center);
-		tblSanPham.getColumnModel().getColumn(4).setCellRenderer(center);
 		tblSanPham.getColumnModel().getColumn(5).setCellRenderer(right);
-		tblSanPham.getColumnModel().getColumn(6).setCellRenderer(center);
-
 		tblSanPham.getColumnModel().getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
