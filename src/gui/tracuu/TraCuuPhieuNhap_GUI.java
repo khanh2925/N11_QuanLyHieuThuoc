@@ -88,7 +88,7 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
 
         txtTimKiem = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã PN, tên nhân viên, nhà cung cấp...");
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20));
         txtTimKiem.setBounds(25, 17, 480, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
@@ -96,26 +96,26 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
         pnHeader.add(txtTimKiem);
 
         JLabel lblTu = new JLabel("Từ ngày:");
-        lblTu.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblTu.setBounds(540, 28, 70, 35);
+        lblTu.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        lblTu.setBounds(530, 28, 80, 35);
         pnHeader.add(lblTu);
 
         dateTuNgay = new JDateChooser();
         dateTuNgay.setDateFormatString("dd/MM/yyyy");
-        dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        dateTuNgay.setBounds(620, 28, 140, 38);
+        dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        dateTuNgay.setBounds(610, 28, 180, 38);
         dateTuNgay.setDate(java.sql.Date.valueOf(LocalDate.now().minusDays(30)));
         pnHeader.add(dateTuNgay);
 
         JLabel lblDen = new JLabel("Đến:");
-        lblDen.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblDen.setBounds(780, 28, 40, 35);
+        lblDen.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        lblDen.setBounds(830, 28, 50, 35);
         pnHeader.add(lblDen);
 
         dateDenNgay = new JDateChooser();
         dateDenNgay.setDateFormatString("dd/MM/yyyy");
-        dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        dateDenNgay.setBounds(820, 28, 140, 38);
+        dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        dateDenNgay.setBounds(890, 28, 180, 38);
         dateDenNgay.setDate(new Date());
         pnHeader.add(dateDenNgay);
 
@@ -127,7 +127,7 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
                     "</center>" +
                 "</html>"
             );
-        btnTimKiem.setBounds(1020, 22, 130, 50);
+        btnTimKiem.setBounds(1120, 22, 130, 50);
         btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnTimKiem.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã phiếu nhập, nhân viên, nhà cung cấp và bộ lọc ngày</html>");
         pnHeader.add(btnTimKiem);
@@ -140,7 +140,7 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
                     "</center>" +
                 "</html>"
             );
-        btnLamMoi.setBounds(1165, 22, 130, 50);
+        btnLamMoi.setBounds(1265, 22, 130, 50);
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
         pnHeader.add(btnLamMoi);
@@ -153,7 +153,7 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
                     "</center>" +
                 "</html>"
             );
-        btnXemHoaDon.setBounds(1310, 22, 170, 50);
+        btnXemHoaDon.setBounds(1410, 22, 170, 50);
         btnXemHoaDon.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnXemHoaDon.setToolTipText("<html><b>Phím tắt:</b> F3<br>Xem chi tiết hóa đơn nhập hàng đang chọn</html>");
         pnHeader.add(btnXemHoaDon);
@@ -224,20 +224,22 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
     private JTable thietLapBang(DefaultTableModel model) {
         JTable table = new JTable(model);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        table.setRowHeight(30);
+        table.setRowHeight(35);
         table.setSelectionBackground(new Color(0xC8E6C9));
+        table.setGridColor(new Color(230, 230, 230));
 
         JTableHeader header = table.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 16));
         header.setBackground(new Color(33, 150, 243));
         header.setForeground(Color.WHITE);
+        header.setPreferredSize(new Dimension(100, 40));
         return table;
     }
 
     private TitledBorder taoVienTieuDe(String title) {
         return BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
-                TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 16), Color.DARK_GRAY);
+                TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 18), Color.DARK_GRAY);
     }
 
     private void dangKySuKien() {
@@ -391,7 +393,7 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
 
     private void xuLyTimKiem() {
         String keyword = txtTimKiem.getText().trim();
-        if (keyword.equals("Tìm theo mã PN, tên nhân viên, nhà cung cấp...")) {
+        if (keyword.equals("Tìm theo mã PN, tên nhân viên, nhà cung cấp...(F1 / Ctrl+F)")) {
             keyword = "";
         }
 
@@ -431,7 +433,7 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
 
     private void xuLyLamMoi() {
         txtTimKiem.setText("");
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã PN, tên nhân viên, nhà cung cấp...");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã PN, tên nhân viên, nhà cung cấp...(F1 / Ctrl+F)");
         dateTuNgay.setDate(java.sql.Date.valueOf(LocalDate.now().minusDays(30)));
         dateDenNgay.setDate(new Date());
         taiDuLieuPhieuNhap();
@@ -564,9 +566,9 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
         table.getColumnModel().getColumn(4).setCellRenderer(rightRenderer); // Đơn giá
         table.getColumnModel().getColumn(5).setCellRenderer(rightRenderer); // Thành tiền
 
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
-        table.setRowHeight(25);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 16));
+        table.setRowHeight(35);
 
         JScrollPane scrollTable = new JScrollPane(table);
         centerPanel.add(scrollTable);

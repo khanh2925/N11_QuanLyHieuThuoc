@@ -1,6 +1,6 @@
 /**
  * @author Quốc Khánh cute
- * @version 1.0
+ * @version 2.0
  * @since Nov 19, 2025
  *
  * Mô tả: Giao diện tra cứu khách hàng và lịch sử giao dịch (Mua, Trả).
@@ -9,18 +9,44 @@
 package gui.tracuu;
 
 import java.awt.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.*;
-import java.util.Date;
-import com.toedter.calendar.JDateChooser;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 // Import các component riêng của bạn
 import component.button.PillButton;
 import component.input.PlaceholderSupport;
 import component.border.RoundedBorder;
 
+// Import DAO và Entity
+import dao.KhachHang_DAO;
+import dao.HoaDon_DAO;
+import dao.PhieuTra_DAO;
+import entity.KhachHang;
+import entity.HoaDon;
+import entity.PhieuTra;
+
+@SuppressWarnings("serial")
 public class TraCuuKhachHang_GUI extends JPanel {
+    
+    private static final String PLACEHOLDER_TIM_KIEM = "Tìm theo mã, tên hoặc SĐT... (F1 / Ctrl+F)";
 
     private JPanel pnHeader;
     private JPanel pnCenter;
@@ -39,12 +65,34 @@ public class TraCuuKhachHang_GUI extends JPanel {
 
     // Components lọc (Thay đổi cho phù hợp khách hàng)
     private JTextField txtTimKiem;
-    private JComboBox<String> cbGioiTinh;    // Thay cho Chức vụ
-    private JComboBox<String> cbHangThanhVien; // Thay cho Ca làm
+    private JComboBox<String> cbGioiTinh;
     private JComboBox<String> cbTrangThai;
+    
+    // Buttons
+    private PillButton btnTim;
+    private PillButton btnLamMoi;
+    private PillButton btnXuatExcel;
+    
+    // DAO
+    private final KhachHang_DAO khachHangDAO;
+    private final HoaDon_DAO hoaDonDAO;
+    private final PhieuTra_DAO phieuTraDAO;
+    
+    // Data cache
+    private List<KhachHang> danhSachGoc = new ArrayList<>();
+    
+    // Formatter
+    private final DecimalFormat df = new DecimalFormat("#,### đ");
+    private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public TraCuuKhachHang_GUI() {
         setPreferredSize(new Dimension(1537, 850));
+        
+        // Khởi tạo DAO
+        khachHangDAO = new KhachHang_DAO();
+        hoaDonDAO = new HoaDon_DAO();
+        phieuTraDAO = new PhieuTra_DAO();
+        
         initialize();
     }
 
@@ -61,8 +109,9 @@ public class TraCuuKhachHang_GUI extends JPanel {
         add(pnCenter, BorderLayout.CENTER);
 
         // 3. DATA
-        loadDuLieuKhachHang();
         addEvents();
+        setupKeyboardShortcuts(); // Thiết lập phím tắt
+        loadDuLieuKhachHang();
     }
 
     // ==============================================================================
@@ -76,62 +125,75 @@ public class TraCuuKhachHang_GUI extends JPanel {
 
         // --- Ô TÌM KIẾM TO ---
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm khách hàng theo mã, tên, sđt...");
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
-        txtTimKiem.setBounds(25, 17, 400, 60);
+        PlaceholderSupport.addPlaceholder(txtTimKiem, PLACEHOLDER_TIM_KIEM);
+        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+        txtTimKiem.setBounds(25, 17, 480, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
-        txtTimKiem.setForeground(Color.GRAY);
+        txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
         pnHeader.add(txtTimKiem);
 
         // --- BỘ LỌC ---
-        int yFilter = 28;
-        int hFilter = 38;
-
-        // Lọc 1: Giới tính
-        JLabel lblGT = new JLabel("Giới tính:");
-        lblGT.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblGT.setBounds(450, yFilter, 70, 35);
-        pnHeader.add(lblGT);
-
+        addFilterLabel("Giới tính:", 530, 28, 80, 35);
         cbGioiTinh = new JComboBox<>(new String[]{"Tất cả", "Nam", "Nữ"});
-        cbGioiTinh.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        cbGioiTinh.setBounds(520, yFilter, 100, hFilter);
-        pnHeader.add(cbGioiTinh);
+        setupCombo(cbGioiTinh, 610, 28, 140, 38);
 
-        // Lọc 2: Hạng thành viên (Ví dụ: Thân thiết, VIP)
-        JLabel lblHang = new JLabel("Hạng:");
-        lblHang.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblHang.setBounds(640, yFilter, 50, 35);
-        pnHeader.add(lblHang);
-
-        cbHangThanhVien = new JComboBox<>(new String[]{"Tất cả", "Mới", "Thân thiết", "VIP"});
-        cbHangThanhVien.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        cbHangThanhVien.setBounds(690, yFilter, 120, hFilter);
-        pnHeader.add(cbHangThanhVien);
-
-        // Lọc 3: Trạng thái
-        JLabel lblTT = new JLabel("Trạng thái:");
-        lblTT.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblTT.setBounds(820, yFilter, 80, 35);
-        pnHeader.add(lblTT);
-
+        addFilterLabel("Trạng thái:", 790, 28, 100, 35);
         cbTrangThai = new JComboBox<>(new String[]{"Tất cả", "Hoạt động", "Ngừng"});
-        cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        cbTrangThai.setBounds(900, yFilter, 120, hFilter);
-        pnHeader.add(cbTrangThai);
+        setupCombo(cbTrangThai, 890, 28, 180, 38);
 
         // --- NÚT ---
-        PillButton btnTim = new PillButton("Tìm kiếm");
-        btnTim.setBounds(1050, 22, 120, 50);
+        btnTim = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "TÌM KIẾM<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
+                    "</center>" +
+                "</html>"
+            );
         btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnTim.setBounds(1120, 22, 130, 50);
+        btnTim.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã, tên và bộ lọc</html>");
         pnHeader.add(btnTim);
 
-        PillButton btnMoi = new PillButton("Làm mới");
-        btnMoi.setBounds(1190, 22, 120, 50);
-        btnMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        pnHeader.add(btnMoi);
+        btnLamMoi = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "LÀM MỚI<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(F5)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+        btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnLamMoi.setBounds(1265, 22, 130, 50);
+        btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
+        pnHeader.add(btnLamMoi);
         
+        btnXuatExcel = new PillButton(
+                "<html>" +
+                    "<center>" +
+                        "XUẤT EXCEL<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(Ctrl+E)</span>" +
+                    "</center>" +
+                "</html>"
+            );
+        btnXuatExcel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnXuatExcel.setBounds(1410, 22, 180, 50);
+        btnXuatExcel.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất dữ liệu ra file Excel</html>");
+        pnHeader.add(btnXuatExcel);
+    }
+    
+    private void addFilterLabel(String text, int x, int y, int w, int h) {
+        JLabel lbl = new JLabel(text);
+        lbl.setBounds(x, y, w, h);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        pnHeader.add(lbl);
+    }
+
+    private void setupCombo(JComboBox<?> cb, int x, int y, int w, int h) {
+        cb.setBounds(x, y, w, h);
+        cb.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        pnHeader.add(cb);
     }
 
     // ==============================================================================
@@ -149,7 +211,7 @@ public class TraCuuKhachHang_GUI extends JPanel {
 
         // --- TOP: BẢNG KHÁCH HÀNG ---
         // Cột dữ liệu phù hợp với Khách Hàng
-        String[] colKH = {"STT", "Mã KH", "Tên khách hàng", "SĐT", "Ngày sinh", "Giới tính", "Điểm tích lũy", "Hạng", "Trạng thái"};
+        String[] colKH = {"STT", "Mã KH", "Tên khách hàng", "SĐT", "Ngày sinh", "Giới tính", "Trạng thái"};
         modelKhachHang = new DefaultTableModel(colKH, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -163,25 +225,9 @@ public class TraCuuKhachHang_GUI extends JPanel {
             if (i != 2) tblKhachHang.getColumnModel().getColumn(i).setCellRenderer(center); // Tên canh trái
         }
         tblKhachHang.getColumnModel().getColumn(2).setPreferredWidth(200); 
-
-        // Render Hạng thành viên (Đậm)
-        tblKhachHang.getColumnModel().getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                lbl.setHorizontalAlignment(SwingConstants.CENTER);
-                if ("VIP".equals(value)) {
-                    lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
-                    lbl.setForeground(new Color(255, 140, 0)); // Màu cam cho VIP
-                } else {
-                    lbl.setForeground(Color.BLACK);
-                }
-                return lbl;
-            }
-        });
         
         // Render Trạng thái
-        tblKhachHang.getColumnModel().getColumn(8).setCellRenderer(new DefaultTableCellRenderer() {
+        tblKhachHang.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -211,7 +257,7 @@ public class TraCuuKhachHang_GUI extends JPanel {
 
     // Tạo Panel cho Tab Mua Hàng (Khác với bán hàng là hiển thị Nhân viên bán)
     private JComponent createTabMuaHang() {
-        String[] cols = {"STT", "Mã hóa đơn", "Ngày mua", "Nhân viên bán", "Tổng tiền", "Điểm cộng"};
+        String[] cols = {"STT", "Mã hóa đơn", "Ngày mua", "Nhân viên bán", "Tổng tiền"};
         modelLichSuMuaHang = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -222,7 +268,7 @@ public class TraCuuKhachHang_GUI extends JPanel {
 
     // Tạo Panel cho Tab Trả Hàng
     private JComponent createTabTraHang() {
-        String[] cols = {"STT", "Mã đơn trả", "Ngày trả", "Lý do trả", "Tiền hoàn lại", "Điểm trừ"};
+        String[] cols = {"STT", "Mã đơn trả", "Ngày trả", "Lý do trả", "Tiền hoàn lại"};
         modelLichSuTraHang = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -235,13 +281,15 @@ public class TraCuuKhachHang_GUI extends JPanel {
     private JTable setupTable(DefaultTableModel model) {
         JTable table = new JTable(model);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        table.setRowHeight(28);
+        table.setRowHeight(35);
         table.setSelectionBackground(new Color(0xC8E6C9)); // Màu xanh nhạt khi chọn
+        table.setGridColor(new Color(230, 230, 230));
         
         JTableHeader header = table.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 16));
         header.setBackground(new Color(33, 150, 243)); // Màu xanh header
         header.setForeground(Color.WHITE);
+        header.setPreferredSize(new Dimension(100, 40));
         return table;
     }
     
@@ -265,7 +313,7 @@ public class TraCuuKhachHang_GUI extends JPanel {
     private TitledBorder createTitledBorder(String title) {
         return BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
-            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 16), Color.DARK_GRAY
+            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 18), Color.DARK_GRAY
         );
     }
 
@@ -274,6 +322,12 @@ public class TraCuuKhachHang_GUI extends JPanel {
     // ==============================================================================
 
     private void addEvents() {
+        // Sự kiện nút
+        btnTim.addActionListener(e -> timKiem());
+        btnLamMoi.addActionListener(e -> lamMoi());
+        btnXuatExcel.addActionListener(e -> xuatExcel());
+        txtTimKiem.addActionListener(e -> timKiem()); // Enter để tìm
+        
         // Sự kiện click vào khách hàng -> Load dữ liệu tab bên dưới
         tblKhachHang.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -285,17 +339,179 @@ public class TraCuuKhachHang_GUI extends JPanel {
             }
         });
     }
+    
+    /**
+     * Thiết lập phím tắt cho màn hình Tra cứu Khách hàng
+     */
+    private void setupKeyboardShortcuts() {
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+
+        // F1: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
+        actionMap.put("focusTimKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+
+        // F5: Làm mới
+        inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
+        actionMap.put("lamMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                lamMoi();
+            }
+        });
+
+        // Ctrl+F: Focus tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
+        actionMap.put("timKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+
+        // Ctrl+E: Xuất Excel
+        inputMap.put(KeyStroke.getKeyStroke("control E"), "xuatExcel");
+        actionMap.put("xuatExcel", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                xuatExcel();
+            }
+        });
+    }
+    
+    private void timKiem() {
+        JOptionPane.showMessageDialog(this, "Chức năng tìm kiếm đang phát triển!");
+    }
+    
+    private void lamMoi() {
+        txtTimKiem.setText("");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, PLACEHOLDER_TIM_KIEM);
+        cbGioiTinh.setSelectedIndex(0);
+        cbTrangThai.setSelectedIndex(0);
+        modelKhachHang.setRowCount(0);
+        modelLichSuMuaHang.setRowCount(0);
+        modelLichSuTraHang.setRowCount(0);
+        loadDuLieuKhachHang();
+    }
+    
+    /**
+     * Xuất dữ liệu ra file Excel
+     */
+    private void xuatExcel() {
+        if (modelKhachHang.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất!",
+                    "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Chọn nơi lưu file Excel");
+            fileChooser.setSelectedFile(new File("DanhSachKhachHang.xlsx"));
+            fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files", "xlsx"));
+
+            if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                File file = fileChooser.getSelectedFile();
+                if (!file.getName().endsWith(".xlsx")) {
+                    file = new File(file.getAbsolutePath() + ".xlsx");
+                }
+
+                XSSFWorkbook workbook = new XSSFWorkbook();
+                Sheet sheet = workbook.createSheet("Danh Sách Khách Hàng");
+
+                // Header style
+                CellStyle headerStyle = workbook.createCellStyle();
+                XSSFFont headerFont = workbook.createFont();
+                headerFont.setBold(true);
+                headerStyle.setFont(headerFont);
+                headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+                headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+                // Tiêu đề
+                Row titleRow = sheet.createRow(0);
+                Cell titleCell = titleRow.createCell(0);
+                titleCell.setCellValue("DANH SÁCH KHÁCH HÀNG");
+
+                CellStyle titleStyle = workbook.createCellStyle();
+                XSSFFont titleFont = workbook.createFont();
+                titleFont.setBold(true);
+                titleFont.setFontHeightInPoints((short) 16);
+                titleStyle.setFont(titleFont);
+                titleCell.setCellStyle(titleStyle);
+
+                // Thông tin ngày xuất
+                Row periodRow = sheet.createRow(1);
+                periodRow.createCell(0).setCellValue(
+                        "Ngày xuất: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+
+                // Header row
+                Row headerRow = sheet.createRow(3);
+                for (int i = 0; i < modelKhachHang.getColumnCount(); i++) {
+                    Cell cell = headerRow.createCell(i);
+                    cell.setCellValue(modelKhachHang.getColumnName(i));
+                    cell.setCellStyle(headerStyle);
+                }
+
+                // Data rows
+                for (int row = 0; row < modelKhachHang.getRowCount(); row++) {
+                    Row dataRow = sheet.createRow(row + 4);
+                    for (int col = 0; col < modelKhachHang.getColumnCount(); col++) {
+                        Object value = modelKhachHang.getValueAt(row, col);
+                        dataRow.createCell(col).setCellValue(value != null ? value.toString() : "");
+                    }
+                }
+
+                // Auto-size columns
+                for (int i = 0; i < modelKhachHang.getColumnCount(); i++) {
+                    sheet.autoSizeColumn(i);
+                }
+
+                // Write file
+                try (FileOutputStream fos = new FileOutputStream(file)) {
+                    workbook.write(fos);
+                }
+                workbook.close();
+
+                JOptionPane.showMessageDialog(this,
+                        "Xuất Excel thành công!\nFile: " + file.getAbsolutePath(),
+                        "Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+                // Mở file
+                Desktop.getDesktop().open(file);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Lỗi xuất Excel: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
 
     private void loadDuLieuKhachHang() {
-        // Dữ liệu fake cho Khách Hàng
-        Object[][] data = {
-            {"1", "KH-20251104-0001", "Nguyễn Thị Lan", "0912345678", "01/01/1990", "Nữ", "150", "Thân thiết", "Hoạt động"},
-            {"2", "KH-20251104-0002", "Trần Văn Tùng", "0988777666", "20/05/1985", "Nam", "1200", "VIP", "Hoạt động"},
-            {"3", "KH-20251104-0003", "Lê Thanh H", "0909090909", "15/08/2000", "Nữ", "10", "Mới", "Ngừng"},
-        };
+        modelKhachHang.setRowCount(0);
+        danhSachGoc = khachHangDAO.layTatCaKhachHang();
         
-        for (Object[] row : data) {
-            modelKhachHang.addRow(row);
+        int stt = 1;
+        for (KhachHang kh : danhSachGoc) {
+            String gioiTinh = kh.isGioiTinh() ? "Nam" : "Nữ";
+            String ngaySinh = kh.getNgaySinh() != null ? kh.getNgaySinh().format(dtf) : "";
+            String trangThai = kh.isHoatDong() ? "Hoạt động" : "Ngừng";
+            
+            modelKhachHang.addRow(new Object[]{
+                stt++,
+                kh.getMaKhachHang(),
+                kh.getTenKhachHang(),
+                kh.getSoDienThoai(),
+                ngaySinh,
+                gioiTinh,
+                trangThai
+            });
         }
     }
 
@@ -304,15 +520,60 @@ public class TraCuuKhachHang_GUI extends JPanel {
         modelLichSuMuaHang.setRowCount(0);
         modelLichSuTraHang.setRowCount(0);
 
-        // Giả lập dữ liệu dựa trên Mã KH
-        if (maKH.equals("KH-20251104-0001")) { // Nguyễn Thị Lan
-            modelLichSuMuaHang.addRow(new Object[]{"1", "HD001", "10/11/2025", "Trần Thu Hà", "500,000 đ", "+50"});
-            modelLichSuMuaHang.addRow(new Object[]{"2", "HD009", "01/11/2025", "Lê Văn C", "200,000 đ", "+20"});
-        } 
-        else if (maKH.equals("KH-20251104-0002")) { // Trần Văn Tùng (VIP)
-            modelLichSuMuaHang.addRow(new Object[]{"1", "HD005", "15/11/2025", "Trần Thu Hà", "2,000,000 đ", "+200"});
+        try {
+            // Load lịch sử mua hàng (Hoá đơn) - Lấy tất cả rồi filter
+            List<HoaDon> allHoaDon = hoaDonDAO.layTatCaHoaDon();
+            int stt1 = 1;
+            for (HoaDon hd : allHoaDon) {
+                // Chỉ lấy hóa đơn của khách hàng này
+                if (hd.getKhachHang() != null && hd.getKhachHang().getMaKhachHang().equals(maKH)) {
+                    String ngayLap = hd.getNgayLap() != null ? hd.getNgayLap().format(dtf) : "";
+                    String nhanVien = hd.getNhanVien() != null ? hd.getNhanVien().getTenNhanVien() : "";
+                    String tongTien = df.format(hd.getTongTien());
+                    
+                    modelLichSuMuaHang.addRow(new Object[]{
+                        stt1++,
+                        hd.getMaHoaDon(),
+                        ngayLap,
+                        nhanVien,
+                        tongTien
+                    });
+                }
+            }
             
-            modelLichSuTraHang.addRow(new Object[]{"1", "DT001", "16/11/2025", "Thuốc bị vỡ hộp", "200,000 đ", "-20"});
+            // Load lịch sử trả hàng - Lấy tất cả rồi filter
+            List<PhieuTra> allPhieuTra = phieuTraDAO.layTatCaPhieuTra();
+            int stt2 = 1;
+            for (PhieuTra pt : allPhieuTra) {
+                // Chỉ lấy phiếu trả của khách hàng này
+                if (pt.getKhachHang() != null && pt.getKhachHang().getMaKhachHang().equals(maKH)) {
+                    String ngayLap = pt.getNgayLap() != null ? pt.getNgayLap().format(dtf) : "";
+                    
+                    // Lấy lý do từ chi tiết phiếu trả (lấy lý do đầu tiên hoặc tổng hợp)
+                    String lyDo = "";
+                    if (pt.getChiTietPhieuTraList() != null && !pt.getChiTietPhieuTraList().isEmpty()) {
+                        lyDo = pt.getChiTietPhieuTraList().get(0).getLyDoChiTiet();
+                        if (pt.getChiTietPhieuTraList().size() > 1) {
+                            lyDo += " (+" + (pt.getChiTietPhieuTraList().size() - 1) + " SP khác)";
+                        }
+                    }
+                    
+                    String tienHoan = df.format(pt.getTongTienHoan());
+                    
+                    modelLichSuTraHang.addRow(new Object[]{
+                        stt2++,
+                        pt.getMaPhieuTra(),
+                        ngayLap,
+                        lyDo,
+                        tienHoan
+                    });
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, 
+                "Lỗi khi tải lịch sử giao dịch: " + e.getMessage(),
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

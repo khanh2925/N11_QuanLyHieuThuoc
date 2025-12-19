@@ -128,8 +128,12 @@ public class SanPham {
     }
 
     public double getGiaBan() {
-        if (chiTietBangGiaHienTai == null)
-        	giaBan = 0;
+        if (chiTietBangGiaHienTai == null) {
+            System.err.println("⚠️ CẢNH BÁO: Sản phẩm '" + maSanPham + " - " + tenSanPham + 
+                               "' không có bảng giá. Giá bán = 0. " +
+                               "Vui lòng kiểm tra dữ liệu BangGia và ChiTietBangGia trong database.");
+            giaBan = 0;
+        }
         return giaBan;
     }
 

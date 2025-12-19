@@ -25,7 +25,7 @@ import gui.quanly.NhanVien_QL_GUI;
 import gui.quanly.QLTraHang_GUI;
 import gui.quanly.QL_HuyHang_GUI;
 import gui.quanly.QuanLySanPham_GUI;
-import gui.quanly.ThemPhieuNhap_GUI;
+import gui.quanly.QuanLyPhieuNhap_GUI;
 import gui.quanly.ThongKeDoanhThu_GUI;
 import gui.quanly.ThongKeSanPham_GUI;
 import gui.tracuu.TraCuuBangGia_GUI;
@@ -40,8 +40,7 @@ import gui.tracuu.TraCuuPhieuHuy_GUI;
 import gui.tracuu.TraCuuPhieuNhap_GUI;
 import gui.tracuu.TraCuuSanPham_GUI;
 import gui.tracuu.TraCuuLoSanPham_GUI;
-import gui.trogiup.GioiThieu_GUI;
-import gui.trogiup.HuongDan_GUI;
+import gui.trogiup.*;
 
 import java.awt.*;
 import java.net.URL;
@@ -94,7 +93,7 @@ public class Main_GUI extends JFrame {
 		if (isQL) { // Thêm các panel chức năng - sau này gắn tên panel vào đây
 			dashboardQL = new gui.quanly.TongQuanQuanLy_GUI(this);
 			cardPanel.add(dashboardQL, "tongquan");
-			cardPanel.add(new ThemPhieuNhap_GUI(), "nhaphang");
+			cardPanel.add(new QuanLyPhieuNhap_GUI(), "nhaphang");
 			cardPanel.add(new QL_HuyHang_GUI(), "xuathuy");
 			cardPanel.add(new QLTraHang_GUI(), "trahang");
 			cardPanel.add(new NhaCungCap_GUI(), "nhacungcap");
@@ -180,7 +179,7 @@ public class Main_GUI extends JFrame {
 			        "/resources/images/icon_san_pham.png",
 			        new TraCuuLoSanPham_GUI());
 
-			addMenuButton(menuScrollContent, "Quản lý nhập hàng", "nhaphang", "/resources/images/icon_nhap_hang.png");
+			addMenuButton(menuScrollContent, "Quản lý phiếu nhập", "nhaphang", "/resources/images/icon_nhap_hang.png");
 			addMenuButton(menuScrollContent, "Quản lý xuất huỷ", "xuathuy", "/resources/images/icon_xuat_huy.png");
 			addMenuButton(menuScrollContent, "Quản lý trả hàng", "trahang", "/resources/images/icon_tra_hang.png");
 
@@ -194,7 +193,7 @@ public class Main_GUI extends JFrame {
 
 			addMenuButton(menuScrollContent, "Quản lý nhà cung cấp", "nhacungcap",
 					"/resources/images/icon_nha_cung_cap.png");
-			addMenuButton(menuScrollContent, "Quẩn lý khách hàng", "khachhang",
+			addMenuButton(menuScrollContent, "Quản lý khách hàng", "khachhang",
 					"/resources/images/icon_khach_hang.png");
 			addMenuButton(menuScrollContent, "Quản lý khuyến mãi", "khuyenmai",
 					"/resources/images/icon_khuyen_mai.png");
@@ -202,14 +201,8 @@ public class Main_GUI extends JFrame {
 			addMenuButton(menuScrollContent, "Trợ giúp", "trogiup", "/resources/images/icon_tro_giup.png");
 						addSubmenuButton("trogiup", "gioithieu", "Giới thiệu", "/resources/images/icon_gioi_thieu.png",
 					() -> GioiThieu_GUI.moGioiThieu());
-			addSubmenuButton("trogiup", "huongdan", "Hướng dẫn", "/resources/images/icon_gioi_thieu.png",
-					() -> {
-						JOptionPane.showMessageDialog(null, 
-							"Đang mở file hướng dẫn trong trình duyệt...", 
-							"Thông báo", 
-							JOptionPane.INFORMATION_MESSAGE);
-						HuongDan_GUI.moHuongDan();
-					});
+						addSubmenuButton("trogiup", "huongdan", "Hướng dẫn", "/resources/images/icon_gioi_thieu.png",
+								new HuongDan_GUI(true)); // true = QL
 
 
 			menuScrollContent.add(Box.createVerticalGlue());
@@ -242,14 +235,8 @@ public class Main_GUI extends JFrame {
 			addMenuButton(menuScrollContent, "Trợ giúp", "trogiup", "/resources/images/icon_tro_giup.png");
 						addSubmenuButton("trogiup", "gioithieu", "Giới thiệu", "/resources/images/icon_gioi_thieu.png",
 					() -> GioiThieu_GUI.moGioiThieu());
-			addSubmenuButton("trogiup", "huongdan", "Hướng dẫn", "/resources/images/icon_gioi_thieu.png",
-					() -> {
-						JOptionPane.showMessageDialog(null, 
-							"Đang mở file hướng dẫn trong trình duyệt...", 
-							"Thông báo", 
-							JOptionPane.INFORMATION_MESSAGE);
-						HuongDan_GUI.moHuongDan();
-					});
+						addSubmenuButton("trogiup", "huongdan", "Hướng dẫn", "/resources/images/icon_gioi_thieu.png",
+								new HuongDan_GUI(false)); // false = Nhân viên
 
 			menuScrollContent.add(Box.createVerticalGlue());
 		}

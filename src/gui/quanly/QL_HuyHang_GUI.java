@@ -144,28 +144,28 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 		pnHeader.add(txtSearch);
 
 		// --- BỘ LỌC (Font 18) ---
-		// 1. Trạng thái ComboBox
-		addFilterLabel("Trạng thái:", 530, 28, 90, 35);
-		cbTrangThai = new JComboBox<>(new String[] { "Tất cả", "Đã duyệt", "Chờ duyệt" });
-		cbTrangThai.setBounds(620, 28, 150, 38);
-		cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		pnHeader.add(cbTrangThai);
-
-		// 2. Từ ngày
-		addFilterLabel("Từ ngày:", 790, 28, 80, 35);
+		// 1. Từ ngày
+		addFilterLabel("Từ:", 530, 28, 35, 35);
 		dateTuNgay = new JDateChooser();
 		dateTuNgay.setDateFormatString("dd/MM/yyyy");
 		dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		dateTuNgay.setBounds(870, 28, 180, 38);
+		dateTuNgay.setBounds(565, 28, 160, 38);
 		pnHeader.add(dateTuNgay);
 
-		// 3. Đến ngày
-		addFilterLabel("Đến:", 1070, 28, 50, 35);
+		// 2. Đến ngày
+		addFilterLabel("Đến:", 740, 28, 45, 35);
 		dateDenNgay = new JDateChooser();
 		dateDenNgay.setDateFormatString("dd/MM/yyyy");
 		dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		dateDenNgay.setBounds(1120, 28, 180, 38);
+		dateDenNgay.setBounds(785, 28, 160, 38);
 		pnHeader.add(dateDenNgay);
+
+		// 3. Trạng thái ComboBox
+		addFilterLabel("Trạng thái:", 965, 28, 90, 35);
+		cbTrangThai = new JComboBox<>(new String[] { "Tất cả", "Đã duyệt", "Chờ duyệt" });
+		cbTrangThai.setBounds(1055, 28, 150, 38);
+		cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		pnHeader.add(cbTrangThai);
 
 		// --- NÚT (Font 18) ---
 		btnLamMoi = new PillButton(
@@ -634,6 +634,11 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 
 		if (trangThai.trim().equals("Đã hủy hàng")) {
 			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy đã ở trạng thái đã hủy!!");
+			return;
+		}
+		// Không cho phép chuyển từ "Đã từ chối hủy" sang "Hủy hàng"
+		if (trangThai.trim().equals("Đã từ chối hủy")) {
+			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy đã bị từ chối, không thể chuyển sang trạng thái hủy hàng!");
 			return;
 		}
 		String maPH = modelPH.getValueAt(selectRowPH, 0).toString();

@@ -141,32 +141,32 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 
 		// Từ ngày
 		JLabel lblTu = new JLabel("Từ:");
-		lblTu.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		lblTu.setBounds(525, 28, 35, 35);
+		lblTu.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		lblTu.setBounds(520, 30, 30, 35);
 		pnHeader.add(lblTu);
 
 		dateTuNgay = new JDateChooser();
 		dateTuNgay.setDateFormatString("dd/MM/yyyy");
-		dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		dateTuNgay.setBounds(560, 28, 140, 38);
+		dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		dateTuNgay.setBounds(555, 28, 130, 38);
 		pnHeader.add(dateTuNgay);
 
 		// Đến ngày
 		JLabel lblDen = new JLabel("Đến:");
-		lblDen.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		lblDen.setBounds(710, 28, 40, 35);
+		lblDen.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		lblDen.setBounds(700, 30, 40, 35);
 		pnHeader.add(lblDen);
 
 		dateDenNgay = new JDateChooser();
 		dateDenNgay.setDateFormatString("dd/MM/yyyy");
-		dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		dateDenNgay.setBounds(750, 28, 140, 38);
+		dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		dateDenNgay.setBounds(745, 28, 130, 38);
 		pnHeader.add(dateDenNgay);
 
 		// --- 3. TRẠNG THÁI ---
-		addFilterLabel("Trạng thái:", 905, 28, 85, 35);
+		addFilterLabel("Trạng thái:", 895, 30, 90, 35);
 		cbTrangThai = new JComboBox<>();
-		setupComboBox(cbTrangThai, 990, 28, 130, 38);
+		setupComboBox(cbTrangThai, 990, 28, 115, 38);
 
 		// --- 4. CÁC NÚT CHỨC NĂNG (Bên phải) ---
 		btnTimKiem = new PillButton(
@@ -176,7 +176,7 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 						"<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
 						"</center>" +
 						"</html>");
-		btnTimKiem.setBounds(1135, 22, 130, 50);
+		btnTimKiem.setBounds(1120, 22, 130, 50);
 		btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnTimKiem.setToolTipText(
 				"<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã phiếu, SĐT và bộ lọc</html>");
@@ -189,7 +189,7 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 						"<span style='font-size:10px; color:#888888;'>(F5)</span>" +
 						"</center>" +
 						"</html>");
-		btnLamMoi.setBounds(1275, 22, 130, 50);
+		btnLamMoi.setBounds(1265, 22, 130, 50);
 		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
 		pnHeader.add(btnLamMoi);
@@ -201,7 +201,7 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 						"<span style='font-size:10px; color:#888888;'>(F3)</span>" +
 						"</center>" +
 						"</html>");
-		btnXemPhieuTra.setBounds(1415, 22, 180, 50);
+		btnXemPhieuTra.setBounds(1410, 22, 173, 50);
 		btnXemPhieuTra.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnXemPhieuTra.setToolTipText("<html><b>Phím tắt:</b> F3<br>Xem chi tiết phiếu trả đang chọn</html>");
 		pnHeader.add(btnXemPhieuTra);
@@ -227,7 +227,7 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 	private void taoCenter() {
 		pnCenter = new JPanel(new BorderLayout());
 		pnCenter.setBackground(Color.WHITE);
-		pnCenter.setBorder(new EmptyBorder(5, 10, 10, 10));
+		pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
 
 		JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 		splitPane.setDividerLocation(400);

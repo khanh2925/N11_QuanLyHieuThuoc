@@ -203,8 +203,7 @@ public class KhachHang_DAO {
 		LocalDate ns = (d != null) ? d.toLocalDate() : null;
 		boolean hoatDong = rs.getBoolean("HoatDong");
 
-		KhachHang kh = new KhachHang(ma, ten, gt, sdt, ns);
-		kh.setHoatDong(hoatDong);
+		KhachHang kh = new KhachHang(ma, ten, gt, sdt, ns, hoatDong);
 		return kh;
 	}
 	/** 🔹 Phát sinh mã khách hàng tiếp theo dạng KH-yyyymmdd-xxxx */

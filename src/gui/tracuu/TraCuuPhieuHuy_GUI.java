@@ -104,7 +104,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         pnHeader.setPreferredSize(new Dimension(1073, 94));
         pnHeader.setBackground(new Color(0xE3F2F5));
 
-        // --- 1. Ô TÌM KIẾM TO (Bên trái) ---
+        // --- 1. Ô TÌM KIẾM (Bên trái) ---
         txtTimKiem = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã phiếu, tên nhân viên (F1 / Ctrl+F)");
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20)); // Font 20
@@ -114,44 +114,44 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
         pnHeader.add(txtTimKiem);
 
-        // --- 2. BỘ LỌC (Trạng thái + Ngày) ---
-
-        // Trạng thái
-        JLabel lblTT = new JLabel("Trạng thái:");
-        lblTT.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
-        lblTT.setBounds(515, 30, 90, 35);
-        pnHeader.add(lblTT);
-
-        cbTrangThai = new JComboBox<>();
-        cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
-        cbTrangThai.setBounds(603, 28, 123, 38);
-        pnHeader.add(cbTrangThai);
+        // --- 2. BỘ LỌC (Từ ngày + Đến ngày + Trạng thái) ---
 
         // Từ ngày
         JLabel lblTu = new JLabel("Từ:");
         lblTu.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        lblTu.setBounds(736, 30, 33, 35);
+        lblTu.setBounds(520, 30, 30, 35);
         pnHeader.add(lblTu);
 
         dateTuNgay = new JDateChooser();
         dateTuNgay.setDateFormatString("dd/MM/yyyy");
         dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        dateTuNgay.setBounds(766, 30, 130, 38);
+        dateTuNgay.setBounds(555, 28, 130, 38);
         pnHeader.add(dateTuNgay);
 
         // Đến ngày
         JLabel lblDen = new JLabel("Đến:");
         lblDen.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        lblDen.setBounds(913, 30, 50, 35);
+        lblDen.setBounds(700, 30, 40, 35);
         pnHeader.add(lblDen);
 
         dateDenNgay = new JDateChooser();
         dateDenNgay.setDateFormatString("dd/MM/yyyy");
         dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        dateDenNgay.setBounds(956, 30, 113, 38);
+        dateDenNgay.setBounds(745, 28, 130, 38);
         pnHeader.add(dateDenNgay);
 
-        // cac  button ---
+        // Trạng thái
+        JLabel lblTT = new JLabel("Trạng thái:");
+        lblTT.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
+        lblTT.setBounds(895, 30, 90, 35);
+        pnHeader.add(lblTT);
+
+        cbTrangThai = new JComboBox<>();
+        cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
+        cbTrangThai.setBounds(990, 28, 115, 38);
+        pnHeader.add(cbTrangThai);
+
+        // --- 3. CÁC BUTTON ---
         btnTim = new PillButton(
                 "<html>" +
                     "<center>" +
@@ -161,7 +161,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
                 "</html>"
             );
         btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnTim.setBounds(1080, 22, 130, 50);
+        btnTim.setBounds(1120, 22, 130, 50);
         btnTim.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã phiếu, tên nhân viên và bộ lọc ngày</html>");
         pnHeader.add(btnTim);
 
@@ -173,7 +173,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
                     "</center>" +
                 "</html>"
             );
-        btnLamMoi.setBounds(1094, 31, 130, 50);
+        btnLamMoi.setBounds(1265, 22, 130, 50);
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
         pnHeader.add(btnLamMoi);
@@ -185,11 +185,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
 						"<span style='font-size:10px; color:#888888;'>(F3)</span>" +
 						"</center>" +
 						"</html>");
-        btnXemPhieuHuy.setBounds(1536, 22, 180, 50);		
-        btnTim.setBounds(1089, 22, 130, 50);
-        btnLamMoi.setBounds(1229, 22, 130, 50);
-
-        btnXemPhieuHuy.setBounds(1369, 22, 180, 50);
+        btnXemPhieuHuy.setBounds(1410, 22, 175, 50);
 		btnXemPhieuHuy.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnXemPhieuHuy.setToolTipText("<html><b>Phím tắt:</b> F3<br>Xem chi tiết phiếu hủy đang chọn</html>");
 		pnHeader.add(btnXemPhieuHuy);
