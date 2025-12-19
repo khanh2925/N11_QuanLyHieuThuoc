@@ -62,6 +62,7 @@ import dao.PhieuNhap_DAO;
 import dao.SanPham_DAO;
 import entity.NhaCungCap;
 import entity.PhieuNhap;
+import enums.LoaiSanPham;
 
 /**
  * @author Thanh Kha
@@ -223,20 +224,26 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 
 		tblNhaCungCap = setupTable(modelNCC);
 
-		// Custom Renderer cho cột Trạng thái (Xanh/Đỏ)
+		// Căn chỉnh cột cho bảng nhà cung cấp: STT căn giữa, còn lại căn trái
+		DefaultTableCellRenderer centerNCC = new DefaultTableCellRenderer();
+		centerNCC.setHorizontalAlignment(SwingConstants.CENTER);
+		tblNhaCungCap.getColumnModel().getColumn(0).setCellRenderer(centerNCC); // STT căn giữa
+
+		// Custom Renderer cho cột Trạng thái (Xanh đậm/Đỏ nghiêng) - giống
+		// TraCuuDonTraHang
 		tblNhaCungCap.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 					boolean hasFocus, int row, int column) {
 				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
 						column);
-				lbl.setHorizontalAlignment(SwingConstants.CENTER);
+				lbl.setFont(lbl.getFont().deriveFont(Font.BOLD));
 				if ("Đang hoạt động".equals(value)) {
-					lbl.setForeground(new Color(0, 128, 0));
-					lbl.setFont(new Font("Segoe UI", Font.BOLD, 16));
+					lbl.setForeground(new Color(0x2E7D32)); // Xanh đậm
+					lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
 				} else {
 					lbl.setForeground(Color.RED);
-					lbl.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+					lbl.setFont(new Font("Segoe UI", Font.ITALIC, 15)); // Đỏ nghiêng
 				}
 				return lbl;
 			}
@@ -269,18 +276,16 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 
 		tblLichSuNhapHang = setupTable(modelLichSu); // ✅ Gán table
 
-		DefaultTableCellRenderer center = new DefaultTableCellRenderer();
-		center.setHorizontalAlignment(SwingConstants.CENTER);
-		DefaultTableCellRenderer right = new DefaultTableCellRenderer();
-		right.setHorizontalAlignment(SwingConstants.RIGHT);
+		// Căn chỉnh cột: STT, Ngày căn giữa; Tổng tiền căn phải; còn lại căn trái
+		DefaultTableCellRenderer centerLS = new DefaultTableCellRenderer();
+		centerLS.setHorizontalAlignment(SwingConstants.CENTER);
+		DefaultTableCellRenderer rightLS = new DefaultTableCellRenderer();
+		rightLS.setHorizontalAlignment(SwingConstants.RIGHT);
 
-		for (int i = 0; i < tblLichSuNhapHang.getColumnCount(); i++) {
-			if (i == 3) { // Cột Tổng tiền
-				tblLichSuNhapHang.getColumnModel().getColumn(i).setCellRenderer(right);
-			} else {
-				tblLichSuNhapHang.getColumnModel().getColumn(i).setCellRenderer(center);
-			}
-		}
+		tblLichSuNhapHang.getColumnModel().getColumn(0).setCellRenderer(centerLS); // STT căn giữa
+		tblLichSuNhapHang.getColumnModel().getColumn(2).setCellRenderer(centerLS); // Ngày căn giữa
+		tblLichSuNhapHang.getColumnModel().getColumn(3).setCellRenderer(rightLS); // Tổng tiền căn phải
+		// Cột 1 (Mã phiếu nhập) và 4 (Nhân viên) mặc định căn trái
 
 		return new JScrollPane(tblLichSuNhapHang);
 	}
@@ -302,9 +307,7 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 		right.setHorizontalAlignment(SwingConstants.RIGHT);
 
 		tblSanPhamCungCap.getColumnModel().getColumn(0).setCellRenderer(center); // STT
-		tblSanPhamCungCap.getColumnModel().getColumn(1).setCellRenderer(center); // Mã SP
-		tblSanPhamCungCap.getColumnModel().getColumn(3).setCellRenderer(center); // Loại
-		tblSanPhamCungCap.getColumnModel().getColumn(4).setCellRenderer(center); // Số lần
+		tblSanPhamCungCap.getColumnModel().getColumn(4).setCellRenderer(right); // Số lần
 		tblSanPhamCungCap.getColumnModel().getColumn(5).setCellRenderer(right); // Tổng SL
 
 		return new JScrollPane(tblSanPhamCungCap);
@@ -540,11 +543,7 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 			}
 		});
 
-		// Căn giữa 2 cột đầu
-		DefaultTableCellRenderer center = new DefaultTableCellRenderer();
-		center.setHorizontalAlignment(SwingConstants.CENTER);
-		table.getColumnModel().getColumn(0).setCellRenderer(center);
-		table.getColumnModel().getColumn(1).setCellRenderer(center);
+		// Không căn chỉnh mặc định ở đây, để từng bảng tự thiết lập alignment riêng
 
 		return table;
 	}
@@ -599,7 +598,7 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 			Object[] data = entry.getValue();
 
 			modelSanPham.addRow(new Object[] { stt++, maSP, data[0], // Tên SP
-					data[1], // Loại
+					LoaiSanPham.valueOf((String) data[1]), // Loại
 					data[2], // Số lần nhập
 					data[3] // Tổng SL
 			});
@@ -607,94 +606,248 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 	}
 
 	/**
-	 * Xuất dữ liệu ra file Excel
+	 * Xuất danh sách nhà cung cấp ra file Excel
+	 * - Nếu có dòng được chọn: xuất những nhà cung cấp đã chọn
+	 * - Nếu không chọn: xuất toàn bộ danh sách theo bộ lọc hiện tại
+	 * Xuất đầy đủ 3 sheet: NCC, Lịch sử nhập hàng, Sản phẩm cung cấp
 	 */
 	private void xuatExcel() {
-		if (modelNCC.getRowCount() == 0) {
-			JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất!",
-					"Thông báo", JOptionPane.WARNING_MESSAGE);
+		// Kiểm tra xem có dòng nào được chọn không
+		int[] selectedRows = tblNhaCungCap.getSelectedRows();
+		boolean coChonDong = (selectedRows != null && selectedRows.length > 0);
+
+		List<NhaCungCap> danhSachCanXuat;
+		String tenFile;
+
+		if (coChonDong) {
+			// Xuất những nhà cung cấp đã chọn
+			danhSachCanXuat = new ArrayList<>();
+			for (int row : selectedRows) {
+				String maNCC = tblNhaCungCap.getValueAt(row, 1).toString();
+				NhaCungCap ncc = allNhaCungCap.stream()
+						.filter(n -> n.getMaNhaCungCap().equals(maNCC))
+						.findFirst()
+						.orElse(null);
+				if (ncc != null) {
+					danhSachCanXuat.add(ncc);
+				}
+			}
+
+			if (danhSachCanXuat.isEmpty()) {
+				JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất!", "Thông báo",
+						JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+
+			tenFile = "NhaCungCapDaChon_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".xlsx";
+		} else {
+			// Tự động tìm kiếm trước khi xuất để chắc chắn xuất đúng tiêu chí
+			xuLyTimKiem();
+
+			if (modelNCC.getRowCount() == 0) {
+				JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất!", "Thông báo",
+						JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+
+			// Lấy danh sách từ bảng hiện tại (theo bộ lọc)
+			danhSachCanXuat = new ArrayList<>();
+			for (int i = 0; i < modelNCC.getRowCount(); i++) {
+				String maNCC = modelNCC.getValueAt(i, 1).toString();
+				NhaCungCap ncc = allNhaCungCap.stream()
+						.filter(n -> n.getMaNhaCungCap().equals(maNCC))
+						.findFirst()
+						.orElse(null);
+				if (ncc != null) {
+					danhSachCanXuat.add(ncc);
+				}
+			}
+
+			tenFile = "DanhSachNhaCungCap_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".xlsx";
+		}
+
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle("Chọn nơi lưu file Excel");
+		fileChooser.setSelectedFile(new File(tenFile));
+		fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
+
+		int userSelection = fileChooser.showSaveDialog(this);
+		if (userSelection != JFileChooser.APPROVE_OPTION) {
 			return;
 		}
 
-		try {
-			JFileChooser fileChooser = new JFileChooser();
-			fileChooser.setDialogTitle("Chọn nơi lưu file Excel");
-			fileChooser.setSelectedFile(new File("DanhSachNhaCungCap.xlsx"));
-			fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files", "xlsx"));
+		File fileToSave = fileChooser.getSelectedFile();
+		if (!fileToSave.getName().endsWith(".xlsx")) {
+			fileToSave = new File(fileToSave.getAbsolutePath() + ".xlsx");
+		}
 
-			if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-				File file = fileChooser.getSelectedFile();
-				if (!file.getName().endsWith(".xlsx")) {
-					file = new File(file.getAbsolutePath() + ".xlsx");
+		try (XSSFWorkbook workbook = new XSSFWorkbook()) {
+			// Style cho tiêu đề
+			CellStyle headerStyle = workbook.createCellStyle();
+			XSSFFont headerFont = workbook.createFont();
+			headerFont.setBold(true);
+			headerFont.setFontHeightInPoints((short) 12);
+			headerFont.setColor(IndexedColors.WHITE.getIndex());
+			headerStyle.setFont(headerFont);
+			headerStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+			headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+			headerStyle.setAlignment(org.apache.poi.ss.usermodel.HorizontalAlignment.CENTER);
+			headerStyle.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+			headerStyle.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+			headerStyle.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+			headerStyle.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+
+			// Style cho dữ liệu
+			CellStyle dataStyle = workbook.createCellStyle();
+			dataStyle.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+			dataStyle.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+			dataStyle.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+			dataStyle.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+
+			// ===== SHEET 1: DANH SÁCH NHÀ CUNG CẤP =====
+			Sheet sheetNCC = workbook.createSheet("Danh sách nhà cung cấp");
+
+			// Tạo header
+			Row headerRow = sheetNCC.createRow(0);
+			String[] headers = { "Mã NCC", "Tên nhà cung cấp", "Số điện thoại", "Địa chỉ", "Email", "Trạng thái" };
+			for (int i = 0; i < headers.length; i++) {
+				Cell cell = headerRow.createCell(i);
+				cell.setCellValue(headers[i]);
+				cell.setCellStyle(headerStyle);
+			}
+
+			// Điền dữ liệu từ danh sách cần xuất
+			int rowIdx = 1;
+			for (NhaCungCap ncc : danhSachCanXuat) {
+				Row dataRow = sheetNCC.createRow(rowIdx++);
+				String trangThaiText = ncc.isHoatDong() ? "Đang hoạt động" : "Ngưng hợp tác";
+
+				dataRow.createCell(0).setCellValue(ncc.getMaNhaCungCap());
+				dataRow.createCell(1).setCellValue(ncc.getTenNhaCungCap());
+				dataRow.createCell(2).setCellValue(ncc.getSoDienThoai() != null ? ncc.getSoDienThoai() : "");
+				dataRow.createCell(3).setCellValue(ncc.getDiaChi() != null ? ncc.getDiaChi() : "");
+				dataRow.createCell(4).setCellValue(ncc.getEmail() != null ? ncc.getEmail() : "");
+				dataRow.createCell(5).setCellValue(trangThaiText);
+
+				for (int col = 0; col < 6; col++) {
+					dataRow.getCell(col).setCellStyle(dataStyle);
 				}
+			}
 
-				XSSFWorkbook workbook = new XSSFWorkbook();
-				Sheet sheet = workbook.createSheet("Danh Sách Nhà Cung Cấp");
+			// Auto-size columns
+			for (int i = 0; i < headers.length; i++) {
+				sheetNCC.autoSizeColumn(i);
+			}
 
-				// Header style
-				CellStyle headerStyle = workbook.createCellStyle();
-				XSSFFont headerFont = workbook.createFont();
-				headerFont.setBold(true);
-				headerStyle.setFont(headerFont);
-				headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
-				headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+			// ===== SHEET 2: LỊCH SỬ NHẬP HÀNG =====
+			Sheet sheetLichSu = workbook.createSheet("Lịch sử nhập hàng");
 
-				// Tiêu đề
-				Row titleRow = sheet.createRow(0);
-				Cell titleCell = titleRow.createCell(0);
-				titleCell.setCellValue("DANH SÁCH NHÀ CUNG CẤP");
+			// Header lịch sử nhập hàng
+			Row headerRowLS = sheetLichSu.createRow(0);
+			String[] headersLS = { "Mã NCC", "Tên NCC", "Mã phiếu nhập", "Ngày nhập", "Tổng tiền", "Nhân viên nhập" };
+			for (int i = 0; i < headersLS.length; i++) {
+				Cell cell = headerRowLS.createCell(i);
+				cell.setCellValue(headersLS[i]);
+				cell.setCellStyle(headerStyle);
+			}
 
-				CellStyle titleStyle = workbook.createCellStyle();
-				XSSFFont titleFont = workbook.createFont();
-				titleFont.setBold(true);
-				titleFont.setFontHeightInPoints((short) 16);
-				titleStyle.setFont(titleFont);
-				titleCell.setCellStyle(titleStyle);
+			// Điền dữ liệu lịch sử nhập hàng cho danh sách NCC cần xuất
+			int lsRowIdx = 1;
+			for (NhaCungCap ncc : danhSachCanXuat) {
+				String maNCC = ncc.getMaNhaCungCap();
+				String tenNCC = ncc.getTenNhaCungCap();
 
-				// Thông tin ngày xuất
-				Row periodRow = sheet.createRow(1);
-				periodRow.createCell(0).setCellValue(
-						"Ngày xuất: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+				List<PhieuNhap> dsPhieuNhap = phieuNhapDAO.layPhieuNhapTheoNhaCungCap(maNCC);
+				if (dsPhieuNhap != null && !dsPhieuNhap.isEmpty()) {
+					for (PhieuNhap pn : dsPhieuNhap) {
+						Row dataRow = sheetLichSu.createRow(lsRowIdx++);
+						dataRow.createCell(0).setCellValue(maNCC);
+						dataRow.createCell(1).setCellValue(tenNCC);
+						dataRow.createCell(2).setCellValue(pn.getMaPhieuNhap());
+						dataRow.createCell(3).setCellValue(pn.getNgayNhap().format(dtf));
+						dataRow.createCell(4).setCellValue(df.format(pn.getTongTien()));
+						dataRow.createCell(5).setCellValue(pn.getNhanVien().getTenNhanVien());
 
-				// Header row
-				Row headerRow = sheet.createRow(3);
-				for (int i = 0; i < modelNCC.getColumnCount(); i++) {
-					Cell cell = headerRow.createCell(i);
-					cell.setCellValue(modelNCC.getColumnName(i));
-					cell.setCellStyle(headerStyle);
-				}
-
-				// Data rows
-				for (int row = 0; row < modelNCC.getRowCount(); row++) {
-					Row dataRow = sheet.createRow(row + 4);
-					for (int col = 0; col < modelNCC.getColumnCount(); col++) {
-						Object value = modelNCC.getValueAt(row, col);
-						dataRow.createCell(col).setCellValue(value != null ? value.toString() : "");
+						for (int col = 0; col < 6; col++) {
+							dataRow.getCell(col).setCellStyle(dataStyle);
+						}
 					}
 				}
-
-				// Auto-size columns
-				for (int i = 0; i < modelNCC.getColumnCount(); i++) {
-					sheet.autoSizeColumn(i);
-				}
-
-				// Write file
-				try (FileOutputStream fos = new FileOutputStream(file)) {
-					workbook.write(fos);
-				}
-				workbook.close();
-
-				JOptionPane.showMessageDialog(this,
-						"Xuất Excel thành công!\nFile: " + file.getAbsolutePath(),
-						"Thành công", JOptionPane.INFORMATION_MESSAGE);
-
-				// Mở file
-				Desktop.getDesktop().open(file);
 			}
+
+			// Auto-size columns
+			for (int i = 0; i < headersLS.length; i++) {
+				sheetLichSu.autoSizeColumn(i);
+			}
+
+			// ===== SHEET 3: SẢN PHẨM CUNG CẤP =====
+			Sheet sheetSanPham = workbook.createSheet("Sản phẩm cung cấp");
+
+			// Header sản phẩm cung cấp
+			Row headerRowSP = sheetSanPham.createRow(0);
+			String[] headersSP = { "Mã NCC", "Tên NCC", "Mã SP", "Tên sản phẩm", "Loại", "Số lần nhập",
+					"Tổng SL đã nhập" };
+			for (int i = 0; i < headersSP.length; i++) {
+				Cell cell = headerRowSP.createCell(i);
+				cell.setCellValue(headersSP[i]);
+				cell.setCellStyle(headerStyle);
+			}
+
+			// Điền dữ liệu sản phẩm cung cấp cho danh sách NCC cần xuất
+			int spRowIdx = 1;
+			for (NhaCungCap ncc : danhSachCanXuat) {
+				String maNCC = ncc.getMaNhaCungCap();
+				String tenNCC = ncc.getTenNhaCungCap();
+
+				Map<String, Object[]> thongKe = sanPhamDAO.thongKeSanPhamTheoNCC(maNCC);
+				if (thongKe != null && !thongKe.isEmpty()) {
+					for (Map.Entry<String, Object[]> entry : thongKe.entrySet()) {
+						String maSP = entry.getKey();
+						Object[] data = entry.getValue();
+
+						Row dataRow = sheetSanPham.createRow(spRowIdx++);
+						dataRow.createCell(0).setCellValue(maNCC);
+						dataRow.createCell(1).setCellValue(tenNCC);
+						dataRow.createCell(2).setCellValue(maSP);
+						dataRow.createCell(3).setCellValue(data[0] != null ? data[0].toString() : ""); // Tên SP
+						dataRow.createCell(4)
+								.setCellValue(data[1] != null ? LoaiSanPham.valueOf((String) data[1]).toString() : ""); // Loại
+						dataRow.createCell(5).setCellValue(data[2] != null ? data[2].toString() : "0"); // Số lần nhập
+						dataRow.createCell(6).setCellValue(data[3] != null ? data[3].toString() : "0"); // Tổng SL
+
+						for (int col = 0; col < 7; col++) {
+							dataRow.getCell(col).setCellStyle(dataStyle);
+						}
+					}
+				}
+			}
+
+			// Auto-size columns
+			for (int i = 0; i < headersSP.length; i++) {
+				sheetSanPham.autoSizeColumn(i);
+			}
+
+			// Ghi file
+			try (FileOutputStream fos = new FileOutputStream(fileToSave)) {
+				workbook.write(fos);
+			}
+
+			JOptionPane.showMessageDialog(this,
+					"Xuất Excel thành công!\nFile: " + fileToSave.getAbsolutePath() +
+							"\n\nĐã xuất " + danhSachCanXuat.size()
+							+ " nhà cung cấp kèm đầy đủ thông tin Lịch sử nhập hàng và Sản phẩm cung cấp.",
+					"Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+			// Mở file sau khi xuất
+			if (Desktop.isDesktopSupported()) {
+				Desktop.getDesktop().open(fileToSave);
+			}
+
 		} catch (Exception e) {
-			JOptionPane.showMessageDialog(this, "Lỗi xuất Excel: " + e.getMessage(),
-					"Lỗi", JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
+			JOptionPane.showMessageDialog(this,
+					"Lỗi khi xuất file Excel:\n" + e.getMessage(),
+					"Lỗi", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 

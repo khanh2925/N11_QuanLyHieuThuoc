@@ -219,7 +219,7 @@ public class ChiTietHoaDon_DAO {
 	// 📊 Đếm số SP đã bán trong ngày hiện tại của nhân viên
 	// ============================================================
 	public int demSoSanPhamBanHomNay(String maNhanVien) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """

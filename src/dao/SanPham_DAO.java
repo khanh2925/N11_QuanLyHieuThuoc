@@ -25,6 +25,9 @@ public class SanPham_DAO {
 	private static BangGia cachedBangGiaActive = null;
 	private static List<ChiTietBangGia> cachedChiTietBangGia = null;
 
+	// ✅ CACHE: Danh sách tất cả sản phẩm
+	private static List<SanPham> cacheAllSanPham = null;
+
 	public SanPham_DAO() {
 		// Khởi tạo các DAO cần thiết để lấy thông tin giá bán và khuyến mãi
 		bangGiaDAO = new BangGia_DAO();
@@ -42,7 +45,7 @@ public class SanPham_DAO {
 		}
 	}
 
-	/** � Refresh cache khi bảng giá thay đổi */
+	/** Refresh cache khi bảng giá thay đổi */
 	public static void refreshCacheBangGia() {
 		cachedBangGiaActive = null;
 		cachedChiTietBangGia = null;
@@ -61,10 +64,14 @@ public class SanPham_DAO {
 		return null;
 	}
 
-	/** 🔹 Lấy toàn bộ sản phẩm */
+	/** 🔹 Lấy toàn bộ sản phẩm (OPTIMIZED WITH CACHE) */
 	public ArrayList<SanPham> layTatCaSanPham() {
+		if (cacheAllSanPham != null) {
+			return new ArrayList<>(cacheAllSanPham);
+		}
+
 		ArrayList<SanPham> danhSach = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String sql = "SELECT * FROM SanPham";
 
@@ -72,15 +79,17 @@ public class SanPham_DAO {
 			while (rs.next()) {
 				danhSach.add(taoSanPhamTuResultSet(rs));
 			}
+			// Update cache
+			cacheAllSanPham = new ArrayList<>(danhSach);
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi lấy danh sách sản phẩm: " + e.getMessage());
 		}
 		return danhSach;
 	}
 
-	/** 🔹 Thêm sản phẩm mới */
+	/** 🔹 Thêm sản phẩm mới (UPDATE CACHE) */
 	public boolean themSanPham(SanPham sp) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String sql = """
 				    INSERT INTO SanPham (MaSanPham, TenSanPham, LoaiSanPham, SoDangKy, DuongDung,
@@ -90,16 +99,22 @@ public class SanPham_DAO {
 
 		try (PreparedStatement ps = con.prepareStatement(sql)) {
 			ganGiaTriChoPreparedStatement(ps, sp);
-			return ps.executeUpdate() > 0;
+			boolean success = ps.executeUpdate() > 0;
+			if (success) {
+				if (cacheAllSanPham != null) {
+					cacheAllSanPham.add(sp);
+				}
+			}
+			return success;
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi thêm sản phẩm: " + e.getMessage());
 		}
 		return false;
 	}
 
-	/** 🔹 Cập nhật thông tin sản phẩm */
+	/** 🔹 Cập nhật thông tin sản phẩm (UPDATE CACHE) */
 	public boolean capNhatSanPham(SanPham sp) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String sql = """
 				    UPDATE SanPham
@@ -126,31 +141,52 @@ public class SanPham_DAO {
 			ps.setString(8, sp.getKeBanSanPham());
 			ps.setBoolean(9, sp.isHoatDong());
 			ps.setString(10, sp.getMaSanPham());
-			return ps.executeUpdate() > 0;
+			boolean success = ps.executeUpdate() > 0;
+
+			if (success && cacheAllSanPham != null) {
+				for (int i = 0; i < cacheAllSanPham.size(); i++) {
+					if (cacheAllSanPham.get(i).getMaSanPham().equals(sp.getMaSanPham())) {
+						cacheAllSanPham.set(i, sp);
+						break;
+					}
+				}
+			}
+			return success;
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi cập nhật sản phẩm: " + e.getMessage());
 		}
 		return false;
 	}
 
-	/** 🔹 Xóa sản phẩm */
+	/** 🔹 Xóa sản phẩm (UPDATE CACHE) */
 	public boolean xoaSanPham(String maSanPham) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String sql = "DELETE FROM SanPham WHERE MaSanPham=?";
 
 		try (PreparedStatement ps = con.prepareStatement(sql)) {
 			ps.setString(1, maSanPham);
-			return ps.executeUpdate() > 0;
+			boolean success = ps.executeUpdate() > 0;
+			if (success && cacheAllSanPham != null) {
+				cacheAllSanPham.removeIf(sp -> sp.getMaSanPham().equals(maSanPham));
+			}
+			return success;
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi xóa sản phẩm: " + e.getMessage());
 		}
 		return false;
 	}
 
-	/** 🔹 Lấy sản phẩm theo mã */
+	/** 🔹 Lấy sản phẩm theo mã (QUERY CACHE IF AVAILABLE) */
 	public SanPham laySanPhamTheoMa(String maSanPham) {
-		connectDB.getInstance();
+		if (cacheAllSanPham != null) {
+			for (SanPham sp : cacheAllSanPham) {
+				if (sp.getMaSanPham().equals(maSanPham)) {
+					return sp;
+				}
+			}
+		}
+
 		Connection con = connectDB.getConnection();
 		String sql = "SELECT * FROM SanPham WHERE MaSanPham=?";
 
@@ -168,7 +204,14 @@ public class SanPham_DAO {
 
 	/** 🔹 🔍 Tìm sản phẩm chính xác theo số đăng ký (SoDangKy) */
 	public SanPham timSanPhamTheoSoDangKy(String soDangKy) {
-		connectDB.getInstance();
+		if (cacheAllSanPham != null) {
+			for (SanPham sp : cacheAllSanPham) {
+				if (sp.getSoDangKy() != null && sp.getSoDangKy().equals(soDangKy)) {
+					return sp;
+				}
+			}
+		}
+
 		Connection con = connectDB.getConnection();
 		String sql = "SELECT * FROM SanPham WHERE SoDangKy = ?";
 
@@ -186,8 +229,16 @@ public class SanPham_DAO {
 
 	/** 🔹 Tìm kiếm sản phẩm theo mã / tên / số đăng ký (LIKE gần đúng) */
 	public ArrayList<SanPham> timKiemSanPham(String tuKhoa) {
+		// Note: Complex search might still hit DB unless we implement filtering on
+		// cache
+		// For now, let's keep hitting DB for search to ensure accuracy with complex
+		// like queries,
+		// or implementing simple filter on cache if loaded.
+		// Given the requirements, updating cache on modification is priority.
+		// Optimizing search to use cache is a bonus but "LIKE" is easier in SQL.
+
 		ArrayList<SanPham> ds = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String sql = """
 				    SELECT * FROM SanPham
@@ -215,8 +266,19 @@ public class SanPham_DAO {
 
 	/** 🔹 Lấy danh sách sản phẩm theo loại */
 	public ArrayList<SanPham> laySanPhamTheoLoai(LoaiSanPham loaiSP) {
+		// Optimization: Filter from cache if exists
+		if (cacheAllSanPham != null) {
+			ArrayList<SanPham> ds = new ArrayList<>();
+			for (SanPham sp : cacheAllSanPham) {
+				if (sp.getLoaiSanPham() == loaiSP) {
+					ds.add(sp);
+				}
+			}
+			return ds;
+		}
+
 		ArrayList<SanPham> ds = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String sql = "SELECT * FROM SanPham WHERE LoaiSanPham=?";
 
@@ -325,7 +387,7 @@ public class SanPham_DAO {
 
 	public Map<String, Object[]> thongKeSanPhamTheoNCC(String maNCC) {
 		Map<String, Object[]> result = new LinkedHashMap<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = "SELECT sp.MaSanPham, sp.TenSanPham, sp.LoaiSanPham, "

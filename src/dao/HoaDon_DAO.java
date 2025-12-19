@@ -89,7 +89,7 @@ public class HoaDon_DAO {
 
                 // ========== TẠO HOADON ==========
                 LocalDate ngayLap = rs.getDate("NgayLap").toLocalDate();
-                double tongTien = rs.getDouble("TongThanhToan");
+                // Ta không cần lấy TongThanhToan từ DB nữa vì entity sẽ tự tính
                 boolean thuocKeDon = rs.getBoolean("ThuocKeDon");
 
                 HoaDon hd = new HoaDon();
@@ -97,16 +97,9 @@ public class HoaDon_DAO {
                 hd.setNhanVien(nv);
                 hd.setKhachHang(kh);
                 hd.setNgayLap(ngayLap);
+                // Set KM trước hoặc sau khi có chi tiết đều được, nhưng set trước để sẵn sàng
                 hd.setKhuyenMai(km);
                 hd.setThuocKeDon(thuocKeDon);
-
-                // Set tongTien bằng reflection
-                try {
-                    var setTongTien = HoaDon.class.getDeclaredField("tongTien");
-                    setTongTien.setAccessible(true);
-                    setTongTien.set(hd, tongTien);
-                } catch (Exception ignore) {
-                }
 
                 // Đóng rs, ps trước khi gọi layChiTietHoaDon
                 rs.close();
@@ -114,6 +107,7 @@ public class HoaDon_DAO {
 
                 // ========== LẤY CHI TIẾT HÓA ĐƠN ==========
                 List<ChiTietHoaDon> dsCT = layChiTietHoaDon(maHD);
+                // Setter này sẽ TỰ ĐỘNG tính toán lại tổng tiền, tiền giảm, thành tiền...
                 hd.setDanhSachChiTiet(dsCT);
 
                 return hd;
@@ -266,7 +260,7 @@ public class HoaDon_DAO {
         ResultSet rs = null;
 
         // Tạm lưu danh sách hóa đơn (chưa có chi tiết)
-        List<HoaDonTemp> tempList = new ArrayList<>();
+        List<HoaDon> headers = new ArrayList<>();
 
         try {
             ps = con.prepareStatement(sql);
@@ -313,16 +307,16 @@ public class HoaDon_DAO {
                     km.setTrangThai(rs.getBoolean("TrangThaiKM"));
                 }
 
-                // ========== LƯU TẠM ==========
-                HoaDonTemp temp = new HoaDonTemp();
-                temp.maHD = rs.getString("MaHoaDon");
-                temp.ngayLap = rs.getDate("NgayLap").toLocalDate();
-                temp.tongTien = rs.getDouble("TongThanhToan");
-                temp.thuocKeDon = rs.getBoolean("ThuocKeDon");
-                temp.nv = nv;
-                temp.kh = kh;
-                temp.km = km;
-                tempList.add(temp);
+                // ========== TẠO HEADER HOADON ==========
+                HoaDon hd = new HoaDon();
+                hd.setMaHoaDon(rs.getString("MaHoaDon"));
+                hd.setNgayLap(rs.getDate("NgayLap").toLocalDate());
+                hd.setThuocKeDon(rs.getBoolean("ThuocKeDon"));
+                hd.setNhanVien(nv);
+                hd.setKhachHang(kh);
+                hd.setKhuyenMai(km);
+
+                headers.add(hd);
             }
 
         } catch (SQLException e) {
@@ -342,25 +336,11 @@ public class HoaDon_DAO {
         }
 
         // Sau khi đóng ResultSet, lấy chi tiết cho từng hóa đơn
-        for (HoaDonTemp temp : tempList) {
-            List<ChiTietHoaDon> dsCT = layChiTietHoaDon(temp.maHD);
+        for (HoaDon hd : headers) {
+            List<ChiTietHoaDon> dsCT = layChiTietHoaDon(hd.getMaHoaDon());
 
-            HoaDon hd = new HoaDon();
-            hd.setMaHoaDon(temp.maHD);
-            hd.setNhanVien(temp.nv);
-            hd.setKhachHang(temp.kh);
-            hd.setNgayLap(temp.ngayLap);
-            hd.setKhuyenMai(temp.km);
-            hd.setThuocKeDon(temp.thuocKeDon);
+            // Setter này quan trọng: Gán list -> Tính lại tiền ngay
             hd.setDanhSachChiTiet(dsCT);
-
-            // Set tongTien bằng reflection
-            try {
-                var setTongTien = HoaDon.class.getDeclaredField("tongTien");
-                setTongTien.setAccessible(true);
-                setTongTien.set(hd, temp.tongTien);
-            } catch (Exception ignore) {
-            }
 
             dsHD.add(hd);
         }
@@ -371,22 +351,11 @@ public class HoaDon_DAO {
         return new ArrayList<>(dsHD); // Clone để tránh modify cache
     }
 
-    // Class tạm để lưu thông tin hóa đơn
-    private static class HoaDonTemp {
-        String maHD;
-        LocalDate ngayLap;
-        double tongTien;
-        boolean thuocKeDon;
-        NhanVien nv;
-        KhachHang kh;
-        KhuyenMai km;
-    }
-
     // ============================================================
     // ➕ Thêm hóa đơn
     // ============================================================
     public boolean themHoaDon(HoaDon hd) {
-        connectDB.getInstance();
+
         Connection con = connectDB.getConnection();
         PreparedStatement stmtHD = null;
         PreparedStatement stmtCTHD = null;
@@ -493,7 +462,7 @@ public class HoaDon_DAO {
     // 🧾 Tạo mã hóa đơn
     // ============================================================
     public String taoMaHoaDon() {
-        connectDB.getInstance();
+
         Connection con = connectDB.getConnection();
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -549,7 +518,7 @@ public class HoaDon_DAO {
         ResultSet rs = null;
 
         // Tạm lưu danh sách hóa đơn (chưa có chi tiết)
-        List<HoaDonTemp> tempList = new ArrayList<>();
+        List<HoaDon> headers = new ArrayList<>();
 
         try {
             ps = con.prepareStatement(sql);
@@ -597,16 +566,16 @@ public class HoaDon_DAO {
                     km.setTrangThai(rs.getBoolean("TrangThaiKM"));
                 }
 
-                // ========== LƯU TẠM ==========
-                HoaDonTemp temp = new HoaDonTemp();
-                temp.maHD = rs.getString("MaHoaDon");
-                temp.ngayLap = rs.getDate("NgayLap").toLocalDate();
-                temp.tongTien = rs.getDouble("TongThanhToan");
-                temp.thuocKeDon = rs.getBoolean("ThuocKeDon");
-                temp.nv = nv;
-                temp.kh = kh;
-                temp.km = km;
-                tempList.add(temp);
+                // ========== TẠO HEADER HOADON ==========
+                HoaDon hd = new HoaDon();
+                hd.setMaHoaDon(rs.getString("MaHoaDon"));
+                hd.setNgayLap(rs.getDate("NgayLap").toLocalDate());
+                hd.setThuocKeDon(rs.getBoolean("ThuocKeDon"));
+                hd.setNhanVien(nv);
+                hd.setKhachHang(kh);
+                hd.setKhuyenMai(km);
+
+                headers.add(hd);
             }
         } catch (SQLException e) {
             System.err.println("❌ Lỗi khi tìm hóa đơn theo SĐT: " + e.getMessage());
@@ -623,26 +592,12 @@ public class HoaDon_DAO {
             }
         }
 
-        // Sau khi đóng ResultSet, lấy chi tiết cho từng hóa đơn
-        for (HoaDonTemp temp : tempList) {
-            List<ChiTietHoaDon> dsCT = layChiTietHoaDon(temp.maHD);
+        // Sau khi đóng ResultSet, lấy chi tiết cho từng hóa đơn và TÍNH TOÁN
+        for (HoaDon hd : headers) {
+            List<ChiTietHoaDon> dsCT = layChiTietHoaDon(hd.getMaHoaDon());
 
-            HoaDon hd = new HoaDon();
-            hd.setMaHoaDon(temp.maHD);
-            hd.setNhanVien(temp.nv);
-            hd.setKhachHang(temp.kh);
-            hd.setNgayLap(temp.ngayLap);
-            hd.setKhuyenMai(temp.km);
-            hd.setThuocKeDon(temp.thuocKeDon);
+            // Setter tự động tính toán
             hd.setDanhSachChiTiet(dsCT);
-
-            // Set tongTien bằng reflection
-            try {
-                var setTongTien = HoaDon.class.getDeclaredField("tongTien");
-                setTongTien.setAccessible(true);
-                setTongTien.set(hd, temp.tongTien);
-            } catch (Exception ignore) {
-            }
 
             dsHD.add(hd);
         }
@@ -660,7 +615,7 @@ public class HoaDon_DAO {
      * @return Tổng doanh thu trong tháng đó
      */
     public double layDoanhThuTheoThang(int thang, int nam) {
-        connectDB.getInstance();
+
         Connection con = connectDB.getConnection();
 
         String sql = """
@@ -715,7 +670,7 @@ public class HoaDon_DAO {
      * @return Số lượng hóa đơn
      */
     public int demSoHoaDonTheoThang(int thang, int nam) {
-        connectDB.getInstance();
+
         Connection con = connectDB.getConnection();
 
         String sql = """

@@ -35,15 +35,18 @@ public class DangNhap_GUI extends JFrame {
 
 	private JTextField txtTaiKhoan;
 	private JPasswordField txtMatKhau;
-    
-    // Khởi tạo DAO
-    private final TaiKhoan_DAO tkDao = new TaiKhoan_DAO();
+
+	// Khởi tạo DAO
+	private final TaiKhoan_DAO tkDao = new TaiKhoan_DAO();
 
 	public DangNhap_GUI() {
-        // Thiết lập màn hình hiển thị toàn bộ
-        setExtendedState(JFrame.MAXIMIZED_BOTH); 
+		// Thiết lập màn hình hiển thị toàn bộ
+		setExtendedState(JFrame.MAXIMIZED_BOTH);
 		initialize();
-        setVisible(true); // Hiển thị khung sau khi khởi tạo
+		setVisible(true); // Hiển thị khung sau khi khởi tạo
+
+		// 🚀 BẮT ĐẦU TẢI DỮ LIỆU NGẦM NGAY KHI MỞ MÀN HÌNH ĐĂNG NHẬP
+		dao.DataPreloader.preloadAllData();
 	}
 
 	private void initialize() {
@@ -132,14 +135,16 @@ public class DangNhap_GUI extends JFrame {
 		addPlaceholder(txtMatKhau, "Nhập mật khẩu của bạn");
 
 		// === 1. Khởi tạo Icon ===
-		ImageIcon iconOpen = new ImageIcon(new ImageIcon(getClass().getResource("/resources/images/eye_open.png")).getImage()
-		        .getScaledInstance(25, 25, Image.SCALE_SMOOTH));
-		ImageIcon iconClose = new ImageIcon(new ImageIcon(getClass().getResource("/resources/images/eye_close.png")).getImage()
-		        .getScaledInstance(25, 25, Image.SCALE_SMOOTH));
+		ImageIcon iconOpen = new ImageIcon(
+				new ImageIcon(getClass().getResource("/resources/images/eye_open.png")).getImage()
+						.getScaledInstance(25, 25, Image.SCALE_SMOOTH));
+		ImageIcon iconClose = new ImageIcon(
+				new ImageIcon(getClass().getResource("/resources/images/eye_close.png")).getImage()
+						.getScaledInstance(25, 25, Image.SCALE_SMOOTH));
 
 		// === 2. Tạo nút toggle và cấu hình giao diện ===
-		JButton btnTogglePassword = new JButton(iconOpen); 
-		btnTogglePassword.setBounds(50 + inputWidth - 45, 558 + 5, 30, 40); 
+		JButton btnTogglePassword = new JButton(iconOpen);
+		btnTogglePassword.setBounds(50 + inputWidth - 45, 558 + 5, 30, 40);
 		btnTogglePassword.setFocusPainted(false);
 		btnTogglePassword.setBorderPainted(false);
 		btnTogglePassword.setContentAreaFilled(false);
@@ -148,35 +153,36 @@ public class DangNhap_GUI extends JFrame {
 
 		pnFormDangNhap.add(btnTogglePassword);
 
-		// 🔥 CỰC KỲ QUAN TRỌNG: Đưa nút lên lớp trên cùng (Layer 0) để chắc chắn nhận được click
+		// 🔥 CỰC KỲ QUAN TRỌNG: Đưa nút lên lớp trên cùng (Layer 0) để chắc chắn nhận
+		// được click
 		pnFormDangNhap.setComponentZOrder(btnTogglePassword, 0);
 
 		// Đảm bảo trạng thái ban đầu của txtMatKhau (nếu đã có text thì che đi)
 		if (!txtMatKhau.getText().equals("Nhập mật khẩu của bạn")) {
-		    txtMatKhau.setEchoChar('●');
+			txtMatKhau.setEchoChar('●');
 		}
 
 		// === 3. Xử lý sự kiện click (Logic mới: Không dùng biến phụ) ===
 		btnTogglePassword.addActionListener(e -> {
-		    // Debug: In ra console để biết chắc chắn nút đã được bấm
-		    System.out.println("Sự kiện click mắt đã chạy!");
+			// Debug: In ra console để biết chắc chắn nút đã được bấm
+			System.out.println("Sự kiện click mắt đã chạy!");
 
-		    String currentPass = new String(txtMatKhau.getPassword());
-		    // Nếu là placeholder hoặc rỗng thì bỏ qua
-		    if (currentPass.equals("Nhập mật khẩu của bạn") || currentPass.isEmpty()) {
-		        return;
-		    }
+			String currentPass = new String(txtMatKhau.getPassword());
+			// Nếu là placeholder hoặc rỗng thì bỏ qua
+			if (currentPass.equals("Nhập mật khẩu của bạn") || currentPass.isEmpty()) {
+				return;
+			}
 
-		    // Kiểm tra trực tiếp trạng thái của ô mật khẩu thay vì dùng biến isHidden
-		    if (txtMatKhau.getEchoChar() != (char) 0) {
-		        // Đang có ký tự che (ẩn) -> Chuyển sang HIỆN
-		        txtMatKhau.setEchoChar((char) 0);
-		        btnTogglePassword.setIcon(iconClose); 
-		    } else {
-		        // Đang không che (hiện) -> Chuyển sang ẨN
-		        txtMatKhau.setEchoChar('●');
-		        btnTogglePassword.setIcon(iconOpen);
-		    }
+			// Kiểm tra trực tiếp trạng thái của ô mật khẩu thay vì dùng biến isHidden
+			if (txtMatKhau.getEchoChar() != (char) 0) {
+				// Đang có ký tự che (ẩn) -> Chuyển sang HIỆN
+				txtMatKhau.setEchoChar((char) 0);
+				btnTogglePassword.setIcon(iconClose);
+			} else {
+				// Đang không che (hiện) -> Chuyển sang ẨN
+				txtMatKhau.setEchoChar('●');
+				btnTogglePassword.setIcon(iconOpen);
+			}
 		});
 
 		JButton btnDangNhap = new PillButton("ĐĂNG NHẬP");
@@ -202,27 +208,28 @@ public class DangNhap_GUI extends JFrame {
 
 		// Thêm sự kiện Hover chuột cho đẹp (giữ lại hiệu ứng cũ)
 		btnQuenMK.addMouseListener(new MouseAdapter() {
-		    @Override
-		    public void mouseEntered(MouseEvent e) {
-		        btnQuenMK.setForeground(new Color(0xB71C1C));
-		        btnQuenMK.setFont(new Font("Arial", Font.ITALIC | Font.BOLD, 16));
-		    }
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				btnQuenMK.setForeground(new Color(0xB71C1C));
+				btnQuenMK.setFont(new Font("Arial", Font.ITALIC | Font.BOLD, 16));
+			}
 
-		    @Override
-		    public void mouseExited(MouseEvent e) {
-		        btnQuenMK.setForeground(new Color(0xD32F2F));
-		        btnQuenMK.setFont(new Font("Arial", Font.ITALIC, 16));
-		    }
+			@Override
+			public void mouseExited(MouseEvent e) {
+				btnQuenMK.setForeground(new Color(0xD32F2F));
+				btnQuenMK.setFont(new Font("Arial", Font.ITALIC, 16));
+			}
 		});
 
 		// Thêm sự kiện Click để mở Dialog Quên Mật Khẩu
 		btnQuenMK.addActionListener(e -> {
-		    // Mở Dialog QuenMatKhau, truyền 'this' làm cha để dialog hiện ở giữa cửa sổ đăng nhập
-		    new QuenMatKhau_Dialog(this).setVisible(true);
+			// Mở Dialog QuenMatKhau, truyền 'this' làm cha để dialog hiện ở giữa cửa sổ
+			// đăng nhập
+			new QuenMatKhau_Dialog(this).setVisible(true);
 		});
 
 		pnFormDangNhap.add(btnQuenMK);
-		
+
 		// === Nút test nhanh: Đăng nhập nhanh (Quản lý / Nhân viên) ===
 		JButton btnQuickQL = new JButton("QL test");
 		btnQuickQL.setToolTipText("Đăng nhập nhanh: NV-20250210-0017 / 123456aA@");
@@ -230,11 +237,11 @@ public class DangNhap_GUI extends JFrame {
 		btnQuickQL.setBounds(50, 724, 120, 30);
 		btnQuickQL.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		btnQuickQL.addActionListener(e -> {
-		    txtTaiKhoan.setText("NV-20250210-0017");
-		    txtMatKhau.setText("123456aA@");
-		    // đảm bảo echo char
-		    txtMatKhau.setEchoChar('●');
-		    xuLyDangNhap();
+			txtTaiKhoan.setText("NV-20250210-0017");
+			txtMatKhau.setText("123456aA@");
+			// đảm bảo echo char
+			txtMatKhau.setEchoChar('●');
+			xuLyDangNhap();
 		});
 		pnFormDangNhap.add(btnQuickQL);
 
@@ -244,66 +251,67 @@ public class DangNhap_GUI extends JFrame {
 		btnQuickNV.setBounds(190, 724, 120, 30);
 		btnQuickNV.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		btnQuickNV.addActionListener(e -> {
-		    txtTaiKhoan.setText("NV-20250415-0018");
-		    txtMatKhau.setText("123456aA@");
-		    txtMatKhau.setEchoChar('●');
-		    xuLyDangNhap();
+			txtTaiKhoan.setText("NV-20250415-0018");
+			txtMatKhau.setText("123456aA@");
+			txtMatKhau.setEchoChar('●');
+			xuLyDangNhap();
 		});
 		pnFormDangNhap.add(btnQuickNV);
 
-		
 		return pnFormDangNhap;
 	}
 
 	/**
-     * 💡 HÀM XỬ LÝ SỰ KIỆN ĐĂNG NHẬP (Dùng DAO và Session)
-     */
+	 * 💡 HÀM XỬ LÝ SỰ KIỆN ĐĂNG NHẬP (Dùng DAO và Session)
+	 */
 	private void xuLyDangNhap() {
-        String tenDangNhap = txtTaiKhoan.getText().trim();
-        // Chuyển JPasswordField thành String an toàn
-        String matKhau = new String(txtMatKhau.getPassword()).trim(); 
-        
-        // Lấy placeholder
-        String placeholderTK = "Nhập tài khoản của bạn";
-        String placeholderMK = "Nhập mật khẩu của bạn";
+		String tenDangNhap = txtTaiKhoan.getText().trim();
+		// Chuyển JPasswordField thành String an toàn
+		String matKhau = new String(txtMatKhau.getPassword()).trim();
 
-        // 1. Kiểm tra rỗng (hoặc còn placeholder)
-        if (tenDangNhap.isEmpty() || tenDangNhap.equals(placeholderTK) || matKhau.isEmpty() || matKhau.equals(placeholderMK)) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập Tên đăng nhập và Mật khẩu hợp lệ.", "Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+		// Lấy placeholder
+		String placeholderTK = "Nhập tài khoản của bạn";
+		String placeholderMK = "Nhập mật khẩu của bạn";
 
-        // 2. Gọi DAO để xác thực
-        TaiKhoan taiKhoan = tkDao.dangNhap(tenDangNhap, matKhau); // Hàm đã có join NhanVien
-        
-        if (taiKhoan != null) {
-            // Đăng nhập thành công
-            NhanVien nvDangNhap = taiKhoan.getNhanVien();
-            System.out.println(taiKhoan);
-            
-            // 3. Lưu Session
-            Session.getInstance().setTaiKhoanDangNhap(taiKhoan);
+		// 1. Kiểm tra rỗng (hoặc còn placeholder)
+		if (tenDangNhap.isEmpty() || tenDangNhap.equals(placeholderTK) || matKhau.isEmpty()
+				|| matKhau.equals(placeholderMK)) {
+			JOptionPane.showMessageDialog(this, "Vui lòng nhập Tên đăng nhập và Mật khẩu hợp lệ.", "Lỗi đăng nhập",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
 
-            JOptionPane.showMessageDialog(this,
-                    "Đăng nhập thành công!\nXin chào " + nvDangNhap.getTenNhanVien() + " ("
-                    + (nvDangNhap.isQuanLy() ? "Quản lý" : "Nhân viên") + ")",
-                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
+		// 2. Gọi DAO để xác thực
+		TaiKhoan taiKhoan = tkDao.dangNhap(tenDangNhap, matKhau); // Hàm đã có join NhanVien
 
-            // 4. Đóng màn hình đăng nhập
-            this.dispose(); 
+		if (taiKhoan != null) {
+			// Đăng nhập thành công
+			NhanVien nvDangNhap = taiKhoan.getNhanVien();
+			System.out.println(taiKhoan);
 
-            // 5. Mở màn hình chính (Main_GUI)
-            new Main_GUI(nvDangNhap).setVisible(true);
+			// 3. Lưu Session
+			Session.getInstance().setTaiKhoanDangNhap(taiKhoan);
 
-        } else {
-            // Đăng nhập thất bại
-            JOptionPane.showMessageDialog(this, "Tên đăng nhập hoặc Mật khẩu không đúng.", "Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
-            // Xóa trường mật khẩu để nhập lại
-            txtMatKhau.setText(""); 
-            addPlaceholder(txtMatKhau, placeholderMK); // Đặt lại placeholder
-        }
-    }
+			JOptionPane.showMessageDialog(this,
+					"Đăng nhập thành công!\nXin chào " + nvDangNhap.getTenNhanVien() + " ("
+							+ (nvDangNhap.isQuanLy() ? "Quản lý" : "Nhân viên") + ")",
+					"Thành công", JOptionPane.INFORMATION_MESSAGE);
 
+			// 4. Đóng màn hình đăng nhập
+			this.dispose();
+
+			// 5. Mở màn hình chính (Main_GUI)
+			new Main_GUI(nvDangNhap).setVisible(true);
+
+		} else {
+			// Đăng nhập thất bại
+			JOptionPane.showMessageDialog(this, "Tên đăng nhập hoặc Mật khẩu không đúng.", "Lỗi đăng nhập",
+					JOptionPane.ERROR_MESSAGE);
+			// Xóa trường mật khẩu để nhập lại
+			txtMatKhau.setText("");
+			addPlaceholder(txtMatKhau, placeholderMK); // Đặt lại placeholder
+		}
+	}
 
 	private void addPlaceholder(JTextField field, String placeholder) {
 		field.setText(placeholder);
