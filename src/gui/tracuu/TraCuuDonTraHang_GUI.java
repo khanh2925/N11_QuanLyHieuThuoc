@@ -549,9 +549,9 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 			boolean checkKy = true;
 			if (!"Tất cả".equals(tt)) {
 				if ("Đã duyệt".equals(tt))
-					checkKy = pt.isDaDuyet();
+					checkKy = pt.isTrangThai();
 				else
-					checkKy = !pt.isDaDuyet();
+					checkKy = !pt.isTrangThai();
 			}
 
 			if (checkNgay && checkKy) {
@@ -613,7 +613,7 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 		for (PhieuTra pt : ds) {
 			modelPhieuTra.addRow(new Object[] { stt++, pt.getMaPhieuTra(), pt.getKhachHang().getTenKhachHang(),
 					pt.getNhanVien().getTenNhanVien(), pt.getNgayLap().format(dtf), df.format(pt.getTongTienHoan()),
-					pt.isDaDuyet() ? "Đã duyệt" : "Chờ duyệt" });
+					pt.isTrangThai() ? "Đã duyệt" : "Chờ duyệt" });
 		}
 	}
 

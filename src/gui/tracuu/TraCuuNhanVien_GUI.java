@@ -565,7 +565,7 @@ public class TraCuuNhanVien_GUI extends JPanel {
 			modelTra.addRow(new Object[] { stt++, pt.getMaPhieuTra(),
 					pt.getNgayLap() != null ? pt.getNgayLap().format(dtf) : "",
 					pt.getKhachHang() != null ? pt.getKhachHang().getTenKhachHang() : "",
-					df.format(pt.getTongTienHoan()), pt.isDaDuyet() ? "Đã duyệt" : "Chờ duyệt" });
+					df.format(pt.getTongTienHoan()), pt.isTrangThai() ? "Đã duyệt" : "Chờ duyệt" });
 		}
 	}
 
