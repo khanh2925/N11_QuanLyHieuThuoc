@@ -25,6 +25,7 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -134,7 +135,7 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 		TaoHeader();
 		initTable();// tạo bảng và load dữ liệu từ database lên bảng
 		TaoPanelCenter();
-
+		configureTableRenderers();
 		// Event listeners
 		txtSearch.addActionListener(e -> refreshFilters()); // Nhấn Enter để tìm kiếm
 		cbTrangThai.addActionListener(e -> refreshFilters());
@@ -194,38 +195,23 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 		pnHeader.add(cbTrangThai);
 
 		// --- 4. CÁC NÚT CHỨC NĂNG ---
-		btnTimKiem = new PillButton(
-				"<html>" +
-						"<center>" +
-						"TÌM KIẾM<br>" +
-						"<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
-						"</center>" +
-						"</html>");
+		btnTimKiem = new PillButton("<html>" + "<center>" + "TÌM KIẾM<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(Enter)</span>" + "</center>" + "</html>");
 		btnTimKiem.setBounds(1135, 22, 130, 50);
 		btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnTimKiem.setToolTipText(
 				"<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã phiếu, SĐT và bộ lọc</html>");
 		pnHeader.add(btnTimKiem);
 
-		btnLamMoi = new PillButton(
-				"<html>" +
-						"<center>" +
-						"LÀM MỚI<br>" +
-						"<span style='font-size:10px; color:#888888;'>(F5)</span>" +
-						"</center>" +
-						"</html>");
+		btnLamMoi = new PillButton("<html>" + "<center>" + "LÀM MỚI<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(F5)</span>" + "</center>" + "</html>");
 		btnLamMoi.setBounds(1275, 22, 130, 50);
 		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
 		pnHeader.add(btnLamMoi);
 
-		btnXuatFile = new PillButton(
-				"<html>" +
-						"<center>" +
-						"XUẤT FILE<br>" +
-						"<span style='font-size:10px; color:#888888;'>(F8)</span>" +
-						"</center>" +
-						"</html>");
+		btnXuatFile = new PillButton("<html>" + "<center>" + "XUẤT FILE<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(F8)</span>" + "</center>" + "</html>");
 		btnXuatFile.setBounds(1415, 22, 180, 50);
 		btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnXuatFile.setToolTipText("<html><b>Phím tắt:</b> F8<br>Xuất danh sách phiếu trả ra file Excel</html>");
@@ -290,6 +276,24 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 				xuatExcel();
 			}
 		});
+
+		// Ctrl+K: Nhập kho
+		inputMap.put(KeyStroke.getKeyStroke("control K"), "nhapKho");
+		actionMap.put("nhapKho", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				NhapKho();
+			}
+		});
+
+		// Ctrl+H: Hủy hàng
+		inputMap.put(KeyStroke.getKeyStroke("control H"), "huyHang");
+		actionMap.put("huyHang", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				HuyHang();
+			}
+		});
 	}
 
 	// Helper method để loại bỏ dấu tiếng Việt
@@ -331,14 +335,20 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 
 		pnBtnCTPT = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
 
-		btnNhapKho = new PillButton("Nhập lại kho");
+		btnNhapKho = new PillButton("<html>" + "<center>" + "NHẬP KHO<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(Ctrl+K)</span>" + "</center>" + "</html>");
 		btnNhapKho.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnNhapKho
-				.setToolTipText("<html><b>Nhập lại kho</b><br>Nhập hàng trả về kho sau khi kiểm tra chất lượng</html>");
+		btnNhapKho.setPreferredSize(new Dimension(150, 50)); // Kích thước nút lớn hơn
+		btnNhapKho.setToolTipText(
+				"<html><b>Phím tắt:</b> Ctrl+K<br>Nhập hàng trả về kho sau khi kiểm tra chất lượng</html>");
+		btnNhapKho.setEnabled(false); // Mặc định disable
 
-		btnHuyHang = new PillButton("Hủy hàng");
+		btnHuyHang = new PillButton("<html>" + "<center>" + "HỦY HÀNG<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(Ctrl+H)</span>" + "</center>" + "</html>");
 		btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnHuyHang.setToolTipText("<html><b>Hủy hàng</b><br>Hủy hàng trả không đạt chất lượng</html>");
+		btnHuyHang.setPreferredSize(new Dimension(150, 50)); // Kích thước nút lớn hơn
+		btnHuyHang.setToolTipText("<html><b>Phím tắt:</b> Ctrl+H<br>Hủy hàng trả không đạt chất lượng</html>");
+		btnHuyHang.setEnabled(false); // Mặc định disable
 
 		pnBtnCTPT.add(btnNhapKho);
 		pnBtnCTPT.add(btnHuyHang);
@@ -354,8 +364,8 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 
 		List<RowFilter<Object, Object>> filters = new ArrayList<>();
 
-		// --- Lọc theo text: cột 0 (Mã PT), cột 1 (Khách hàng), cột 2 (SĐT), cột 4
-		// (Người trả)
+		// --- Lọc theo text: cột 1 (Mã PT), cột 2 (Khách hàng), cột 3 (SĐT), cột 5
+		// (Người trả) - đã dịch do thêm cột STT
 		String text = txtSearch.getText().trim();
 		if (!text.isEmpty() && !txtSearch.getForeground().equals(Color.GRAY)) {
 			String searchTextNoSign = removeDiacritics(text);
@@ -364,8 +374,8 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			filters.add(new RowFilter<Object, Object>() {
 				@Override
 				public boolean include(Entry<? extends Object, ? extends Object> entry) {
-					// Kiểm tra các cột: 0 (Mã PT), 1 (Khách hàng), 2 (SĐT), 4 (Người trả)
-					int[] colsToCheck = { 0, 1, 2, 4 };
+					// Kiểm tra các cột: 1 (Mã PT), 2 (Khách hàng), 3 (SĐT), 5 (Người trả)
+					int[] colsToCheck = { 1, 2, 3, 5 };
 					for (int col : colsToCheck) {
 						String value = entry.getStringValue(col);
 						if (value != null) {
@@ -380,13 +390,13 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			});
 		}
 
-		// --- Lọc theo trạng thái ComboBox: cột 5 (đã dịch do thêm cột SĐT)
+		// --- Lọc theo trạng thái ComboBox: cột 6 (đã dịch do thêm cột STT)
 		String trangThai = (String) cbTrangThai.getSelectedItem();
 		if (trangThai != null && !trangThai.equals("Tất cả")) {
-			filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(trangThai), 5));
+			filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(trangThai), 6));
 		}
 
-		// --- Lọc theo ngày: cột 3 (Ngày lập - đã dịch do thêm cột SĐT)
+		// --- Lọc theo ngày: cột 4 (Ngày lập - đã dịch do thêm cột STT)
 		java.util.Date tuNgay = dateTuNgay.getDate();
 		java.util.Date denNgay = dateDenNgay.getDate();
 
@@ -395,7 +405,7 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 				@Override
 				public boolean include(Entry<? extends Object, ? extends Object> entry) {
 					try {
-						String ngayStr = entry.getStringValue(3); // Cột Ngày lập (đã dịch)
+						String ngayStr = entry.getStringValue(4); // Cột Ngày lập (đã dịch do thêm STT)
 						LocalDate ngay = LocalDate.parse(ngayStr, fmt);
 
 						LocalDate tu = tuNgay != null
@@ -429,8 +439,8 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 	}
 
 	private void initTable() {
-		// Bảng phiếu trả - Thêm cột SĐT ẩn để tìm kiếm
-		String[] phieuTraCols = { "Mã PT", "Khách hàng", "SĐT", "Ngày lập", "Người trả", "Trạng thái",
+		// Bảng phiếu trả - Thêm cột STT và SĐT ẩn để tìm kiếm
+		String[] phieuTraCols = { "STT", "Mã PT", "Khách hàng", "SĐT", "Ngày lập", "Người trả", "Trạng thái",
 				"Tổng tiền hoàn" };
 		modelPT = new DefaultTableModel(phieuTraCols, 0) {
 			@Override
@@ -445,15 +455,12 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 				Color.DARK_GRAY);
 		scrPT.setBorder(tbPT);
 
-		// Ẩn cột SĐT (cột 2)
-		tblPT.getColumnModel().getColumn(2).setMinWidth(0);
-		tblPT.getColumnModel().getColumn(2).setMaxWidth(0);
-		tblPT.getColumnModel().getColumn(2).setPreferredWidth(0);
+		// Cột STT căn giữa và width nhỏ
 
 		loadDataTablePT();
 
-		// Bảng chi tiết phiếu trả
-		String[] cTPhieuCols = { "Mã hóa đơn", "Mã lô", "Tên SP", "Hạn dùng", "SL trả", "Lý do", "Đơn vị tính",
+		// Bảng chi tiết phiếu trả - Thêm cột STT
+		String[] cTPhieuCols = { "STT", "Mã hóa đơn", "Mã lô", "Tên SP", "Hạn dùng", "SL trả", "Lý do", "Đơn vị tính",
 				"Trạng thái" };
 
 		modelCTPT = new DefaultTableModel(cTPhieuCols, 0) {
@@ -469,61 +476,20 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 		formatTable(tblPT);
 		formatTable(tblCTPT);
 
-		// ===================================================================
-		// ---- 1) Trạng thái bảng PHIẾU TRẢ: Đã duyệt = xanh, Chờ duyệt = đỏ ----
-		// Cột 5 (Trạng thái - đã dịch do thêm cột SĐT)
-		tblPT.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
-			@Override
-			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-					boolean hasFocus, int row, int column) {
-				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
-						column);
-				lbl.setHorizontalAlignment(SwingConstants.CENTER);
-
-				String text = value == null ? "" : value.toString().trim();
-
-				if (text.equalsIgnoreCase("Đã duyệt")) {
-					lbl.setForeground(new Color(0, 128, 0)); // Xanh lá
-				} else if (text.equalsIgnoreCase("Chờ duyệt") || text.equalsIgnoreCase("Đang chờ duyệt")) {
-					lbl.setForeground(Color.RED);
-				} else {
-					lbl.setForeground(Color.BLACK);
-				}
-
-				// Không đụng tới background để vẫn giữ màu chọn dòng
-				return lbl;
-			}
-		});
-
-		// ---- 2) Trạng thái bảng CHI TIẾT: Nhập lại hàng = xanh, Hủy hàng = đỏ ----
-		// Cột 7 (Trạng thái)
-		tblCTPT.getColumnModel().getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
-			@Override
-			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-					boolean hasFocus, int row, int column) {
-				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
-						column);
-				lbl.setHorizontalAlignment(SwingConstants.CENTER);
-
-				String text = value == null ? "" : value.toString().trim();
-
-				if (text.equalsIgnoreCase("Nhập lại hàng")) {
-					lbl.setForeground(new Color(0, 128, 0)); // Xanh lá
-				} else if (text.equalsIgnoreCase("Huỷ hàng") || text.equalsIgnoreCase("Hủy hàng")) {
-					lbl.setForeground(Color.RED);
-				} else { // Chờ duyệt, hoặc trạng thái khác
-					lbl.setForeground(Color.BLACK);
-				}
-
-				return lbl;
-			}
-		});
-
-		// bắt sự kiện chọn dòng để tự nạp chi tiết
 		tblPT.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tblPT.getSelectionModel().addListSelectionListener(e -> {
-			if (!e.getValueIsAdjusting())
+			if (!e.getValueIsAdjusting()) {
 				loadTableCTPT();
+				capNhatTrangThaiNut();
+			}
+		});
+
+		// bắt sự kiện chọn dòng CTPT để cập nhật trạng thái nút
+		tblCTPT.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		tblCTPT.getSelectionModel().addListSelectionListener(e -> {
+			if (!e.getValueIsAdjusting()) {
+				capNhatTrangThaiNut();
+			}
 		});
 
 		// sắp xếp tăng giảm tự động khi click vào header
@@ -553,39 +519,81 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 		table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
 		table.setSelectionBackground(new Color(180, 205, 230));
 		table.setShowGrid(false);
-
-		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-		centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-
-		DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
-		rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
-
-		DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
-		leftRenderer.setHorizontalAlignment(JLabel.LEFT);
-
-		TableColumnModel m = table.getColumnModel();
-		for (int i = 0; i < m.getColumnCount(); i++) {
-			String col = m.getColumn(i).getHeaderValue().toString().toLowerCase();
-
-			if (col.contains("mã"))
-				m.getColumn(i).setCellRenderer(centerRenderer);
-			else if (col.contains("số lượng") || col.contains("sl"))
-				m.getColumn(i).setCellRenderer(rightRenderer);
-			else if (col.contains("giá") || col.contains("tiền"))
-				m.getColumn(i).setCellRenderer(rightRenderer);
-			else if (col.contains("ngày") || col.contains("hạn"))
-				m.getColumn(i).setCellRenderer(centerRenderer);
-			else
-				m.getColumn(i).setCellRenderer(leftRenderer);
-		}
-
-		table.getTableHeader().setReorderingAllowed(false);
 	}
 
-	// đưa dữ liệu Phiếu Trả lên bảng
+	private void configureTableRenderers() {
+		tblPT.getColumnModel().getColumn(0).setPreferredWidth(50);
+		// 3 la sdt an di
+		tblPT.getColumnModel().getColumn(3).setMinWidth(0);
+		tblPT.getColumnModel().getColumn(3).setMaxWidth(0);
+		tblPT.getColumnModel().getColumn(3).setPreferredWidth(0);
+
+		DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+		center.setHorizontalAlignment(SwingConstants.CENTER);
+		DefaultTableCellRenderer right = new DefaultTableCellRenderer();
+		right.setHorizontalAlignment(SwingConstants.RIGHT);
+
+		tblPT.getColumnModel().getColumn(0).setCellRenderer(center);
+		tblPT.getColumnModel().getColumn(4).setCellRenderer(center);
+		tblPT.getColumnModel().getColumn(7).setCellRenderer(right);
+
+		tblCTPT.getColumnModel().getColumn(0).setCellRenderer(center);
+		tblCTPT.getColumnModel().getColumn(4).setCellRenderer(center);
+		tblCTPT.getColumnModel().getColumn(5).setCellRenderer(right);
+
+		tblPT.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
+			@Override
+			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+					boolean hasFocus, int row, int column) {
+				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
+						column);
+				if ("Đã duyệt".equals(value)) {
+					lbl.setForeground(new Color(0x2E7D32));
+					lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
+				} else {
+					lbl.setForeground(Color.RED);
+					lbl.setFont(new Font("Segoe UI", Font.ITALIC, 15));
+				}
+				return lbl;
+			}
+		});
+		tblCTPT.getColumnModel().getColumn(8).setCellRenderer(new DefaultTableCellRenderer() {
+			@Override
+			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+					boolean hasFocus, int row, int column) {
+				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
+						column);
+				if ("Nhập lại hàng".equals(value)) {
+					lbl.setForeground(new Color(0x2E7D32));
+					lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
+				} else if ("Huỷ hàng".equals(value)) {
+					lbl.setForeground(Color.RED);
+					lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
+				} else {
+					lbl.setForeground(Color.RED);
+					lbl.setFont(new Font("Segoe UI", Font.ITALIC, 15));
+				}
+				return lbl;
+			}
+		});
+	}
+
+	// đưa dữ liệu Phiếu Trả lên bảng với 30 ngày mặc định
 	private void loadDataTablePT() {
 		dsPhieuTra = new ArrayList<PhieuTra>();
 		modelPT.setRowCount(0);
+
+		// --- CHỌN NGÀY MẶC ĐỊNH ---
+		Calendar cal = Calendar.getInstance();
+
+		// Đến ngày: Hôm nay
+		java.util.Date now = cal.getTime();
+		dateDenNgay.setDate(now);
+
+		// Từ ngày: 30 ngày trước
+		cal.add(Calendar.DAY_OF_MONTH, -30);
+		java.util.Date d30 = cal.getTime();
+		dateTuNgay.setDate(d30);
 
 		try {
 			dsPhieuTra = pt_dao.layTatCaPhieuTra();
@@ -593,26 +601,33 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			e.printStackTrace();
 		}
 
+		int stt = 1;
 		for (PhieuTra pt : dsPhieuTra) {
 			String khachHang = pt.getKhachHang() != null ? pt.getKhachHang().getTenKhachHang() : "N/A";
 			String sdt = pt.getKhachHang() != null ? pt.getKhachHang().getSoDienThoai() : ""; // Thêm SĐT (ẩn)
 			String nhanVien = pt.getNhanVien() != null ? pt.getNhanVien().getTenNhanVien() : "N/A";
 
-			modelPT.addRow(new Object[] { pt.getMaPhieuTra(), khachHang, sdt, // Cột SĐT (ẩn)
+			modelPT.addRow(new Object[] { stt++, pt.getMaPhieuTra(), khachHang, sdt, // Cột SĐT (ẩn)
 					pt.getNgayLap().format(fmt), nhanVien, pt.getTrangThaiText(), df.format(pt.getTongTienHoan()) });
 		}
 
+		// Áp dụng bộ lọc ngày mặc định
+		refreshFilters();
+		capNhatTrangThaiNut();
 	}
 
-	// đưa dữ liệu CTPT lên bảng
+	// đưa dữ liệu CTPT lên bảng với STT
 	private void loadTableCTPT() {
 		int selectRow = tblPT.getSelectedRow();
 
 		if (selectRow == -1) {
+			modelCTPT.setRowCount(0);
+			capNhatTrangThaiNut();
 			return;
 		}
 
-		String maPT = modelPT.getValueAt(selectRow, 0).toString();
+		// Lấy mã PT từ cột 1 (do thêm STT)
+		String maPT = modelPT.getValueAt(selectRow, 1).toString();
 
 		dsCTPhieuTra = new ArrayList<ChiTietPhieuTra>();
 		modelCTPT.setRowCount(0);
@@ -623,6 +638,7 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			e.printStackTrace();
 		}
 
+		int stt = 1;
 		for (ChiTietPhieuTra ctpt : dsCTPhieuTra) {
 			// ✅ Xử lý trường hợp DonViTinh = null
 			String tenDonViTinh = "N/A";
@@ -646,16 +662,41 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 							? ctpt.getChiTietHoaDon().getLoSanPham().getHanSuDung().format(fmt)
 							: "N/A";
 
-			modelCTPT.addRow(
-					new Object[] { maHD, maLo, tenSP, hanDung, ctpt.getSoLuong(), ctpt.getLyDoChiTiet(), tenDonViTinh, // Cột
-																														// 6:
-																														// Đơn
-																														// vị
-																														// tính
-							ctpt.getTrangThaiText() // Cột 7: Trạng thái
-					});
+			modelCTPT.addRow(new Object[] { stt++, maHD, maLo, tenSP, hanDung, ctpt.getSoLuong(), ctpt.getLyDoChiTiet(),
+					tenDonViTinh, ctpt.getTrangThaiText() // Cột 8: Trạng thái
+			});
 		}
 
+		capNhatTrangThaiNut();
+	}
+
+	/**
+	 * Cập nhật trạng thái hiển thị các nút dựa trên việc có chọn dòng hay không -
+	 * Không chọn dòng CTPT: Disable nút Nhập Kho và Hủy Hàng - Có chọn dòng CTPT
+	 * (và PT): Enable nút Nhập Kho và Hủy Hàng - Chi tiết đã xử lý (Nhập lại hàng /
+	 * Huỷ hàng): Disable cả 2 nút
+	 */
+	private void capNhatTrangThaiNut() {
+		// Null check để tránh NPE khi khởi tạo
+		if (tblPT == null || tblCTPT == null || btnNhapKho == null || btnHuyHang == null) {
+			return;
+		}
+
+		int rowPT = tblPT.getSelectedRow();
+		int rowCTPT = tblCTPT.getSelectedRow();
+		boolean coDongCTPTDuocChon = (rowCTPT != -1);
+		boolean coDongPTDuocChon = (rowPT != -1);
+
+		// Kiểm tra trạng thái chi tiết - chỉ enable nếu còn "Chờ duyệt"
+		boolean chiTietChuaXuLy = false;
+		if (coDongCTPTDuocChon && modelCTPT != null) {
+			String trangThai = modelCTPT.getValueAt(rowCTPT, 8).toString().trim(); // Cột 8 - Trạng thái
+			chiTietChuaXuLy = trangThai.equalsIgnoreCase("Chờ duyệt");
+		}
+
+		// Buttons only enabled when a CTPT row with status "Chờ duyệt" is selected
+		btnNhapKho.setEnabled(coDongCTPTDuocChon && coDongPTDuocChon && chiTietChuaXuLy);
+		btnHuyHang.setEnabled(coDongCTPTDuocChon && coDongPTDuocChon && chiTietChuaXuLy);
 	}
 
 	public static void main(String[] args) {
@@ -740,8 +781,8 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			JOptionPane.showMessageDialog(null, "Vui lòng chọn chi tiết phiếu trả để cập nhật trạng thái!!");
 			return;
 		}
-		// ✅ Đọc cột 7 (Trạng thái)
-		String trangThai = modelCTPT.getValueAt(selectRowCT, 7).toString();
+		// ✅ Đọc cột 8 (Trạng thái - đã dịch do thêm STT)
+		String trangThai = modelCTPT.getValueAt(selectRowCT, 8).toString();
 		if (trangThai.trim().equalsIgnoreCase("Huỷ hàng") || trangThai.trim().equalsIgnoreCase("Hủy hàng")) {
 			JOptionPane.showMessageDialog(null, "Chi tiết phiếu trả này đã ở trạng thái hủy hàng");
 			return;
@@ -758,9 +799,10 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			return;
 		}
 
-		String maPT = modelPT.getValueAt(selectRowPT, 0).toString();
-		String maHD = modelCTPT.getValueAt(selectRowCT, 0).toString();
-		String maLo = modelCTPT.getValueAt(selectRowCT, 1).toString();
+		// Lấy mã từ cột 1 (do thêm STT)
+		String maPT = modelPT.getValueAt(selectRowPT, 1).toString();
+		String maHD = modelCTPT.getValueAt(selectRowCT, 1).toString();
+		String maLo = modelCTPT.getValueAt(selectRowCT, 2).toString();
 		String maDVT = "";
 		NhanVien nv = Session.getInstance().getTaiKhoanDangNhap().getNhanVien();
 
@@ -777,8 +819,8 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 		String kq = pt_dao.capNhatTrangThai_GiaoDich(maPT, maHD, maLo, maDVT, nv, 2);
 
 		if (kq != null && kq.startsWith("OK")) {
-			// ✅ Cập nhật lại GUI
-			modelCTPT.setValueAt("Huỷ hàng", selectRowCT, 7);
+			// ✅ Cập nhật lại GUI - cột 8 (do thêm STT)
+			modelCTPT.setValueAt("Huỷ hàng", selectRowCT, 8);
 
 			// Hiển thị thông báo có mã phiếu huỷ nếu được tạo
 			if (kq.contains("|")) {
@@ -797,7 +839,6 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 	}
 
 	// sự kiện nhập lại kho
-	// sự kiện nhập lại kho
 	private void NhapKho() {
 
 		int selectRowCT = tblCTPT.getSelectedRow();
@@ -807,8 +848,8 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			return;
 		}
 
-		// ✅ Đọc cột 7 (Trạng thái)
-		String trangThai = modelCTPT.getValueAt(selectRowCT, 7).toString();
+		// ✅ Đọc cột 8 (Trạng thái - đã dịch do thêm STT)
+		String trangThai = modelCTPT.getValueAt(selectRowCT, 8).toString();
 
 		if (trangThai.trim().equalsIgnoreCase("Nhập lại hàng")) {
 			JOptionPane.showMessageDialog(null, "Chi tiết phiếu trả đã ở trạng thái đã nhập kho!!");
@@ -826,9 +867,10 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			return;
 		}
 
-		String maPT = modelPT.getValueAt(selectRowPT, 0).toString();
-		String maHD = modelCTPT.getValueAt(selectRowCT, 0).toString();
-		String maLo = modelCTPT.getValueAt(selectRowCT, 1).toString();
+		// Lấy mã từ cột 1 (do thêm STT)
+		String maPT = modelPT.getValueAt(selectRowPT, 1).toString();
+		String maHD = modelCTPT.getValueAt(selectRowCT, 1).toString();
+		String maLo = modelCTPT.getValueAt(selectRowCT, 2).toString();
 		String maDVT = "";
 		NhanVien nv = Session.getInstance().getTaiKhoanDangNhap().getNhanVien();
 
@@ -845,8 +887,8 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 		String kq = pt_dao.capNhatTrangThai_GiaoDich(maPT, maHD, maLo, maDVT, nv, 1);
 
 		if (kq != null && kq.startsWith("OK")) {
-			// ✅ Cập nhật lại GUI
-			modelCTPT.setValueAt("Nhập lại hàng", selectRowCT, 7);
+			// ✅ Cập nhật lại GUI - cột 8 (do thêm STT)
+			modelCTPT.setValueAt("Nhập lại hàng", selectRowCT, 8);
 			JOptionPane.showMessageDialog(null, "Nhập lại kho thành công");
 
 			// Cập nhật trạng thái phiếu nếu cần
@@ -865,10 +907,10 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 	 */
 	private void capNhatTrangThaiPhieuSauKhiCapNhatCTPT(String maPhieuTra) {
 
-		// Kiểm tra xem tất cả chi tiết đã được xử lý chưa
+		// Kiểm tra xem tất cả chi tiết đã được xử lý chưa - cột 8 (do thêm STT)
 		boolean tatCaDaXuLy = true;
 		for (int i = 0; i < modelCTPT.getRowCount(); i++) {
-			String trangThai = modelCTPT.getValueAt(i, 7).toString().trim();
+			String trangThai = modelCTPT.getValueAt(i, 8).toString().trim();
 			if (trangThai.equalsIgnoreCase("Chờ duyệt")) {
 				tatCaDaXuLy = false;
 				break;
@@ -893,7 +935,8 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			return;
 		}
 
-		modelPT.setValueAt("Đã duyệt", rowModel, 5); // Cột 5 (Trạng thái - đã dịch do thêm cột SĐT)
+		// Cột 6 (Trạng thái - do thêm STT)
+		modelPT.setValueAt("Đã duyệt", rowModel, 6);
 		JOptionPane.showMessageDialog(null, "Phiếu trả đã được duyệt tự động!");
 
 	}
@@ -982,38 +1025,38 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 				cell.setCellStyle(headerStyle);
 			}
 
-			// Điền dữ liệu từ bảng (bỏ cột SĐT ẩn)
+			// Điền dữ liệu từ bảng (bỏ cột STT và SĐT ẩn)
 			for (int row = 0; row < modelPT.getRowCount(); row++) {
 				Row dataRow = sheetPT.createRow(row + 1);
 
-				// Cột 0: Mã PT
+				// Cột 0: Mã PT (từ cột 1 trong model vì cột 0 là STT)
 				Cell cell0 = dataRow.createCell(0);
-				cell0.setCellValue(modelPT.getValueAt(row, 0).toString());
+				cell0.setCellValue(modelPT.getValueAt(row, 1).toString());
 				cell0.setCellStyle(dataStyle);
 
-				// Cột 1: Khách hàng
+				// Cột 1: Khách hàng (cột 2)
 				Cell cell1 = dataRow.createCell(1);
-				cell1.setCellValue(modelPT.getValueAt(row, 1).toString());
+				cell1.setCellValue(modelPT.getValueAt(row, 2).toString());
 				cell1.setCellStyle(dataStyle);
 
-				// Cột 2: Ngày lập (bỏ qua cột 2 - SĐT ẩn, lấy cột 3)
+				// Cột 2: Ngày lập (bỏ qua cột 3 - SĐT ẩn, lấy cột 4)
 				Cell cell2 = dataRow.createCell(2);
-				cell2.setCellValue(modelPT.getValueAt(row, 3).toString());
+				cell2.setCellValue(modelPT.getValueAt(row, 4).toString());
 				cell2.setCellStyle(dataStyle);
 
-				// Cột 3: Người trả (cột 4)
+				// Cột 3: Người trả (cột 5)
 				Cell cell3 = dataRow.createCell(3);
-				cell3.setCellValue(modelPT.getValueAt(row, 4).toString());
+				cell3.setCellValue(modelPT.getValueAt(row, 5).toString());
 				cell3.setCellStyle(dataStyle);
 
-				// Cột 4: Trạng thái (cột 5)
+				// Cột 4: Trạng thái (cột 6)
 				Cell cell4 = dataRow.createCell(4);
-				cell4.setCellValue(modelPT.getValueAt(row, 5).toString());
+				cell4.setCellValue(modelPT.getValueAt(row, 6).toString());
 				cell4.setCellStyle(dataStyle);
 
-				// Cột 5: Tổng tiền hoàn (cột 6)
+				// Cột 5: Tổng tiền hoàn (cột 7)
 				Cell cell5 = dataRow.createCell(5);
-				cell5.setCellValue(modelPT.getValueAt(row, 6).toString());
+				cell5.setCellValue(modelPT.getValueAt(row, 7).toString());
 				cell5.setCellStyle(moneyStyle);
 			}
 
@@ -1026,7 +1069,7 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			if (modelCTPT.getRowCount() > 0) {
 				Sheet sheetCTPT = workbook.createSheet("Chi tiết phiếu trả");
 
-				// Header chi tiết
+				// Header chi tiết (không bao gồm STT)
 				Row headerRowCT = sheetCTPT.createRow(0);
 				String[] headersCT = { "Mã hóa đơn", "Mã lô", "Tên SP", "Hạn dùng", "SL trả", "Lý do", "Đơn vị tính",
 						"Trạng thái" };
@@ -1036,11 +1079,12 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 					cell.setCellStyle(headerStyle);
 				}
 
-				// Điền dữ liệu chi tiết
+				// Điền dữ liệu chi tiết (bỏ cột 0 - STT)
 				for (int row = 0; row < modelCTPT.getRowCount(); row++) {
 					Row dataRow = sheetCTPT.createRow(row + 1);
-					for (int col = 0; col < modelCTPT.getColumnCount(); col++) {
-						Cell cell = dataRow.createCell(col);
+					// Bắt đầu từ cột 1 trong model (bỏ STT), ghi ra cột 0 trong Excel
+					for (int col = 1; col < modelCTPT.getColumnCount(); col++) {
+						Cell cell = dataRow.createCell(col - 1); // Dịch cột -1
 						Object value = modelCTPT.getValueAt(row, col);
 						cell.setCellValue(value != null ? value.toString() : "");
 						cell.setCellStyle(dataStyle);
@@ -1058,8 +1102,7 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 				workbook.write(fos);
 			}
 
-			JOptionPane.showMessageDialog(this,
-					"Xuất Excel thành công!\nFile: " + fileToSave.getAbsolutePath(),
+			JOptionPane.showMessageDialog(this, "Xuất Excel thành công!\nFile: " + fileToSave.getAbsolutePath(),
 					"Thành công", JOptionPane.INFORMATION_MESSAGE);
 
 			// Mở file sau khi xuất
@@ -1069,9 +1112,8 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			JOptionPane.showMessageDialog(this,
-					"Lỗi khi xuất file Excel:\n" + e.getMessage(),
-					"Lỗi", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, "Lỗi khi xuất file Excel:\n" + e.getMessage(), "Lỗi",
+					JOptionPane.ERROR_MESSAGE);
 		}
 	}
 

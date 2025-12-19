@@ -169,38 +169,23 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 		setupComboBox(cbTrangThai, 990, 28, 115, 38);
 
 		// --- 4. CÁC NÚT CHỨC NĂNG (Bên phải) ---
-		btnTimKiem = new PillButton(
-				"<html>" +
-						"<center>" +
-						"TÌM KIẾM<br>" +
-						"<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
-						"</center>" +
-						"</html>");
+		btnTimKiem = new PillButton("<html>" + "<center>" + "TÌM KIẾM<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(Enter)</span>" + "</center>" + "</html>");
 		btnTimKiem.setBounds(1120, 22, 130, 50);
 		btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnTimKiem.setToolTipText(
 				"<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã phiếu, SĐT và bộ lọc</html>");
 		pnHeader.add(btnTimKiem);
 
-		btnLamMoi = new PillButton(
-				"<html>" +
-						"<center>" +
-						"LÀM MỚI<br>" +
-						"<span style='font-size:10px; color:#888888;'>(F5)</span>" +
-						"</center>" +
-						"</html>");
+		btnLamMoi = new PillButton("<html>" + "<center>" + "LÀM MỚI<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(F5)</span>" + "</center>" + "</html>");
 		btnLamMoi.setBounds(1265, 22, 130, 50);
 		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
 		pnHeader.add(btnLamMoi);
 
-		btnXemPhieuTra = new PillButton(
-				"<html>" +
-						"<center>" +
-						"XEM PHIẾU TRẢ<br>" +
-						"<span style='font-size:10px; color:#888888;'>(F3)</span>" +
-						"</center>" +
-						"</html>");
+		btnXemPhieuTra = new PillButton("<html>" + "<center>" + "XEM PHIẾU TRẢ<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(F3)</span>" + "</center>" + "</html>");
 		btnXemPhieuTra.setBounds(1410, 22, 173, 50);
 		btnXemPhieuTra.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnXemPhieuTra.setToolTipText("<html><b>Phím tắt:</b> F3<br>Xem chi tiết phiếu trả đang chọn</html>");
@@ -275,7 +260,6 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 		right.setHorizontalAlignment(SwingConstants.RIGHT);
 
 		tblPhieuTra.getColumnModel().getColumn(0).setCellRenderer(center);
-		tblPhieuTra.getColumnModel().getColumn(1).setCellRenderer(center);
 		tblPhieuTra.getColumnModel().getColumn(4).setCellRenderer(center);
 		tblPhieuTra.getColumnModel().getColumn(5).setCellRenderer(right);
 
@@ -286,21 +270,42 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 
 				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
 						column);
-				lbl.setHorizontalAlignment(SwingConstants.CENTER);
 				lbl.setFont(lbl.getFont().deriveFont(Font.BOLD));
 				if ("Đã duyệt".equals(value)) {
 					lbl.setForeground(new Color(0x2E7D32));
+					lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
 				} else {
-					lbl.setForeground(new Color(0xE65100));
+					lbl.setForeground(Color.RED);
+					lbl.setFont(new Font("Segoe UI", Font.ITALIC, 15));
 				}
 				return lbl;
 			}
 		});
 
 		tblChiTiet.getColumnModel().getColumn(0).setCellRenderer(center);
-		tblChiTiet.getColumnModel().getColumn(3).setCellRenderer(center);
+		tblChiTiet.getColumnModel().getColumn(3).setCellRenderer(right);
 		tblChiTiet.getColumnModel().getColumn(4).setCellRenderer(right);
-		tblChiTiet.getColumnModel().getColumn(5).setCellRenderer(center);
+
+		// Format cột Hướng xử lý (Trạng thái) giống QLTraHang_GUI
+		tblChiTiet.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
+			@Override
+			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+					boolean hasFocus, int row, int column) {
+				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
+						column);
+				if ("Nhập lại hàng".equals(value)) {
+					lbl.setForeground(new Color(0x2E7D32));
+					lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
+				} else if ("Huỷ hàng".equals(value)) {
+					lbl.setForeground(Color.RED);
+					lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
+				} else {
+					lbl.setForeground(Color.RED);
+					lbl.setFont(new Font("Segoe UI", Font.ITALIC, 15));
+				}
+				return lbl;
+			}
+		});
 	}
 
 	private JTable setupTable(DefaultTableModel model) {
@@ -455,9 +460,7 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 	private void xuLyXemPhieuTra() {
 		int row = tblPhieuTra.getSelectedRow();
 		if (row == -1) {
-			JOptionPane.showMessageDialog(this,
-					"Vui lòng chọn phiếu trả cần xem!",
-					"Thông báo",
+			JOptionPane.showMessageDialog(this, "Vui lòng chọn phiếu trả cần xem!", "Thông báo",
 					JOptionPane.WARNING_MESSAGE);
 			return;
 		}
@@ -542,8 +545,8 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 		for (PhieuTra pt : ketQua) {
 			// Lọc Ngày
 			LocalDate ngayLap = pt.getNgayLap();
-			boolean checkNgay = (ngayLap.isEqual(fromDate) || ngayLap.isAfter(fromDate)) &&
-					(ngayLap.isEqual(toDate) || ngayLap.isBefore(toDate));
+			boolean checkNgay = (ngayLap.isEqual(fromDate) || ngayLap.isAfter(fromDate))
+					&& (ngayLap.isEqual(toDate) || ngayLap.isBefore(toDate));
 
 			// Lọc Trạng Thái
 			boolean checkKy = true;
@@ -577,29 +580,23 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 		txtTimKiem.setText("");
 		PlaceholderSupport.addPlaceholder(txtTimKiem, PLACEHOLDER_TIM_KIEM);
 
-		// --- CHỌN NGÀY MẶC ĐỊNH ---
+		// --- CHỌN NGÀY MẶC ĐỊNH: 30 ngày giống QLTraHang_GUI ---
 		taiDanhSachPhieuTra();
 
 		// Đến ngày: Hôm nay
-		Date now = new Date();
+		Calendar cal = Calendar.getInstance();
+		Date now = cal.getTime();
 		dateDenNgay.setDate(now);
 
-		// Từ ngày: Ngày cũ nhất của phiếu trả hàng (nếu có)
-		if (!allPhieuTra.isEmpty()) {
-			LocalDate oldestDate = allPhieuTra.stream()
-					.map(PhieuTra::getNgayLap)
-					.min(LocalDate::compareTo)
-					.orElse(LocalDate.now());
-			Date fromDate = Date.from(oldestDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
-			dateTuNgay.setDate(fromDate);
-		} else {
-			// Nếu không có phiếu trả nào, đặt từ ngày là hôm nay
-			dateTuNgay.setDate(now);
-		}
+		// Từ ngày: 30 ngày trước
+		cal.add(Calendar.DAY_OF_MONTH, -30);
+		Date d30 = cal.getTime();
+		dateTuNgay.setDate(d30);
 
 		cbTrangThai.setSelectedIndex(0);
 
-		loadTablePhieuTra(allPhieuTra); // Hiển thị tất cả
+		// Áp dụng bộ lọc ngày mặc định
+		xuLyTimKiem();
 		modelChiTiet.setRowCount(0);
 	}
 
@@ -644,8 +641,8 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 	private String trangThaiCTText(int t) {
 		return switch (t) {
 			case 0 -> "Chờ duyệt";
-			case 1 -> "Nhập kho";
-			case 2 -> "Hủy";
+			case 1 -> "Nhập lại hàng"; // Format giống QLTraHang_GUI
+			case 2 -> "Huỷ hàng"; // Format giống QLTraHang_GUI
 			case 3 -> "Chuyển NCC";
 			default -> "Không xác định";
 		};
