@@ -3,7 +3,6 @@ package gui.quanly;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.Period;
@@ -19,15 +18,6 @@ import javax.swing.table.*;
 
 import com.toedter.calendar.JDateChooser;
 
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.FillPatternType;
-import org.apache.poi.ss.usermodel.IndexedColors;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.xssf.usermodel.XSSFFont;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
 import component.button.PillButton;
 import component.input.PlaceholderSupport;
 import component.border.RoundedBorder;
@@ -39,6 +29,7 @@ import entity.TaiKhoan;
 @SuppressWarnings("serial")
 public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 
+	private static final String PLACEHOLDER_TIM_KIEM = "Tìm kiếm theo mã, tên, SDT... (F1 / Ctrl+F)";
 	// --- COMPONENTS UI ---
 	private JPanel pnHeader, pnCenter;
 	private JSplitPane splitPane;
@@ -52,7 +43,7 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 	// private String currentImagePath = "/resources/images/icon_anh_nv_null.png";
 
 	// Buttons
-	private PillButton btnThem, btnSua, btnXoa, btnLamMoi, btnTimKiem;
+	private PillButton btnThem, btnSua, btnLamMoi, btnTimKiem;
 
 	// Search & Table
 	private JTextField txtTimKiem;
@@ -113,7 +104,7 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		pnHeader.setBackground(new Color(0xE3F2F5));
 
 		txtTimKiem = new JTextField();
-		PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo mã, tên, số điện thoại... (F1 / Ctrl+F)");
+		PlaceholderSupport.addPlaceholder(txtTimKiem, PLACEHOLDER_TIM_KIEM);
 		txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 22));
 		txtTimKiem.setBounds(25, 17, 500, 60);
 		txtTimKiem.setBorder(new RoundedBorder(20));
@@ -124,33 +115,14 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 
 		pnHeader.add(txtTimKiem);
 
-		btnTimKiem = new PillButton(
-				"<html>" +
-						"<center>" +
-						"TÌM KIẾM<br>" +
-						"<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
-						"</center>" +
-						"</html>");
+		btnTimKiem = new PillButton("<html>" + "<center>" + "TÌM KIẾM<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(Enter)</span>" + "</center>" + "</html>");
 		btnTimKiem.setBounds(540, 22, 130, 50);
 		btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnTimKiem.setToolTipText(
 				"<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã, tên và bộ lọc</html>");
 		btnTimKiem.addActionListener(e -> xuLyTimKiem());
 		pnHeader.add(btnTimKiem);
-
-		// Nút Xuất Excel
-		PillButton btnXuatExcel = new PillButton(
-				"<html>" +
-						"<center>" +
-						"XUẤT EXCEL<br>" +
-						"<span style='font-size:10px; color:#888888;'>(Ctrl+E)</span>" +
-						"</center>" +
-						"</html>");
-		btnXuatExcel.setBounds(685, 22, 150, 50);
-		btnXuatExcel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnXuatExcel.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất dữ liệu ra file Excel</html>");
-		btnXuatExcel.addActionListener(e -> xuatExcel());
-		pnHeader.add(btnXuatExcel);
 	}
 
 	// =====================================================================
@@ -215,6 +187,7 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 
 		p.add(createLabel("Họ tên:", xStart, yStart));
 		txtTenNV = createTextField(xStart + wLbl, yStart, wTxt);
+		PlaceholderSupport.addPlaceholder(txtTenNV, "Nhập họ tên nhân viên");
 		p.add(txtTenNV);
 
 		p.add(createLabel("Ngày sinh:", xCol2, yStart));
@@ -222,6 +195,9 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		dateNgaySinh.setDateFormatString("dd/MM/yyyy");
 		dateNgaySinh.setFont(FONT_TEXT);
 		dateNgaySinh.setBounds(xCol2 + wLbl, yStart, wTxt, hText);
+		// Thêm placeholder cho JDateChooser
+		JTextField txtDateNgaySinh = (JTextField) dateNgaySinh.getDateEditor().getUiComponent();
+		PlaceholderSupport.addPlaceholder(txtDateNgaySinh, "dd/MM/yyyy");
 		p.add(dateNgaySinh);
 
 		// ===== HÀNG 3 =====
@@ -235,6 +211,7 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 
 		p.add(createLabel("SĐT:", xCol2, yStart));
 		txtSDT = createTextField(xCol2 + wLbl, yStart, wTxt);
+		PlaceholderSupport.addPlaceholder(txtSDT, "Nhập số điện thoại");
 		p.add(txtSDT);
 
 		// ===== HÀNG 4 =====
@@ -258,6 +235,7 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 
 		p.add(createLabel("Địa chỉ:", xStart, yStart));
 		txtDiaChi = createTextField(xStart + wLbl, yStart, wTxt);
+		PlaceholderSupport.addPlaceholder(txtDiaChi, "Nhập địa chỉ");
 		p.add(txtDiaChi);
 
 	}
@@ -276,13 +254,8 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		int btnW = 140;
 		int btnH = 45;
 
-		btnThem = new PillButton(
-				"<html>" +
-						"<center>" +
-						"THÊM NV<br>" +
-						"<span style='font-size:10px; color:#888888;'>(Ctrl+N)</span>" +
-						"</center>" +
-						"</html>");
+		btnThem = new PillButton("<html>" + "<center>" + "THÊM NV<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(Ctrl+N)</span>" + "</center>" + "</html>");
 		btnThem.setFont(FONT_BOLD);
 		btnThem.setPreferredSize(new Dimension(btnW, btnH));
 		btnThem.setToolTipText("<html><b>Phím tắt:</b> Ctrl+N<br>Thêm nhân viên mới</html>");
@@ -290,13 +263,8 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		gbc.gridy = 0;
 		p.add(btnThem, gbc);
 
-		btnSua = new PillButton(
-				"<html>" +
-						"<center>" +
-						"CẬP NHẬT<br>" +
-						"<span style='font-size:10px; color:#888888;'>(Ctrl+U)</span>" +
-						"</center>" +
-						"</html>");
+		btnSua = new PillButton("<html>" + "<center>" + "CẬP NHẬT<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(Ctrl+U)</span>" + "</center>" + "</html>");
 		btnSua.setFont(FONT_BOLD);
 		btnSua.setPreferredSize(new Dimension(btnW, btnH));
 		btnSua.setToolTipText("<html><b>Phím tắt:</b> Ctrl+U<br>Cập nhật thông tin nhân viên đang chọn</html>");
@@ -304,38 +272,19 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		gbc.gridy = 1;
 		p.add(btnSua, gbc);
 
-		btnXoa = new PillButton(
-				"<html>" +
-						"<center>" +
-						"THÔI VIỆC<br>" +
-						"<span style='font-size:10px; color:#888888;'>(Ctrl+D)</span>" +
-						"</center>" +
-						"</html>");
-		btnXoa.setFont(FONT_BOLD);
-		btnXoa.setPreferredSize(new Dimension(btnW, btnH));
-		btnXoa.setToolTipText(
-				"<html><b>Phím tắt:</b> Ctrl+D<br>Đánh dấu nhân viên đã nghỉ (Không xóa khỏi hệ thống)</html>");
-		btnXoa.addActionListener(this);
-		gbc.gridy = 2;
-		p.add(btnXoa, gbc);
-
-		btnLamMoi = new PillButton(
-				"<html>" +
-						"<center>" +
-						"LÀM MỚI<br>" +
-						"<span style='font-size:10px; color:#888888;'>(F5)</span>" +
-						"</center>" +
-						"</html>");
+		btnLamMoi = new PillButton("<html>" + "<center>" + "LÀM MỚI<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(F5)</span>" + "</center>" + "</html>");
 		btnLamMoi.setFont(FONT_BOLD);
 		btnLamMoi.setPreferredSize(new Dimension(btnW, btnH));
 		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới form nhập liệu</html>");
 		btnLamMoi.addActionListener(this);
-		gbc.gridy = 3;
+		gbc.gridy = 2;
 		p.add(btnLamMoi, gbc);
 	}
 
 	private void taoBangDanhSach(JPanel p) {
-		String[] cols = { "Mã NV", "Họ tên", "Giới tính", "Ngày sinh", "SĐT", "Chức vụ", "Ca làm", "Trạng thái" };
+		String[] cols = { "STT", "Mã NV", "Họ tên", "Giới tính", "Ngày sinh", "SĐT", "Chức vụ", "Ca làm",
+				"Trạng thái" };
 		modelNhanVien = new DefaultTableModel(cols, 0) {
 			@Override
 			public boolean isCellEditable(int r, int c) {
@@ -344,18 +293,42 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		};
 		tblNhanVien = setupTable(modelNhanVien);
 
-		// Render màu trạng thái
-		tblNhanVien.getColumnModel().getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
+		// Renderer căn giữa cho STT (cột 0)
+		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+		centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+		DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
+		leftRenderer.setHorizontalAlignment(SwingConstants.LEFT);
+
+		// STT - căn giữa
+		tblNhanVien.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
+		tblNhanVien.getColumnModel().getColumn(0).setPreferredWidth(50);
+
+		// Mã NV, Họ tên, Giới tính, SĐT, Chức vụ, Ca làm - căn trái
+		tblNhanVien.getColumnModel().getColumn(1).setCellRenderer(leftRenderer); // Mã NV
+		tblNhanVien.getColumnModel().getColumn(2).setCellRenderer(leftRenderer); // Họ tên
+		tblNhanVien.getColumnModel().getColumn(3).setCellRenderer(leftRenderer); // Giới tính
+		tblNhanVien.getColumnModel().getColumn(5).setCellRenderer(leftRenderer); // SĐT
+		tblNhanVien.getColumnModel().getColumn(6).setCellRenderer(leftRenderer); // Chức vụ
+		tblNhanVien.getColumnModel().getColumn(7).setCellRenderer(leftRenderer); // Ca làm
+
+		// Ngày sinh - căn giữa
+		tblNhanVien.getColumnModel().getColumn(4).setCellRenderer(centerRenderer); // Ngày sinh
+
+		// Render màu trạng thái - căn trái
+		tblNhanVien.getColumnModel().getColumn(8).setCellRenderer(new DefaultTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 					boolean hasFocus, int row, int column) {
 				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
 						column);
-				lbl.setHorizontalAlignment(SwingConstants.CENTER);
-				if ("Đang làm".equals(value))
-					lbl.setForeground(new Color(0, 128, 0));
-				else
+				lbl.setHorizontalAlignment(SwingConstants.LEFT);
+				if ("Đang làm".equals(value)) {
+					lbl.setForeground(new Color(0x2E7D32)); // Xanh lá đậm
+					lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
+				} else {
 					lbl.setForeground(Color.RED);
+					lbl.setFont(new Font("Segoe UI", Font.ITALIC, 14));
+				}
 				return lbl;
 			}
 		});
@@ -364,6 +337,14 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				doToForm(tblNhanVien.getSelectedRow());
+				capNhatTrangThaiNut();
+			}
+		});
+
+		// Selection Listener for button visibility
+		tblNhanVien.getSelectionModel().addListSelectionListener(e -> {
+			if (!e.getValueIsAdjusting()) {
+				capNhatTrangThaiNut();
 			}
 		});
 
@@ -383,16 +364,12 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		// 1. THÊM
 		if (o.equals(btnThem)) {
 			xuLyThem();
-			System.out.println("Đã thêm nhân viên");
 		}
 		// 2. SỬA
 		else if (o.equals(btnSua)) {
 			xuLyCapNhat();
 		}
-		// 3. "XÓA" = CHO NGHỈ (SOFT DELETE)
-		else if (o.equals(btnXoa)) {
-			xuLyChoNghi();
-		}
+
 		// 4. LÀM MỚI
 		else if (o.equals(btnLamMoi)) {
 			lamMoiForm();
@@ -433,6 +410,7 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 				loadDataNhanVien();
 				chonDongTheoMa(nv.getMaNhanVien());
 				lamMoiForm();
+				txtTenNV.requestFocus();
 			} else {
 				JOptionPane.showMessageDialog(this, "Thêm nhân viên thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
 			}
@@ -463,31 +441,6 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		}
 	}
 
-	// KHÔNG XOÁ RECORD -> CHUYỂN SANG "ĐÃ NGHỈ"
-	private void xuLyChoNghi() {
-		int row = tblNhanVien.getSelectedRow();
-		if (row == -1) {
-			JOptionPane.showMessageDialog(this, "Vui lòng chọn 1 nhân viên để cho nghỉ!");
-			return;
-		}
-
-		String maNV = (String) tblNhanVien.getValueAt(row, 0);
-
-		int opt = JOptionPane.showConfirmDialog(this,
-				"Đánh dấu nhân viên " + maNV + " là 'Đã nghỉ'? (Không xóa khỏi hệ thống)", "Xác nhận",
-				JOptionPane.YES_NO_OPTION);
-		if (opt != JOptionPane.YES_OPTION)
-			return;
-
-		if (nvDAO.capNhatTrangThai(maNV, false)) {
-			JOptionPane.showMessageDialog(this, "Đã cập nhật trạng thái nhân viên.");
-			loadDataNhanVien();
-			chonDongTheoMa(maNV);
-		} else {
-			JOptionPane.showMessageDialog(this, "Cập nhật trạng thái thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-		}
-	}
-
 	// =====================================================================
 	// DATA BẢNG
 	// =====================================================================
@@ -496,31 +449,42 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		dsNhanVien = nvDAO.layTatCaNhanVien();
 		modelNhanVien.setRowCount(0);
 
+		int stt = 1;
 		for (NhanVien nv : dsNhanVien) {
-			modelNhanVien.addRow(new Object[] { nv.getMaNhanVien(), nv.getTenNhanVien(), nv.isGioiTinh() ? "Nam" : "Nữ",
-					formatNgay(nv.getNgaySinh()), nv.getSoDienThoai(), nv.isQuanLy() ? "Quản lý" : "Nhân viên",
-					nv.getTenCaLam(), nv.isTrangThai() ? "Đang làm" : "Đã nghỉ" });
+			modelNhanVien.addRow(
+					new Object[] { stt++, nv.getMaNhanVien(), nv.getTenNhanVien(), nv.isGioiTinh() ? "Nam" : "Nữ",
+							formatNgay(nv.getNgaySinh()), nv.getSoDienThoai(), nv.isQuanLy() ? "Quản lý" : "Nhân viên",
+							nv.getTenCaLam(), nv.isTrangThai() ? "Đang làm" : "Đã nghỉ" });
 		}
 	}
 
 	private void doToForm(int row) {
 		if (row < 0)
 			return;
-		String maNV = (String) tblNhanVien.getValueAt(row, 0);
+		String maNV = (String) tblNhanVien.getValueAt(row, 1); // Cột 1 là Mã NV (cột 0 là STT)
 		NhanVien nv = timNhanVienTrongDanhSach(maNV);
 		if (nv == null)
 			return;
 
 		txtMaNV.setText(nv.getMaNhanVien());
+
+		// Set text và màu đen (không phải placeholder)
+		txtTenNV.setForeground(Color.BLACK);
 		txtTenNV.setText(nv.getTenNhanVien());
+
 		cboGioiTinh.setSelectedItem(nv.isGioiTinh() ? "Nam" : "Nữ");
 		if (nv.getNgaySinh() != null) {
 			dateNgaySinh.setDate(java.sql.Date.valueOf(nv.getNgaySinh()));
 		} else {
 			dateNgaySinh.setDate(null);
 		}
+
+		txtSDT.setForeground(Color.BLACK);
 		txtSDT.setText(nv.getSoDienThoai());
+
+		txtDiaChi.setForeground(Color.BLACK);
 		txtDiaChi.setText(nv.getDiaChi());
+
 		cboChucVu.setSelectedItem(nv.isQuanLy() ? "Quản lý" : "Nhân viên");
 
 		int ca = nv.getCaLam();
@@ -532,6 +496,8 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		}
 
 		cboTrangThai.setSelectedItem(nv.isTrangThai() ? "Đang làm" : "Đã nghỉ");
+
+		capNhatTrangThaiNut();
 	}
 
 	private NhanVien timNhanVienTrongDanhSach(String maNV) {
@@ -544,7 +510,7 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 
 	private void chonDongTheoMa(String maNV) {
 		for (int i = 0; i < modelNhanVien.getRowCount(); i++) {
-			if (maNV.equals(modelNhanVien.getValueAt(i, 0))) {
+			if (maNV.equals(modelNhanVien.getValueAt(i, 1))) { // Cột 1 là Mã NV
 				tblNhanVien.setRowSelectionInterval(i, i);
 				tblNhanVien.scrollRectToVisible(tblNhanVien.getCellRect(i, 0, true));
 				doToForm(i);
@@ -562,10 +528,12 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 
 		List<NhanVien> ketQua = nvDAO.timNhanVien(kw);
 		modelNhanVien.setRowCount(0);
+		int stt = 1;
 		for (NhanVien nv : ketQua) {
-			modelNhanVien.addRow(new Object[] { nv.getMaNhanVien(), nv.getTenNhanVien(), nv.isGioiTinh() ? "Nam" : "Nữ",
-					formatNgay(nv.getNgaySinh()), nv.getSoDienThoai(), nv.isQuanLy() ? "Quản lý" : "Nhân viên",
-					nv.getTenCaLam(), nv.isTrangThai() ? "Đang làm" : "Đã nghỉ" });
+			modelNhanVien.addRow(
+					new Object[] { stt++, nv.getMaNhanVien(), nv.getTenNhanVien(), nv.isGioiTinh() ? "Nam" : "Nữ",
+							formatNgay(nv.getNgaySinh()), nv.getSoDienThoai(), nv.isQuanLy() ? "Quản lý" : "Nhân viên",
+							nv.getTenCaLam(), nv.isTrangThai() ? "Đang làm" : "Đã nghỉ" });
 		}
 	}
 
@@ -605,15 +573,6 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 			}
 		});
 
-		// Ctrl+E: Xuất Excel
-		inputMap.put(KeyStroke.getKeyStroke("control E"), "xuatExcel");
-		actionMap.put("xuatExcel", new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				xuatExcel();
-			}
-		});
-
 		// Ctrl+N: Thêm
 		inputMap.put(KeyStroke.getKeyStroke("control N"), "themNV");
 		actionMap.put("themNV", new AbstractAction() {
@@ -632,14 +591,6 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 			}
 		});
 
-		// Ctrl+D: Thôi việc
-		inputMap.put(KeyStroke.getKeyStroke("control D"), "choNghiNV");
-		actionMap.put("choNghiNV", new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				xuLyChoNghi();
-			}
-		});
 	}
 
 	// =====================================================================
@@ -674,8 +625,7 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 			dateNgaySinh.requestFocus();
 			return null;
 		}
-		LocalDate ngaySinh = dateNgaySinh.getDate().toInstant()
-				.atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+		LocalDate ngaySinh = dateNgaySinh.getDate().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
 
 		int age = Period.between(ngaySinh, LocalDate.now()).getYears();
 		if (age < 18) {
@@ -735,17 +685,39 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		String newMa = nvDAO.taoMaNhanVienTuDong();
 		txtMaNV.setText(newMa);
 		txtMaNV.setEditable(false);
-
 		txtTenNV.setText("");
+		PlaceholderSupport.addPlaceholder(txtTenNV, "Nhập họ tên nhân viên");
 		dateNgaySinh.setDate(null);
+		// Re-add placeholder cho JDateChooser
+		JTextField txtDateNgaySinh = (JTextField) dateNgaySinh.getDateEditor().getUiComponent();
+		PlaceholderSupport.addPlaceholder(txtDateNgaySinh, "dd/MM/yyyy");
 		txtSDT.setText("");
+		PlaceholderSupport.addPlaceholder(txtSDT, "Nhập số điện thoại");
 		txtDiaChi.setText("");
+		PlaceholderSupport.addPlaceholder(txtDiaChi, "Nhập địa chỉ");
 		cboGioiTinh.setSelectedIndex(0);
 		cboChucVu.setSelectedIndex(0);
 		cboCaLam.setSelectedIndex(0);
 		cboTrangThai.setSelectedIndex(0);
-		txtTenNV.requestFocus();
+		txtTimKiem.requestFocus();
 		tblNhanVien.clearSelection();
+		capNhatTrangThaiNut();
+	}
+
+	/**
+	 * Cập nhật trạng thái hiển thị các nút dựa trên việc có chọn dòng hay không -
+	 * Không chọn dòng: Enable nút Thêm, disable Cập nhật - Có chọn dòng: Disable
+	 * nút Thêm, enable Cập nhật
+	 */
+	private void capNhatTrangThaiNut() {
+		int row = tblNhanVien.getSelectedRow();
+		boolean coDongDuocChon = (row != -1);
+
+		// Nút Thêm: chỉ enable khi KHÔNG chọn dòng nào
+		btnThem.setEnabled(!coDongDuocChon);
+
+		// Nút Cập nhật: chỉ enable khi CÓ chọn dòng
+		btnSua.setEnabled(coDongDuocChon);
 	}
 
 	// --- Helpers UI & Ảnh ---
@@ -818,98 +790,6 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 	private TitledBorder createTitledBorder(String title) {
 		return BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
 				TitledBorder.LEFT, TitledBorder.TOP, FONT_BOLD, Color.DARK_GRAY);
-	}
-
-	/**
-	 * Xuất dữ liệu ra file Excel
-	 */
-	private void xuatExcel() {
-		if (modelNhanVien.getRowCount() == 0) {
-			JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất!",
-					"Thông báo", JOptionPane.WARNING_MESSAGE);
-			return;
-		}
-
-		try {
-			JFileChooser fileChooser = new JFileChooser();
-			fileChooser.setDialogTitle("Chọn nơi lưu file Excel");
-			fileChooser.setSelectedFile(new File("QuanLyNhanVien.xlsx"));
-			fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files", "xlsx"));
-
-			if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-				File file = fileChooser.getSelectedFile();
-				if (!file.getName().endsWith(".xlsx")) {
-					file = new File(file.getAbsolutePath() + ".xlsx");
-				}
-
-				XSSFWorkbook workbook = new XSSFWorkbook();
-				Sheet sheet = workbook.createSheet("Danh Sách Nhân Viên");
-
-				// Header style
-				CellStyle headerStyle = workbook.createCellStyle();
-				XSSFFont headerFont = workbook.createFont();
-				headerFont.setBold(true);
-				headerStyle.setFont(headerFont);
-				headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
-				headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-
-				// Tiêu đề
-				Row titleRow = sheet.createRow(0);
-				Cell titleCell = titleRow.createCell(0);
-				titleCell.setCellValue("DANH SÁCH NHÂN VIÊN");
-
-				CellStyle titleStyle = workbook.createCellStyle();
-				XSSFFont titleFont = workbook.createFont();
-				titleFont.setBold(true);
-				titleFont.setFontHeightInPoints((short) 16);
-				titleStyle.setFont(titleFont);
-				titleCell.setCellStyle(titleStyle);
-
-				// Thông tin ngày xuất
-				Row periodRow = sheet.createRow(1);
-				periodRow.createCell(0).setCellValue(
-						"Ngày xuất: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-
-				// Header row
-				Row headerRow = sheet.createRow(3);
-				for (int i = 0; i < modelNhanVien.getColumnCount(); i++) {
-					Cell cell = headerRow.createCell(i);
-					cell.setCellValue(modelNhanVien.getColumnName(i));
-					cell.setCellStyle(headerStyle);
-				}
-
-				// Data rows
-				for (int row = 0; row < modelNhanVien.getRowCount(); row++) {
-					Row dataRow = sheet.createRow(row + 4);
-					for (int col = 0; col < modelNhanVien.getColumnCount(); col++) {
-						Object value = modelNhanVien.getValueAt(row, col);
-						dataRow.createCell(col).setCellValue(value != null ? value.toString() : "");
-					}
-				}
-
-				// Auto-size columns
-				for (int i = 0; i < modelNhanVien.getColumnCount(); i++) {
-					sheet.autoSizeColumn(i);
-				}
-
-				// Write file
-				try (FileOutputStream fos = new FileOutputStream(file)) {
-					workbook.write(fos);
-				}
-				workbook.close();
-
-				JOptionPane.showMessageDialog(this,
-						"Xuất Excel thành công!\nFile: " + file.getAbsolutePath(),
-						"Thành công", JOptionPane.INFORMATION_MESSAGE);
-
-				// Mở file
-				Desktop.getDesktop().open(file);
-			}
-		} catch (Exception e) {
-			JOptionPane.showMessageDialog(this, "Lỗi xuất Excel: " + e.getMessage(),
-					"Lỗi", JOptionPane.ERROR_MESSAGE);
-			e.printStackTrace();
-		}
 	}
 
 	// MAIN TEST
