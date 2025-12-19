@@ -376,16 +376,14 @@ public class TraCuuDonTraHang_GUI extends JPanel implements ActionListener {
 			}
 		});
 
-		// --- double click phiếu trả ---
+		// --- double click phiếu trả -> Xem phiếu trả (giống nút Xem phiếu trả)---
 		tblPhieuTra.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (e.getClickCount() == 2) {
 					int row = tblPhieuTra.getSelectedRow();
 					if (row != -1) {
-						String ma = tblPhieuTra.getValueAt(row, 1).toString();
-						JOptionPane.showMessageDialog(TraCuuDonTraHang_GUI.this,
-								"Bạn vừa mở phiếu trả: " + ma + "\n(Có thể mở form chi tiết hoặc sửa phiếu tại đây)");
+						xuLyXemPhieuTra();
 					}
 				}
 			}

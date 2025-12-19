@@ -78,6 +78,7 @@ import entity.ChiTietPhieuTra;
 import entity.NhanVien;
 import entity.PhieuTra;
 import entity.Session;
+import gui.dialog.PhieuTraPreviewDialog;
 
 public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListener {
 
@@ -457,6 +458,10 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 
 		// Cột STT căn giữa và width nhỏ
 
+		// Khởi tạo sorter TRƯỚC khi load data để bộ lọc 30 ngày được áp dụng ngay
+		sorter = new TableRowSorter<>(modelPT);
+		tblPT.setRowSorter(sorter);
+
 		loadDataTablePT();
 
 		// Bảng chi tiết phiếu trả - Thêm cột STT
@@ -491,10 +496,6 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 				capNhatTrangThaiNut();
 			}
 		});
-
-		// sắp xếp tăng giảm tự động khi click vào header
-		sorter = new TableRowSorter<>(modelPT);
-		tblPT.setRowSorter(sorter);
 	}
 
 	private JTable setupTable(DefaultTableModel model) {
@@ -712,8 +713,25 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		// TODO Auto-generated method stub
+		// Double click phiếu trả -> Xem phiếu trả (giống TraCuuDonTraHang)
+		if (e.getSource() == tblPT && e.getClickCount() == 2) {
+			int row = tblPT.getSelectedRow();
+			if (row != -1) {
+				String maPT = tblPT.getValueAt(row, 1).toString(); // Cột 1: Mã PT
+				xemPhieuTra(maPT);
+			}
+		}
+	}
 
+	/**
+	 * Mở dialog xem phiếu trả
+	 */
+	private void xemPhieuTra(String maPT) {
+		PhieuTra pt = pt_dao.timKiemPhieuTraBangMa(maPT);
+		if (pt != null) {
+			List<ChiTietPhieuTra> dsCT = ctpt_dao.timKiemChiTietBangMaPhieuTra(maPT);
+			new PhieuTraPreviewDialog(SwingUtilities.getWindowAncestor(this), pt, dsCT).setVisible(true);
+		}
 	}
 
 	@Override
