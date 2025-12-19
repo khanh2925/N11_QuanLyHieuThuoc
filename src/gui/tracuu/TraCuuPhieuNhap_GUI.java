@@ -206,13 +206,13 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
 
         tblChiTiet = thietLapBang(modelChiTiet);
 
-        tblChiTiet.getColumnModel().getColumn(0).setCellRenderer(center);
-        tblChiTiet.getColumnModel().getColumn(1).setCellRenderer(center);
-        tblChiTiet.getColumnModel().getColumn(2).setCellRenderer(center);
-        tblChiTiet.getColumnModel().getColumn(4).setCellRenderer(center);
-        tblChiTiet.getColumnModel().getColumn(5).setCellRenderer(center);
-        tblChiTiet.getColumnModel().getColumn(6).setCellRenderer(right);
-        tblChiTiet.getColumnModel().getColumn(7).setCellRenderer(right);
+        tblChiTiet.getColumnModel().getColumn(0).setCellRenderer(center);  // STT
+        tblChiTiet.getColumnModel().getColumn(1).setCellRenderer(center);  // Mã Lô
+        tblChiTiet.getColumnModel().getColumn(2).setCellRenderer(center);  // Mã SP
+        tblChiTiet.getColumnModel().getColumn(4).setCellRenderer(center);  // ĐVT
+        tblChiTiet.getColumnModel().getColumn(5).setCellRenderer(right);   // Số lượng
+        tblChiTiet.getColumnModel().getColumn(6).setCellRenderer(right);   // Đơn giá nhập
+        tblChiTiet.getColumnModel().getColumn(7).setCellRenderer(right);   // Thành tiền
 
         tblChiTiet.getColumnModel().getColumn(3).setPreferredWidth(250);
 

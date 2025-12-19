@@ -253,25 +253,25 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
         add(pnSidebar, BorderLayout.EAST);
 
         // --- Thông tin nhân viên ---
-        JPanel pnNhanVien = new JPanel(new BorderLayout(5, 5));
-        pnNhanVien.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-        pnNhanVien.setOpaque(false);
-        JLabel lblNhanVienLabel = new JLabel("Nhân viên:");
-        lblNhanVienLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        JLabel lblNhanVienValue = new JLabel(nhanVienDangNhap != null ? nhanVienDangNhap.getTenNhanVien() : "N/A");
-        lblNhanVienValue.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        JLabel lblThoiGian = new JLabel(java.time.LocalDateTime.now().format(fmtDateTime), SwingConstants.RIGHT);
-        lblThoiGian.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        pnNhanVien.add(lblNhanVienLabel, BorderLayout.WEST);
-        pnNhanVien.add(lblNhanVienValue, BorderLayout.CENTER);
-        pnNhanVien.add(lblThoiGian, BorderLayout.EAST);
-        pnSidebar.add(pnNhanVien);
-        pnSidebar.add(Box.createVerticalStrut(10));
-        JSeparator lineNV = new JSeparator();
-        lineNV.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-        pnSidebar.add(Box.createVerticalStrut(4));
-        pnSidebar.add(lineNV);
-        pnSidebar.add(Box.createVerticalStrut(15));
+//        JPanel pnNhanVien = new JPanel(new BorderLayout(5, 5));
+//        pnNhanVien.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+//        pnNhanVien.setOpaque(false);
+//        JLabel lblNhanVienLabel = new JLabel("Nhân viên:");
+//        lblNhanVienLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+//        JLabel lblNhanVienValue = new JLabel(nhanVienDangNhap != null ? nhanVienDangNhap.getTenNhanVien() : "N/A");
+//        lblNhanVienValue.setFont(new Font("Segoe UI", Font.BOLD, 14));
+//        JLabel lblThoiGian = new JLabel(java.time.LocalDateTime.now().format(fmtDateTime), SwingConstants.RIGHT);
+//        lblThoiGian.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+//        pnNhanVien.add(lblNhanVienLabel, BorderLayout.WEST);
+//        pnNhanVien.add(lblNhanVienValue, BorderLayout.CENTER);
+//        pnNhanVien.add(lblThoiGian, BorderLayout.EAST);
+//        pnSidebar.add(pnNhanVien);
+//        pnSidebar.add(Box.createVerticalStrut(10));
+//        JSeparator lineNV = new JSeparator();
+//        lineNV.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
+//        pnSidebar.add(Box.createVerticalStrut(4));
+//        pnSidebar.add(lineNV);
+//        pnSidebar.add(Box.createVerticalStrut(15));
 
         // --- Giao diện tìm kiếm NCC ---
 
@@ -280,7 +280,7 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
         pnTimNCC.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
         pnTimNCC.setOpaque(false);
 
-        txtTimNCC = TaoJtextNhanh.nhapLieu("Nhập Số điện thoại NCC(F2/Ctrl+K)");
+        txtTimNCC = TaoJtextNhanh.nhapLieu("Tìm NCC theo mã,sdt(F2/Ctrl+K)");
         txtTimNCC.setPreferredSize(new Dimension(120, 200));;
         txtTimNCC.setToolTipText("<html><b>Phím tắt:</b> F2 hoặc Ctrl+K<br>Nhập số điện thoại nhà cung cấp và nhấn Enter</html>");
         txtTimNCC.addActionListener(this);
@@ -526,6 +526,27 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
             @Override
             public void actionPerformed(ActionEvent e) {
                 xuLyNhapPhieu();
+            }
+        });
+
+        // F4: Làm mới/Reset đơn nhập hàng
+        inputMap.put(KeyStroke.getKeyStroke("F4"), "resetDonHang");
+        actionMap.put("resetDonHang", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (pnDanhSachDon.getComponentCount() == 0) {
+                    JOptionPane.showMessageDialog(QuanLyPhieuNhap_GUI.this, 
+                        "Đơn nhập hàng trống!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+                int confirm = JOptionPane.showConfirmDialog(QuanLyPhieuNhap_GUI.this,
+                    "Bạn có chắc muốn xóa toàn bộ đơn nhập hàng?", "Xác nhận",
+                    JOptionPane.YES_NO_OPTION);
+                if (confirm == JOptionPane.YES_OPTION) {
+                    xoaTatCaDuLieu();
+                    JOptionPane.showMessageDialog(QuanLyPhieuNhap_GUI.this,
+                        "Đã làm mới đơn nhập hàng!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                }
             }
         });
 

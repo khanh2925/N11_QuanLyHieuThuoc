@@ -102,7 +102,7 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
 
         // Filter: Hình thức
         addFilterLabel("Hình thức:", 755, 28, 90, 35);
-        cbHinhThuc = new JComboBox<>(new String[]{"Tất cả", "Giảm tiền", "Giảm %", "Tặng quà"});
+        cbHinhThuc = new JComboBox<>(new String[]{"Tất cả", "Giảm tiền", "Giảm %"});
         setupCombo(cbHinhThuc, 845, 28, 120, 35);
 
         // Filter: Trạng thái

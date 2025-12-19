@@ -15,6 +15,7 @@ import javax.swing.table.*;
 import component.button.PillButton;
 import component.input.PlaceholderSupport;
 import component.border.RoundedBorder;
+import com.toedter.calendar.JDateChooser;
 
 // Import Entity & DAO
 import dao.BangGia_DAO;
@@ -38,11 +39,13 @@ public class BangGia_GUI extends JPanel implements ActionListener {
     private JSplitPane splitPane;
 
     // Form nhập liệu (Master)
-    private JTextField txtMaBG, txtTenBG, txtNgayApDung;
+    private JTextField txtMaBG, txtTenBG;
+    private JDateChooser txtNgayApDung;
+    private JComboBox<String> cboTrangThai;
     private JCheckBox chkHoatDong;
 
     // Panel Nút bấm (Master)
-    private PillButton btnThem, btnSua, btnNgungHoatDong, btnLamMoi;
+    private PillButton btnThem, btnSua, btnLamMoi;
     
     // Header (Tìm kiếm)
     private JTextField txtTimKiem;
@@ -55,7 +58,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
     // Tab 2: Chi tiết Quy tắc giá
     private JTable tblChiTiet;
     private DefaultTableModel modelChiTiet;
-    private PillButton btnThemCT, btnXoaCT, btnLamMoiCT; 
+    private PillButton btnThemCT, btnSuaCT, btnXoaCT, btnLamMoiCT; 
     
     // Input nhập nhanh chi tiết (Tối ưu UX)
     private JTextField txtGiaTu, txtGiaDen, txtTiLe; 
@@ -79,6 +82,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
     // Cache & Logic Variables
     private List<ChiTietBangGia> dsChiTietTam; 
     private double nextStartPrice = 0; // ✅ Biến theo dõi giá bắt đầu tiếp theo
+    private int indexDangSua = -1; // ✅ Chỉ số dòng đang được sửa (-1 = không sửa)
 
     public BangGia_GUI() {
         setPreferredSize(new Dimension(1537, 850));
@@ -88,6 +92,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         chiTietDAO = new ChiTietBangGia_DAO();
         sanPhamDAO = new SanPham_DAO();
         dsChiTietTam = new ArrayList<>();
+        indexDangSua = -1;
         
         initialize();
         setupKeyboardShortcuts(); // Thiết lập phím tắt
@@ -221,8 +226,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         txtTenBG = new JTextField();
         txtTenBG.setFont(FONT_TEXT);
         txtTenBG.setBounds(xStart + wLbl, yStart + (hText + gap), wTxt, 35);
-        PlaceholderSupport.addPlaceholder(txtTenBG, "Nhập tên bảng giá (F2)");
-        txtTenBG.setToolTipText("<html><b>Phím tắt:</b> F2<br>Nhập tên bảng giá (VD: Bảng giá tháng 1/2025)</html>");
+        PlaceholderSupport.addPlaceholder(txtTenBG, "Nhập tên bảng giá");
         p.add(txtTenBG);
 
         // CHECKBOX: "Đặt làm mặc định"
@@ -242,12 +246,71 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         lblNgayApDung.setBounds(xCol2, yStart, 120, 35);
         p.add(lblNgayApDung);
         
-        txtNgayApDung = new JTextField();
+        txtNgayApDung = new JDateChooser();
         txtNgayApDung.setFont(FONT_TEXT);
         txtNgayApDung.setBounds(xCol2 + wLbl, yStart, wTxt, 35);
-        txtNgayApDung.setEditable(false); 
-        txtNgayApDung.setText(LocalDate.now().format(dtf));
+        txtNgayApDung.setDateFormatString("dd/MM/yyyy");
+        txtNgayApDung.setDate(java.sql.Date.valueOf(LocalDate.now()));
         p.add(txtNgayApDung);
+
+        // Trạng thái (cùng hàng với Tên BG)
+        JLabel lblTrangThai = new JLabel("Trạng thái:");
+        lblTrangThai.setFont(FONT_TEXT);
+        lblTrangThai.setBounds(xCol2, yStart + (hText + gap), 120, 35);
+        p.add(lblTrangThai);
+        
+        cboTrangThai = new JComboBox<>(new String[]{"Hoạt động", "Ngưng hoạt động"});
+        cboTrangThai.setFont(FONT_TEXT);
+        cboTrangThai.setBounds(xCol2 + wLbl, yStart + (hText + gap), wTxt, 35);
+        cboTrangThai.setBackground(Color.WHITE);
+        cboTrangThai.setToolTipText("<html>Chọn trạng thái bảng giá:<br>- <b>Hoạt động:</b> Bảng giá đang được sử dụng<br>- <b>Ngưng hoạt động:</b> Bảng giá không còn sử dụng</html>");
+        p.add(cboTrangThai);
+        
+        // Đồng bộ sự kiện giữa combobox và checkbox
+        cboTrangThai.addActionListener(e -> {
+            if (cboTrangThai.getSelectedIndex() == 0) { // Hoạt động
+                chkHoatDong.setEnabled(true);
+            } else { // Ngưng hoạt động
+                chkHoatDong.setSelected(false);
+                chkHoatDong.setEnabled(false);
+            }
+        });
+        
+        chkHoatDong.addActionListener(e -> {
+            if (chkHoatDong.isSelected()) {
+                cboTrangThai.setSelectedIndex(0); // Đặt về Hoạt động
+            }
+        });
+        
+        // ✅ Thêm DocumentListener để enable btnThem khi có nhập liệu
+        thietLapDocumentListenerChoForm();
+    }
+    
+    /** ✅ Thiết lập listener để enable btnThem khi có nhập liệu trong form */
+    private void thietLapDocumentListenerChoForm() {
+        javax.swing.event.DocumentListener docListener = new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { kiemTraVaEnableBtnThem(); }
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { kiemTraVaEnableBtnThem(); }
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { kiemTraVaEnableBtnThem(); }
+        };
+        
+        txtTenBG.getDocument().addDocumentListener(docListener);
+    }
+    
+    /** ✅ Kiểm tra và enable btnThem nếu có nhập liệu */
+    private void kiemTraVaEnableBtnThem() {
+        String tenBG = txtTenBG.getText().trim();
+        boolean coNhapLieu = !tenBG.isEmpty() && !tenBG.equals("Nhập tên bảng giá (F2)");
+        
+        if (coNhapLieu) {
+            btnThem.setEnabled(true);
+            btnSua.setEnabled(false); // Loại trừ btnSua khi đang nhập mới
+        } else {
+            btnThem.setEnabled(false);
+        }
     }
 
     // --- PANEL NÚT BẤM (MASTER) ---
@@ -275,6 +338,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         btnThem.setPreferredSize(new Dimension(btnW, btnH));
         btnThem.addActionListener(this);
         btnThem.setToolTipText("<html><b>Phím tắt:</b> Ctrl+N<br>Tạo bảng giá mới (sẽ hỏi xác nhận nếu đang nhập dở)</html>");
+        btnThem.setEnabled(false); // ✅ Ban đầu không cho chọn
         gbc.gridy = 0; p.add(btnThem, gbc);
 
         btnSua = new PillButton(
@@ -288,20 +352,8 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         btnSua.setPreferredSize(new Dimension(btnW, btnH));
         btnSua.addActionListener(this);
         btnSua.setToolTipText("<html><b>Phím tắt:</b> Ctrl+U<br>Cập nhật bảng giá đang chọn (phải chọn bảng giá trước)</html>");
+        btnSua.setEnabled(false); // ✅ Ban đầu không cho chọn
         gbc.gridy = 1; p.add(btnSua, gbc);
-
-        btnNgungHoatDong = new PillButton(
-                "<html>" +
-                    "<center>" +
-                        "NGƯNG HĐ<br>" +
-                        "<span style='font-size:10px; color:#888888;'>(Ctrl+D)</span>" +
-                    "</center>" +
-                "</html>");
-        btnNgungHoatDong.setFont(FONT_BOLD);
-        btnNgungHoatDong.setPreferredSize(new Dimension(btnW, btnH));
-        btnNgungHoatDong.addActionListener(this);
-        btnNgungHoatDong.setToolTipText("<html><b>Phím tắt:</b> Ctrl+D<br>Ngừng hoạt động bảng giá đang chọn</html>");
-        gbc.gridy = 2; p.add(btnNgungHoatDong, gbc);
 
         btnLamMoi = new PillButton(
                 "<html>" +
@@ -314,18 +366,30 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         btnLamMoi.setPreferredSize(new Dimension(btnW, btnH));
         btnLamMoi.addActionListener(this);
         btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Xóa form và làm mới (sẽ hỏi xác nhận nếu đang nhập dở)</html>");
-        gbc.gridy = 3; p.add(btnLamMoi, gbc);
+        gbc.gridy = 2; p.add(btnLamMoi, gbc);
     }
 
     // --- TAB 1: DANH SÁCH ---
     private void taoBangDanhSach(JPanel p) {
-        String[] cols = {"Mã Bảng Giá", "Tên Bảng Giá", "Ngày áp dụng", "Người lập", "Trạng thái"};
+        String[] cols = {"STT", "Mã Bảng Giá", "Tên Bảng Giá", "Ngày áp dụng", "Người lập", "Trạng thái"};
         modelBangGia = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         tblBangGia = setupTable(modelBangGia);
 
-        tblBangGia.getColumnModel().getColumn(4).setCellRenderer(new DefaultTableCellRenderer() {
+        // Căn chỉnh cột theo quy chuẩn
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
+        leftRenderer.setHorizontalAlignment(JLabel.LEFT);
+        
+        // STT: Giữa (cột 0 - đã có từ setupTable)
+        tblBangGia.getColumnModel().getColumn(1).setCellRenderer(centerRenderer); // Mã Bảng Giá: Giữa (mã)
+        tblBangGia.getColumnModel().getColumn(2).setCellRenderer(leftRenderer); // Tên Bảng Giá: Trái (văn bản)
+        tblBangGia.getColumnModel().getColumn(3).setCellRenderer(centerRenderer); // Ngày áp dụng: Giữa
+        tblBangGia.getColumnModel().getColumn(4).setCellRenderer(centerRenderer); // Người lập: Giữa (mã)
+
+        tblBangGia.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -347,8 +411,21 @@ public class BangGia_GUI extends JPanel implements ActionListener {
             public void mouseClicked(MouseEvent e) {
                 int row = tblBangGia.getSelectedRow();
                 if(row >= 0) {
-                    String maBG = tblBangGia.getValueAt(row, 0).toString();
+                    String maBG = tblBangGia.getValueAt(row, 1).toString();
                     loadBangGiaLenForm(maBG);
+                }
+            }
+        });
+        
+        // ✅ Thêm ListSelectionListener để enable btnSua khi chọn dòng
+        tblBangGia.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int row = tblBangGia.getSelectedRow();
+                if (row >= 0) {
+                    btnSua.setEnabled(true);
+                    btnThem.setEnabled(false); // Loại trừ btnThem khi đang chọn để sửa
+                } else {
+                    btnSua.setEnabled(false);
                 }
             }
         });
@@ -376,7 +453,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         // 2. Giá đến
         pnToolBar.add(new JLabel("Đến:"));
         txtGiaDen = new JTextField(10);
-        PlaceholderSupport.addPlaceholder(txtGiaDen, "F3");
+        PlaceholderSupport.addPlaceholder(txtGiaDen, "Nhập giá đến (F3)");
         txtGiaDen.setToolTipText("<html><b>Phím tắt:</b> F3<br>Nhập giá kết thúc của khoảng (VD: 100000)<br>Nhấn Enter để nhảy sang Tỉ lệ</html>");
         pnToolBar.add(txtGiaDen);
         
@@ -401,11 +478,11 @@ public class BangGia_GUI extends JPanel implements ActionListener {
      // 4. Tỉ lệ
         pnToolBar.add(new JLabel("Tỉ lệ (VD 1.2):"));
         txtTiLe = new JTextField(7);
-        PlaceholderSupport.addPlaceholder(txtTiLe, "F4");
+        PlaceholderSupport.addPlaceholder(txtTiLe, "Nhập tỉ lệ (F4)");
         txtTiLe.setToolTipText("<html><b>Phím tắt:</b> F4<br>Nhập tỉ lệ định giá (VD: 1.2 = bán gấp 1.2 lần giá vốn)<br>Nhấn Enter để thêm quy tắc vào bảng</html>");
         pnToolBar.add(txtTiLe);
 
-        // 5. Nút Thêm
+        // 5. Nút Thêm (F7)
         btnThemCT = new PillButton(
             "<html>" +
                 "<center>" +
@@ -419,7 +496,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         btnThemCT.addActionListener(this);
         pnToolBar.add(btnThemCT);
         
-        // 6. Nút Xóa (Xóa dòng cuối)
+        // 6. Nút Xóa (F8)
         btnXoaCT = new PillButton(
             "<html>" +
                 "<center>" +
@@ -433,7 +510,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         btnXoaCT.addActionListener(this);
         pnToolBar.add(btnXoaCT);
         
-        // 7. Nút Làm mới (Reset form nhập)
+        // 7. Nút Làm mới (F9)
         btnLamMoiCT = new PillButton(
             "<html>" +
                 "<center>" +
@@ -449,6 +526,20 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         });
         pnToolBar.add(btnLamMoiCT);
         
+        // 8. Nút Sửa (F10)
+        btnSuaCT = new PillButton(
+            "<html>" +
+                "<center>" +
+                    "SỬA QUY TẮC<br>" +
+                    "<span style='font-size:10px; color:#888888;'>(F10)</span>" +
+                "</center>" +
+            "</html>");
+        btnSuaCT.setFont(FONT_BOLD);
+        btnSuaCT.setPreferredSize(new Dimension(160, 35));
+        btnSuaCT.setToolTipText("<html><b>Phím tắt:</b> F10<br>Sửa quy tắc giá đang chọn<br>(Chọn 1 dòng trong bảng rồi nhấn nút này)</html>");
+        btnSuaCT.addActionListener(this);
+        pnToolBar.add(btnSuaCT);
+        
         p.add(pnToolBar, BorderLayout.NORTH);
 
         // Table
@@ -457,6 +548,16 @@ public class BangGia_GUI extends JPanel implements ActionListener {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         tblChiTiet = setupTable(modelChiTiet);
+        
+        // Căn chỉnh cột theo quy chuẩn
+        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+        rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
+        
+        // STT: Giữa (cột 0 - đã có từ setupTable)
+        tblChiTiet.getColumnModel().getColumn(1).setCellRenderer(rightRenderer); // Giá nhập từ: Phải (tiền tệ)
+        tblChiTiet.getColumnModel().getColumn(2).setCellRenderer(rightRenderer); // Giá nhập đến: Phải (tiền tệ)
+        tblChiTiet.getColumnModel().getColumn(3).setCellRenderer(rightRenderer); // Tỉ lệ định giá: Phải (số)
+        tblChiTiet.getColumnModel().getColumn(4).setCellRenderer(rightRenderer); // Lợi nhuận dự kiến: Phải (%)
         
         JScrollPane scr = new JScrollPane(tblChiTiet);
         scr.setBorder(BorderFactory.createEmptyBorder());
@@ -524,13 +625,27 @@ public class BangGia_GUI extends JPanel implements ActionListener {
     
     // --- TAB 3: MÔ PHỎNG ---
     private void taoBangMoPhong(JPanel p) {
-        String[] cols = {"Mã SP", "Tên thuốc mẫu", "Giá nhập (Vốn)", "Tỉ lệ áp dụng", "Giá bán ra (Tính toán)"};
+        String[] cols = {"STT", "Mã SP", "Tên thuốc mẫu", "Giá nhập (Vốn)", "Tỉ lệ áp dụng", "Giá bán ra (Tính toán)"};
         modelMoPhong = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         tblMoPhong = setupTable(modelMoPhong);
         
-        tblMoPhong.getColumnModel().getColumn(4).setCellRenderer(new DefaultTableCellRenderer() {
+        // Căn chỉnh cột theo quy chuẩn
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
+        leftRenderer.setHorizontalAlignment(JLabel.LEFT);
+        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+        rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
+        
+        // STT: Giữa (cột 0 - đã có từ setupTable)
+        tblMoPhong.getColumnModel().getColumn(1).setCellRenderer(centerRenderer); // Mã SP: Giữa (mã)
+        tblMoPhong.getColumnModel().getColumn(2).setCellRenderer(leftRenderer); // Tên thuốc mẫu: Trái (văn bản)
+        tblMoPhong.getColumnModel().getColumn(3).setCellRenderer(rightRenderer); // Giá nhập (Vốn): Phải (tiền tệ)
+        tblMoPhong.getColumnModel().getColumn(4).setCellRenderer(rightRenderer); // Tỉ lệ áp dụng: Phải (số)
+        
+        tblMoPhong.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -558,14 +673,14 @@ public class BangGia_GUI extends JPanel implements ActionListener {
             xuLyThemBangGia();
         } else if (o.equals(btnSua)) {
             xuLyCapNhatBangGia();
-        } else if (o.equals(btnNgungHoatDong)) {
-            xuLyNgungHoatDong();
         } else if (o.equals(btnLamMoi)) {
             xuLyLamMoi();
         } else if (o.equals(btnTimKiem)) {
             xuLyTimKiem();
         } else if (o.equals(btnThemCT)) {
             xuLyThemChiTietVaoBangTam();
+        } else if (o.equals(btnSuaCT)) {
+            xuLySuaChiTiet();
         } else if (o.equals(btnXoaCT)) {
             xuLyXoaChiTietKhoiBangTam();
         }
@@ -630,42 +745,20 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         }
     }
 
-    // --- 3. NGƯNG HOẠT ĐỘNG ---
-    private void xuLyNgungHoatDong() {
-        String maBG = txtMaBG.getText();
-        if (maBG.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn bảng giá.");
-            return;
-        }
-
-        if (chkHoatDong.isSelected()) {
-            int confirm = JOptionPane.showConfirmDialog(this, 
-                "Bảng giá này ĐANG HOẠT ĐỘNG.\nViệc ngưng hoạt động sẽ khiến sản phẩm không có giá bán.\nBạn có chắc chắn không?", 
-                "Cảnh báo", JOptionPane.YES_NO_OPTION);
-            if (confirm != JOptionPane.YES_OPTION) return;
-        } else {
-            JOptionPane.showMessageDialog(this, "Bảng giá này đã ở trạng thái ngừng hoạt động rồi.");
-            return;
-        }
-
-        BangGia bg = bangGiaDAO.timBangGiaTheoMa(maBG);
-        if (bg != null) {
-            bg.setHoatDong(false);
-            if (bangGiaDAO.capNhatBangGia(bg)) {
-                JOptionPane.showMessageDialog(this, "Đã ngưng hoạt động bảng giá: " + maBG);
-                xuLyLamMoi();
-            }
-        }
-    }
-
-    // --- 4. LÀM MỚI & RESET ---
+    // --- 3. LÀM MỚI & RESET ---
     private void xuLyLamMoi() {
         txtMaBG.setText(bangGiaDAO.taoMaBangGia());
         txtTenBG.setText("");
         PlaceholderSupport.addPlaceholder(txtTenBG, "Nhập tên bảng giá (F2)");
-        txtNgayApDung.setText(LocalDate.now().format(dtf));
+        txtNgayApDung.setDate(java.sql.Date.valueOf(LocalDate.now()));
+        cboTrangThai.setSelectedIndex(0); // Mặc định: Hoạt động
         chkHoatDong.setSelected(true);
         chkHoatDong.setEnabled(false);
+        
+        // ✅ Reset trạng thái nút
+        btnThem.setEnabled(false);
+        btnSua.setEnabled(false);
+        tblBangGia.clearSelection(); // Bỏ chọn dòng trong bảng
         
         // ✅ BỔ SUNG: Reset ô tìm kiếm
         txtTimKiem.setText(""); 
@@ -722,9 +815,87 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         }
     }
 
-    // --- 6. XỬ LÝ CHI TIẾT (TỐI ƯU UX) ---
+    // --- 6. XỬ LÝ SỬA CHI TIẾT ---
+    private void xuLySuaChiTiet() {
+        int selectedRow = tblChiTiet.getSelectedRow();
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(this, 
+                "Vui lòng chọn 1 quy tắc trong bảng để sửa!",
+                "Chưa chọn quy tắc", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (selectedRow >= dsChiTietTam.size()) {
+            JOptionPane.showMessageDialog(this, "Dòng được chọn không hợp lệ!");
+            return;
+        }
+
+        // Load thông tin lên form
+        ChiTietBangGia ct = dsChiTietTam.get(selectedRow);
+        txtGiaTu.setText(dfTien.format(ct.getGiaTu()));
+        
+        if (ct.getGiaDen() == Double.MAX_VALUE) {
+            txtGiaDen.setText("∞");
+            txtGiaDen.setEnabled(false);
+            chkKhoangCuoi.setSelected(true);
+        } else {
+            txtGiaDen.setText(dfTien.format(ct.getGiaDen()));
+            txtGiaDen.setEnabled(false); // Không cho sửa giá đến
+            chkKhoangCuoi.setSelected(false);
+        }
+        
+        txtTiLe.setText(String.valueOf(ct.getTiLe()));
+        txtTiLe.setEnabled(true);
+        txtTiLe.requestFocus();
+        txtTiLe.selectAll();
+        
+        // Đánh dấu đang ở chế độ sửa
+        indexDangSua = selectedRow;
+        
+        // Thay đổi text của nút Thêm thành Lưu
+        btnThemCT.setText(
+            "<html>" +
+                "<center>" +
+                    "LƯU SỬA ĐỔI<br>" +
+                    "<span style='font-size:10px; color:#888888;'>(F7)</span>" +
+                "</center>" +
+            "</html>");
+        btnThemCT.setToolTipText("<html><b>Phím tắt:</b> F7<br>Lưu thay đổi vào quy tắc đang sửa</html>");
+        
+        // Vô hiệu hóa các nút khác
+        btnSuaCT.setEnabled(false);
+        btnXoaCT.setEnabled(false);
+        chkKhoangCuoi.setEnabled(false);
+        
+        // Đổi text nút Làm mới thành Hủy sửa đổi
+        btnLamMoiCT.setText(
+            "<html>" +
+                "<center>" +
+                    "HỦY SỬA ĐỔI<br>" +
+                    "<span style='font-size:10px; color:#888888;'>(F9)</span>" +
+                "</center>" +
+            "</html>");
+        btnLamMoiCT.setToolTipText("<html><b>Phím tắt:</b> F9<br>Hủy chế độ sửa và quay lại nhập liệu bình thường</html>");
+        
+        JOptionPane.showMessageDialog(this,
+            "Bạn đang ở chế độ SỬA quy tắc thứ " + (selectedRow + 1) + "\n" +
+            "- Chỉ có thể sửa TỈ LỆ (Giá từ/đến không được thay đổi để giữ tính liên tục)\n" +
+            "- Nhấn 'LƯU SỬA ĐỔI' (F7) để lưu\n" +
+            "- Nhấn 'HỦY SỬA ĐỔI' (F9) để hủy",
+            "Chế độ sửa",
+            JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    // --- 7. XỬ LÝ CHI TIẾT (TỐI ƯU UX) ---
     private void xuLyThemChiTietVaoBangTam() {
         try {
+            // Kiểm tra xem có đang ở chế độ sửa không
+            if (indexDangSua >= 0) {
+                xuLyLuuSuaDoiChiTiet();
+                return;
+            }
+            
             // 1. Lấy giá từ (Auto)
             double giaTu = nextStartPrice;
             
@@ -761,13 +932,13 @@ public class BangGia_GUI extends JPanel implements ActionListener {
                 return;
             }
             
-            // 4.1. Validate: Tỉ lệ phải lớn hơn quy tắc trước
+            // 4.1. Validate: Giá nhập càng cao thì tỉ lệ lợi nhuận càng thấp
             if (!dsChiTietTam.isEmpty()) {
                 ChiTietBangGia lastRule = dsChiTietTam.get(dsChiTietTam.size() - 1);
-                if (tiLe <= lastRule.getTiLe()) {
+                if (tiLe >= lastRule.getTiLe()) {
                     JOptionPane.showMessageDialog(this, 
-                        "Tỉ lệ mới (" + tiLe + ") phải lớn hơn tỉ lệ quy tắc trước (" + lastRule.getTiLe() + ").\n" +
-                        "Quy tắc sau phải có lợi nhuận cao hơn quy tắc trước.",
+                        "Tỉ lệ mới (" + tiLe + ") phải nhỏ hơn tỉ lệ quy tắc trước (" + lastRule.getTiLe() + ").\n" +
+                        "Giá nhập càng cao thì lợi nhuận càng thấp.",
                         "Tỉ lệ không hợp lệ", 
                         JOptionPane.WARNING_MESSAGE);
                     txtTiLe.requestFocus();
@@ -810,6 +981,91 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         }
     }
 
+    /** ✅ Lưu sửa đổi tỉ lệ của quy tắc đang sửa */
+    private void xuLyLuuSuaDoiChiTiet() {
+        try {
+            // Lấy tỉ lệ mới
+            String strTiLe = txtTiLe.getText().replace(",", "").trim();
+            if (strTiLe.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập tỉ lệ.");
+                txtTiLe.requestFocus();
+                return;
+            }
+            double tiLeMoi = Double.parseDouble(strTiLe);
+
+            if (tiLeMoi <= 0) {
+                JOptionPane.showMessageDialog(this, "Tỉ lệ phải lớn hơn 0.");
+                return;
+            }
+
+            // Validate: Tỉ lệ phải nhỏ hơn quy tắc trước và lớn hơn quy tắc sau
+            if (indexDangSua > 0) {
+                double tiLeTruoc = dsChiTietTam.get(indexDangSua - 1).getTiLe();
+                if (tiLeMoi >= tiLeTruoc) {
+                    JOptionPane.showMessageDialog(this,
+                        "Tỉ lệ mới (" + tiLeMoi + ") phải nhỏ hơn tỉ lệ quy tắc trước (" + tiLeTruoc + ")\n" +
+                        "Giá nhập càng cao thì lợi nhuận càng thấp.",
+                        "Tỉ lệ không hợp lệ",
+                        JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+            }
+
+            if (indexDangSua < dsChiTietTam.size() - 1) {
+                double tiLeSau = dsChiTietTam.get(indexDangSua + 1).getTiLe();
+                if (tiLeMoi <= tiLeSau) {
+                    JOptionPane.showMessageDialog(this,
+                        "Tỉ lệ mới (" + tiLeMoi + ") phải lớn hơn tỉ lệ quy tắc sau (" + tiLeSau + ")\n" +
+                        "Giá nhập càng cao thì lợi nhuận càng thấp.",
+                        "Tỉ lệ không hợp lệ",
+                        JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+            }
+
+            // Cập nhật tỉ lệ
+            ChiTietBangGia ctDangSua = dsChiTietTam.get(indexDangSua);
+            ctDangSua.setTiLe(tiLeMoi);
+
+            // Reset chế độ sửa
+            indexDangSua = -1;
+            btnThemCT.setText(
+                "<html>" +
+                    "<center>" +
+                        "THÊM QUY TẮC<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(F7)</span>" +
+                    "</center>" +
+                "</html>");
+            btnThemCT.setToolTipText("<html><b>Phím tắt:</b> F7<br>Thêm quy tắc giá vào bảng tạm<br>(Giá Từ sẽ tự động nhảy)</html>");
+            btnSuaCT.setEnabled(true);
+            btnXoaCT.setEnabled(true);
+            
+            // Đổi lại text nút Làm mới về ban đầu
+            btnLamMoiCT.setText(
+                "<html>" +
+                    "<center>" +
+                        "LÀM MỚI<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(F9)</span>" +
+                    "</center>" +
+                "</html>");
+            btnLamMoiCT.setToolTipText("<html><b>Phím tắt:</b> F9<br>Làm mới các ô nhập liệu<br>Để tiếp tục thêm quy tắc mới</html>");
+
+            // Render lại bảng
+            renderBangChiTiet(dsChiTietTam);
+            renderBangMoPhong(dsChiTietTam);
+
+            // Reset form input (không xóa dữ liệu)
+            resetInputFormSauKhiLuu();
+
+            JOptionPane.showMessageDialog(this, "Cập nhật tỉ lệ thành công!");
+
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập số hợp lệ!");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage());
+        }
+    }
+
     private void xuLyXoaChiTietKhoiBangTam() {
         // Logic xóa kiểu Stack (chỉ được xóa dòng cuối cùng) để bảo toàn tính liên tục
         if (dsChiTietTam.isEmpty()) return;
@@ -840,10 +1096,12 @@ public class BangGia_GUI extends JPanel implements ActionListener {
 
     private void renderDanhSachBangGia(List<BangGia> list) {
         modelBangGia.setRowCount(0);
+        int stt = 1;
         for (BangGia bg : list) {
             String tenNV = bg.getNhanVien() != null ? bg.getNhanVien().getMaNhanVien() : "N/A";
             
             modelBangGia.addRow(new Object[]{
+                stt++,
                 bg.getMaBangGia(),
                 bg.getTenBangGia(),
                 dtf.format(bg.getNgayApDung()),
@@ -880,6 +1138,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         modelMoPhong.setRowCount(0);
         List<SanPham> listSP = sanPhamDAO.layTatCaSanPham(); 
         int count = 0;
+        int stt = 1;
         for(SanPham sp : listSP) {
             if(count++ > 15) break; 
             
@@ -894,6 +1153,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
             }
             
             modelMoPhong.addRow(new Object[]{
+                stt++,
                 sp.getMaSanPham(),
                 sp.getTenSanPham(),
                 dfTien.format(giaVon),
@@ -909,7 +1169,8 @@ public class BangGia_GUI extends JPanel implements ActionListener {
             txtMaBG.setText(bg.getMaBangGia());
             txtTenBG.setText(bg.getTenBangGia());
             txtTenBG.setForeground(Color.BLACK); // Đảm bảo chữ màu đen, không phải placeholder
-            txtNgayApDung.setText(dtf.format(bg.getNgayApDung()));
+            txtNgayApDung.setDate(java.sql.Date.valueOf(bg.getNgayApDung()));
+            cboTrangThai.setSelectedIndex(bg.isHoatDong() ? 0 : 1); // 0: Hoạt động, 1: Ngưng hoạt động
             chkHoatDong.setSelected(bg.isHoatDong());
             
             // Load và reset quy trình nhập liệu
@@ -941,10 +1202,31 @@ public class BangGia_GUI extends JPanel implements ActionListener {
     private BangGia taoBangGiaTuForm() {
         String ma = txtMaBG.getText().trim();
         String ten = txtTenBG.getText().trim();
-        boolean active = chkHoatDong.isSelected(); 
+        // Lấy trạng thái từ combobox: 0 = Hoạt động, 1 = Ngưng hoạt động
+        boolean active = cboTrangThai.getSelectedIndex() == 0;
+        
+        // Nếu checkbox được chọn thì ưu tiên checkbox (đặt làm mặc định)
+        if (chkHoatDong.isSelected()) {
+            active = true;
+        }
         
         try {
-            LocalDate ngay = LocalDate.parse(txtNgayApDung.getText(), dtf);
+            if (txtNgayApDung.getDate() == null) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày áp dụng.");
+                return null;
+            }
+            
+            // Chuyển đổi Date sang LocalDate an toàn hơn
+            java.util.Date date = txtNgayApDung.getDate();
+            LocalDate ngay;
+            if (date instanceof java.sql.Date) {
+                ngay = ((java.sql.Date) date).toLocalDate();
+            } else {
+                ngay = date.toInstant()
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .toLocalDate();
+            }
+            
             NhanVien nv = null;
             try {
                 nv = Session.getInstance().getTaiKhoanDangNhap().getNhanVien();
@@ -953,12 +1235,16 @@ public class BangGia_GUI extends JPanel implements ActionListener {
             }
             return new BangGia(ma, nv, ten, ngay, active);
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi dữ liệu ngày tháng hoặc hệ thống.");
+            e.printStackTrace(); // In ra console để debug
+            JOptionPane.showMessageDialog(this, 
+                "Lỗi: " + e.getMessage() + "\nVui lòng kiểm tra lại dữ liệu.", 
+                "Lỗi dữ liệu", 
+                JOptionPane.ERROR_MESSAGE);
             return null;
         }
     }
 
-    /** ✅ VALIDATION CẢI TIẾN: Bắt buộc 3 quy tắc + Có vô cực */
+    /** ✅ VALIDATION: Bắt buộc 3 quy tắc, không bắt buộc phải có vô cực */
     private boolean validInput() {
         String tenBG = txtTenBG.getText().trim();
         if (tenBG.isEmpty() || tenBG.equals("Nhập tên bảng giá (F2)")) {
@@ -968,16 +1254,9 @@ public class BangGia_GUI extends JPanel implements ActionListener {
             return false;
         }
         
-        // 1. Kiểm tra số lượng quy tắc
+        // Kiểm tra số lượng quy tắc
         if (dsChiTietTam.size() < 3) {
             JOptionPane.showMessageDialog(this, "Bảng giá phải có tối thiểu 3 khoảng giá (Quy tắc).");
-            return false;
-        }
-
-        // 2. Kiểm tra quy tắc cuối cùng phải là vô cực
-        ChiTietBangGia lastRule = dsChiTietTam.get(dsChiTietTam.size() - 1);
-        if (lastRule.getGiaDen() != Double.MAX_VALUE) {
-            JOptionPane.showMessageDialog(this, "Quy tắc cuối cùng phải là khoảng mở (Chọn 'Trở lên').");
             return false;
         }
 
@@ -1161,6 +1440,17 @@ public class BangGia_GUI extends JPanel implements ActionListener {
             }
         });
 
+        // F10: Sửa quy tắc chi tiết
+        inputMap.put(KeyStroke.getKeyStroke("F10"), "suaChiTiet");
+        actionMap.put("suaChiTiet", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnSuaCT.isEnabled()) {
+                    xuLySuaChiTiet();
+                }
+            }
+        });
+
         // Ctrl+N: Tạo mới bảng giá
         inputMap.put(KeyStroke.getKeyStroke("control N"), "taoMoi");
         actionMap.put("taoMoi", new AbstractAction() {
@@ -1200,15 +1490,6 @@ public class BangGia_GUI extends JPanel implements ActionListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 xuLyCapNhatBangGia();
-            }
-        });
-
-        // Ctrl+D: Ngưng hoạt động
-        inputMap.put(KeyStroke.getKeyStroke("control D"), "ngungHoatDong");
-        actionMap.put("ngungHoatDong", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                xuLyNgungHoatDong();
             }
         });
 
@@ -1256,38 +1537,79 @@ public class BangGia_GUI extends JPanel implements ActionListener {
             }
         });
     }
-    private void xuLyLamMoiFormChiTiet() {
-        // Reset các ô input về trạng thái sẵn sàng nhập quy tắc tiếp theo
+    /** ✅ Reset form input sau khi lưu sửa - GIỮ NGUYÊN dữ liệu */
+    private void resetInputFormSauKhiLuu() {
+        // Tính lại nextStartPrice dựa trên quy tắc cuối cùng
         if (!dsChiTietTam.isEmpty()) {
-            ChiTietBangGia lastRule = dsChiTietTam.get(dsChiTietTam.size() - 1);
-            if (lastRule.getGiaDen() == Double.MAX_VALUE) {
-                // Đã có dòng vô cực, không thể thêm nữa
+            ChiTietBangGia last = dsChiTietTam.get(dsChiTietTam.size() - 1);
+            if (last.getGiaDen() == Double.MAX_VALUE) {
+                // Đã là khoảng cuối -> Khóa nhập liệu
+                nextStartPrice = -1;
                 txtGiaTu.setText("---");
-                txtGiaDen.setText("");
+                txtGiaDen.setText("---");
                 txtGiaDen.setEnabled(false);
+                txtTiLe.setText("");
+                txtTiLe.setEnabled(false);
+                chkKhoangCuoi.setSelected(false);
+                chkKhoangCuoi.setEnabled(false);
                 btnThemCT.setEnabled(false);
             } else {
-                // Còn có thể thêm, reset về giá kế tiếp
+                // Còn có thể thêm tiếp
+                nextStartPrice = last.getGiaDen() + 1;
                 txtGiaTu.setText(dfTien.format(nextStartPrice));
                 txtGiaDen.setText("");
                 txtGiaDen.setEnabled(true);
+                txtTiLe.setText("");
+                txtTiLe.setEnabled(true);
+                chkKhoangCuoi.setSelected(false);
+                chkKhoangCuoi.setEnabled(true);
                 btnThemCT.setEnabled(true);
+                txtGiaDen.requestFocus();
             }
         } else {
-            // Chưa có quy tắc nào
+            // Không có quy tắc nào -> reset về ban đầu
+            nextStartPrice = 0;
             txtGiaTu.setText("0");
             txtGiaDen.setText("");
             txtGiaDen.setEnabled(true);
+            txtTiLe.setText("");
+            txtTiLe.setEnabled(true);
+            chkKhoangCuoi.setSelected(false);
+            chkKhoangCuoi.setEnabled(true);
             btnThemCT.setEnabled(true);
+            txtGiaDen.requestFocus();
+        }
+    }
+    
+    /** ✅ Làm mới form chi tiết - CHỈ reset input, KHÔNG xóa dữ liệu */
+    private void xuLyLamMoiFormChiTiet() {
+        // Reset chế độ sửa nếu đang sửa
+        if (indexDangSua >= 0) {
+            indexDangSua = -1;
+            btnThemCT.setText(
+                "<html>" +
+                    "<center>" +
+                        "THÊM QUY TẮC<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(F7)</span>" +
+                    "</center>" +
+                "</html>");
+            btnThemCT.setToolTipText("<html><b>Phím tắt:</b> F7<br>Thêm quy tắc giá vào bảng tạm<br>(Giá Từ sẽ tự động nhảy)</html>");
+            btnSuaCT.setEnabled(true);
+            btnXoaCT.setEnabled(true);
+            
+            // Đổi lại text nút Làm mới về ban đầu
+            btnLamMoiCT.setText(
+                "<html>" +
+                    "<center>" +
+                        "LÀM MỚI<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(F9)</span>" +
+                    "</center>" +
+                "</html>");
+            btnLamMoiCT.setToolTipText("<html><b>Phím tắt:</b> F9<br>Làm mới các ô nhập liệu<br>Để tiếp tục thêm quy tắc mới</html>");
         }
         
-        txtTiLe.setText("");
-        chkKhoangCuoi.setSelected(false);
-        chkKhoangCuoi.setEnabled(true);
-        txtTiLe.setEnabled(true);
-        
-        // Focus vào ô giá đến để tiếp tục nhập
-        txtGiaDen.requestFocus();
+        // CHỈ reset input, KHÔNG xóa dsChiTietTam
+        resetInputFormSauKhiLuu();
     }
     public static void main(String[] args) {
             JFrame frame = new JFrame("Quản Lý Bảng Giá");
