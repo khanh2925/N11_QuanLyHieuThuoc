@@ -7,6 +7,7 @@ import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionListener;
+import java.awt.event.HierarchyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -122,6 +123,7 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 
 		addEvents();
 		setupKeyboardShortcuts(); // Thiết lập phím tắt
+		addFocusOnShow(); // Focus vào ô tìm kiếm khi panel được hiển thị
 		initData();
 	}
 
@@ -224,19 +226,21 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 
 		tblNhaCungCap = setupTable(modelNCC);
 
-		// Căn chỉnh cột cho bảng nhà cung cấp: STT căn giữa, còn lại căn trái
+		// Căn chỉnh cột cho bảng nhà cung cấp
 		DefaultTableCellRenderer centerNCC = new DefaultTableCellRenderer();
 		centerNCC.setHorizontalAlignment(SwingConstants.CENTER);
 		tblNhaCungCap.getColumnModel().getColumn(0).setCellRenderer(centerNCC); // STT căn giữa
+		tblNhaCungCap.getColumnModel().getColumn(1).setCellRenderer(centerNCC); // Mã NCC căn giữa
+		tblNhaCungCap.getColumnModel().getColumn(3).setCellRenderer(centerNCC); // SĐT căn giữa
 
-		// Custom Renderer cho cột Trạng thái (Xanh đậm/Đỏ nghiêng) - giống
-		// TraCuuDonTraHang
+		// Custom Renderer cho cột Trạng thái (Xanh đậm/Đỏ nghiêng + căn giữa)
 		tblNhaCungCap.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 					boolean hasFocus, int row, int column) {
 				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
 						column);
+				lbl.setHorizontalAlignment(SwingConstants.CENTER); // Căn giữa
 				lbl.setFont(lbl.getFont().deriveFont(Font.BOLD));
 				if ("Đang hoạt động".equals(value)) {
 					lbl.setForeground(new Color(0x2E7D32)); // Xanh đậm
@@ -283,9 +287,10 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 		rightLS.setHorizontalAlignment(SwingConstants.RIGHT);
 
 		tblLichSuNhapHang.getColumnModel().getColumn(0).setCellRenderer(centerLS); // STT căn giữa
+		tblLichSuNhapHang.getColumnModel().getColumn(1).setCellRenderer(centerLS); // Mã phiếu nhập căn giữa
 		tblLichSuNhapHang.getColumnModel().getColumn(2).setCellRenderer(centerLS); // Ngày căn giữa
 		tblLichSuNhapHang.getColumnModel().getColumn(3).setCellRenderer(rightLS); // Tổng tiền căn phải
-		// Cột 1 (Mã phiếu nhập) và 4 (Nhân viên) mặc định căn trái
+		// Cột 4 (Nhân viên) mặc định căn trái
 
 		return new JScrollPane(tblLichSuNhapHang);
 	}
@@ -306,7 +311,9 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 		DefaultTableCellRenderer right = new DefaultTableCellRenderer();
 		right.setHorizontalAlignment(SwingConstants.RIGHT);
 
-		tblSanPhamCungCap.getColumnModel().getColumn(0).setCellRenderer(center); // STT
+		tblSanPhamCungCap.getColumnModel().getColumn(0).setCellRenderer(center); // STT căn giữa
+		tblSanPhamCungCap.getColumnModel().getColumn(1).setCellRenderer(center); // Mã SP căn giữa
+		tblSanPhamCungCap.getColumnModel().getColumn(3).setCellRenderer(center); // Loại căn giữa
 		tblSanPhamCungCap.getColumnModel().getColumn(4).setCellRenderer(right); // Số lần
 		tblSanPhamCungCap.getColumnModel().getColumn(5).setCellRenderer(right); // Tổng SL
 
@@ -492,6 +499,7 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 		nhaCungCapDAO.refreshCache();
 		taiDanhSachNhaCungCap();
 		loadTableNhaCungCap(allNhaCungCap);
+		txtTimKiem.requestFocus(); // Focus vào ô tìm kiếm sau khi làm mới
 	}
 
 	// ==============================================================================
@@ -866,6 +874,20 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 			frame.setLocationRelativeTo(null);
 			frame.setContentPane(new TraCuuNhaCungCap_GUI());
 			frame.setVisible(true);
+		});
+	}
+
+	/**
+	 * Auto focus vào ô tìm kiếm khi panel được hiển thị
+	 */
+	private void addFocusOnShow() {
+		addHierarchyListener(e -> {
+			if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+				SwingUtilities.invokeLater(() -> {
+					txtTimKiem.requestFocusInWindow();
+					txtTimKiem.selectAll();
+				});
+			}
 		});
 	}
 }

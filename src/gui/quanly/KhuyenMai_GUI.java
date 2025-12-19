@@ -306,14 +306,16 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
 		rightRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
 
-		tblKhuyenMai.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
+		tblKhuyenMai.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); // STT căn giữa
 		tblKhuyenMai.getColumnModel().getColumn(0).setPreferredWidth(50);
 
-		// Renderer căn trái cho Mã KM, Tên KM, Hình thức, Loại (cột 1, 2, 3, 7)
-		tblKhuyenMai.getColumnModel().getColumn(1).setCellRenderer(leftRenderer); // Mã KM
+		// Renderer căn trái cho Tên KM, Hình thức (cột 2, 3)
 		tblKhuyenMai.getColumnModel().getColumn(2).setCellRenderer(leftRenderer); // Tên KM
 		tblKhuyenMai.getColumnModel().getColumn(3).setCellRenderer(leftRenderer); // Hình thức
-		tblKhuyenMai.getColumnModel().getColumn(7).setCellRenderer(leftRenderer); // Loại
+
+		// Renderer căn giữa cho Mã KM, Loại (cột 1, 7)
+		tblKhuyenMai.getColumnModel().getColumn(1).setCellRenderer(centerRenderer); // Mã KM
+		tblKhuyenMai.getColumnModel().getColumn(7).setCellRenderer(centerRenderer); // Loại
 
 		// Renderer căn phải cho Giá trị (cột 4)
 		tblKhuyenMai.getColumnModel().getColumn(4).setCellRenderer(rightRenderer);
@@ -322,14 +324,14 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		tblKhuyenMai.getColumnModel().getColumn(5).setCellRenderer(centerRenderer); // Bắt đầu
 		tblKhuyenMai.getColumnModel().getColumn(6).setCellRenderer(centerRenderer); // Kết thúc
 
-		// Renderer màu cho cột Trạng thái (cột 8)
+		// Renderer màu cho cột Trạng thái (cột 8) + căn giữa
 		tblKhuyenMai.getColumnModel().getColumn(8).setCellRenderer(new DefaultTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 					boolean hasFocus, int row, int column) {
 				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
 						column);
-				lbl.setHorizontalAlignment(SwingConstants.LEFT);
+				lbl.setHorizontalAlignment(SwingConstants.CENTER); // Căn giữa
 				String status = String.valueOf(value);
 				if ("Đang hoạt động".equals(status)) {
 					lbl.setForeground(new Color(0x2E7D32)); // Xanh lá đậm

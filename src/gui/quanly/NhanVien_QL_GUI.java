@@ -2,6 +2,7 @@ package gui.quanly;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.event.HierarchyEvent;
 import java.io.File;
 import java.net.URL;
 import java.time.LocalDate;
@@ -93,6 +94,7 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		add(pnCenter, BorderLayout.CENTER);
 
 		setupKeyboardShortcuts(); // Thiết lập phím tắt
+		addFocusOnShow(); // Focus vào ô tìm kiếm khi panel được hiển thị
 	}
 
 	// =====================================================================
@@ -303,25 +305,27 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		tblNhanVien.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
 		tblNhanVien.getColumnModel().getColumn(0).setPreferredWidth(50);
 
-		// Mã NV, Họ tên, Giới tính, SĐT, Chức vụ, Ca làm - căn trái
-		tblNhanVien.getColumnModel().getColumn(1).setCellRenderer(leftRenderer); // Mã NV
+		// Mã NV, Giới tính, SĐT, Chức vụ, Ca làm - căn giữa
+		tblNhanVien.getColumnModel().getColumn(1).setCellRenderer(centerRenderer); // Mã NV
+		tblNhanVien.getColumnModel().getColumn(3).setCellRenderer(centerRenderer); // Giới tính
+		tblNhanVien.getColumnModel().getColumn(5).setCellRenderer(centerRenderer); // SĐT
+		tblNhanVien.getColumnModel().getColumn(6).setCellRenderer(centerRenderer); // Chức vụ
+		tblNhanVien.getColumnModel().getColumn(7).setCellRenderer(centerRenderer); // Ca làm
+
+		// Họ tên - căn trái
 		tblNhanVien.getColumnModel().getColumn(2).setCellRenderer(leftRenderer); // Họ tên
-		tblNhanVien.getColumnModel().getColumn(3).setCellRenderer(leftRenderer); // Giới tính
-		tblNhanVien.getColumnModel().getColumn(5).setCellRenderer(leftRenderer); // SĐT
-		tblNhanVien.getColumnModel().getColumn(6).setCellRenderer(leftRenderer); // Chức vụ
-		tblNhanVien.getColumnModel().getColumn(7).setCellRenderer(leftRenderer); // Ca làm
 
 		// Ngày sinh - căn giữa
 		tblNhanVien.getColumnModel().getColumn(4).setCellRenderer(centerRenderer); // Ngày sinh
 
-		// Render màu trạng thái - căn trái
+		// Render màu trạng thái - căn giữa
 		tblNhanVien.getColumnModel().getColumn(8).setCellRenderer(new DefaultTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 					boolean hasFocus, int row, int column) {
 				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
 						column);
-				lbl.setHorizontalAlignment(SwingConstants.LEFT);
+				lbl.setHorizontalAlignment(SwingConstants.CENTER); // Căn giữa
 				if ("Đang làm".equals(value)) {
 					lbl.setForeground(new Color(0x2E7D32)); // Xanh lá đậm
 					lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -801,6 +805,20 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 			frame.setLocationRelativeTo(null);
 			frame.setContentPane(new NhanVien_QL_GUI());
 			frame.setVisible(true);
+		});
+	}
+
+	/**
+	 * Auto focus vào ô tìm kiếm khi panel được hiển thị
+	 */
+	private void addFocusOnShow() {
+		addHierarchyListener(e -> {
+			if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+				SwingUtilities.invokeLater(() -> {
+					txtTimKiem.requestFocusInWindow();
+					txtTimKiem.selectAll();
+				});
+			}
 		});
 	}
 }
