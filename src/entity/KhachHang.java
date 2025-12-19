@@ -19,12 +19,13 @@ public class KhachHang {
     }
 
     public KhachHang(String maKhachHang, String tenKhachHang, boolean gioiTinh,
-                     String soDienThoai, LocalDate ngaySinh) {
+                     String soDienThoai, LocalDate ngaySinh, boolean hoatDong) {
         setMaKhachHang(maKhachHang);
         setTenKhachHang(tenKhachHang);
         setGioiTinh(gioiTinh);
         setSoDienThoai(soDienThoai);
         setNgaySinh(ngaySinh);
+        setHoatDong(hoatDong);
     }
 
     // ===== GETTERS / SETTERS =====
@@ -103,6 +104,9 @@ public class KhachHang {
     public void setDanhSachHoaDon(List<HoaDon> danhSachHoaDon) {
         this.danhSachHoaDon = danhSachHoaDon;
     }
+    public String getTrangThaiText() {
+		return hoatDong ? "Hoạt động" : "Ngừng";
+	}
 
     // ===== OVERRIDES =====
     @Override

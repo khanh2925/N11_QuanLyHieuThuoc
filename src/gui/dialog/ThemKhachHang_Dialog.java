@@ -146,8 +146,9 @@ public class ThemKhachHang_Dialog extends JDialog implements ActionListener {
             String sdt = txtSoDienThoai.getText();
             Date selectedDate = ngaySinhDateChooser.getDate();
             LocalDate ngaySinh = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            boolean hoatDong = true;
                       
-            this.khachHangMoi = new KhachHang(maKH, ten, gioiTinh, sdt, ngaySinh);           
+            this.khachHangMoi = new KhachHang(maKH, ten, gioiTinh, sdt, ngaySinh, hoatDong);           
             dispose();
             
         } catch (IllegalArgumentException | DateTimeParseException ex) {
