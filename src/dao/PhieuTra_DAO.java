@@ -433,7 +433,7 @@ public class PhieuTra_DAO {
 			psPT.setString(3, pt.getKhachHang().getMaKhachHang());
 			psPT.setDate(4, java.sql.Date.valueOf(pt.getNgayLap()));
 			psPT.setDouble(5, pt.getTongTienHoan());
-			psPT.setBoolean(6, pt.isDaDuyet());
+			psPT.setBoolean(6, pt.isTrangThai());
 			psPT.executeUpdate();
 
 			// Insert chi tiết
