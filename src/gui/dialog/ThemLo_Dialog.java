@@ -135,7 +135,7 @@ public class ThemLo_Dialog extends JDialog {
         mainPanel.add(lblSoLuong, gbc);
 
         gbc.gridx = 1; gbc.gridy = 3;
-        spinnerSoLuong = new JSpinner(new SpinnerNumberModel(1, 1, 10000, 1));
+        spinnerSoLuong = new JSpinner(new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
         spinnerSoLuong.setFont(fontField);
         mainPanel.add(spinnerSoLuong, gbc);
 
@@ -208,9 +208,34 @@ public class ThemLo_Dialog extends JDialog {
             return;
         }
         LocalDate hsd = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        if (hsd.isBefore(LocalDate.now().plusDays(30))) {
-             JOptionPane.showMessageDialog(this, "Hạn sử dụng phải lớn hơn 30 ngày kể từ hôm nay.", "Ngày không hợp lệ", JOptionPane.WARNING_MESSAGE);
-             return;
+        
+        // Kiểm tra HSD đã hết hạn
+        if (hsd.isBefore(LocalDate.now())) {
+            JOptionPane.showMessageDialog(this, 
+                String.format("Hạn sử dụng đã hết hạn!\nSản phẩm: %s\nHSD: %s", 
+                    sanPham.getTenSanPham(), hsd), 
+                "HSD không hợp lệ", 
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Cảnh báo nếu HSD <= 3 tháng
+        if (hsd.isBefore(LocalDate.now().plusMonths(3))) {
+            int option = JOptionPane.showConfirmDialog(this,
+                String.format("⚠️ CẢNH BÁO: Sản phẩm sắp hết hạn!\n\n" +
+                    "Sản phẩm: %s\n" +
+                    "Hạn sử dụng: %s\n" +
+                    "Còn lại: %d ngày\n\n" +
+                    "Bạn có chắc chắn muốn nhập sản phẩm này không?",
+                    sanPham.getTenSanPham(), hsd, 
+                    java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), hsd)),
+                "Cảnh báo HSD sắp hết hạn",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+            
+            if (option != JOptionPane.YES_OPTION) {
+                return; // Người dùng chọn Không → hủy việc thêm lô
+            }
         }
         
         QuyCachDongGoi qcDaChon = (QuyCachDongGoi) cmbQuyCach.getSelectedItem();
@@ -222,8 +247,27 @@ public class ThemLo_Dialog extends JDialog {
         try {
             int soLuongQuyCach = (Integer) spinnerSoLuong.getValue();
             
+            // Kiểm tra số lượng hợp lệ
+            if (soLuongQuyCach <= 0) {
+                JOptionPane.showMessageDialog(this, 
+                    "Số lượng nhập phải lớn hơn 0!", 
+                    "Số lượng không hợp lệ", 
+                    JOptionPane.WARNING_MESSAGE);
+                spinnerSoLuong.requestFocus();
+                return;
+            }
+            
             // QUY ĐỔI VỀ GỐC
             this.soLuongNhapGoc = soLuongQuyCach * qcDaChon.getHeSoQuyDoi();
+            
+            // Kiểm tra sau khi quy đổi
+            if (this.soLuongNhapGoc <= 0) {
+                JOptionPane.showMessageDialog(this, 
+                    "Lỗi quy đổi: Số lượng sau khi quy đổi không hợp lệ!", 
+                    "Lỗi quy đổi", 
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             
             String maLo = txtMaLo.getText();
             
