@@ -193,7 +193,7 @@ public class Main_GUI extends JFrame {
 
 			addMenuButton(menuScrollContent, "Quản lý nhà cung cấp", "nhacungcap",
 					"/resources/images/icon_nha_cung_cap.png");
-			addMenuButton(menuScrollContent, "Quẩn lý khách hàng", "khachhang",
+			addMenuButton(menuScrollContent, "Quản lý khách hàng", "khachhang",
 					"/resources/images/icon_khach_hang.png");
 			addMenuButton(menuScrollContent, "Quản lý khuyến mãi", "khuyenmai",
 					"/resources/images/icon_khuyen_mai.png");
