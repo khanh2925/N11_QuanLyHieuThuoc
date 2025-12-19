@@ -70,6 +70,18 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		loadDataKhuyenMai();
 		lamMoiForm(); // sinh mã mới ngay từ đầu
 		capNhatTrangThaiNut(); // Cập nhật hiển thị nút theo chọn dòng
+
+		// Focus vào txtTimKiem khi panel được hiển thị
+		addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentShown(ComponentEvent e) {
+				SwingUtilities.invokeLater(() -> {
+					txtTimKiem.setText("");
+					PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm KM theo mã, tên chương trình (F1 / Ctrl+F)");
+					txtTimKiem.requestFocusInWindow();
+				});
+			}
+		});
 	}
 
 	// ====================== BUILD UI ======================
@@ -102,13 +114,8 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		txtTimKiem.addActionListener(e -> xuLyTimKiem());
 		pnHeader.add(txtTimKiem);
 
-		btnTimKiem = new PillButton(
-				"<html>" +
-						"<center>" +
-						"TÌM KIẾM<br>" +
-						"<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
-						"</center>" +
-						"</html>");
+		btnTimKiem = new PillButton("<html>" + "<center>" + "TÌM KIẾM<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(Enter)</span>" + "</center>" + "</html>");
 		btnTimKiem.setBounds(540, 22, 130, 50);
 		btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		btnTimKiem.setToolTipText(
@@ -216,8 +223,8 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 
 		p.add(createLabel("Hình thức:", xCol2, yStart));
 		// text hiển thị khớp với enum.toString()
-		cboHinhThuc = new JComboBox<>(new String[] { HinhThucKM.GIAM_GIA_PHAN_TRAM.getMoTa(),
-				HinhThucKM.GIAM_GIA_TIEN.getMoTa() });
+		cboHinhThuc = new JComboBox<>(
+				new String[] { HinhThucKM.GIAM_GIA_PHAN_TRAM.getMoTa(), HinhThucKM.GIAM_GIA_TIEN.getMoTa() });
 		cboHinhThuc.setBounds(xCol2 + wLbl, yStart, wTxt, hText);
 		cboHinhThuc.setFont(FONT_TEXT);
 		p.add(cboHinhThuc);
@@ -262,13 +269,8 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		int btnW = 140;
 		int btnH = 45;
 
-		btnThem = new PillButton(
-				"<html>" +
-						"<center>" +
-						"TẠO KM<br>" +
-						"<span style='font-size:10px; color:#888888;'>(Ctrl+N)</span>" +
-						"</center>" +
-						"</html>");
+		btnThem = new PillButton("<html>" + "<center>" + "TẠO KM<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(Ctrl+N)</span>" + "</center>" + "</html>");
 		btnThem.setFont(FONT_BOLD);
 		btnThem.setPreferredSize(new Dimension(btnW, btnH));
 		btnThem.setToolTipText("<html><b>Phím tắt:</b> Ctrl+N<br>Tạo khuyến mãi mới</html>");
@@ -276,13 +278,8 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		gbc.gridy = 0;
 		p.add(btnThem, gbc);
 
-		btnSua = new PillButton(
-				"<html>" +
-						"<center>" +
-						"CẬP NHẬT<br>" +
-						"<span style='font-size:10px; color:#888888;'>(Ctrl+U)</span>" +
-						"</center>" +
-						"</html>");
+		btnSua = new PillButton("<html>" + "<center>" + "CẬP NHẬT<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(Ctrl+U)</span>" + "</center>" + "</html>");
 		btnSua.setFont(FONT_BOLD);
 		btnSua.setPreferredSize(new Dimension(btnW, btnH));
 		btnSua.setToolTipText("<html><b>Phím tắt:</b> Ctrl+U<br>Cập nhật khuyến mãi đang chọn</html>");
@@ -290,13 +287,8 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		gbc.gridy = 1;
 		p.add(btnSua, gbc);
 
-		btnLamMoi = new PillButton(
-				"<html>" +
-						"<center>" +
-						"LÀM MỚI<br>" +
-						"<span style='font-size:10px; color:#888888;'>(F5)</span>" +
-						"</center>" +
-						"</html>");
+		btnLamMoi = new PillButton("<html>" + "<center>" + "LÀM MỚI<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(F5)</span>" + "</center>" + "</html>");
 		btnLamMoi.setFont(FONT_BOLD);
 		btnLamMoi.setPreferredSize(new Dimension(btnW, btnH));
 		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới form nhập liệu</html>");
@@ -386,25 +378,15 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		JPanel pnTool = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		pnTool.setBackground(Color.WHITE);
 
-		btnChonSP = new PillButton(
-				"<html>" +
-						"<center>" +
-						"CHỌN SP<br>" +
-						"<span style='font-size:10px; color:#888888;'>(F7)</span>" +
-						"</center>" +
-						"</html>");
+		btnChonSP = new PillButton("<html>" + "<center>" + "CHỌN SP<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(F7)</span>" + "</center>" + "</html>");
 		btnChonSP.setFont(FONT_BOLD);
 		btnChonSP.setPreferredSize(new Dimension(140, 45));
 		btnChonSP.setToolTipText("<html><b>Phím tắt:</b> F7<br>Mở danh sách chọn sản phẩm áp dụng</html>");
 		btnChonSP.addActionListener(this);
 
-		btnXoaSP = new PillButton(
-				"<html>" +
-						"<center>" +
-						"XÓA SP<br>" +
-						"<span style='font-size:10px; color:#888888;'>(F8)</span>" +
-						"</center>" +
-						"</html>");
+		btnXoaSP = new PillButton("<html>" + "<center>" + "XÓA SP<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(F8)</span>" + "</center>" + "</html>");
 		btnXoaSP.setFont(FONT_BOLD);
 		btnXoaSP.setPreferredSize(new Dimension(140, 45));
 		btnXoaSP.setToolTipText("<html><b>Phím tắt:</b> F8<br>Xóa sản phẩm đã chọn khỏi khuyến mãi</html>");
@@ -594,16 +576,15 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 				LocalDate today = LocalDate.now();
 				// Kiểm tra còn hạn không
 				if (km.getNgayKetThuc().isBefore(today)) {
-					JOptionPane.showMessageDialog(this,
-							"Không thể kích hoạt lại!\nKhuyến mãi đã hết hạn (" + dfDate.format(km.getNgayKetThuc())
-									+ ")",
+					JOptionPane.showMessageDialog(
+							this, "Không thể kích hoạt lại!\nKhuyến mãi đã hết hạn ("
+									+ dfDate.format(km.getNgayKetThuc()) + ")",
 							"Không hợp lệ", JOptionPane.WARNING_MESSAGE);
 					return;
 				}
 				// Kiểm tra còn số lượng
 				if (km.getSoLuongKhuyenMai() <= 0) {
-					JOptionPane.showMessageDialog(this,
-							"Không thể kích hoạt lại!\nSố lượng khuyến mãi đã hết (= 0)",
+					JOptionPane.showMessageDialog(this, "Không thể kích hoạt lại!\nSố lượng khuyến mãi đã hết (= 0)",
 							"Không hợp lệ", JOptionPane.WARNING_MESSAGE);
 					return;
 				}
@@ -796,8 +777,6 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 			return;
 
 		txtMaKM.setText(km.getMaKM());
-
-		// Set text và màu đen (không phải placeholder)
 		txtTenKM.setForeground(Color.BLACK);
 		txtTenKM.setText(km.getTenKM());
 
@@ -807,7 +786,7 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 
 		txtGiaTri.setForeground(Color.BLACK);
 		txtGiaTri.setText(removeGrouping(dfNumber.format(km.getGiaTri())));
-
+		
 		txtDieuKien.setForeground(Color.BLACK);
 		txtDieuKien.setText(removeGrouping(dfNumber.format(km.getDieuKienApDungHoaDon())));
 
@@ -986,19 +965,18 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		// Reset text fields - set empty text, placeholder will show when focus is lost
 		txtTenKM.setText("");
 		txtTenKM.setForeground(Color.GRAY);
-		txtTenKM.setText("Nhập tên khuyến mãi");
-
+		PlaceholderSupport.addPlaceholder(txtTenKM, "Nhập tên khuyến mãi");
 		txtGiaTri.setText("");
 		txtGiaTri.setForeground(Color.GRAY);
-		txtGiaTri.setText("Nhập giá trị");
+		PlaceholderSupport.addPlaceholder(txtGiaTri, "Nhập giá trị");
 
 		txtDieuKien.setText("");
 		txtDieuKien.setForeground(Color.GRAY);
-		txtDieuKien.setText("Nhập điều kiện");
+		PlaceholderSupport.addPlaceholder(txtDieuKien, "Nhập điều kiện");
 
 		txtSoLuong.setText("");
 		txtSoLuong.setForeground(Color.GRAY);
-		txtSoLuong.setText("Nhập số lượng");
+		PlaceholderSupport.addPlaceholder(txtSoLuong, "Nhập số lượng");
 
 		// Set ngày mặc định là hôm nay
 		dateNgayBD.setDate(new Date());
@@ -1009,17 +987,17 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		cboTrangThai.setSelectedIndex(0);
 		tblKhuyenMai.clearSelection();
 		modelSanPhamApDung.setRowCount(0);
-		txtTimKiem.requestFocus();
+		loadDataKhuyenMai();
 		capNhatTrangThaiNut(); // Cập nhật trạng thái nút
+		txtTimKiem.requestFocus();
 	}
 
 	/**
-	 * Cập nhật trạng thái hiển thị các nút dựa trên việc có chọn dòng hay không
-	 * - Không chọn dòng: Hiện nút Thêm, ẩn Cập nhật
-	 * - Có chọn dòng: Ẩn nút Thêm, hiện Cập nhật
-	 * - btnChonSP: chỉ enable khi chọn KM loại "theo sản phẩm"
-	 * - btnXoaSP: chỉ enable khi chọn KM loại "theo sản phẩm" VÀ có dòng được chọn
-	 * trong bảng sản phẩm
+	 * Cập nhật trạng thái hiển thị các nút dựa trên việc có chọn dòng hay không -
+	 * Không chọn dòng: Hiện nút Thêm, ẩn Cập nhật - Có chọn dòng: Ẩn nút Thêm, hiện
+	 * Cập nhật - btnChonSP: chỉ enable khi chọn KM loại "theo sản phẩm" - btnXoaSP:
+	 * chỉ enable khi chọn KM loại "theo sản phẩm" VÀ có dòng được chọn trong bảng
+	 * sản phẩm
 	 */
 	private void capNhatTrangThaiNut() {
 		int row = tblKhuyenMai.getSelectedRow();
@@ -1054,8 +1032,7 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		if (row < 0 || row >= dsKhuyenMai.size())
 			return null;
 		// Tìm theo mã trong dsKhuyenMai (do bảng có thể đang filter)
-		// Cột 1 là Mã KM (cột 0 là STT)
-		String maKM = (String) tblKhuyenMai.getValueAt(row, 1);
+		String maKM = (String) tblKhuyenMai.getValueAt(row, 1); // Cột 1 là Mã KM (cột 0 là STT)
 		for (KhuyenMai km : dsKhuyenMai) {
 			if (km.getMaKM().equals(maKM))
 				return km;
@@ -1065,8 +1042,7 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 
 	private void chonDongTheoMa(String maKM) {
 		for (int i = 0; i < modelKhuyenMai.getRowCount(); i++) {
-			// Cột 1 là Mã KM (cột 0 là STT)
-			if (maKM.equals(modelKhuyenMai.getValueAt(i, 1))) {
+			if (maKM.equals(modelKhuyenMai.getValueAt(i, 1))) { // Cột 1 là Mã KM (cột 0 là STT)
 				tblKhuyenMai.setRowSelectionInterval(i, i);
 				doToForm(i);
 				break;
