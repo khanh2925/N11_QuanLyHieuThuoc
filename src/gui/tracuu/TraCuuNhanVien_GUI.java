@@ -71,7 +71,6 @@ public class TraCuuNhanVien_GUI extends JPanel {
 	private PillButton btnTim;
 	private PillButton btnLamMoi;
 	private PillButton btnXuatExcel;
-	private PillButton btnXuatChiTiet;
 
 	// CENTER
 	private JPanel pnCenter;
@@ -177,7 +176,7 @@ public class TraCuuNhanVien_GUI extends JPanel {
 		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
 		pnHeader.add(btnLamMoi);
 
-		// Nút Xuất Excel
+		// Nút Xuất Excel (Gộp cả 2 chức năng: Danh sách + Chi tiết)
 		btnXuatExcel = new PillButton(
 				"<html>" +
 						"<center>" +
@@ -186,23 +185,9 @@ public class TraCuuNhanVien_GUI extends JPanel {
 						"</center>" +
 						"</html>");
 		btnXuatExcel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnXuatExcel.setBounds(1220, 22, 180, 50);
-		btnXuatExcel.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất danh sách nhân viên ra file Excel</html>");
+		btnXuatExcel.setBounds(1420, 22, 180, 50);
+		btnXuatExcel.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất danh sách và lịch sử chi tiết ra Excel</html>");
 		pnHeader.add(btnXuatExcel);
-		
-		// Nút Xuất Chi Tiết
-		btnXuatChiTiet = new PillButton(
-				"<html>" +
-						"<center>" +
-						"XUẤT CHI TIẾT<br>" +
-						"<span style='font-size:10px; color:#888888;'>(Ctrl+Shift+E)</span>" +
-						"</center>" +
-						"</html>"
-				);
-		btnXuatChiTiet.setFont(new Font("Segoe UI", Font.BOLD, 16));
-		btnXuatChiTiet.setBounds(1415, 22, 180, 50);
-		btnXuatChiTiet.setToolTipText("<html><b>Phím tắt:</b> Ctrl+Shift+E<br>Xuất lịch sử bán/trả/hủy của nhân viên được chọn</html>");
-		pnHeader.add(btnXuatChiTiet);
 	}
 
 	private void addFilterLabel(String text, int x, int y, int w, int h) {
@@ -394,8 +379,7 @@ public class TraCuuNhanVien_GUI extends JPanel {
 		// cbTrangThai.addActionListener(e -> locTheoBoLoc());
 
 		btnLamMoi.addActionListener(e -> xuLyLamMoi());
-		btnXuatExcel.addActionListener(e -> xuatExcel());
-		btnXuatChiTiet.addActionListener(e -> xuatExcelChiTiet());
+		btnXuatExcel.addActionListener(e -> xuatExcelDayDu());
 		// Khi chọn 1 nhân viên → load lịch sử
 		tblNhanVien.getSelectionModel().addListSelectionListener(e -> {
 			if (!e.getValueIsAdjusting()) {
@@ -443,21 +427,12 @@ public class TraCuuNhanVien_GUI extends JPanel {
 			}
 		});
 
-		// Ctrl+E: Xuất Excel danh sách
+		// Ctrl+E: Xuất Excel đầy đủ (Danh sách + Chi tiết)
 		inputMap.put(KeyStroke.getKeyStroke("control E"), "xuatExcel");
 		actionMap.put("xuatExcel", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				xuatExcel();
-			}
-		});
-		
-		// Ctrl+Shift+E: Xuất Excel chi tiết lịch sử
-		inputMap.put(KeyStroke.getKeyStroke("control shift E"), "xuatExcelChiTiet");
-		actionMap.put("xuatExcelChiTiet", new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				xuatExcelChiTiet();
+				xuatExcelDayDu();
 			}
 		});
 	}
@@ -654,7 +629,7 @@ public class TraCuuNhanVien_GUI extends JPanel {
 			modelTra.addRow(new Object[] { stt++, pt.getMaPhieuTra(),
 					pt.getNgayLap() != null ? pt.getNgayLap().format(dtf) : "",
 					pt.getKhachHang() != null ? pt.getKhachHang().getTenKhachHang() : "",
-					df.format(pt.getTongTienHoan()), pt.isDaDuyet() ? "Đã duyệt" : "Chờ duyệt" });
+					df.format(pt.getTongTienHoan()), pt.isTrangThai() ? "Đã duyệt" : "Chờ duyệt" });
 		}
 	}
 
@@ -678,6 +653,29 @@ public class TraCuuNhanVien_GUI extends JPanel {
 		}
 	}
 
+	/**
+	 * Xuất Excel đầy đủ: Danh sách nhân viên + Lịch sử chi tiết (nếu có chọn)
+	 */
+	private void xuatExcelDayDu() {
+		// Thực hiện xuất danh sách trước
+		xuatExcel();
+		
+		int selectedRow = tblNhanVien.getSelectedRow();
+		if (selectedRow != -1) {
+			// Kiểm tra có dữ liệu trong các tab không
+			if (modelBan.getRowCount() > 0 || modelTra.getRowCount() > 0 || modelHuy.getRowCount() > 0) {
+				int choice = JOptionPane.showConfirmDialog(this,
+						"Bạn có muốn xuất thêm lịch sử chi tiết của nhân viên đang chọn không?",
+						"Xuất lịch sử chi tiết",
+						JOptionPane.YES_NO_OPTION,
+						JOptionPane.QUESTION_MESSAGE);
+				if (choice == JOptionPane.YES_OPTION) {
+					xuatExcelChiTiet();
+				}
+			}
+		}
+	}
+	
 	/**
 	 * Xuất dữ liệu ra file Excel (Xuất theo dòng được chọn hoặc toàn bộ nếu không chọn)
 	 */

@@ -32,7 +32,7 @@ import entity.Session;
  * @version 2.0 (Optimized UX: Auto-fill Range, Infinite Checkbox, Strict Validation)
  */
 @SuppressWarnings("serial")
-public class BangGia_GUI extends JPanel implements ActionListener {
+public class BangGia_GUI extends JPanel implements ActionListener,MouseListener {
 
     // --- COMPONENTS UI ---
     private JPanel pnHeader, pnCenter;
@@ -83,6 +83,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
     private List<ChiTietBangGia> dsChiTietTam; 
     private double nextStartPrice = 0; // ✅ Biến theo dõi giá bắt đầu tiếp theo
     private int indexDangSua = -1; // ✅ Chỉ số dòng đang được sửa (-1 = không sửa)
+    private boolean dangLoadDuLieu = false; // ✅ Flag để phân biệt load dữ liệu vs nhập liệu mới
 
     public BangGia_GUI() {
         setPreferredSize(new Dimension(1537, 850));
@@ -281,38 +282,8 @@ public class BangGia_GUI extends JPanel implements ActionListener {
                 cboTrangThai.setSelectedIndex(0); // Đặt về Hoạt động
             }
         });
-        
-        // ✅ Thêm DocumentListener để enable btnThem khi có nhập liệu
-        thietLapDocumentListenerChoForm();
     }
     
-    /** ✅ Thiết lập listener để enable btnThem khi có nhập liệu trong form */
-    private void thietLapDocumentListenerChoForm() {
-        javax.swing.event.DocumentListener docListener = new javax.swing.event.DocumentListener() {
-            @Override
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { kiemTraVaEnableBtnThem(); }
-            @Override
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { kiemTraVaEnableBtnThem(); }
-            @Override
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { kiemTraVaEnableBtnThem(); }
-        };
-        
-        txtTenBG.getDocument().addDocumentListener(docListener);
-    }
-    
-    /** ✅ Kiểm tra và enable btnThem nếu có nhập liệu */
-    private void kiemTraVaEnableBtnThem() {
-        String tenBG = txtTenBG.getText().trim();
-        boolean coNhapLieu = !tenBG.isEmpty() && !tenBG.equals("Nhập tên bảng giá (F2)");
-        
-        if (coNhapLieu) {
-            btnThem.setEnabled(true);
-            btnSua.setEnabled(false); // Loại trừ btnSua khi đang nhập mới
-        } else {
-            btnThem.setEnabled(false);
-        }
-    }
-
     // --- PANEL NÚT BẤM (MASTER) ---
     private void taoPanelNutBam(JPanel p) {
         p.setPreferredSize(new Dimension(200, 0));
@@ -338,7 +309,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         btnThem.setPreferredSize(new Dimension(btnW, btnH));
         btnThem.addActionListener(this);
         btnThem.setToolTipText("<html><b>Phím tắt:</b> Ctrl+N<br>Tạo bảng giá mới (sẽ hỏi xác nhận nếu đang nhập dở)</html>");
-        btnThem.setEnabled(false); // ✅ Ban đầu không cho chọn
+        btnThem.setEnabled(true); // ✅ Luôn mở, chỉ khóa khi chọn dòng
         gbc.gridy = 0; p.add(btnThem, gbc);
 
         btnSua = new PillButton(
@@ -406,16 +377,8 @@ public class BangGia_GUI extends JPanel implements ActionListener {
             }
         });
 
-        tblBangGia.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int row = tblBangGia.getSelectedRow();
-                if(row >= 0) {
-                    String maBG = tblBangGia.getValueAt(row, 1).toString();
-                    loadBangGiaLenForm(maBG);
-                }
-            }
-        });
+        // ✅ Sử dụng MouseListener interface
+        tblBangGia.addMouseListener(this);
         
         // ✅ Thêm ListSelectionListener để enable btnSua khi chọn dòng
         tblBangGia.getSelectionModel().addListSelectionListener(e -> {
@@ -423,9 +386,10 @@ public class BangGia_GUI extends JPanel implements ActionListener {
                 int row = tblBangGia.getSelectedRow();
                 if (row >= 0) {
                     btnSua.setEnabled(true);
-                    btnThem.setEnabled(false); // Loại trừ btnThem khi đang chọn để sửa
+                    btnThem.setEnabled(false); // Khóa btnThem khi đang chọn dòng
                 } else {
                     btnSua.setEnabled(false);
+                    btnThem.setEnabled(true); // Mở lại btnThem khi bỏ chọn
                 }
             }
         });
@@ -611,16 +575,8 @@ public class BangGia_GUI extends JPanel implements ActionListener {
             }
         });
         
-        // ✅BỔ SUNG SỰ KIỆN CLICK VÀO HÀNG
-        tblChiTiet.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int row = tblChiTiet.getSelectedRow();
-                if (row >= 0) {
-                    xuLyClickDongChiTiet(row);
-                }
-            }
-        });
+        // ✅ Sử dụng MouseListener interface
+        tblChiTiet.addMouseListener(this);
     }
     
     // --- TAB 3: MÔ PHỎNG ---
@@ -756,7 +712,7 @@ public class BangGia_GUI extends JPanel implements ActionListener {
         chkHoatDong.setEnabled(false);
         
         // ✅ Reset trạng thái nút
-        btnThem.setEnabled(false);
+        btnThem.setEnabled(true); // Luôn mở khi làm mới
         btnSua.setEnabled(false);
         tblBangGia.clearSelection(); // Bỏ chọn dòng trong bảng
         
@@ -1166,6 +1122,9 @@ public class BangGia_GUI extends JPanel implements ActionListener {
     private void loadBangGiaLenForm(String maBG) {
         BangGia bg = bangGiaDAO.timBangGiaTheoMa(maBG);
         if (bg != null) {
+            // ✅ Set flag để ngăn DocumentListener làm sai logic nút
+            dangLoadDuLieu = true;
+            
             txtMaBG.setText(bg.getMaBangGia());
             txtTenBG.setText(bg.getTenBangGia());
             txtTenBG.setForeground(Color.BLACK); // Đảm bảo chữ màu đen, không phải placeholder
@@ -1196,6 +1155,11 @@ public class BangGia_GUI extends JPanel implements ActionListener {
 
             renderBangChiTiet(dsChiTietTam);
             renderBangMoPhong(dsChiTietTam);
+            
+            // ✅ Tắt flag và đảm bảo btnSua enabled (vì đang ở chế độ sửa)
+            dangLoadDuLieu = false;
+            btnSua.setEnabled(true);
+            // btnThem sẽ tự động bị disable bởi ListSelectionListener khi dòng được chọn
         }
     }
 
@@ -1619,4 +1583,45 @@ public class BangGia_GUI extends JPanel implements ActionListener {
             frame.setContentPane(new BangGia_GUI());
             frame.setVisible(true);
     }
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		Object source = e.getSource();
+		
+		// Xử lý click vào bảng Bảng Giá
+		if (source.equals(tblBangGia)) {
+			int row = tblBangGia.getSelectedRow();
+			if(row >= 0) {
+				String maBG = tblBangGia.getValueAt(row, 1).toString();
+				loadBangGiaLenForm(maBG);
+			}
+		}
+		// Xử lý click vào bảng Chi Tiết
+		else if (source.equals(tblChiTiet)) {
+			int row = tblChiTiet.getSelectedRow();
+			if (row >= 0) {
+				xuLyClickDongChiTiet(row);
+			}
+		}
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		// Không cần xử lý
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// Không cần xử lý
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// Không cần xử lý
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// Không cần xử lý
+	}
 }
