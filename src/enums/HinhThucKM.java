@@ -6,10 +6,9 @@ package enums;
  */
 public enum HinhThucKM {
     GIAM_GIA_PHAN_TRAM("Giảm giá %"),
-    GIAM_GIA_TIEN("Giảm giá tiền mặt"),
-    TANG_THEM("Tặng thêm sản phẩm");
+    GIAM_GIA_TIEN("Giảm giá tiền mặt");
 
-    private final String moTa;
+	private final String moTa;
 
     HinhThucKM(String moTa) {
         this.moTa = moTa;

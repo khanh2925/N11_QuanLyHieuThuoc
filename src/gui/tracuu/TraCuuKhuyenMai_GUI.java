@@ -109,7 +109,7 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
         lblHinhThuc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(lblHinhThuc);
 
-        cbHinhThuc = new JComboBox<>(new String[]{"Tất cả", "Giảm tiền", "Giảm %", "Tặng quà"});
+        cbHinhThuc = new JComboBox<>(new String[]{"Tất cả", "Giảm tiền", "Giảm %"});
         cbHinhThuc.setBounds(860, 28, 120, 38);
         cbHinhThuc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         pnHeader.add(cbHinhThuc);
@@ -375,11 +375,9 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
             String hinhThucHienThi = "";
             if (km.getHinhThuc() == HinhThucKM.GIAM_GIA_PHAN_TRAM) hinhThucHienThi = "Giảm %";
             else if (km.getHinhThuc() == HinhThucKM.GIAM_GIA_TIEN) hinhThucHienThi = "Giảm tiền";
-            else if (km.getHinhThuc() == HinhThucKM.TANG_THEM) hinhThucHienThi = "Tặng quà";
 
             if (locHinhThuc.equals("Giảm tiền") && km.getHinhThuc() != HinhThucKM.GIAM_GIA_TIEN) continue;
             if (locHinhThuc.equals("Giảm %") && km.getHinhThuc() != HinhThucKM.GIAM_GIA_PHAN_TRAM) continue;
-            if (locHinhThuc.equals("Tặng quà") && km.getHinhThuc() != HinhThucKM.TANG_THEM) continue;
 
             LocalDate now = LocalDate.now();
             String trangThaiHienThi;

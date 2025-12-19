@@ -234,7 +234,7 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		p.add(createLabel("Hình thức:", xCol2, yStart));
 		// text hiển thị khớp với enum.toString()
 		cboHinhThuc = new JComboBox<>(new String[] { HinhThucKM.GIAM_GIA_PHAN_TRAM.getMoTa(),
-				HinhThucKM.GIAM_GIA_TIEN.getMoTa(), HinhThucKM.TANG_THEM.getMoTa() });
+				HinhThucKM.GIAM_GIA_TIEN.getMoTa() });
 		cboHinhThuc.setBounds(xCol2 + wLbl, yStart, wTxt, hText);
 		cboHinhThuc.setFont(FONT_TEXT);
 		p.add(cboHinhThuc);
@@ -915,12 +915,6 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 
 		if (hinhThuc == HinhThucKM.GIAM_GIA_PHAN_TRAM && giaTri > 100) {
 			showErrorAndFocus(txtGiaTri, "Giảm giá phần trăm không được vượt quá 100%!", JOptionPane.WARNING_MESSAGE);
-			return null;
-		}
-
-		if (kmHoaDon && hinhThuc == HinhThucKM.TANG_THEM) {
-			showErrorAndFocus((JTextField) cboHinhThuc.getEditor().getEditorComponent(),
-					"Khuyến mãi hóa đơn không thể có hình thức 'TẶNG THÊM'!", JOptionPane.WARNING_MESSAGE);
 			return null;
 		}
 
