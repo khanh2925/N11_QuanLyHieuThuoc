@@ -77,52 +77,7 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
         thietLapPhimTat();
     }
 
-    /**
-     * Thiết lập phím tắt cho các component
-     */
-    private void thietLapPhimTat() {
-        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        ActionMap actionMap = getActionMap();
-        
-        // F1, Ctrl+F: Focus vào ô tìm kiếm
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), "focusTimKiem");
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "focusTimKiem");
-        actionMap.put("focusTimKiem", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                txtTimKiem.requestFocus();
-                txtTimKiem.selectAll();
-            }
-        });
-        
-        // F5: Làm mới
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), "lamMoi");
-        actionMap.put("lamMoi", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                lamMoiForm();
-                loadDataLenBang();
-            }
-        });
-        
-        // Ctrl+N: Thêm
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK), "themKH");
-        actionMap.put("themKH", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ThemKH();
-            }
-        });
-        
-        // Ctrl+U: Cập nhật
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK), "suaKH");
-        actionMap.put("suaKH", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                SuaKH();
-            }
-        });
-    }
+    
 
     // =====================================================================
     //                              PHẦN HEADER
@@ -195,12 +150,13 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
         p.add(createLabel("Mã KH:", xStart, yStart));
         txtMaKH = createTextField(xStart + wLbl, yStart, wTxt);
         txtMaKH.setEditable(false);
-        p.add(txtMaKH);
+        PlaceholderSupport.addPlaceholder(txtMaKH, kh_dao.phatSinhMaKhachHangTiepTheo());
+        p.add(txtMaKH);        
 
         p.add(createLabel("Tên KH:", xStart, yStart + gap + hText));
         txtTenKH = createTextField(xStart + wLbl, yStart + gap + hText, wTxt);
         p.add(txtTenKH);
-        // hỗ trợ người dùng nhập tên
+        PlaceholderSupport.addPlaceholder(txtTenKH, "Nhập tên khách hàng");
         txtTenKH.addKeyListener(this);
 
         p.add(createLabel("Giới tính:", xStart, yStart + (gap + hText) * 2));
@@ -213,6 +169,7 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
         p.add(createLabel("Số ĐT:", xCol2, yStart));
         txtSDT = createTextField(xCol2 + wLbl, yStart, wTxt);
         p.add(txtSDT);
+        PlaceholderSupport.addPlaceholder(txtSDT, "Nhập số điện thoại: dạng 0xxxxxxxxx");
 
         p.add(createLabel("Ngày sinh:", xCol2, yStart + gap + hText));
         txtNgaySinh = createTextField(xCol2 + wLbl, yStart + gap + hText, wTxt);
@@ -267,6 +224,7 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
         btnSua.setPreferredSize(new Dimension(btnW, btnH));
         btnSua.setToolTipText("<html><b>Phím tắt:</b> Ctrl+U<br>Cập nhật thông tin khách hàng đang chọn</html>");
         btnSua.addActionListener(this);
+        btnSua.setEnabled(false); 
         gbc.gridy = 1; p.add(btnSua, gbc);
 
         btnLamMoi = new PillButton(
@@ -403,6 +361,8 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
         String trangThai = tblKhachHang.getValueAt(row, 6).toString();
         cboTrangThai.setSelectedItem(trangThai.equals("Hoạt động") ? "Hoạt động" : "Ngưng");
         txtMaKH.setEditable(false);
+        btnSua.setEnabled(true);
+        btnThem.setEnabled(false);
     }
 
     // =====================================================================
@@ -549,6 +509,7 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
 
     private void lamMoiForm() {
         txtMaKH.setText("");
+        PlaceholderSupport.addPlaceholder(txtMaKH, kh_dao.phatSinhMaKhachHangTiepTheo());
         txtTenKH.setText("");
         txtSDT.setText("");
         txtNgaySinh.setText("");
@@ -557,6 +518,10 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
         txtTenKH.requestFocus();
         tblKhachHang.clearSelection();
         if (txtTimKiem != null) txtTimKiem.setText("");
+        
+        // Disable nút Cập nhật khi không có selection
+        btnSua.setEnabled(false);
+        btnThem.setEnabled(true);
     }
 
     // =====================================================================
@@ -648,6 +613,53 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
 	    if (caret > ketQua.length()) caret = ketQua.length();
 	    txtTenKH.setCaretPosition(caret);
 	}
+
+    /**
+     * Thiết lập phím tắt cho các component
+     */
+    private void thietLapPhimTat() {
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+        
+        // F1, Ctrl+F: Focus vào ô tìm kiếm
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), "focusTimKiem");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "focusTimKiem");
+        actionMap.put("focusTimKiem", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                txtTimKiem.requestFocus();
+                txtTimKiem.selectAll();
+            }
+        });
+        
+        // F5: Làm mới
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), "lamMoi");
+        actionMap.put("lamMoi", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                lamMoiForm();
+                loadDataLenBang();
+            }
+        });
+        
+        // Ctrl+N: Thêm
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK), "themKH");
+        actionMap.put("themKH", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ThemKH();
+            }
+        });
+        
+        // Ctrl+U: Cập nhật
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK), "suaKH");
+        actionMap.put("suaKH", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                SuaKH();
+            }
+        });
+    }
 
     // Test riêng
     public static void main(String[] args) {
