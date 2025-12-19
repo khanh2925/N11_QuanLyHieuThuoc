@@ -21,6 +21,11 @@ public class LoSanPham_DAO {
 	public LoSanPham_DAO() {
 	}
 
+	/** Xóa cache để buộc load lại dữ liệu mới từ DB */
+	public static void clearCache() {
+		cacheAllLoSanPham = null;
+	}
+
 	/** Lấy toàn bộ lô sản phẩm */
 	public ArrayList<LoSanPham> layTatCaLoSanPham() {
 		// 1. Kiểm tra cache
@@ -156,6 +161,14 @@ public class LoSanPham_DAO {
 
 	/** Tìm lô sản phẩm chính xác theo mã (OPTIMIZED - dùng JOIN) */
 	public LoSanPham timLoTheoMa(String maLo) {
+		// 1. Check Cache
+		if (cacheAllLoSanPham != null) {
+			for (LoSanPham lo : cacheAllLoSanPham) {
+				if (lo.getMaLo().equals(maLo)) {
+					return lo;
+				}
+			}
+		}
 
 		Connection con = connectDB.getConnection();
 
@@ -421,60 +434,34 @@ public class LoSanPham_DAO {
 		return "LO-000001";
 	}
 
-	/**
-	 * Xác định số ngày cảnh báo gần hết hạn theo LoaiSanPham.
-	 *
-	 * THUOC, MY_PHAM, THUC_PHAM_BO_SUNG, SAN_PHAM_KHAC → 60 ngày DUNG_CU_Y_TE,
-	 * SAN_PHAM_CHO_ME_VA_BE → 90 ngày
-	 */
-	private int soNgayCanhBaoTheoLoai(LoaiSanPham loai) {
-		if (loai == null) {
-			return 60; // mặc định
-		}
+	/** Hằng số số ngày cảnh báo gần hết hạn - áp dụng cho mọi loại sản phẩm */
+	private static final int SO_NGAY_CANH_BAO = 90;
 
-		switch (loai) {
-			case THUOC:
-			case MY_PHAM:
-			case THUC_PHAM_BO_SUNG:
-			case SAN_PHAM_KHAC:
-				return 60;
-
-			case DUNG_CU_Y_TE:
-			case SAN_PHAM_CHO_ME_VA_BE:
-				return 90;
-
-			default:
-				return 60;
-		}
-	}
-
-	public List<LoSanPham> timLoGanHetHanTheoLoai(LoaiSanPham loaiSanPham) {
+	/** Tìm các lô ĐÃ HẾT HẠN theo loại sản phẩm */
+	public List<LoSanPham> timLoDaHetHanTheoLoai(LoaiSanPham loaiSanPham) {
 		List<LoSanPham> danhSach = new ArrayList<>();
 
 		if (loaiSanPham == null) {
 			return danhSach;
 		}
 
-		// Ngày cảnh báo tính bằng Java
-		int soNgayCanhBao = soNgayCanhBaoTheoLoai(loaiSanPham);
-		LocalDate today = LocalDate.now();
-		LocalDate canhBao = today.plusDays(soNgayCanhBao);
-
+		// Logic hết hạn: HSD < today
+		// (origin/khoi logic was kept, HEAD logic relied on missing method)
 		Connection con = connectDB.getConnection();
 
+		// Logic hết hạn: HSD < today
 		String sql = """
 				SELECT L.MaLo, L.HanSuDung, L.SoLuongTon, L.MaSanPham
 				FROM LoSanPham L
 				JOIN SanPham SP ON L.MaSanPham = SP.MaSanPham
 				WHERE SP.LoaiSanPham = ?
-				  AND L.HanSuDung < ?
+				  AND L.HanSuDung < CAST(GETDATE() AS DATE)
 				  AND L.SoLuongTon > 0
 				""";
 
 		try (PreparedStatement stmt = con.prepareStatement(sql)) {
 
 			stmt.setString(1, loaiSanPham.name()); // VD: THUC_PHAM_BO_SUNG
-			stmt.setDate(2, Date.valueOf(canhBao)); // so sánh HSD < canhBao
 
 			try (ResultSet rs = stmt.executeQuery()) {
 				while (rs.next()) {
@@ -496,25 +483,22 @@ public class LoSanPham_DAO {
 		return danhSach;
 	}
 
-	public Map<LoaiSanPham, Integer> thongKeSoLoCanHuyTheoHSDTheoLoai() {
+	/** Thống kê số lô GẦN HẾT HẠN theo loại sản phẩm (0 < HSD - today <= 90) */
+	public Map<LoaiSanPham, Integer> thongKeSoLoDaHetHanTheoHSDTheoLoai() {
 		Map<LoaiSanPham, Integer> map = new LinkedHashMap<>();
 		for (LoaiSanPham l : LoaiSanPham.values())
 			map.put(l, 0);
 
 		Connection con = connectDB.getConnection();
 
+		// Logic gần hết hạn: 0 < (HSD - today) <= 90
 		String sql = """
 				    SELECT SP.LoaiSanPham, COUNT(*) AS SoLo
 				    FROM LoSanPham L
 				    JOIN SanPham SP ON L.MaSanPham = SP.MaSanPham
 				    WHERE L.SoLuongTon > 0
-				      AND L.HanSuDung < DATEADD(DAY,
-				            CASE
-				                WHEN SP.LoaiSanPham IN ('DUNG_CU_Y_TE','SAN_PHAM_CHO_ME_VA_BE') THEN 90
-				                ELSE 60
-				            END,
-				            CAST(GETDATE() AS DATE)
-				      )
+				      AND L.HanSuDung > CAST(GETDATE() AS DATE)
+				      AND L.HanSuDung <= DATEADD(DAY, 90, CAST(GETDATE() AS DATE))
 				    GROUP BY SP.LoaiSanPham
 				""";
 
@@ -531,32 +515,30 @@ public class LoSanPham_DAO {
 			}
 
 		} catch (SQLException e) {
-			System.err.println("❌ Lỗi thống kê số lô cần hủy theo HSD theo loại: " + e.getMessage());
+			System.err.println("❌ Lỗi thống kê số lô gần hết hạn theo loại: " + e.getMessage());
 		}
 
 		return map;
 	}
 
-	/** ✅ Lấy danh sách lô "tới hạn sử dụng" (cần hủy theo HSD) */
+	/**
+	 * ✅ Lấy danh sách lô sắp hết hạn sử dụng
+	 * Logic: 0 < (HSD - ngày hiện tại) <= 90
+	 * (tức là today < HSD <= today + 90)
+	 */
 	public List<LoSanPham> layDanhSachLoSPToiHanSuDung() {
 		List<LoSanPham> danhSach = new ArrayList<>();
 
 		Connection con = connectDB.getConnection();
 
-		// ✅ GIỮ NGUYÊN rule như demSoLoSPToiHanSuDung(): 60/90 ngày theo loại
+		// Logic sắp hết hạn: 0 < (HSD - today) <= 90
 		String sql = """
 				    SELECT L.MaLo, L.HanSuDung, L.SoLuongTon, L.MaSanPham
 				    FROM LoSanPham L
 				    JOIN SanPham SP ON L.MaSanPham = SP.MaSanPham
 				    WHERE L.SoLuongTon > 0
-				      AND L.HanSuDung < DATEADD(DAY,
-				            CASE
-				                WHEN SP.LoaiSanPham IN ('DUNG_CU_Y_TE', 'SAN_PHAM_CHO_ME_VA_BE') THEN 90
-				                WHEN SP.LoaiSanPham IN ('THUOC', 'MY_PHAM', 'THUC_PHAM_BO_SUNG', 'SAN_PHAM_KHAC') THEN 60
-				                ELSE 60
-				            END,
-				            CAST(GETDATE() AS DATE)
-				      )
+				      AND L.HanSuDung > CAST(GETDATE() AS DATE)
+				      AND L.HanSuDung <= DATEADD(DAY, 90, CAST(GETDATE() AS DATE))
 				    ORDER BY L.HanSuDung ASC
 				""";
 
@@ -569,14 +551,65 @@ public class LoSanPham_DAO {
 				int soLuongTon = rs.getInt("SoLuongTon");
 				String maSP = rs.getString("MaSanPham");
 
-				// ✅ giống style các hàm khác: chỉ gắn SanPham theo mã, không query thêm
 				SanPham sp = new SanPham(maSP);
 
 				danhSach.add(new LoSanPham(maLo, hanSuDung, soLuongTon, sp));
 			}
 
 		} catch (SQLException e) {
-			System.err.println("❌ Lỗi lấy danh sách lô tới hạn sử dụng: " + e.getMessage());
+			System.err.println("❌ Lỗi lấy danh sách lô gần hết hạn sử dụng: " + e.getMessage());
+		}
+
+		return danhSach;
+	}
+
+	/**
+	 * ✅ Lấy danh sách lô sản phẩm đã hết hạn (bao gồm cả thông tin sản phẩm đầy đủ)
+	 * Logic: ngày hiện tại > hạn sử dụng
+	 */
+	public List<LoSanPham> layDanhSachLoSPDaHetHan() {
+		List<LoSanPham> danhSach = new ArrayList<>();
+
+		connectDB.getInstance();
+		Connection con = connectDB.getConnection();
+
+		// Lấy lô đã hết hạn với thông tin sản phẩm đầy đủ
+		String sql = """
+				    SELECT L.MaLo, L.HanSuDung, L.SoLuongTon,
+				           SP.MaSanPham, SP.TenSanPham, SP.LoaiSanPham, SP.GiaNhap
+				    FROM LoSanPham L
+				    JOIN SanPham SP ON L.MaSanPham = SP.MaSanPham
+				    WHERE L.SoLuongTon > 0
+				      AND L.HanSuDung < CAST(GETDATE() AS DATE)
+				    ORDER BY L.HanSuDung ASC
+				""";
+
+		try (PreparedStatement stmt = con.prepareStatement(sql);
+				ResultSet rs = stmt.executeQuery()) {
+
+			while (rs.next()) {
+				String maLo = rs.getString("MaLo");
+				LocalDate hanSuDung = rs.getDate("HanSuDung").toLocalDate();
+				int soLuongTon = rs.getInt("SoLuongTon");
+				String maSP = rs.getString("MaSanPham");
+
+				SanPham sp = new SanPham();
+				try {
+					sp.setMaSanPham(maSP);
+					sp.setTenSanPham(rs.getString("TenSanPham"));
+					sp.setGiaNhap(rs.getDouble("GiaNhap"));
+					String loaiStr = rs.getString("LoaiSanPham");
+					if (loaiStr != null) {
+						sp.setLoaiSanPham(LoaiSanPham.valueOf(loaiStr.trim().toUpperCase()));
+					}
+				} catch (Exception ignore) {
+				}
+
+				danhSach.add(new LoSanPham(maLo, hanSuDung, soLuongTon, sp));
+			}
+
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi lấy danh sách lô sản phẩm đã hết hạn: " + e.getMessage());
 		}
 
 		return danhSach;
@@ -630,17 +663,18 @@ public class LoSanPham_DAO {
 		return danhSach;
 	}
 
-	/** ✅ Kiểm tra lô có cảnh báo hết hạn hay không (Logic lọc in-memory) */
+	/**
+	 * ✅ Kiểm tra lô có sắp hết hạn hay không
+	 * Logic: 0 < (HSD - today) <= 90
+	 */
 	public boolean kiemTraLoToiHan(LoSanPham lo) {
 		if (lo == null || lo.getSanPham() == null)
 			return false;
-
-		int days = soNgayCanhBaoTheoLoai(lo.getSanPham().getLoaiSanPham());
 		LocalDate today = LocalDate.now();
-		LocalDate canhBao = today.plusDays(days);
-
-		// HanSuDung < canhBao => Tới hạn/Hết hạn
-		return lo.getHanSuDung().isBefore(canhBao);
+		LocalDate hanSuDung = lo.getHanSuDung();
+		LocalDate ngayCanhBaoMax = today.plusDays(SO_NGAY_CANH_BAO);
+		// 0 < (HSD - today) <= 90 → today < HSD <= today + 90
+		return hanSuDung.isAfter(today) && !hanSuDung.isAfter(ngayCanhBaoMax);
 	}
 
 }

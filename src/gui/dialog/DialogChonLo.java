@@ -4,7 +4,6 @@ import dao.LoSanPham_DAO;
 import dao.SanPham_DAO;
 import entity.LoSanPham;
 import entity.SanPham;
-import enums.LoaiSanPham;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -24,7 +23,6 @@ public class DialogChonLo extends JDialog {
     private JTextField txtTim;
     private JTable tblLo;
     private DefaultTableModel model;
-	private JComboBox<LoaiSanPham> cboLoaiHang;
 	private JPanel pnTop;
     private LoSanPham selectedLo = null;
     private ArrayList<LoSanPham> dsLoHSD;
@@ -37,7 +35,7 @@ public class DialogChonLo extends JDialog {
     private final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private String keyword;
-    private String loaiTim; // "MASP" , "TENSP" , "HSD"
+    private String loaiTim; // "MASP" , "TENSP" 
     
 
     public DialogChonLo(String keyword, String loaiTim) {
@@ -69,15 +67,7 @@ public class DialogChonLo extends JDialog {
          */
         
         JButton btnTim = new JButton("Tìm");
-        btnTim.addActionListener(e -> {
-            if ("HSD".equals(loaiTim)) {
-                // Đang ở mode gần hết hạn → dùng combobox loại hàng
-                timGanHetHanTheoLoai();
-            } else {
-                // Các mode khác (MASP, TENSP) dùng logic cũ
-                loc();
-            }
-        });
+        btnTim.addActionListener(e -> loc());
         pnTop.add(btnTim, BorderLayout.EAST);
 
 
@@ -123,15 +113,7 @@ public class DialogChonLo extends JDialog {
 
         add(pnBottom, BorderLayout.SOUTH);
     }
-    private void ThemComboBox() {
-    	// combo loai hàng   	 
-    	cboLoaiHang = new JComboBox<>(LoaiSanPham.values());
-	    cboLoaiHang.setFont(new Font("Tahoma", Font.PLAIN, 18));
-	    cboLoaiHang.setBounds(550, 25, 250, 40);
-	    pnTop.remove(txtTim);
-    	pnTop.add(cboLoaiHang, BorderLayout.CENTER);
-    
-	}
+
     // =====================================================
     // =============== LOAD DỮ LIỆU BAN ĐẦU ================
     // =====================================================
@@ -165,10 +147,11 @@ public class DialogChonLo extends JDialog {
             }
 
             case "HSD" -> {
-                // Đổi ô nhập text thành combobox loại hàng
-                ThemComboBox();
-                // Lần đầu mở dialog -> tự load theo loại đang chọn
-                timGanHetHanTheoLoai();
+                // Load tất cả lô đã hết hạn
+                dsLoHSD = new ArrayList<>(loDAO.layDanhSachLoSPDaHetHan());
+                for (LoSanPham lo : dsLoHSD) {
+                    ketQua.add(taiDayDuSanPham(lo));
+                }
             }
 
         }
@@ -181,13 +164,35 @@ public class DialogChonLo extends JDialog {
     // =====================================================
 
     private void loc() {
-        
+        String text = txtTim.getText().trim();
+
+        // Nếu mode HSD, lọc trong danh sách lô đã hết hạn
         if ("HSD".equals(loaiTim)) {
-            timGanHetHanTheoLoai();
+            if (text.isEmpty()) {
+                // Nếu không nhập gì, hiển thị tất cả lô hết hạn
+                ArrayList<LoSanPham> ketQua = new ArrayList<>();
+                for (LoSanPham lo : dsLoHSD) {
+                    ketQua.add(taiDayDuSanPham(lo));
+                }
+                fill(ketQua);
+            } else {
+                // Lọc theo keyword trong danh sách lô hết hạn
+                ArrayList<LoSanPham> ketQua = new ArrayList<>();
+                String lowerText = text.toLowerCase();
+                for (LoSanPham lo : dsLoHSD) {
+                    SanPham sp = lo.getSanPham();
+                    boolean match = lo.getMaLo().toLowerCase().contains(lowerText)
+                            || (sp != null && sp.getMaSanPham().toLowerCase().contains(lowerText))
+                            || (sp != null && sp.getTenSanPham().toLowerCase().contains(lowerText));
+                    if (match) {
+                        ketQua.add(taiDayDuSanPham(lo));
+                    }
+                }
+                fill(ketQua);
+            }
             return;
         }
 
-        String text = txtTim.getText().trim();
         if (text.isEmpty()) return;
 
         ArrayList<LoSanPham> dsLo = loDAO.layTatCaLoSanPham();
@@ -201,18 +206,8 @@ public class DialogChonLo extends JDialog {
             return;
         }
 
-        // 2. Nhập HSD
-        LocalDate hsd = parseDate(text);
-        if (hsd != null) {
-            for (LoSanPham lo : dsLo) {
-                if (lo.getHanSuDung().equals(hsd))
-                    ketQua.add(taiDayDuSanPham(lo));
-            }
-            fill(ketQua);
-            return;
-        }
 
-        // 3. Tìm theo tên / mã SP
+        // 2. Tìm theo tên / mã SP
         ArrayList<SanPham> dsSP = spDAO.timKiemSanPham(text);
         for (SanPham sp : dsSP) {
             for (LoSanPham lo : dsLo) {
@@ -230,21 +225,7 @@ public class DialogChonLo extends JDialog {
     // ====================== CHỌN LÔ ======================
     // =====================================================
     
-    private void timGanHetHanTheoLoai() {
-        if (cboLoaiHang == null) return;
 
-        LoaiSanPham loai = (LoaiSanPham) cboLoaiHang.getSelectedItem();
-        if (loai == null) return;
-
-        ArrayList<LoSanPham> ketQua = new ArrayList<>();
-
-        // Gọi DAO: dùng ngày hiện tại + số ngày cảnh báo
-        for (LoSanPham lo : loDAO.timLoGanHetHanTheoLoai(loai)) {
-            ketQua.add(taiDayDuSanPham(lo)); // nạp đủ thông tin sản phẩm
-        }
-
-        fill(ketQua);
-    }
     
     private void chonLo() {
         int row = tblLo.getSelectedRow();
@@ -344,16 +325,7 @@ public class DialogChonLo extends JDialog {
         }
     }
 
-    private LocalDate parseDate(String s) {
-        try {
-            if (s.matches("^\\d{1,2}/\\d{1,2}/\\d{4}$"))
-                return LocalDate.parse(s, fmt);
 
-            if (s.matches("^\\d{4}-\\d{1,2}-\\d{1,2}$"))
-                return LocalDate.parse(s);
-        } catch (Exception ignored) {}
-        return null;
-    }
 
     // =====================================================
     // =============== GETTER TRẢ LÔ CHỌN ==================

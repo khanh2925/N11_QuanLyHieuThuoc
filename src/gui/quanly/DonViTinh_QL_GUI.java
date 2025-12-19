@@ -29,10 +29,10 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
     private DefaultTableModel modelDonViTinh;
 
     // Buttons
-    private PillButton btnThem, btnSua, btnXoa, btnLamMoi, btnTimKiem;
+    private PillButton btnThem, btnSua, btnLamMoi, btnTimKiem;
 
     // DAO & data
-    private final DonViTinh_DAO dvtDAO = new DonViTinh_DAO();
+    private DonViTinh_DAO dvtDAO;
     private List<DonViTinh> dsDonViTinh;
     
     // Style
@@ -49,6 +49,7 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
+        dvtDAO = new DonViTinh_DAO();
         // 1. HEADER
         taoPhanHeader();
         add(pnHeader, BorderLayout.NORTH);
@@ -150,12 +151,14 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         txtMaDVT = createTextField(xStart + 100, yStart, wTxt);
         txtMaDVT.setEditable(false); // Mã tự sinh từ DAO
         p.add(txtMaDVT);
+        PlaceholderSupport.addPlaceholder(txtMaDVT, dvtDAO.taoMaTuDong());
 
         // Hàng 2: Tên Đơn Vị Tính
         yStart += hText + gap;
         p.add(createLabel("Tên ĐVT:", xStart, yStart));
         txtTenDVT = createTextField(xStart + 100, yStart, wTxt);
         p.add(txtTenDVT);
+        PlaceholderSupport.addPlaceholder(txtTenDVT, "Nhập tên đơn vị tính");
     }
 
     // Panel nút bên phải
@@ -196,20 +199,8 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         btnSua.setPreferredSize(new Dimension(btnW, btnH));
         btnSua.setToolTipText("<html><b>Phím tắt:</b> Ctrl+U<br>Cập nhật thông tin đơn vị tính đang chọn</html>");
         btnSua.addActionListener(this);
+        btnSua.setEnabled(false);
         gbc.gridy = 1; p.add(btnSua, gbc);
-
-        btnXoa = new PillButton(
-                "<html>" +
-                        "<center>" +
-                        "XÓA<br>" +
-                        "<span style='font-size:10px; color:#888888;'>(Ctrl+D)</span>" +
-                        "</center>" +
-                        "</html>");
-        btnXoa.setFont(FONT_BOLD);
-        btnXoa.setPreferredSize(new Dimension(btnW, btnH));
-        btnXoa.setToolTipText("<html><b>Phím tắt:</b> Ctrl+D<br>Xóa đơn vị tính đang chọn</html>");
-        btnXoa.addActionListener(this);
-        gbc.gridy = 2; p.add(btnXoa, gbc);
 
         btnLamMoi = new PillButton(
                 "<html>" +
@@ -222,7 +213,7 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         btnLamMoi.setPreferredSize(new Dimension(btnW, btnH));
         btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới form nhập liệu</html>");
         btnLamMoi.addActionListener(this);
-        gbc.gridy = 3; p.add(btnLamMoi, gbc);
+        gbc.gridy = 2; p.add(btnLamMoi, gbc);
     }
 
     private void taoBangDanhSach(JPanel p) {
@@ -261,6 +252,10 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         txtMaDVT.setText(tblDonViTinh.getValueAt(row, 0).toString());
         txtTenDVT.setText(tblDonViTinh.getValueAt(row, 1).toString());
         txtMaDVT.setEditable(false);
+        
+        // Disable nút Thêm, Enable nút Cập nhật khi có selection
+        btnThem.setEnabled(false);
+        btnSua.setEnabled(true);
     }
 
 
@@ -292,6 +287,10 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         txtTenDVT.setText("");
         txtTenDVT.requestFocus();
         tblDonViTinh.clearSelection();
+        
+        // Enable nút Thêm, Disable nút Cập nhật khi không có selection
+        btnThem.setEnabled(true);
+        btnSua.setEnabled(false);
     }
 
     private void xuLyTimKiem() {
@@ -340,16 +339,18 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
 
         if (o.equals(btnThem)) {
             themDonViTinh();
+            return;
         } 
         else if (o.equals(btnSua)) {
+            
             suaDonViTinh();
-        }
-        else if (o.equals(btnXoa)) {
-            xoaDonViTinh();
+            return;
+
         }
         else if (o.equals(btnLamMoi)) {
             lamMoiForm();
             loadDataLenBang();
+            return;
         }
     }
 
@@ -391,6 +392,7 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng cần sửa!");
             return;
         }
+        
 
         String ma = txtMaDVT.getText().trim();
         if (ma.isEmpty()) {
@@ -416,27 +418,7 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         }
     }
 
-    /** Xóa đơn vị tính */
-    private void xoaDonViTinh() {
-        int row = tblDonViTinh.getSelectedRow();
-        if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng cần xóa!");
-            return;
-        }
-        String ma = tblDonViTinh.getValueAt(row, 0).toString();
-        if (JOptionPane.showConfirmDialog(this,
-                "Xóa đơn vị tính: " + ma + "?", "Xác nhận", JOptionPane.YES_NO_OPTION)
-                == JOptionPane.YES_OPTION) {
-            if (dvtDAO.xoaDonViTinh(ma)) {
-                JOptionPane.showMessageDialog(this, "Đã xóa!");
-                modelDonViTinh.removeRow(row);
-                lamMoiForm();
-            } else {
-                JOptionPane.showMessageDialog(this,
-                        "Xóa thất bại (Có thể đang được sử dụng)!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
+    
 
     // ======================================================================
     //                              UI Helpers
@@ -526,15 +508,6 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 suaDonViTinh();
-            }
-        });
-
-        // Ctrl+D: Xóa
-        inputMap.put(KeyStroke.getKeyStroke("control D"), "xoaDVT");
-        actionMap.put("xoaDVT", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                xoaDonViTinh();
             }
         });
     }

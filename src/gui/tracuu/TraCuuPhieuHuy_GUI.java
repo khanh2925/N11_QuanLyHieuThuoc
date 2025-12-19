@@ -233,9 +233,10 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         DefaultTableCellRenderer right = new DefaultTableCellRenderer();
         right.setHorizontalAlignment(SwingConstants.RIGHT);
 
+
         tblPhieuHuy.getColumnModel().getColumn(0).setCellRenderer(center); // STT
         tblPhieuHuy.getColumnModel().getColumn(1).setCellRenderer(center); // Mã
-        tblPhieuHuy.getColumnModel().getColumn(2).setCellRenderer(center); // Người lập
+
         tblPhieuHuy.getColumnModel().getColumn(3).setCellRenderer(center); // Ngày
         tblPhieuHuy.getColumnModel().getColumn(4).setCellRenderer(right);  // Tiền
 

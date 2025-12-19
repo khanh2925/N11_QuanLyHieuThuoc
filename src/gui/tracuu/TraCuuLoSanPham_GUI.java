@@ -36,7 +36,7 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 
 	// Header components (UI only)
 	private JTextField txtTimKiem;
-	private JCheckBox chkHetHan;
+	private JComboBox<String> cbHanSuDung;
 	private JComboBox<String> cbTonKho;
 
 	private final LoSanPham_DAO loDao = new LoSanPham_DAO();
@@ -95,25 +95,23 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 		// 2) Bộ lọc HSD
 		JLabel lblHSD = new JLabel("HSD:");
 		lblHSD.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		lblHSD.setBounds(542, 28, 60, 35);
+		lblHSD.setBounds(542, 28, 50, 35);
 		pnHeader.add(lblHSD);
 
-		chkHetHan = new JCheckBox("Hết hạn");
-		chkHetHan.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		chkHetHan.setBackground(new Color(0xE3F2F5));
-		chkHetHan.setBounds(608, 30, 100, 30);
-
-		pnHeader.add(chkHetHan);
+		cbHanSuDung = new JComboBox<>(new String[] { "Tất cả", "Gần hết hạn", "Đã hết hạn" });
+		cbHanSuDung.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		cbHanSuDung.setBounds(600, 28, 170, 38);
+		pnHeader.add(cbHanSuDung);
 
 		// 3) Tồn kho
 		JLabel lblTon = new JLabel("Tồn:");
 		lblTon.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		lblTon.setBounds(728, 28, 55, 35);
+		lblTon.setBounds(790, 28, 55, 35);
 		pnHeader.add(lblTon);
 
 		cbTonKho = new JComboBox<>(new String[] { "Tất cả", "Còn tồn", "Hết hàng" });
 		cbTonKho.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		cbTonKho.setBounds(793, 28, 170, 38);
+		cbTonKho.setBounds(855, 28, 140, 38);
 		pnHeader.add(cbTonKho);
 
 		// 4) button
@@ -223,12 +221,7 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 		tblSanPham = setupTable(modelSanPham);
 
 		tblSanPham.getColumnModel().getColumn(0).setCellRenderer(center);
-		tblSanPham.getColumnModel().getColumn(2).setCellRenderer(center);
-		tblSanPham.getColumnModel().getColumn(3).setCellRenderer(center);
-		tblSanPham.getColumnModel().getColumn(4).setCellRenderer(center);
 		tblSanPham.getColumnModel().getColumn(5).setCellRenderer(right);
-		tblSanPham.getColumnModel().getColumn(6).setCellRenderer(center);
-
 		tblSanPham.getColumnModel().getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
@@ -281,7 +274,7 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 	private void initData() {
 	    txtTimKiem.setText("");
 	    cbTonKho.setSelectedIndex(0);
-	    chkHetHan.setSelected(false);
+	    cbHanSuDung.setSelectedIndex(0);
 	    modelSanPham.setRowCount(0);
 
 	    allLo = loDao.layTatCaLoSanPham();
@@ -319,7 +312,11 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 		tblLo.addMouseListener(this);
 		btnLamMoi.addActionListener(this);
 		btnTim.addActionListener(this);
-		txtTimKiem.addActionListener(this); 
+		txtTimKiem.addActionListener(this);
+		
+		// Tự động lọc khi thay đổi lựa chọn trong combobox
+		cbHanSuDung.addActionListener(e -> xuLyTimKiem());
+		cbTonKho.addActionListener(e -> xuLyTimKiem());
 	}
 
 	/**
@@ -403,7 +400,7 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 	    txtTimKiem.setText("");
 	    PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã lô, mã SP (F1 / Ctrl+F)");
 	    cbTonKho.setSelectedIndex(0);
-	    chkHetHan.setSelected(false);
+	    cbHanSuDung.setSelectedIndex(0);
 	    
 	    // Reset data
 	    allLo = loDao.layTatCaLoSanPham(); // Refresh cache if needed or just get
@@ -428,27 +425,31 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 			// Tìm kiếm DB theo keyword (Mã Lô, Mã SP, Tên SP)
 			dsNguon = loDao.timLoSanPhamTheoKeyword(keyword);
 		} else {
-			// Không có keyword -> Lấy từ cache (đã load)
-			if (allLo == null || allLo.isEmpty()) {
-				allLo = loDao.layTatCaLoSanPham();
-			}
+			// Không có keyword -> Luôn lấy fresh data từ DB
+			allLo = loDao.layTatCaLoSanPham();
 			dsNguon = new ArrayList<>(allLo);
 		}
 		
 		if (dsNguon == null) dsNguon = new ArrayList<>();
 
-		// 2. FILTER LOGIC (Lọc theo Tồn kho & Hết hạn trên kết quả tìm được)
+		// 2. FILTER LOGIC (Lọc theo Tồn kho & Hạn sử dụng trên kết quả tìm được)
 		String tonKhoOpt = cbTonKho.getSelectedItem() == null ? "Tất cả" : cbTonKho.getSelectedItem().toString();
-		boolean checkHetHan = chkHetHan.isSelected();
+		String hanSuDungOpt = cbHanSuDung.getSelectedItem() == null ? "Tất cả" : cbHanSuDung.getSelectedItem().toString();
 
 		List<LoSanPham> ketQua = new ArrayList<>();
+		java.time.LocalDate today = java.time.LocalDate.now();
 		
 		for (LoSanPham lo : dsNguon) {
-			// Filter Hết hạn
-			boolean matchHetHan = true;
-			if (checkHetHan) {
-				// Nếu check "Hết hạn" -> Chỉ lấy các lô tới hạn/hết hạn
-				matchHetHan = loDao.kiemTraLoToiHan(lo);
+			// Filter Hạn sử dụng
+			boolean matchHSD = true;
+			if (hanSuDungOpt.equals("Gần hết hạn")) {
+				// Logic: 0 < (HSD - today) <= 90
+				java.time.LocalDate hsd = lo.getHanSuDung();
+				long daysUntilExpiry = java.time.temporal.ChronoUnit.DAYS.between(today, hsd);
+				matchHSD = (daysUntilExpiry > 0 && daysUntilExpiry <= 90);
+			} else if (hanSuDungOpt.equals("Đã hết hạn")) {
+				// Logic: HSD < today
+				matchHSD = lo.getHanSuDung().isBefore(today);
 			}
 			
 			// Filter Tồn kho
@@ -462,7 +463,7 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 				matchTon = (ton <= 0);
 			}
 
-			if (matchHetHan && matchTon) {
+			if (matchHSD && matchTon) {
 				ketQua.add(lo);
 			}
 		}

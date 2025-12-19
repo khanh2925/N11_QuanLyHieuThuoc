@@ -4,10 +4,8 @@ import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.border.MatteBorder;
 import javax.swing.table.DefaultTableModel;
 
-import component.border.*;
 import component.input.*;
 import component.label.*;
 import component.button.*;
@@ -21,19 +19,14 @@ import entity.LoSanPham;
 import entity.NhanVien;
 import entity.PhieuHuy;
 import entity.QuyCachDongGoi;
-import entity.SanPham;
 import entity.Session;
 import entity.TaiKhoan;
-import enums.LoaiSanPham;
 import gui.panel.HuyHangItemPanel;
-import gui.tracuu.TraCuuPhieuHuy_GUI;
-import gui.Main_GUI;
 import gui.dialog.DialogChonLo;
 import gui.dialog.PhieuHuyPreviewDialog;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -46,11 +39,12 @@ import java.util.List;
  */
 public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 
-	private static final String PLACEHOLDER_TIM_LO = "Nhập mã lô (LO-xxxxxx),mã SP (SP-xxxxxx), tên SP";
+
+	
 	// ====== TÌM KIẾM / DANH SÁCH ======
-	private JTextField txtTimLo; // tìm theo mã lô / sau này có thể mở dialog chọn lô
+	private JTextField txtTimLo;
 	private JPanel pnCotPhaiCenter;
-	private JPanel pnDanhSachLo; // chứa các panel dòng huỷ
+	private JPanel pnDanhSachLo;
 
 	// ====== TÓM TẮT BÊN PHẢI ======
 	private JTextField lblTongDong;
@@ -61,7 +55,6 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 	private JButton btnHuyBo;
 
 	// ====== MODEL TẠM LƯU DỮ LIỆU HUỶ ======
-	// Mỗi dòng: MaLo, TenSP, HSD, SLTon, SLHuy, DonGiaNhap, ThanhTien, LyDo
 	private DefaultTableModel modelHuy;
 	private double tongTienHuy = 0;
 
@@ -77,11 +70,19 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 	// ====== MODEL MỚI DÙNG ITEMHUYHANG ======
 	private final List<ItemHuyHang> dsItem = new ArrayList<>();
 
+	// ===========================================
+	// ============= CONSTRUCTOR =================
+	// ===========================================
+	
 	public HuyHangNhanVien_GUI() {
 		setPreferredSize(new Dimension(1537, 850));
 		initialize();
 	}
 
+	// ===========================================
+	// ============= KHỞI TẠO GIAO DIỆN ==========
+	// ===========================================
+	
 	private void initialize() {
 		setLayout(new BorderLayout());
 		setPreferredSize(new Dimension(1537, 1168));
@@ -97,10 +98,12 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		txtTimLo.setBounds(25, 17, 480, 60);
 		txtTimLo.setForeground(Color.GRAY);
 
-		PlaceholderSupport.addPlaceholder(txtTimLo, PLACEHOLDER_TIM_LO);
+		PlaceholderSupport.addPlaceholder(txtTimLo, "Nhập mã lô, mã/tên SP (F1)");
+		txtTimLo.setToolTipText("<html><b>Phím tắt:</b> F1<br>Nhập mã lô (LO-xxxxxx), mã SP hoặc tên SP</html>");
 		pnHeader.add(txtTimLo);
 
-		btnHSD = new PillButton("HUỶ THEO HSD");
+		btnHSD = new PillButton("<html><center>HUỶ THEO HSD<br><span style='font-size:9px;color:#888'>(F2)</span></center></html>");
+		btnHSD.setToolTipText("<html><b>Phím tắt:</b> F2<br>Mở dialog chọn lô gần hết hạn sử dụng</html>");
 		pnHeader.add(btnHSD);
 		btnHSD.setBounds(545, 28, 154, 40);
 
@@ -165,21 +168,47 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		pnRight.add(boxTongTien);
 		pnRight.add(Box.createVerticalStrut(20));
 
-		// ==== Nút ====
-		btnTaoPhieu = new PillButton("Tạo phiếu huỷ");
-		btnTaoPhieu.setMaximumSize(new Dimension(135, 40));
-		btnTaoPhieu.setPreferredSize(new Dimension(135, 40));
+		// ==== NÚT TẠO PHIẾU HUỶ  ====
+		btnTaoPhieu = TaoButtonNhanh.huyHang();
+		btnTaoPhieu.setForeground(Color.BLACK);
+		btnTaoPhieu.setText(
+			"<html>" +
+				"<center>" +
+					"TẠO PHIẾU HUỶ<br>" +
+					"<span style='font-size:10px; color:#888888;'>(Ctrl + Enter)</span>" +
+				"</center>" +
+			"</html>"
+		);
+		btnTaoPhieu.setAlignmentX(Component.CENTER_ALIGNMENT);
+		btnTaoPhieu.setToolTipText("<html><b>Phím tắt:</b> Ctrl+Enter<br>Tạo phiếu huỷ hàng</html>");
+		pnRight.add(btnTaoPhieu);
+		
+		pnRight.add(Box.createVerticalStrut(8));
 
-		btnHuyBo = new PillButton("Huỷ bỏ");
-		btnHuyBo.setMaximumSize(new Dimension(115, 40));
-		btnHuyBo.setPreferredSize(new Dimension(115, 40));
-
-		JPanel pnBtn = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
-		pnBtn.setOpaque(false);
-		pnBtn.add(btnTaoPhieu);
-		pnBtn.add(btnHuyBo);
-
-		pnRight.add(pnBtn);
+		// ==== LINK HUỶ BỎ  ====
+		btnHuyBo = new JButton("Huỷ bỏ (F4)");
+		btnHuyBo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		btnHuyBo.setForeground(new Color(120, 120, 120)); 
+		btnHuyBo.setBackground(new Color(250, 250, 250)); 
+		btnHuyBo.setFocusPainted(false);
+		btnHuyBo.setBorder(null);
+		btnHuyBo.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnHuyBo.setMaximumSize(new Dimension(200, 30));
+		btnHuyBo.setAlignmentX(Component.CENTER_ALIGNMENT);
+		btnHuyBo.setToolTipText("<html><b>Phím tắt:</b> F4<br>Huỷ bỏ danh sách và làm mới form</html>");
+		
+		// Hover effect nhẹ
+		btnHuyBo.addMouseListener(new java.awt.event.MouseAdapter() {
+			public void mouseEntered(java.awt.event.MouseEvent evt) {
+				btnHuyBo.setForeground(new Color(220, 53, 69)); // Đỏ khi hover
+				btnHuyBo.setBackground(new Color(255, 245, 245));
+			}
+			public void mouseExited(java.awt.event.MouseEvent evt) {
+				btnHuyBo.setForeground(new Color(120, 120, 120));
+				btnHuyBo.setBackground(new Color(250, 250, 250));
+			}
+		});
+		pnRight.add(btnHuyBo);
 		pnRight.add(Box.createVerticalStrut(15));
 
 		// ===== MODEL TẠM =====
@@ -187,7 +216,6 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		modelHuy = new DefaultTableModel(cols, 0) {
 			@Override
 			public boolean isCellEditable(int row, int column) {
-				// Cho phép chỉnh lý do nếu muốn
 				return column == 7;
 			}
 		};
@@ -197,6 +225,38 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		btnHSD.addActionListener(this);
 		btnTaoPhieu.addActionListener(this);
 		btnHuyBo.addActionListener(this);
+		
+		// ===== PHÍM TẮT =====
+		setupKeyboardShortcuts();
+	}
+
+	// ===========================================
+	// ============= SỰ KIỆN (ACTION) ============
+	// ===========================================
+	
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		Object src = e.getSource();
+
+		if (src == txtTimLo) {
+			xuLyTimKiem();
+			return;
+		}
+
+		if (src == btnHuyBo) {
+			resetForm();
+			return;
+		}
+
+		if (src == btnTaoPhieu) {
+			xuLyTaoPhieuHuy();
+			return;
+		}
+
+		if (src == btnHSD) {
+			MoDialogChonLo("", "HSD"); 
+			return;
+		}
 	}
 
 	// ===========================================
@@ -204,19 +264,18 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 	// ===========================================
 
 	/**
-	 * Xử lý ô tìm kiếm mới: - Nếu nhập LO-xxxxxx → tải lô trực tiếp - Nếu nhập mã
-	 * SP / tên SP → mở dialog chọn lô - Nếu nhập hạn dùng → mở dialog và lọc theo
-	 * HSD
+	 * Xử lý ô tìm kiếm:
+	 * - Nếu nhập LO-xxxxxx → tải lô trực tiếp
+	 * - Nếu nhập mã SP / tên SP → mở dialog chọn lô
+	 * - Nếu nhập hạn dùng → mở dialog và lọc theo HSD
 	 */
 	private void xuLyTimKiem() {
-
 		String input = txtTimLo.getText().trim();
 		if (input.isEmpty())
 			return;
 
 		// 1) Nếu nhập MÃ LÔ → load trực tiếp, bỏ qua dialog
 		if (input.matches("^LO-\\d{6}$")) {
-
 			LoSanPham lo = loDAO.timLoTheoMa(input);
 			if (lo == null) {
 				JOptionPane.showMessageDialog(this, "Không tìm thấy lô " + input, "Không tồn tại",
@@ -233,7 +292,6 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 
 		// 2) Nếu là mã sản phẩm → mở dialog chọn lô theo mã SP
 		if (input.matches("^SP-\\w+$") || input.matches("^[A-Za-z0-9_-]+$")) {
-
 			MoDialogChonLo(input, "MASP");
 			txtTimLo.setText("");
 			return;
@@ -245,10 +303,10 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 	}
 
 	/**
-	 * Mở dialog chọn lô theo loại tìm kiếm: - TENSP: tên sản phẩm - MASP: mã sản
-	 * phẩm - HSD: hạn sử dụng
-	 *
-	 * Kết quả trả về LoSanPham → addDongHuy()
+	 * Mở dialog chọn lô theo loại tìm kiếm:
+	 * - TENSP: tên sản phẩm
+	 * - MASP: mã sản phẩm
+	 * - HSD: hạn sử dụng
 	 */
 	private void MoDialogChonLo(String keyword, String loaiTim) {
 		DialogChonLo dialog = new DialogChonLo(keyword, loaiTim);
@@ -300,6 +358,39 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		}
 	}
 
+	/** API cho các màn khác muốn đẩy lô vào danh sách huỷ */
+	public void addDongHuy(LoSanPham lo, double giaNhap) {
+		// kiểm tra trùng
+		for (ItemHuyHang t : dsItem) {
+			if (t.getMaLo().equals(lo.getMaLo())) {
+				JOptionPane.showMessageDialog(this, "Lô đã có trong danh sách huỷ!", "Thông báo",
+						JOptionPane.INFORMATION_MESSAGE);
+				return;
+			}
+		}
+
+		// Lấy số lượng tồn theo đơn vị gốc
+		int slTonGoc = lo.getSoLuongTon();
+
+		ItemHuyHang it = new ItemHuyHang(lo.getMaLo(), lo.getSanPham().getTenSanPham(), slTonGoc, giaNhap);
+
+		// Lấy và set quy cách gốc
+		QuyCachDongGoi qcGoc = quyCachDAO.timQuyCachGocTheoSanPham(lo.getSanPham().getMaSanPham());
+		if (qcGoc != null) {
+			it.setQuyCachGoc(qcGoc);
+			it.setQuyCachHienTai(qcGoc);
+		}
+
+		dsItem.add(it);
+		addPanelItem(it);
+
+		// --- cập nhật model cũ ---
+		modelHuy.addRow(new Object[] { it.getMaLo(), it.getTenSanPham(), lo.getHanSuDung().format(fmt),
+				it.getSoLuongTon(), it.getSoLuongHuy(), it.getDonGiaNhap(), it.getThanhTien(), "" });
+
+		capNhatTongSoLuongVaTien();
+	}
+
 	/** API cho các màn khác muốn đẩy lô vào danh sách huỷ với lý do tự động */
 	private void addDongHuyVoiLyDo(LoSanPham lo, double giaNhap, String lyDo) {
 		// kiểm tra trùng
@@ -340,72 +431,9 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		capNhatTongSoLuongVaTien();
 	}
 
-	/** API cho các màn khác muốn đẩy lô vào danh sách huỷ */
-	public void addDongHuy(LoSanPham lo, double giaNhap) {
-		// kiểm tra trùng
-		for (ItemHuyHang t : dsItem) {
-			if (t.getMaLo().equals(lo.getMaLo())) {
-				JOptionPane.showMessageDialog(this, "Lô đã có trong danh sách huỷ!", "Thông báo",
-						JOptionPane.INFORMATION_MESSAGE);
-				return;
-			}
-		}
-
-		// Lấy số lượng tồn theo đơn vị gốc
-		int slTonGoc = lo.getSoLuongTon();
-
-		ItemHuyHang it = new ItemHuyHang(lo.getMaLo(), lo.getSanPham().getTenSanPham(), slTonGoc, giaNhap);
-
-		// Lấy và set quy cách gốc
-		QuyCachDongGoi qcGoc = quyCachDAO.timQuyCachGocTheoSanPham(lo.getSanPham().getMaSanPham());
-		if (qcGoc != null) {
-			it.setQuyCachGoc(qcGoc);
-			it.setQuyCachHienTai(qcGoc);
-		}
-
-		dsItem.add(it);
-		addPanelItem(it);
-
-		// --- cập nhật model cũ ---
-		modelHuy.addRow(new Object[] { it.getMaLo(), it.getTenSanPham(), lo.getHanSuDung().format(fmt),
-				it.getSoLuongTon(), it.getSoLuongHuy(), it.getDonGiaNhap(), it.getThanhTien(), "" });
-
-		capNhatTongSoLuongVaTien();
-	}
-
-	private void capNhatModel(ItemHuyHang it) {
-		for (int i = 0; i < modelHuy.getRowCount(); i++) {
-			if (modelHuy.getValueAt(i, 0).equals(it.getMaLo())) {
-
-				// Lưu số lượng huỷ theo đơn vị đang hiển thị (UI)
-				modelHuy.setValueAt(it.getSoLuongHuy(), i, 4);
-				// Thành tiền đã tự động tính theo đơn vị gốc
-				modelHuy.setValueAt(it.getThanhTien(), i, 6);
-
-				String lyDo = it.getLyDo();
-				modelHuy.setValueAt(lyDo == null ? "" : lyDo, i, 7);
-				return;
-			}
-		}
-	}
-
-	private void capNhatModelXoa(String maLo) {
-		for (int i = 0; i < modelHuy.getRowCount(); i++) {
-			if (modelHuy.getValueAt(i, 0).equals(maLo)) {
-				modelHuy.removeRow(i);
-				return;
-			}
-		}
-	}
-
-	private void capNhatSTT() {
-		int stt = 1;
-		for (Component c : pnDanhSachLo.getComponents()) {
-			if (c instanceof HuyHangItemPanel hp) {
-				hp.setSTT(stt++);
-			}
-		}
-	}
+	// ===========================================
+	// =========== QUẢN LÝ PANEL ITEM ============
+	// ===========================================
 
 	private void addPanelItem(ItemHuyHang it) {
 		int stt = pnDanhSachLo.getComponentCount() + 1;
@@ -439,6 +467,44 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		pnDanhSachLo.repaint();
 	}
 
+	private void capNhatSTT() {
+		int stt = 1;
+		for (Component c : pnDanhSachLo.getComponents()) {
+			if (c instanceof HuyHangItemPanel hp) {
+				hp.setSTT(stt++);
+			}
+		}
+	}
+
+	// ===========================================
+	// =========== CẬP NHẬT MODEL ================
+	// ===========================================
+
+	private void capNhatModel(ItemHuyHang it) {
+		for (int i = 0; i < modelHuy.getRowCount(); i++) {
+			if (modelHuy.getValueAt(i, 0).equals(it.getMaLo())) {
+
+				// Lưu số lượng huỷ theo đơn vị đang hiển thị (UI)
+				modelHuy.setValueAt(it.getSoLuongHuy(), i, 4);
+				// Thành tiền đã tự động tính theo đơn vị gốc
+				modelHuy.setValueAt(it.getThanhTien(), i, 6);
+
+				String lyDo = it.getLyDo();
+				modelHuy.setValueAt(lyDo == null ? "" : lyDo, i, 7);
+				return;
+			}
+		}
+	}
+
+	private void capNhatModelXoa(String maLo) {
+		for (int i = 0; i < modelHuy.getRowCount(); i++) {
+			if (modelHuy.getValueAt(i, 0).equals(maLo)) {
+				modelHuy.removeRow(i);
+				return;
+			}
+		}
+	}
+
 	private void capNhatSLTrongModel(String maLo, int slHuy, double thanhTien) {
 		for (int i = 0; i < modelHuy.getRowCount(); i++) {
 			if (modelHuy.getValueAt(i, 0).equals(maLo)) {
@@ -459,16 +525,8 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 	}
 
 	// ===========================================
-	// ============= HỖ TRỢ & TÍNH TỔNG ==========
+	// ============= TÍNH TỔNG & HỖ TRỢ ==========
 	// ===========================================
-
-	private int parseIntSafe(String text, int defaultVal) {
-		try {
-			return Integer.parseInt(text.trim());
-		} catch (Exception e) {
-			return defaultVal;
-		}
-	}
 
 	private void capNhatTongSoLuongVaTien() {
 		int soDong = dsItem.size();
@@ -484,9 +542,21 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		tongTienHuy = tongTien;
 
 		lblTongDong.setText(soDong + " dòng");
-		lblTongSoLuong.setText(String.valueOf(tongSLGoc)); // Hiển thị tổng theo đơn vị gốc
+		lblTongSoLuong.setText(String.valueOf(tongSLGoc)); 
 		lblTongTien.setText(String.format("%,.0f đ", tongTienHuy));
 	}
+
+	private int parseIntSafe(String text, int defaultVal) {
+		try {
+			return Integer.parseInt(text.trim());
+		} catch (Exception e) {
+			return defaultVal;
+		}
+	}
+
+	// ===========================================
+	// ============= LÀM MỚI FORM ================
+	// ===========================================
 
 	private void resetForm() {
 		pnDanhSachLo.removeAll();
@@ -563,7 +633,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 			String lyDo = it.getLyDo();
 			ct.setLyDoChiTiet(lyDo == null || lyDo.isEmpty() ? null : lyDo);
 
-			// ✅ Set đơn vị tính (lấy DonViTinh từ QuyCachGoc)
+			//  Set đơn vị tính (lấy DonViTinh từ QuyCachGoc)
 			if (it.getQuyCachGoc() != null && it.getQuyCachGoc().getDonViTinh() != null) {
 				ct.setDonViTinh(it.getQuyCachGoc().getDonViTinh());
 			}
@@ -608,6 +678,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 				String.format("✔ Tạo phiếu huỷ thành công!\nMã phiếu: %s\nTổng tiền huỷ: %,.0f đ", ph.getMaPhieuHuy(),
 						ph.getTongTien()),
 				"Thành công", JOptionPane.INFORMATION_MESSAGE);
+		
 		int confirmHienThiPhieuHuy = JOptionPane.showConfirmDialog(this,
 		        "Tạo phiếu huỷ thành công!\nBạn có muốn xem phiếu không?",
 		        "Xem phiếu",
@@ -618,13 +689,82 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		    new PhieuHuyPreviewDialog(w, ph).setVisible(true);
 		}
 
-
-
 		resetForm();
 	}
-	
 
-	
+	// ===========================================
+	// ============= PHÍM TẮT ====================
+	// ===========================================
+
+	/**
+	 * Thiết lập các phím tắt cho màn hình huỷ hàng
+	 */
+	private void setupKeyboardShortcuts() {
+		InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+		ActionMap actionMap = getActionMap();
+
+		// F1: Focus tìm lô
+		inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimLo");
+		actionMap.put("focusTimLo", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtTimLo.requestFocus();
+				txtTimLo.selectAll();
+			}
+		});
+
+		// F2: Huỷ theo HSD
+		inputMap.put(KeyStroke.getKeyStroke("F2"), "huyTheoHSD");
+		actionMap.put("huyTheoHSD", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				MoDialogChonLo("", "HSD");
+			}
+		});
+
+		// F4: Huỷ bỏ / Làm mới form
+		inputMap.put(KeyStroke.getKeyStroke("F4"), "huyBo");
+		actionMap.put("huyBo", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (dsItem.isEmpty()) {
+					JOptionPane.showMessageDialog(HuyHangNhanVien_GUI.this, 
+						"Danh sách trống!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+					return;
+				}
+				int confirm = JOptionPane.showConfirmDialog(HuyHangNhanVien_GUI.this,
+					"Bạn có chắc muốn huỷ bỏ danh sách huỷ hàng hiện tại?", "Xác nhận",
+					JOptionPane.YES_NO_OPTION);
+				if (confirm == JOptionPane.YES_OPTION) {
+					resetForm();
+					JOptionPane.showMessageDialog(HuyHangNhanVien_GUI.this,
+						"Đã làm mới danh sách!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+				}
+			}
+		});
+
+		// Ctrl+Enter: Tạo phiếu huỷ
+		inputMap.put(KeyStroke.getKeyStroke("control ENTER"), "taoPhieuHuy");
+		actionMap.put("taoPhieuHuy", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				xuLyTaoPhieuHuy();
+			}
+		});
+
+		// ESC: Clear input hiện tại
+		inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), "clearInput");
+		actionMap.put("clearInput", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (txtTimLo.isFocusOwner()) {
+					txtTimLo.setText("");
+					PlaceholderSupport.addPlaceholder(txtTimLo, "Nhập mã lô, mã/tên SP (F1)");
+					HuyHangNhanVien_GUI.this.requestFocus();
+				}
+			}
+		});
+	}
 
 	// ===========================================
 	// ================ TEST MAIN ================
@@ -639,32 +779,6 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 			frame.setContentPane(new HuyHangNhanVien_GUI());
 			frame.setVisible(true);
 		});
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		Object src = e.getSource();
-
-		if (src == txtTimLo) {
-			xuLyTimKiem();
-			return;
-		}
-
-		if (src == btnHuyBo) {
-			resetForm();
-			return;
-		}
-
-		if (src == btnTaoPhieu) {
-			xuLyTaoPhieuHuy();
-			return;
-		}
-
-		if (src == btnHSD) {
-			// Mở dialog chọn lô theo HSD (gần hết hạn)
-			MoDialogChonLo("", "HSD"); // keyword giờ không dùng nữa trong HSD
-			return;
-		}
 	}
 
 }

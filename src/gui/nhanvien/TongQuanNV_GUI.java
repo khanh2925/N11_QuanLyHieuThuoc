@@ -22,7 +22,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.ActionEvent;
 import java.text.DecimalFormat;
-import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 import component.border.RoundedBorder;
@@ -33,6 +33,7 @@ import dao.HoaDon_DAO;
 import dao.LoSanPham_DAO;
 import dao.ThongKe_DAO;
 import dao.ThongKe_DAO.ThongKeHoaDonNgay;
+import entity.LoSanPham;
 import entity.Session;
 import enums.LoaiSanPham;
 import dao.PhieuTra_DAO;
@@ -46,7 +47,7 @@ public class TongQuanNV_GUI extends JPanel implements ActionListener, MouseListe
 	// KPIs Top Row (2 hàng x 3 cột = 5 thẻ + 1 ô trống)
 	private JTextField txtSoDon;
 	private JTextField txtTongTienDaBan;
-	private JTextField txtSPDaBan;
+	private JTextField txtLoSPDaHetHan;
 	private JTextField txtLoSPSapHetHan;
 	private JTextField txtSoPhieuHuyDaTao;
 	private JTextField txtSoPhieuTraDaTao;
@@ -136,30 +137,35 @@ public class TongQuanNV_GUI extends JPanel implements ActionListener, MouseListe
 		pnlKPIs.setOpaque(false);
 
 		// Hàng 1
-		// Thẻ 1: Lợi nhuận tháng này
+		// Thẻ 1: số hóa đơn hôm nay
 		txtSoDon = new JTextField();
 		pnlKPIs.add(taoTheKPI("Số đơn hôm nay", mauChu, txtSoDon, null, null));
 
-		// Thẻ 2: Lợi nhuận tháng trước
+		// Thẻ 2: số tiền bán sp hôm nay
 		txtTongTienDaBan = new JTextField();
 		pnlKPIs.add(taoTheKPI("Tổng tiền hóa đơn", mauChu, txtTongTienDaBan, null, null));
 
-		// Thẻ 3: Tổng tiền nhập hàng tháng này
-		txtSPDaBan = new JTextField();
-		pnlKPIs.add(taoTheKPI("Số SP đã bán hôm nay", mauChu, txtSPDaBan, null, null));
+		// Thẻ 3: Số phiếu trả đã tạo hôm nay
+		txtSoPhieuTraDaTao = new JTextField();
+		pnlKPIs.add(taoTheKPI("Số phiếu trả đã tạo hôm nay", mauChu, txtSoPhieuTraDaTao, null, null));
+		
 
 		// Hàng 2
-		// Thẻ 4: Khách hàng mới
+		// Thẻ 4: Lô SP sắp hết hạn
 		txtLoSPSapHetHan = new JTextField();
 		pnlKPIs.add(taoTheKPI("Lô SP sắp hết hạn", mauChu, txtLoSPSapHetHan, null, null));
+		
+		// Thẻ 5: Lô SP đã hết hạn
+		txtLoSPDaHetHan = new JTextField();
+		pnlKPIs.add(taoTheKPI("Số Lô SP hết hạn(vẫn còn hàng)", mauChu, txtLoSPDaHetHan, null, null));
 
-		// Thẻ 5: Đơn trả cần duyệt (có thể click) - Border đỏ
+		
+		// Thẻ 6: Đơn hủy cần duyệt (có thể click) - Border đỏ
 		txtSoPhieuHuyDaTao = new JTextField();
 		pnlKPIs.add(taoTheKPI("Số phiếu hủy đã tạo hôm nay", mauChu, txtSoPhieuHuyDaTao, null, null));
 
-		// Thẻ 6: Đơn hủy cần duyệt (có thể click) - Border đỏ
-		txtSoPhieuTraDaTao = new JTextField();
-		pnlKPIs.add(taoTheKPI("Số phiếu trả đã tạo hôm nay", mauChu, txtSoPhieuTraDaTao, null, null));
+		
+		
 
 		pnCenter.add(pnlKPIs);
 		pnCenter.add(Box.createVerticalStrut(40));
@@ -213,7 +219,7 @@ public class TongQuanNV_GUI extends JPanel implements ActionListener, MouseListe
 		pnChartArea.setMaximumSize(new Dimension(Integer.MAX_VALUE, 500));
 
 		bieuDoCot = new BieuDoCotJFreeChart();
-		bieuDoCot.setTieuDeBieuDo("Số lô cần hủy theo hạn sử dụng");
+		bieuDoCot.setTieuDeBieuDo("Số lô gần hết hạn sử dụng");
 		bieuDoCot.setTieuDeTrucX("Loại sản phẩm");
 		bieuDoCot.setTieuDeTrucY("Số lô");
 		
@@ -231,7 +237,7 @@ public class TongQuanNV_GUI extends JPanel implements ActionListener, MouseListe
 	private void loadChartLoaiHSD() {
 		bieuDoCot.xoaToanBoDuLieu();
 
-		Map<LoaiSanPham, Integer> data = loSanPhamDao.thongKeSoLoCanHuyTheoHSDTheoLoai();
+		Map<LoaiSanPham, Integer> data = loSanPhamDao.thongKeSoLoDaHetHanTheoHSDTheoLoai();
 
 		int max = 0;
 
@@ -260,31 +266,35 @@ public class TongQuanNV_GUI extends JPanel implements ActionListener, MouseListe
 	private void loadRealData() {
 
 		try {
-
+			
 			ThongKeHoaDonNgay tk = thongKeDAO.thongKeHoaDonHomNayCuaNhanVien(maNV);
-
-			int soHoaDon = tk.getSoHoaDon();
-			double tongTienBanHang = tk.getTongTien();
+			
+					
 			// 1. số đơn hôm nay
+			int soHoaDon = tk.getSoHoaDon();
 			txtSoDon.setText(String.valueOf(soHoaDon));
 			
-			// 2. Lợi nhuận tháng trước
+			// 2. tổng tiền bán hàng hôm nay
+			double tongTienBanHang = tk.getTongTien();
 			txtTongTienDaBan.setText(formatter.format(tongTienBanHang) + " ₫");
 
-			// 3. số SP đã bán trong hôm nay
-			int soSPDaBan = chiTietHoaDonDAO.demSoSanPhamBanHomNay(maNV);
-			txtSPDaBan.setText(String.valueOf(soSPDaBan));
+			// 3. số phiếu trả đã tạo hôm nay
+			int soPhieuTra = phieuTraDAO.demSoPhieuTraHomNayCuaNhanVien(maNV);
+			txtSoPhieuTraDaTao.setText(String.valueOf(soPhieuTra));
 
-			// 4. số lô sp gần hết hạn
+			// 4. số SP đã bán trong hôm nay
+			List<LoSanPham> dsLoSPHetHan = loSanPhamDao.layDanhSachLoSPDaHetHan();			
+			txtLoSPDaHetHan.setText(String.valueOf(dsLoSPHetHan.size()));
+
+			// 5. số lô sp gần hết hạn
 			int soLoToiHanSD = loSanPhamDao.layDanhSachLoSPToiHanSuDung().size();
 			txtLoSPSapHetHan.setText(String.valueOf(soLoToiHanSD));
 
+			// 6. số phiếu hủy đã tạo hôm nay
 			int soPhieuHuy = phieuHuyDAO.demSoPhieuHuyHomNayCuaNhanVien(maNV);
 			txtSoPhieuHuyDaTao.setText(String.valueOf(soPhieuHuy));
 
-			// 6. Phiếu hủy chưa duyệt
-			int soPhieuTra = phieuTraDAO.demSoPhieuTraHomNayCuaNhanVien(maNV);
-			txtSoPhieuTraDaTao.setText(String.valueOf(soPhieuTra));
+			
 
 		} catch (Exception e) {
 			System.err.println("❌ Lỗi load dữ liệu dashboard: " + e.getMessage());
