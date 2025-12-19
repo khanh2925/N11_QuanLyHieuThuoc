@@ -20,7 +20,7 @@ public class TraHangItemPanel extends JPanel {
 
 	private ItemTraHang item;
 	private String anhPath;
-	
+
 	// Flag để tránh xử lý trùng lặp khi nhấn Enter
 	private boolean isDangXuLy = false;
 
@@ -53,6 +53,7 @@ public class TraHangItemPanel extends JPanel {
 
 	private Listener listener;
 	private JButton btnClone;
+	private JLabel lblQuyDoi;
 
 	public TraHangItemPanel(ItemTraHang item, int stt, Listener listener, String anhPath) {
 		this.item = item;
@@ -93,7 +94,6 @@ public class TraHangItemPanel extends JPanel {
 
 		// ===== INFO (Tên + Lô + SL mua) =====
 		Box infoBox = Box.createVerticalBox();
-		infoBox.setBorder(new LineBorder(Color.BLACK));
 
 		txtTenThuoc = TaoJtextNhanh.taoTextDonHang(item.getTenSanPham(), new Font("Segoe UI", Font.BOLD, 16),
 				new Color(0x00796B), 300);
@@ -105,7 +105,6 @@ public class TraHangItemPanel extends JPanel {
 		txtLo = TaoJtextNhanh.taoTextDonHang("Lô: " + item.getMaLo(), new Font("Segoe UI", Font.BOLD, 16),
 				new Color(0x00796B), 150);
 		loBox.add(txtLo);
-		loBox.add(Box.createHorizontalStrut(8));
 
 		txtSoLuongMua = TaoJtextNhanh.taoTextDonHang("Đã mua: " + item.getSoLuongMua(),
 				new Font("Segoe UI", Font.BOLD, 16), new Color(0x00796B), 150);
@@ -113,13 +112,12 @@ public class TraHangItemPanel extends JPanel {
 
 		infoBox.add(loBox);
 		add(infoBox);
-		add(Box.createHorizontalStrut(15));
 
 		// ===== ĐƠN VỊ (comboBox – có thể đổi DVT) =====
 		cboDonViTinh = new JComboBox<>();
+		cboDonViTinh.setPreferredSize(new Dimension(70, 30));
+		cboDonViTinh.setMaximumSize(new Dimension(70, 30));
 		cboDonViTinh.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		cboDonViTinh.setMaximumSize(new Dimension(80, 26)); // ép chiều cao nhỏ
-		cboDonViTinh.setPreferredSize(new Dimension(80, 26));
 		cboDonViTinh.setMinimumSize(new Dimension(80, 26));
 
 		// ===== LOAD TẤT CẢ DVT KHÔNG GIỚI HẠN =====
@@ -140,7 +138,13 @@ public class TraHangItemPanel extends JPanel {
 		}
 
 		add(cboDonViTinh);
-		add(Box.createHorizontalStrut(15));
+		lblQuyDoi = new JLabel();
+		lblQuyDoi.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+		lblQuyDoi.setPreferredSize(new Dimension(70, 30));
+		add(Box.createHorizontalStrut(3));
+		add(lblQuyDoi);
+
+		add(Box.createHorizontalStrut(5));
 
 		// ===== SỐ LƯỢNG TRẢ (+/-) =====
 		Box soLuongBox = Box.createHorizontalBox();
@@ -187,6 +191,16 @@ public class TraHangItemPanel extends JPanel {
 		add(txtThanhTien);
 		add(Box.createHorizontalGlue());
 
+		// ===== LÝ DO TRẢ (đặt ở dưới – không phá layout gốc) =====
+		txtLyDo = new JTextField("Lý do trả");
+		txtLyDo.setFont(new Font("Segoe UI", Font.ITALIC, 12));
+		txtLyDo.setForeground(Color.GRAY);
+		txtLyDo.setPreferredSize(new Dimension(85, 26));
+		txtLyDo.setMaximumSize(new Dimension(180, 26));
+
+		add(Box.createHorizontalStrut(10));
+		add(txtLyDo);
+
 		// ===== CLONE =====
 		btnClone = new JButton();
 		btnClone.setPreferredSize(new Dimension(40, 40));
@@ -217,15 +231,6 @@ public class TraHangItemPanel extends JPanel {
 		} catch (Exception ignored) {
 		}
 		add(btnXoa);
-
-		// ===== LÝ DO TRẢ (đặt ở dưới – không phá layout gốc) =====
-		txtLyDo = new JTextField("Lý do trả (không bắt buộc)");
-		txtLyDo.setFont(new Font("Segoe UI", Font.ITALIC, 12));
-		txtLyDo.setForeground(Color.GRAY);
-		txtLyDo.setMaximumSize(new Dimension(200, 26));
-
-		add(Box.createHorizontalStrut(15));
-		add(txtLyDo);
 
 		addEvents();
 	}
@@ -265,7 +270,7 @@ public class TraHangItemPanel extends JPanel {
 				isDangXuLy = false;
 			}
 		});
-		
+
 		txtSoLuongTra.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent e) {
@@ -349,18 +354,18 @@ public class TraHangItemPanel extends JPanel {
 			@Override
 			public void focusGained(FocusEvent e) {
 				// Xóa placeholder khi focus vào
-				if (txtLyDo.getText().equals("Lý do trả (không bắt buộc)") 
-					&& txtLyDo.getForeground().equals(Color.GRAY)) {
+				if (txtLyDo.getText().equals("Lý do trả (không bắt buộc)")
+						&& txtLyDo.getForeground().equals(Color.GRAY)) {
 					txtLyDo.setText("");
 					txtLyDo.setForeground(Color.BLACK);
 					txtLyDo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 				}
 			}
-			
+
 			@Override
 			public void focusLost(FocusEvent e) {
 				String text = txtLyDo.getText().trim();
-				
+
 				// Hiển thị lại placeholder nếu rỗng
 				if (text.isEmpty()) {
 					txtLyDo.setText("Lý do trả (không bắt buộc)");
@@ -457,8 +462,7 @@ public class TraHangItemPanel extends JPanel {
 		int slCu = item.getSoLuongTra();
 		try {
 			int slMoi = Integer.parseInt(txtSoLuongTra.getText().trim());
-			if (slMoi <= 0)
-			{
+			if (slMoi <= 0) {
 				JOptionPane.showMessageDialog(null, "Số lượng trả phải lớn hơn 0!", "Số lượng không hợp lệ",
 						JOptionPane.WARNING_MESSAGE);
 				txtSoLuongTra.setText(String.valueOf(slCu));
@@ -491,6 +495,20 @@ public class TraHangItemPanel extends JPanel {
 
 		// Panel chỉ HIỂN THỊ, không tự phân bổ nữa
 		txtSoLuongMua.setText("Đã mua: " + item.getSoLuongMuaTheoDVT());
+
+		// Cập nhật quy đổi (giống DonHangItemPanel)
+		if (item.getQuyCachDangChon() != null) {
+			int heSo = item.getQuyCachDangChon().getHeSoQuyDoi();
+			String dvGoc = item.getQuyCachDangChon().getDonViTinh().getTenDonViTinh();
+			// Tìm đơn vị gốc (hệ số = 1)
+			for (QuyCachDongGoi qc : item.getDsQuyCach()) {
+				if (qc.getHeSoQuyDoi() == 1) {
+					dvGoc = qc.getDonViTinh().getTenDonViTinh();
+					break;
+				}
+			}
+			lblQuyDoi.setText("x" + heSo + " " + dvGoc);
+		}
 
 		// notify gui cha để update tiền
 		if (listener != null)

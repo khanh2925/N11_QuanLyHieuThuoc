@@ -61,8 +61,8 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
 	private static final int MAX_RETURN_DAYS = 7;
-	private static final String PLACEHOLDER_TIM_HOA_DON = "Tìm hoá đơn theo mã (F1)";
-	private static final String PLACEHOLDER_TIM_KH = "Tìm hoá đơn theo SĐT khách hàng (F2)";
+	private static final String PLACEHOLDER_TIM_HOA_DON = "Tìm theo mã hoá đơn (F1)";
+	private static final String PLACEHOLDER_TIM_KH = "Tìm theo SĐT khách hàng (F2)";
 	private static final String REGEX_MA_HOA_DON = "^HD-\\d{8}-\\d{4}$";
 	private LocalDate today = LocalDate.now();
 	private double tienTra = 0;
@@ -98,6 +98,7 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 
 		// Thiết lập phím tắt
 		setupKeyboardShortcuts();
+		addFocusOnShow(); 
 	}
 
 	private void initialize() {
@@ -259,13 +260,8 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 
 		// ==== NÚT TRẢ HÀNG (GIỐNG BÁN HÀNG) ====
 		btnTraHang = TaoButtonNhanh.banHang();
-		btnTraHang.setText(
-				"<html>" +
-						"<center>" +
-						"TRẢ HÀNG<br>" +
-						"<span style='font-size:10px; color:#888888;'>(Ctrl + Enter)</span>" +
-						"</center>" +
-						"</html>");
+		btnTraHang.setText("<html>" + "<center>" + "TRẢ HÀNG<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(Ctrl + Enter)</span>" + "</center>" + "</html>");
 		btnTraHang.setAlignmentX(Component.CENTER_ALIGNMENT);
 		btnTraHang.setToolTipText("Xác nhận trả hàng (Ctrl+Enter)");
 		pnRight.add(btnTraHang);
@@ -273,7 +269,7 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 		pnRight.add(Box.createVerticalStrut(8));
 
 		// ==== LINK LÀM MỚI (NHẸ NHÀNG - GIỐNG BÁN HÀNG) ====
-		btnHuy = new JButton("Làm mới (F4)");
+		btnHuy = new JButton("Huỷ đơn (F4)");
 		btnHuy.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 		btnHuy.setForeground(new Color(120, 120, 120)); // Màu xám nhẹ
 		btnHuy.setBackground(new Color(250, 250, 250)); // Nền xám rất nhạt
@@ -703,21 +699,15 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 				chiTiet.append("Chi tiết trả:\n");
 				for (ItemTraHang it : dsTheoLo) {
 					int slGoc = it.getSoLuongTra() * it.getQuyCachDangChon().getHeSoQuyDoi();
-					chiTiet.append(String.format("  • %d %s = %d (gốc)\n",
-							it.getSoLuongTra(),
-							it.getQuyCachDangChon().getDonViTinh().getTenDonViTinh(),
-							slGoc));
+					chiTiet.append(String.format("  • %d %s = %d (gốc)\n", it.getSoLuongTra(),
+							it.getQuyCachDangChon().getDonViTinh().getTenDonViTinh(), slGoc));
 				}
 
 				JOptionPane.showMessageDialog(this,
-						"Sản phẩm: " + tenSP + "\n" +
-								"Lô: " + maLo + "\n\n" +
-								"Đã mua: " + daMuaGoc + " (gốc)\n" +
-								"Đã trả trước đó: " + (int) daTraGoc + " (gốc)\n\n" +
-								chiTiet.toString() +
-								"Tổng muốn trả: " + tongTraGoc + " (gốc)\n\n" +
-								"❌ Tổng vượt mức cho phép!\n" +
-								"Số lượng còn có thể trả: " + (daMuaGoc - (int) daTraGoc) + " (gốc)",
+						"Sản phẩm: " + tenSP + "\n" + "Lô: " + maLo + "\n\n" + "Đã mua: " + daMuaGoc + " (gốc)\n"
+								+ "Đã trả trước đó: " + (int) daTraGoc + " (gốc)\n\n" + chiTiet.toString()
+								+ "Tổng muốn trả: " + tongTraGoc + " (gốc)\n\n" + "❌ Tổng vượt mức cho phép!\n"
+								+ "Số lượng còn có thể trả: " + (daMuaGoc - (int) daTraGoc) + " (gốc)",
 						"Vượt số lượng", JOptionPane.ERROR_MESSAGE);
 				return;
 			}
@@ -726,8 +716,8 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 			if (daTraGoc >= daMuaGoc) {
 				String tenSP = dsTheoLo.get(0).getTenSanPham();
 				JOptionPane.showMessageDialog(this,
-						"Sản phẩm " + tenSP + " (Lô: " + maLo + ") đã được trả đủ.\nKhông thể trả thêm!",
-						"Đã trả hết", JOptionPane.WARNING_MESSAGE);
+						"Sản phẩm " + tenSP + " (Lô: " + maLo + ") đã được trả đủ.\nKhông thể trả thêm!", "Đã trả hết",
+						JOptionPane.WARNING_MESSAGE);
 				return;
 			}
 		}
@@ -865,17 +855,16 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (dsTraHang.isEmpty()) {
-					JOptionPane.showMessageDialog(TraHangNhanVien_GUI.this,
-							"Đơn trả hàng trống!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+					JOptionPane.showMessageDialog(TraHangNhanVien_GUI.this, "Đơn trả hàng trống!", "Thông báo",
+							JOptionPane.INFORMATION_MESSAGE);
 					return;
 				}
 				int confirm = JOptionPane.showConfirmDialog(TraHangNhanVien_GUI.this,
-						"Bạn có chắc muốn huỷ bỏ đơn trả hàng?", "Xác nhận",
-						JOptionPane.YES_NO_OPTION);
+						"Bạn có chắc muốn huỷ bỏ đơn trả hàng?", "Xác nhận", JOptionPane.YES_NO_OPTION);
 				if (confirm == JOptionPane.YES_OPTION) {
 					resetForm();
-					JOptionPane.showMessageDialog(TraHangNhanVien_GUI.this,
-							"Đã làm mới form!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+					JOptionPane.showMessageDialog(TraHangNhanVien_GUI.this, "Đã làm mới form!", "Thành công",
+							JOptionPane.INFORMATION_MESSAGE);
 				}
 			}
 		});
@@ -910,6 +899,17 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 			public void actionPerformed(ActionEvent e) {
 				txtTimHoaDon.requestFocus();
 				txtTimHoaDon.selectAll();
+			}
+		});
+	}
+
+	private void addFocusOnShow() {
+		addHierarchyListener(e -> {
+			if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+				SwingUtilities.invokeLater(() -> {
+					txtTimHoaDon.requestFocusInWindow();
+					txtTimHoaDon.selectAll();
+				});
 			}
 		});
 	}

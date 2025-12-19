@@ -67,21 +67,10 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		setPreferredSize(new Dimension(1537, 850));
 		initialize();
 		setupKeyboardShortcuts(); // Thiết lập phím tắt
+		addFocusOnShow();
 		loadDataKhuyenMai();
 		lamMoiForm(); // sinh mã mới ngay từ đầu
 		capNhatTrangThaiNut(); // Cập nhật hiển thị nút theo chọn dòng
-
-		// Focus vào txtTimKiem khi panel được hiển thị
-		addComponentListener(new ComponentAdapter() {
-			@Override
-			public void componentShown(ComponentEvent e) {
-				SwingUtilities.invokeLater(() -> {
-					txtTimKiem.setText("");
-					PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm KM theo mã, tên chương trình (F1 / Ctrl+F)");
-					txtTimKiem.requestFocusInWindow();
-				});
-			}
-		});
 	}
 
 	// ====================== BUILD UI ======================
@@ -531,6 +520,16 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 		});
 	}
 
+	private void addFocusOnShow() {
+		addHierarchyListener(e -> {
+			if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+				SwingUtilities.invokeLater(() -> {
+					txtTimKiem.requestFocusInWindow();
+					txtTimKiem.selectAll();
+				});
+			}
+		});
+	}
 	// ---------- CRUD KM ----------
 
 	private void xuLyThem() {
@@ -786,7 +785,7 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 
 		txtGiaTri.setForeground(Color.BLACK);
 		txtGiaTri.setText(removeGrouping(dfNumber.format(km.getGiaTri())));
-		
+
 		txtDieuKien.setForeground(Color.BLACK);
 		txtDieuKien.setText(removeGrouping(dfNumber.format(km.getDieuKienApDungHoaDon())));
 
