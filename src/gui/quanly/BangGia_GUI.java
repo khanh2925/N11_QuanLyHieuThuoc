@@ -97,6 +97,7 @@ public class BangGia_GUI extends JPanel implements ActionListener,MouseListener 
         
         initialize();
         setupKeyboardShortcuts(); // Thiết lập phím tắt
+        addFocusOnShow(); // Tự động focus ô tìm kiếm khi hiển thị
     }
 
     private void initialize() {
@@ -419,6 +420,7 @@ public class BangGia_GUI extends JPanel implements ActionListener,MouseListener 
         txtGiaDen = new JTextField(10);
         PlaceholderSupport.addPlaceholder(txtGiaDen, "Nhập giá đến (F3)");
         txtGiaDen.setToolTipText("<html><b>Phím tắt:</b> F3<br>Nhập giá kết thúc của khoảng (VD: 100000)<br>Nhấn Enter để nhảy sang Tỉ lệ</html>");
+        txtGiaDen.setForeground(Color.BLACK);
         pnToolBar.add(txtGiaDen);
         
         // 3. Checkbox "Trở lên"
@@ -430,9 +432,15 @@ public class BangGia_GUI extends JPanel implements ActionListener,MouseListener 
         chkKhoangCuoi.addActionListener(e -> {
             if (chkKhoangCuoi.isSelected()) {
                 txtGiaDen.setText("∞");
+                txtGiaDen.setFont(new Font("Segoe UI", Font.BOLD, 28)); // Font lớn hơn cho ký tự vô cực
+                txtGiaDen.setForeground(Color.BLACK); // Màu đen
+                txtGiaDen.setHorizontalAlignment(JTextField.CENTER); // Căn giữa
                 txtGiaDen.setEnabled(false);
             } else {
                 txtGiaDen.setText("");
+                txtGiaDen.setFont(new Font("Segoe UI", Font.PLAIN, 14)); // Font bình thường
+                txtGiaDen.setForeground(Color.BLACK);
+                txtGiaDen.setHorizontalAlignment(JTextField.LEFT); // Căn trái
                 txtGiaDen.setEnabled(true);
                 txtGiaDen.requestFocus();
             }
@@ -444,6 +452,7 @@ public class BangGia_GUI extends JPanel implements ActionListener,MouseListener 
         txtTiLe = new JTextField(7);
         PlaceholderSupport.addPlaceholder(txtTiLe, "Nhập tỉ lệ (F4)");
         txtTiLe.setToolTipText("<html><b>Phím tắt:</b> F4<br>Nhập tỉ lệ định giá (VD: 1.2 = bán gấp 1.2 lần giá vốn)<br>Nhấn Enter để thêm quy tắc vào bảng</html>");
+        txtTiLe.setForeground(Color.BLACK);
         pnToolBar.add(txtTiLe);
 
         // 5. Nút Thêm (F7)
@@ -793,6 +802,9 @@ public class BangGia_GUI extends JPanel implements ActionListener,MouseListener 
         
         if (ct.getGiaDen() == Double.MAX_VALUE) {
             txtGiaDen.setText("∞");
+            txtGiaDen.setFont(new Font("Segoe UI", Font.BOLD, 28));
+            txtGiaDen.setForeground(Color.BLACK);
+            txtGiaDen.setHorizontalAlignment(JTextField.CENTER);
             txtGiaDen.setEnabled(false);
             chkKhoangCuoi.setSelected(true);
         } else {
@@ -1237,6 +1249,9 @@ public class BangGia_GUI extends JPanel implements ActionListener,MouseListener 
 
         if (ct.getGiaDen() == Double.MAX_VALUE) {
             txtGiaDen.setText("∞");
+            txtGiaDen.setFont(new Font("Segoe UI", Font.BOLD, 28));
+            txtGiaDen.setForeground(Color.BLACK);
+            txtGiaDen.setHorizontalAlignment(JTextField.CENTER);
             chkKhoangCuoi.setSelected(true);
             // Khóa tất cả các ô input vì đây là dòng cuối
             txtGiaDen.setEnabled(false); 
@@ -1501,6 +1516,21 @@ public class BangGia_GUI extends JPanel implements ActionListener,MouseListener 
             }
         });
     }
+
+    /**
+     * Tự động focus vào ô tìm kiếm khi panel được hiển thị
+     */
+    private void addFocusOnShow() {
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+                SwingUtilities.invokeLater(() -> {
+                    txtTimKiem.requestFocusInWindow();
+                    txtTimKiem.selectAll();
+                });
+            }
+        });
+    }
+
     /** ✅ Reset form input sau khi lưu sửa - GIỮ NGUYÊN dữ liệu */
     private void resetInputFormSauKhiLuu() {
         // Tính lại nextStartPrice dựa trên quy tắc cuối cùng

@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.HierarchyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
@@ -78,6 +79,7 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
         taiDuLieuPhieuNhap();
         dangKySuKien();
         setupKeyboardShortcuts();
+        addFocusOnShow();
     }
 
     private void taoPhanDau() {
@@ -318,6 +320,17 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
 
         // Enter trên ô tìm kiếm
         txtTimKiem.addActionListener(ev -> xuLyTimKiem());
+    }
+
+    private void addFocusOnShow() {
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+                SwingUtilities.invokeLater(() -> {
+                    txtTimKiem.requestFocusInWindow();
+                    txtTimKiem.selectAll();
+                });
+            }
+        });
     }
 
     @Override

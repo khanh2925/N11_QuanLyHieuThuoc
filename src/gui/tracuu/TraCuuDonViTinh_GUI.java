@@ -10,6 +10,7 @@ import entity.QuyCachDongGoi;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.HierarchyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
@@ -51,6 +52,7 @@ public class TraCuuDonViTinh_GUI extends JPanel implements ActionListener, Mouse
         setPreferredSize(new Dimension(1537, 850));
         initialize();
         setupKeyboardShortcuts();
+        addFocusOnShow(); // Tự động focus ô tìm kiếm khi hiển thị
     }
 
     private void initialize() {
@@ -250,6 +252,20 @@ private void taoPhanGiua() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 xuLyTimKiem();
+            }
+        });
+    }
+
+    /**
+     * Tự động focus vào ô tìm kiếm khi panel được hiển thị
+     */
+    private void addFocusOnShow() {
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+                SwingUtilities.invokeLater(() -> {
+                    txtTimKiem.requestFocusInWindow();
+                    txtTimKiem.selectAll();
+                });
             }
         });
     }
