@@ -21,7 +21,7 @@ public class ChiTietPhieuHuy_DAO {
 	// ============================================================
 	public List<ChiTietPhieuHuy> timKiemChiTietPhieuHuyBangMa(String maPhieuHuy) {
 		List<ChiTietPhieuHuy> ds = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -105,7 +105,7 @@ public class ChiTietPhieuHuy_DAO {
 	// 🔄 Cập nhật trạng thái chi tiết
 	// ============================================================
 	public boolean capNhatTrangThaiChiTiet(String maPhieuHuy, String maLo, int trangThaiMoi) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sqlUpdateTrangThai = "UPDATE ChiTietPhieuHuy SET TrangThai = ? WHERE MaPhieuHuy = ? AND MaLo = ?";
@@ -130,7 +130,8 @@ public class ChiTietPhieuHuy_DAO {
 				ps.executeUpdate();
 			}
 
-			// 2️⃣ Nếu trạng thái mới = 2 (HỦY HÀNG) → KHÔNG làm gì (đã trừ tồn khi tạo phiếu)
+			// 2️⃣ Nếu trạng thái mới = 2 (HỦY HÀNG) → KHÔNG làm gì (đã trừ tồn khi tạo
+			// phiếu)
 
 			// 3️⃣ Nếu trạng thái mới = 3 (TỪ CHỐI HỦY) → CỘNG LẠI TỒN KHO
 			if (trangThaiMoi == 3) {
@@ -164,7 +165,7 @@ public class ChiTietPhieuHuy_DAO {
 	// 🗑️ Xoá chi tiết (và hoàn tồn nếu cần)
 	// ============================================================
 	public boolean xoaChiTietPhieuHuy(ChiTietPhieuHuy ct) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sqlDelete = "DELETE FROM ChiTietPhieuHuy WHERE MaPhieuHuy = ? AND MaLo = ?";
@@ -211,7 +212,7 @@ public class ChiTietPhieuHuy_DAO {
 	// ✅ Kiểm tra tất cả chi tiết đã xử lý chưa
 	// ============================================================
 	public boolean tatCaChiTietDaXuLy(String maPhieuHuy) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """

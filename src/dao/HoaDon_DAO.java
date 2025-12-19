@@ -376,7 +376,7 @@ public class HoaDon_DAO {
     // ➕ Thêm hóa đơn
     // ============================================================
     public boolean themHoaDon(HoaDon hd) {
-        connectDB.getInstance();
+
         Connection con = connectDB.getConnection();
         PreparedStatement stmtHD = null;
         PreparedStatement stmtCTHD = null;
@@ -483,7 +483,7 @@ public class HoaDon_DAO {
     // 🧾 Tạo mã hóa đơn
     // ============================================================
     public String taoMaHoaDon() {
-        connectDB.getInstance();
+
         Connection con = connectDB.getConnection();
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -645,7 +645,7 @@ public class HoaDon_DAO {
      * @return Tổng doanh thu trong tháng đó
      */
     public double layDoanhThuTheoThang(int thang, int nam) {
-        connectDB.getInstance();
+
         Connection con = connectDB.getConnection();
 
         String sql = """
@@ -700,7 +700,7 @@ public class HoaDon_DAO {
      * @return Số lượng hóa đơn
      */
     public int demSoHoaDonTheoThang(int thang, int nam) {
-        connectDB.getInstance();
+
         Connection con = connectDB.getConnection();
 
         String sql = """

@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class connectDB {
-	public static Connection con = null;
+	private static Connection con = null;
 	private static connectDB instance = new connectDB();
 
 	public static connectDB getInstance() {
@@ -13,15 +13,20 @@ public class connectDB {
 	}
 
 	public void connect() throws SQLException {
+		// Prevent re-connecting if already connected
+		if (con != null && !con.isClosed()) {
+			return;
+		}
+
 		try {
 			String url = "jdbc:sqlserver://localhost:1433;databaseName=QuanLyHieuThuoc;";
 			String user = "sa";
 			String password = "sapassword";
 			con = DriverManager.getConnection(url, user, password);
-			System.out.println("Kết nối thành công!");
+			// System.out.println("Kết nối thành công!"); // Silenced to reduce noise
 		} catch (SQLException e) {
 			System.err.println("Lỗi kết nối SQL Server: " + e.getMessage());
-			throw e; // Ném lại ngoại lệ để lớp gọi xử lý
+			throw e;
 		}
 	}
 
@@ -32,15 +37,16 @@ public class connectDB {
 				System.out.println("Ngắt kết nối thành công!");
 			} catch (SQLException e) {
 				e.printStackTrace();
+			} finally {
+				con = null; // Ensure reference is cleared
 			}
 		}
 	}
 
 	public static Connection getConnection() {
 		try {
-			// Kiểm tra nếu kết nối null hoặc đã đóng
 			if (con == null || con.isClosed()) {
-				getInstance().connect(); // Tạo kết nối mới
+				getInstance().connect();
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();

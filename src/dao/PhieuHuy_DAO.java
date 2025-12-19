@@ -28,7 +28,7 @@ public class PhieuHuy_DAO {
 
 		// 2. Nếu không có cache -> Query DB với JOIN
 		List<PhieuHuy> list = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -198,7 +198,6 @@ public class PhieuHuy_DAO {
 	public int demPhieuHuyChuaDuyet() {
 		String sql = "SELECT COUNT(*) AS SoLuong FROM PhieuHuy WHERE TrangThai = 0";
 
-		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 		Statement st = null;
 		ResultSet rs = null;
@@ -242,7 +241,6 @@ public class PhieuHuy_DAO {
 				WHERE MONTH(NgayLapPhieu) = ? AND YEAR(NgayLapPhieu) = ?
 				""";
 
-		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -278,7 +276,7 @@ public class PhieuHuy_DAO {
 	// 🔍 Lấy phiếu huỷ theo mã (OPTIMIZED - dùng JOIN)
 	// ============================================================
 	public PhieuHuy layTheoMa(String maPhieuHuy) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -349,7 +347,7 @@ public class PhieuHuy_DAO {
 	// ➕ Thêm phiếu huỷ + chi tiết (Transaction) + TRỪ TỒN KHO
 	// ============================================================
 	public boolean themPhieuHuy(PhieuHuy ph) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		if (ph.getChiTietPhieuHuyList() != null) {
@@ -439,8 +437,11 @@ public class PhieuHuy_DAO {
 	// ============================================================
 	// 🔄 Cập nhật trạng thái phiếu (true=đã duyệt, false=chờ duyệt)
 	// ============================================================
+	// ============================================================
+	// 🔄 Cập nhật trạng thái phiếu (true=đã duyệt, false=chờ duyệt)
+	// ============================================================
 	public boolean capNhatTrangThai(String maPhieuHuy, boolean trangThaiMoi) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = "UPDATE PhieuHuy SET TrangThai = ? WHERE MaPhieuHuy = ?";
@@ -450,7 +451,18 @@ public class PhieuHuy_DAO {
 			ps = con.prepareStatement(sql);
 			ps.setBoolean(1, trangThaiMoi);
 			ps.setString(2, maPhieuHuy);
-			return ps.executeUpdate() > 0;
+			boolean result = ps.executeUpdate() > 0;
+
+			// ✅ Cập nhật cache trực tiếp
+			if (result && cacheAllPhieuHuy != null) {
+				for (PhieuHuy ph : cacheAllPhieuHuy) {
+					if (ph.getMaPhieuHuy().equals(maPhieuHuy)) {
+						ph.setTrangThai(trangThaiMoi);
+						break;
+					}
+				}
+			}
+			return result;
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return false;
@@ -479,7 +491,7 @@ public class PhieuHuy_DAO {
 	 * 🔹 Tạo mã tự động PH-yyyyMMdd-xxxx (độ dài 16 ký tự khớp CHECK + CHAR(16))
 	 */
 	public String taoMaPhieuHuy() {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 		String prefix = "PH-" + date + "-";
@@ -515,7 +527,7 @@ public class PhieuHuy_DAO {
 	// 🗑️ Xoá phiếu huỷ (xoá cả chi tiết)
 	// ============================================================
 	public boolean xoa(String maPhieuHuy) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sqlCT = "DELETE FROM ChiTietPhieuHuy WHERE MaPhieuHuy = ?";
@@ -535,6 +547,12 @@ public class PhieuHuy_DAO {
 			}
 
 			con.commit();
+
+			// ✅ Xóa khỏi cache
+			if (cacheAllPhieuHuy != null) {
+				cacheAllPhieuHuy.removeIf(ph -> ph.getMaPhieuHuy().equals(maPhieuHuy));
+			}
+
 			return true;
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -575,7 +593,7 @@ public class PhieuHuy_DAO {
 
 	// Đếm số PH của nhân viên đã lập trong ngày hiện tại.
 	public int demSoPhieuHuyHomNayCuaNhanVien(String maNhanVien) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """

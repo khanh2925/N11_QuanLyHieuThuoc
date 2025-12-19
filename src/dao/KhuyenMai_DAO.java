@@ -14,10 +14,22 @@ public class KhuyenMai_DAO {
 	public KhuyenMai_DAO() {
 	}
 
+	// CACHE LAYER
+	private static List<KhuyenMai> cacheAllKhuyenMai = null;
+
 	/** 🔹 Tìm khuyến mãi theo mã */
 	public KhuyenMai timKhuyenMaiTheoMa(String maKM) {
+		// 1. Check Cache
+		if (cacheAllKhuyenMai != null) {
+			for (KhuyenMai km : cacheAllKhuyenMai) {
+				if (km.getMaKM().equals(maKM)) {
+					return km;
+				}
+			}
+		}
+
 		try {
-			connectDB.getInstance();
+
 			Connection con = connectDB.getConnection();
 			String sql = "SELECT * FROM KhuyenMai WHERE MaKM = ?";
 			try (PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -36,15 +48,22 @@ public class KhuyenMai_DAO {
 
 	/** 🔹 Lấy tất cả khuyến mãi */
 	public List<KhuyenMai> layTatCaKhuyenMai() {
+		// Check Cache
+		if (cacheAllKhuyenMai != null) {
+			return new ArrayList<>(cacheAllKhuyenMai);
+		}
+
 		List<KhuyenMai> ds = new ArrayList<>();
 		try {
-			connectDB.getInstance();
+
 			Connection con = connectDB.getConnection();
 			String sql = "SELECT * FROM KhuyenMai ORDER BY NgayBatDau DESC";
 			try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
 				while (rs.next()) {
 					ds.add(taoKhuyenMaiTuResultSet(rs));
 				}
+				// Save to Cache
+				cacheAllKhuyenMai = new ArrayList<>(ds);
 			}
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi lấy tất cả khuyến mãi: " + e.getMessage());
@@ -54,7 +73,7 @@ public class KhuyenMai_DAO {
 
 	/** 🔹 Thêm khuyến mãi */
 	public boolean themKhuyenMai(KhuyenMai km) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String sql = """
 				    INSERT INTO KhuyenMai (MaKM, TenKM, NgayBatDau, NgayKetThuc, TrangThai, KhuyenMaiHoaDon,
@@ -64,7 +83,13 @@ public class KhuyenMai_DAO {
 
 		try (PreparedStatement stmt = con.prepareStatement(sql)) {
 			ganGiaTriKhuyenMai(stmt, km);
-			return stmt.executeUpdate() > 0;
+			boolean result = stmt.executeUpdate() > 0;
+
+			// ✅ Update Cache
+			if (result && cacheAllKhuyenMai != null) {
+				cacheAllKhuyenMai.add(0, km);
+			}
+			return result;
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi thêm khuyến mãi: " + e.getMessage());
 		}
@@ -73,7 +98,7 @@ public class KhuyenMai_DAO {
 
 	/** 🔹 Cập nhật khuyến mãi */
 	public boolean capNhatKhuyenMai(KhuyenMai km) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String sql = """
 				    UPDATE KhuyenMai
@@ -93,7 +118,18 @@ public class KhuyenMai_DAO {
 			stmt.setDouble(8, km.getDieuKienApDungHoaDon());
 			stmt.setInt(9, km.getSoLuongKhuyenMai());
 			stmt.setString(10, km.getMaKM());
-			return stmt.executeUpdate() > 0;
+			boolean result = stmt.executeUpdate() > 0;
+
+			// ✅ Update Cache directly
+			if (result && cacheAllKhuyenMai != null) {
+				for (int i = 0; i < cacheAllKhuyenMai.size(); i++) {
+					if (cacheAllKhuyenMai.get(i).getMaKM().equals(km.getMaKM())) {
+						cacheAllKhuyenMai.set(i, km);
+						break;
+					}
+				}
+			}
+			return result;
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi cập nhật khuyến mãi: " + e.getMessage());
 		}
@@ -104,11 +140,22 @@ public class KhuyenMai_DAO {
 	public boolean giamSoLuong(String maKM) {
 		String sql = "UPDATE KhuyenMai SET SoLuongKhuyenMai = SoLuongKhuyenMai - 1 WHERE MaKM = ? AND SoLuongKhuyenMai > 0";
 		try {
-			connectDB.getInstance();
+
 			Connection con = connectDB.getConnection();
 			try (PreparedStatement ps = con.prepareStatement(sql)) {
 				ps.setString(1, maKM);
-				return ps.executeUpdate() > 0;
+				boolean result = ps.executeUpdate() > 0;
+
+				// ✅ Update Cache (decrease quantity by 1)
+				if (result && cacheAllKhuyenMai != null) {
+					for (KhuyenMai km : cacheAllKhuyenMai) {
+						if (km.getMaKM().equals(maKM)) {
+							km.setSoLuongKhuyenMai(km.getSoLuongKhuyenMai() - 1);
+							break;
+						}
+					}
+				}
+				return result;
 			}
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi giảm số lượng khuyến mãi: " + e.getMessage());
@@ -118,6 +165,24 @@ public class KhuyenMai_DAO {
 
 	/** 🔹 Lấy danh sách khuyến mãi đang hoạt động */
 	public List<KhuyenMai> layKhuyenMaiDangHoatDong() {
+		// 💡 Use Cache Logic
+		if (cacheAllKhuyenMai != null) {
+			List<KhuyenMai> ds = new ArrayList<>();
+			LocalDate today = LocalDate.now();
+			for (KhuyenMai km : cacheAllKhuyenMai) {
+				// TrangThai = 1
+				// AND GETDATE() BETWEEN NgayBatDau AND NgayKetThuc
+				// AND SoLuongKhuyenMai > 0
+				if (km.isTrangThai() &&
+						(today.isEqual(km.getNgayBatDau()) || today.isAfter(km.getNgayBatDau())) &&
+						(today.isEqual(km.getNgayKetThuc()) || today.isBefore(km.getNgayKetThuc())) &&
+						km.getSoLuongKhuyenMai() > 0) {
+					ds.add(km);
+				}
+			}
+			return ds;
+		}
+
 		List<KhuyenMai> ds = new ArrayList<>();
 		String sql = """
 				    SELECT * FROM KhuyenMai
@@ -127,7 +192,7 @@ public class KhuyenMai_DAO {
 				    ORDER BY NgayBatDau DESC
 				""";
 		try {
-			connectDB.getInstance();
+
 			Connection con = connectDB.getConnection();
 			try (Statement st = con.createStatement(); ResultSet rs = st.executeQuery(sql)) {
 				while (rs.next())
@@ -165,7 +230,7 @@ public class KhuyenMai_DAO {
 
 	/** 🔹 Sinh mã tự động theo định dạng: KM-yyyyMMdd-xxxx */
 	public String taoMaKhuyenMai() {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		LocalDate homNay = LocalDate.now();
@@ -181,7 +246,7 @@ public class KhuyenMai_DAO {
 					String maMax = rs.getString("MaLonNhat");
 					String[] parts = maMax.split("-");
 					if (parts.length == 3) {
-					    soThuTu = Integer.parseInt(parts[2].trim()) + 1;
+						soThuTu = Integer.parseInt(parts[2].trim()) + 1;
 					}
 				}
 				return prefix + String.format("%04d", soThuTu);
@@ -207,7 +272,7 @@ public class KhuyenMai_DAO {
 
 	/** 🔹 Xóa khuyến mãi theo mã */
 	public boolean xoaKhuyenMai(String maKM) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = "DELETE FROM KhuyenMai WHERE MaKM = ?";

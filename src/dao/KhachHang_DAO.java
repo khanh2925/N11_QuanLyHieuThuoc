@@ -13,10 +13,17 @@ public class KhachHang_DAO {
 	public KhachHang_DAO() {
 	}
 
+	// CACHE LAYER
+	private static ArrayList<KhachHang> cacheAllKhachHang = null;
+
 	/** 🔹 Lấy toàn bộ khách hàng */
 	public ArrayList<KhachHang> layTatCaKhachHang() {
+		if (cacheAllKhachHang != null) {
+			return new ArrayList<>(cacheAllKhachHang);
+		}
+
 		ArrayList<KhachHang> danhSach = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = "SELECT * FROM KhachHang";
@@ -25,6 +32,8 @@ public class KhachHang_DAO {
 			while (rs.next()) {
 				danhSach.add(taoKhachHangTuResultSet(rs));
 			}
+			// Update cache
+			cacheAllKhachHang = new ArrayList<>(danhSach);
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi lấy danh sách khách hàng: " + e.getMessage());
 		}
@@ -33,7 +42,7 @@ public class KhachHang_DAO {
 
 	/** 🔹 Thêm khách hàng mới */
 	public boolean themKhachHang(KhachHang kh) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -48,7 +57,13 @@ public class KhachHang_DAO {
 			stmt.setString(4, kh.getSoDienThoai());
 			stmt.setDate(5, kh.getNgaySinh() != null ? Date.valueOf(kh.getNgaySinh()) : null);
 			stmt.setBoolean(6, kh.isHoatDong());
-			return stmt.executeUpdate() > 0;
+			boolean result = stmt.executeUpdate() > 0;
+
+			// ✅ Update Cache
+			if (result && cacheAllKhachHang != null) {
+				cacheAllKhachHang.add(kh);
+			}
+			return result;
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi thêm khách hàng: " + e.getMessage());
 		}
@@ -57,7 +72,7 @@ public class KhachHang_DAO {
 
 	/** 🔹 Cập nhật thông tin khách hàng */
 	public boolean capNhatKhachHang(KhachHang kh) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -73,7 +88,18 @@ public class KhachHang_DAO {
 			stmt.setDate(4, kh.getNgaySinh() != null ? Date.valueOf(kh.getNgaySinh()) : null);
 			stmt.setBoolean(5, kh.isHoatDong());
 			stmt.setString(6, kh.getMaKhachHang());
-			return stmt.executeUpdate() > 0;
+			boolean result = stmt.executeUpdate() > 0;
+
+			// ✅ Update Cache directly
+			if (result && cacheAllKhachHang != null) {
+				for (int i = 0; i < cacheAllKhachHang.size(); i++) {
+					if (cacheAllKhachHang.get(i).getMaKhachHang().equals(kh.getMaKhachHang())) {
+						cacheAllKhachHang.set(i, kh);
+						break;
+					}
+				}
+			}
+			return result;
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi cập nhật khách hàng: " + e.getMessage());
 		}
@@ -82,14 +108,20 @@ public class KhachHang_DAO {
 
 	/** 🔹 Xóa khách hàng */
 	public boolean xoaKhachHang(String maKhachHang) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = "DELETE FROM KhachHang WHERE MaKhachHang = ?";
 
 		try (PreparedStatement stmt = con.prepareStatement(sql)) {
 			stmt.setString(1, maKhachHang);
-			return stmt.executeUpdate() > 0;
+			boolean result = stmt.executeUpdate() > 0;
+
+			// ✅ Remove from Cache
+			if (result && cacheAllKhachHang != null) {
+				cacheAllKhachHang.removeIf(kh -> kh.getMaKhachHang().equals(maKhachHang));
+			}
+			return result;
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi xóa khách hàng: " + e.getMessage());
 		}
@@ -99,7 +131,21 @@ public class KhachHang_DAO {
 	/** 🔹 Tìm khách hàng theo mã / tên / SĐT (LIKE gần đúng) */
 	public ArrayList<KhachHang> timKhachHang(String tuKhoa) {
 		ArrayList<KhachHang> danhSach = new ArrayList<>();
-		connectDB.getInstance();
+
+		// 💡 OPTIMIZE: Search in Cache first if loaded
+		if (cacheAllKhachHang != null) {
+			String key = tuKhoa.trim().toLowerCase();
+			for (KhachHang kh : cacheAllKhachHang) {
+				if (kh.getMaKhachHang().toLowerCase().contains(key) ||
+						kh.getTenKhachHang().toLowerCase().contains(key) ||
+						kh.getSoDienThoai().contains(key)) {
+					danhSach.add(kh);
+				}
+			}
+			if (!danhSach.isEmpty())
+				return danhSach;
+		}
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -128,10 +174,19 @@ public class KhachHang_DAO {
 
 	/** 🔹 Tìm khách hàng đang hoạt động */
 	public ArrayList<KhachHang> timKhachHangHoatDong() {
-		ArrayList<KhachHang> danhSach = new ArrayList<>();
-		connectDB.getInstance();
-		Connection con = connectDB.getConnection();
+		// 💡 Use Cache
+		if (cacheAllKhachHang != null) {
+			ArrayList<KhachHang> result = new ArrayList<>();
+			for (KhachHang kh : cacheAllKhachHang) {
+				if (kh.isHoatDong()) {
+					result.add(kh);
+				}
+			}
+			return result;
+		}
 
+		ArrayList<KhachHang> danhSach = new ArrayList<>();
+		Connection con = connectDB.getConnection();
 		String sql = "SELECT * FROM KhachHang WHERE HoatDong = 1";
 
 		try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
@@ -146,7 +201,15 @@ public class KhachHang_DAO {
 
 	/** 🔹 Tìm khách hàng chính xác theo mã (dùng cho các DAO khác) */
 	public KhachHang timKhachHangTheoMa(String maKhachHang) {
-		connectDB.getInstance();
+		// 💡 Check Cache First
+		if (cacheAllKhachHang != null) {
+			for (KhachHang kh : cacheAllKhachHang) {
+				if (kh.getMaKhachHang().equals(maKhachHang)) {
+					return kh;
+				}
+			}
+		}
+
 		Connection con = connectDB.getConnection();
 		String sql = "SELECT * FROM KhachHang WHERE MaKhachHang = ?";
 
@@ -156,7 +219,6 @@ public class KhachHang_DAO {
 			try (ResultSet rs = stmt.executeQuery()) {
 				if (rs.next()) {
 					KhachHang cc = taoKhachHangTuResultSet(rs);
-					System.out.println(cc);
 					return cc;
 				}
 			}
@@ -173,7 +235,15 @@ public class KhachHang_DAO {
 			return null;
 		}
 
-		connectDB.getInstance();
+		// 💡 Check Cache First
+		if (cacheAllKhachHang != null) {
+			for (KhachHang kh : cacheAllKhachHang) {
+				if (kh.getSoDienThoai().equals(soDienThoai.trim()) && kh.isHoatDong()) {
+					return kh;
+				}
+			}
+		}
+
 		Connection con = connectDB.getConnection();
 
 		String sql = "SELECT * FROM KhachHang WHERE SoDienThoai = ? AND HoatDong = 1";
@@ -206,80 +276,83 @@ public class KhachHang_DAO {
 		KhachHang kh = new KhachHang(ma, ten, gt, sdt, ns, hoatDong);
 		return kh;
 	}
+
 	/** 🔹 Phát sinh mã khách hàng tiếp theo dạng KH-yyyymmdd-xxxx */
 	public String phatSinhMaKhachHangTiepTheo() {
-	    connectDB.getInstance();
-	    Connection con = connectDB.getConnection();
 
-	    LocalDate today = LocalDate.now();
-	    String ngayStr = today.format(DateTimeFormatter.BASIC_ISO_DATE); // yyyymmdd
-	    String prefix = "KH-" + ngayStr + "-";                           // KH-20251123-
+		Connection con = connectDB.getConnection();
 
-	    String sql = "SELECT MAX(MaKhachHang) AS MaxMa FROM KhachHang WHERE MaKhachHang LIKE ?";
+		LocalDate today = LocalDate.now();
+		String ngayStr = today.format(DateTimeFormatter.BASIC_ISO_DATE); // yyyymmdd
+		String prefix = "KH-" + ngayStr + "-"; // KH-20251123-
 
-	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
-	        stmt.setString(1, prefix + "%");
+		String sql = "SELECT MAX(MaKhachHang) AS MaxMa FROM KhachHang WHERE MaKhachHang LIKE ?";
 
-	        try (ResultSet rs = stmt.executeQuery()) {
-	            int next = 1;
-	            if (rs.next()) {
-	                String maxMa = rs.getString("MaxMa");
-	                if (maxMa != null) {
-	                    // 🟢 LẤY PHẦN SỐ SAU DẤU '-' VÀ TRIM KHOẢNG TRẮNG
-	                    String sttStr = maxMa.substring(maxMa.lastIndexOf('-') + 1).trim();
-	                    try {
-	                        next = Integer.parseInt(sttStr) + 1;
-	                    } catch (NumberFormatException e) {
-	                        next = 1; // nếu lỡ format lạ thì quay về 0001
-	                    }
-	                }
-	            }
-	            return prefix + String.format("%04d", next);
-	        }
-	    } catch (SQLException e) {
-	        System.err.println("❌ Lỗi phát sinh mã khách hàng: " + e.getMessage());
-	    }
-	    return null;
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setString(1, prefix + "%");
+
+			try (ResultSet rs = stmt.executeQuery()) {
+				int next = 1;
+				if (rs.next()) {
+					String maxMa = rs.getString("MaxMa");
+					if (maxMa != null) {
+						// 🟢 LẤY PHẦN SỐ SAU DẤU '-' VÀ TRIM KHOẢNG TRẮNG
+						String sttStr = maxMa.substring(maxMa.lastIndexOf('-') + 1).trim();
+						try {
+							next = Integer.parseInt(sttStr) + 1;
+						} catch (NumberFormatException e) {
+							next = 1; // nếu lỡ format lạ thì quay về 0001
+						}
+					}
+				}
+				return prefix + String.format("%04d", next);
+			}
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi phát sinh mã khách hàng: " + e.getMessage());
+		}
+		return null;
 	}
 
 	// ========== PHẦN THỐNG KÊ CHO DASHBOARD ==========
-	
-		/**
-		 * Đếm số khách hàng mới trong tháng
-		 * @param thang Tháng (1-12)
-		 * @param nam Năm
-		 * @return Số lượng khách hàng mới
-		 */
-		public int demKhachHangMoiTheoThang(int thang, int nam) {
-		    connectDB.getInstance();
-		    Connection con = connectDB.getConnection();
-		    
-		    // Giả định: Khách hàng "mới" là những khách hàng có hóa đơn đầu tiên trong tháng này
-		    String sql = """
-		            SELECT COUNT(DISTINCT kh.MaKhachHang) AS SoLuong
-		            FROM KhachHang kh
-		            INNER JOIN HoaDon hd ON kh.MaKhachHang = hd.MaKhachHang
-		            WHERE MONTH(hd.NgayLap) = ? AND YEAR(hd.NgayLap) = ?
-		            AND NOT EXISTS (
-		                SELECT 1 FROM HoaDon hd2 
-		                WHERE hd2.MaKhachHang = hd.MaKhachHang 
-		                AND hd2.NgayLap < hd.NgayLap
-		            )
-		            """;
-		    
-		    try (PreparedStatement stmt = con.prepareStatement(sql)) {
-		        stmt.setInt(1, thang);
-		        stmt.setInt(2, nam);
-		        
-		        try (ResultSet rs = stmt.executeQuery()) {
-		            if (rs.next()) {
-		                return rs.getInt("SoLuong");
-		            }
-		        }
-		    } catch (SQLException e) {
-		        System.err.println("❌ Lỗi đếm khách hàng mới: " + e.getMessage());
-		    }
-		    return 0;
+
+	/**
+	 * Đếm số khách hàng mới trong tháng
+	 * 
+	 * @param thang Tháng (1-12)
+	 * @param nam   Năm
+	 * @return Số lượng khách hàng mới
+	 */
+	public int demKhachHangMoiTheoThang(int thang, int nam) {
+
+		Connection con = connectDB.getConnection();
+
+		// Giả định: Khách hàng "mới" là những khách hàng có hóa đơn đầu tiên trong
+		// tháng này
+		String sql = """
+				SELECT COUNT(DISTINCT kh.MaKhachHang) AS SoLuong
+				FROM KhachHang kh
+				INNER JOIN HoaDon hd ON kh.MaKhachHang = hd.MaKhachHang
+				WHERE MONTH(hd.NgayLap) = ? AND YEAR(hd.NgayLap) = ?
+				AND NOT EXISTS (
+				    SELECT 1 FROM HoaDon hd2
+				    WHERE hd2.MaKhachHang = hd.MaKhachHang
+				    AND hd2.NgayLap < hd.NgayLap
+				)
+				""";
+
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setInt(1, thang);
+			stmt.setInt(2, nam);
+
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return rs.getInt("SoLuong");
+				}
+			}
+		} catch (SQLException e) {
+			System.err.println("❌ Lỗi đếm khách hàng mới: " + e.getMessage());
 		}
+		return 0;
+	}
 
 }

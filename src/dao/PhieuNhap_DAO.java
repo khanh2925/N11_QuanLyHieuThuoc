@@ -25,9 +25,17 @@ public class PhieuNhap_DAO {
 	public PhieuNhap_DAO() {
 	}
 
+	// CACHE LAYER
+	private static List<PhieuNhap> cacheAllPhieuNhap = null;
+
 	public List<PhieuNhap> layDanhSachPhieuNhap() {
+		// Check Cache
+		if (cacheAllPhieuNhap != null) {
+			return new ArrayList<>(cacheAllPhieuNhap);
+		}
+
 		List<PhieuNhap> dsPhieuNhap = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = "SELECT pn.MaPhieuNhap, pn.NgayNhap, pn.TongTien, " + "nv.MaNhanVien, nv.TenNhanVien, "
@@ -63,6 +71,8 @@ public class PhieuNhap_DAO {
 
 				dsPhieuNhap.add(pn);
 			}
+			// Save to Cache
+			cacheAllPhieuNhap = new ArrayList<>(dsPhieuNhap);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -73,8 +83,9 @@ public class PhieuNhap_DAO {
 	// 🔍 Tìm phiếu nhập theo mã (OPTIMIZED - dùng JOIN)
 	// ============================================================
 	public PhieuNhap timPhieuNhapTheoMa(String maPhieuNhap) {
+		// Chi tiết view -> Query DB to get full details (ChiTietPhieuNhapList)
 		PhieuNhap pn = null;
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -142,7 +153,7 @@ public class PhieuNhap_DAO {
 	// ============================================================
 	private List<ChiTietPhieuNhap> layChiTietPhieuNhap(String maPhieuNhap) {
 		List<ChiTietPhieuNhap> dsChiTiet = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -222,7 +233,7 @@ public class PhieuNhap_DAO {
 	}
 
 	public boolean themPhieuNhap(PhieuNhap pn) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		PreparedStatement stmtPhieuNhap = null;
@@ -277,6 +288,11 @@ public class PhieuNhap_DAO {
 			stmtChiTiet.executeBatch();
 
 			con.commit();
+
+			// ✅ Update Cache directly
+			if (cacheAllPhieuNhap != null) {
+				cacheAllPhieuNhap.add(0, pn);
+			}
 			return true;
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -307,7 +323,7 @@ public class PhieuNhap_DAO {
 	 * Tạo mã phiếu nhập tự động theo định dạng PN-yyyymmdd-xxxx (CHAR(16))
 	 */
 	public String taoMaPhieuNhap() {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String ngayHomNay = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
@@ -335,8 +351,30 @@ public class PhieuNhap_DAO {
 	}
 
 	public List<PhieuNhap> timKiemPhieuNhap(String keyword, java.util.Date tuNgay, java.util.Date denNgay) {
+		// 1. Search in Cache
+		if (cacheAllPhieuNhap != null) {
+			List<PhieuNhap> filtered = new ArrayList<>();
+			String key = keyword.trim().toLowerCase();
+			LocalDate start = new java.sql.Date(tuNgay.getTime()).toLocalDate();
+			LocalDate end = new java.sql.Date(denNgay.getTime()).toLocalDate();
+
+			for (PhieuNhap pn : cacheAllPhieuNhap) {
+				boolean matchKey = pn.getMaPhieuNhap().toLowerCase().contains(key)
+						|| pn.getNhaCungCap().getTenNhaCungCap().toLowerCase().contains(key)
+						|| pn.getNhanVien().getTenNhanVien().toLowerCase().contains(key);
+
+				boolean matchDate = (pn.getNgayNhap().isEqual(start) || pn.getNgayNhap().isAfter(start)) &&
+						(pn.getNgayNhap().isEqual(end) || pn.getNgayNhap().isBefore(end));
+
+				if (matchKey && matchDate) {
+					filtered.add(pn);
+				}
+			}
+			return filtered;
+		}
+
 		List<PhieuNhap> dsPhieuNhap = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
@@ -400,8 +438,19 @@ public class PhieuNhap_DAO {
 	}
 
 	public List<PhieuNhap> layPhieuNhapTheoNhaCungCap(String maNCC) {
+		// 1. Filter from Cache
+		if (cacheAllPhieuNhap != null) {
+			List<PhieuNhap> ds = new ArrayList<>();
+			for (PhieuNhap pn : cacheAllPhieuNhap) {
+				if (pn.getNhaCungCap().getMaNhaCungCap().equals(maNCC)) {
+					ds.add(pn);
+				}
+			}
+			return ds;
+		}
+
 		List<PhieuNhap> dsPhieuNhap = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = "SELECT pn.MaPhieuNhap, pn.NgayNhap, pn.TongTien, " + "nv.MaNhanVien, nv.TenNhanVien "
@@ -447,7 +496,6 @@ public class PhieuNhap_DAO {
 				WHERE MONTH(NgayNhap) = ? AND YEAR(NgayNhap) = ?
 				""";
 
-		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null;

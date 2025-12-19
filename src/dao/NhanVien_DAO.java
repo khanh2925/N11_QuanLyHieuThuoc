@@ -26,7 +26,7 @@ public class NhanVien_DAO {
 
 		// Cache rỗng → Query DB và lưu vào cache
 		ArrayList<NhanVien> danhSach = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = "SELECT * FROM NhanVien ORDER BY MaNhanVien DESC";
@@ -49,7 +49,7 @@ public class NhanVien_DAO {
 
 	/** 🔹 Thêm nhân viên mới */
 	public boolean themNhanVien(NhanVien nv) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -83,7 +83,7 @@ public class NhanVien_DAO {
 
 	/** 🔹 Cập nhật thông tin nhân viên */
 	public boolean capNhatNhanVien(NhanVien nv) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -104,9 +104,14 @@ public class NhanVien_DAO {
 			stmt.setString(9, nv.getMaNhanVien());
 			boolean success = stmt.executeUpdate() > 0;
 
-			// ✅ Xóa cache sau khi cập nhật thành công để load lại dữ liệu mới
-			if (success) {
-				cacheAllNhanVien = null;
+			// ✅ Cập nhật cache trực tiếp
+			if (success && cacheAllNhanVien != null) {
+				for (int i = 0; i < cacheAllNhanVien.size(); i++) {
+					if (cacheAllNhanVien.get(i).getMaNhanVien().equals(nv.getMaNhanVien())) {
+						cacheAllNhanVien.set(i, nv);
+						break;
+					}
+				}
 			}
 
 			return success;
@@ -118,14 +123,21 @@ public class NhanVien_DAO {
 
 	/** 🔹 Xóa nhân viên */
 	public boolean xoaNhanVien(String maNhanVien) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = "DELETE FROM NhanVien WHERE MaNhanVien=?";
 
 		try (PreparedStatement stmt = con.prepareStatement(sql)) {
 			stmt.setString(1, maNhanVien);
-			return stmt.executeUpdate() > 0;
+			boolean success = stmt.executeUpdate() > 0;
+
+			// ✅ Xóa khỏi cache
+			if (success && cacheAllNhanVien != null) {
+				cacheAllNhanVien.removeIf(nv -> nv.getMaNhanVien().equals(maNhanVien));
+			}
+
+			return success;
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi xóa nhân viên: " + e.getMessage());
 		}
@@ -135,7 +147,7 @@ public class NhanVien_DAO {
 	/** 🔹 Tìm nhân viên theo mã, tên hoặc số điện thoại (LIKE gần đúng) */
 	public ArrayList<NhanVien> timNhanVien(String tuKhoa) {
 		ArrayList<NhanVien> danhSach = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -164,7 +176,15 @@ public class NhanVien_DAO {
 
 	/** 🔹 Tìm nhân viên chính xác theo mã (dùng cho các DAO khác) */
 	public NhanVien timNhanVienTheoMa(String maNhanVien) {
-		connectDB.getInstance();
+		// Optimizing: Check cache first
+		if (cacheAllNhanVien != null) {
+			for (NhanVien nv : cacheAllNhanVien) {
+				if (nv.getMaNhanVien().equals(maNhanVien)) {
+					return nv;
+				}
+			}
+		}
+
 		Connection con = connectDB.getConnection();
 		String sql = "SELECT * FROM NhanVien WHERE MaNhanVien = ?";
 
@@ -184,7 +204,7 @@ public class NhanVien_DAO {
 
 	/** 🔹 Cập nhật trạng thái làm việc */
 	public boolean capNhatTrangThai(String maNhanVien, boolean trangThai) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = "UPDATE NhanVien SET TrangThai=? WHERE MaNhanVien=?";
@@ -194,9 +214,14 @@ public class NhanVien_DAO {
 			stmt.setString(2, maNhanVien);
 			boolean success = stmt.executeUpdate() > 0;
 
-			// ✅ Xóa cache sau khi cập nhật thành công
-			if (success) {
-				cacheAllNhanVien = null;
+			// ✅ Cập nhật cache trực tiếp
+			if (success && cacheAllNhanVien != null) {
+				for (NhanVien nv : cacheAllNhanVien) {
+					if (nv.getMaNhanVien().equals(maNhanVien)) {
+						nv.setTrangThai(trangThai);
+						break;
+					}
+				}
 			}
 
 			return success;
@@ -223,7 +248,7 @@ public class NhanVien_DAO {
 	}
 
 	public String taoMaNhanVienTuDong() {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 		String prefix = "NV-" + today + "-";

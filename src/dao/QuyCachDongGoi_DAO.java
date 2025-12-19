@@ -2,6 +2,7 @@ package dao;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.List;
 
 import database.connectDB;
 import entity.QuyCachDongGoi;
@@ -15,10 +16,18 @@ public class QuyCachDongGoi_DAO {
 	public QuyCachDongGoi_DAO() {
 	}
 
+	// CACHE LAYER
+	private static List<QuyCachDongGoi> cacheAllQuyCach = null;
+
 	/** Lấy tất cả quy cách đóng gói với thông tin chi tiết (JOIN 3 bảng) */
 	public ArrayList<QuyCachDongGoi> layTatCaQuyCachDongGoi() {
+		// Check Cache
+		if (cacheAllQuyCach != null) {
+			return new ArrayList<>(cacheAllQuyCach);
+		}
+
 		ArrayList<QuyCachDongGoi> ds = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = "SELECT qc.MaQuyCach, qc.HeSoQuyDoi, qc.TiLeGiam, qc.DonViGoc, "
@@ -68,6 +77,8 @@ public class QuyCachDongGoi_DAO {
 					System.err.println("Lỗi dữ liệu không hợp lệ (MaQuyCach " + maQC + "): " + e.getMessage());
 				}
 			}
+			// Save to Cache
+			cacheAllQuyCach = new ArrayList<>(ds);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -76,7 +87,7 @@ public class QuyCachDongGoi_DAO {
 
 	/** Sinh mã quy cách mới (dạng QC-000001) */
 	public String taoMaQuyCach() {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String sql = "SELECT TOP 1 MaQuyCach FROM QuyCachDongGoi WHERE MaQuyCach LIKE 'QC-%' ORDER BY MaQuyCach DESC";
 		try (Statement st = con.createStatement(); ResultSet rs = st.executeQuery(sql)) {
@@ -95,7 +106,7 @@ public class QuyCachDongGoi_DAO {
 
 	/** Thêm quy cách */
 	public boolean themQuyCachDongGoi(QuyCachDongGoi q) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String sql = "INSERT INTO QuyCachDongGoi (MaQuyCach, MaSanPham, MaDonViTinh, HeSoQuyDoi, TiLeGiam, DonViGoc) VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -106,7 +117,13 @@ public class QuyCachDongGoi_DAO {
 			ps.setInt(4, q.getHeSoQuyDoi());
 			ps.setDouble(5, q.getTiLeGiam());
 			ps.setBoolean(6, q.isDonViGoc());
-			return ps.executeUpdate() > 0;
+			boolean result = ps.executeUpdate() > 0;
+
+			// ✅ Update Cache
+			if (result && cacheAllQuyCach != null) {
+				cacheAllQuyCach.add(q);
+			}
+			return result;
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -115,7 +132,7 @@ public class QuyCachDongGoi_DAO {
 
 	/** Cập nhật quy cách */
 	public boolean capNhatQuyCachDongGoi(QuyCachDongGoi q) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String sql = "UPDATE QuyCachDongGoi SET MaSanPham = ?, MaDonViTinh = ?, HeSoQuyDoi = ?, TiLeGiam = ?, DonViGoc = ? WHERE MaQuyCach = ?";
 
@@ -126,7 +143,18 @@ public class QuyCachDongGoi_DAO {
 			ps.setDouble(4, q.getTiLeGiam());
 			ps.setBoolean(5, q.isDonViGoc());
 			ps.setString(6, q.getMaQuyCach());
-			return ps.executeUpdate() > 0;
+			boolean result = ps.executeUpdate() > 0;
+
+			// ✅ Update Cache directly
+			if (result && cacheAllQuyCach != null) {
+				for (int i = 0; i < cacheAllQuyCach.size(); i++) {
+					if (cacheAllQuyCach.get(i).getMaQuyCach().equals(q.getMaQuyCach())) {
+						cacheAllQuyCach.set(i, q);
+						break;
+					}
+				}
+			}
+			return result;
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -135,7 +163,15 @@ public class QuyCachDongGoi_DAO {
 
 	/** 🔹 Tìm Quy Cách Đóng Gói Gốc (donViGoc = 1) theo mã sản phẩm */
 	public QuyCachDongGoi timQuyCachGocTheoSanPham(String maSanPham) {
-		connectDB.getInstance();
+		// 1. Check Cache First
+		if (cacheAllQuyCach != null) {
+			for (QuyCachDongGoi qc : cacheAllQuyCach) {
+				if (qc.getSanPham().getMaSanPham().equals(maSanPham) && qc.isDonViGoc()) {
+					return qc;
+				}
+			}
+		}
+
 		String sql = "SELECT qc.*, dvt.TenDonViTinh " + "FROM QuyCachDongGoi qc "
 				+ "JOIN DonViTinh dvt ON qc.MaDonViTinh = dvt.MaDonViTinh "
 				+ "WHERE qc.MaSanPham = ? AND qc.DonViGoc = 1";
@@ -164,8 +200,21 @@ public class QuyCachDongGoi_DAO {
 	// ✅✅✅ HÀM MỚI ĐƯỢC THÊM VÀO ✅✅✅
 	/** 🔹 Lấy danh sách quy cách đóng gói (kèm ĐVT) theo mã sản phẩm */
 	public ArrayList<QuyCachDongGoi> layDanhSachQuyCachTheoSanPham(String maSanPham) {
+		// 1. Check Cache
+		if (cacheAllQuyCach != null) {
+			ArrayList<QuyCachDongGoi> ds = new ArrayList<>();
+			for (QuyCachDongGoi qc : cacheAllQuyCach) {
+				if (qc.getSanPham().getMaSanPham().equals(maSanPham)) {
+					ds.add(qc);
+				}
+			}
+			// Sort by HeSoQuyDoi (as in original SQL)
+			ds.sort((o1, o2) -> Integer.compare(o1.getHeSoQuyDoi(), o2.getHeSoQuyDoi()));
+			return ds;
+		}
+
 		ArrayList<QuyCachDongGoi> ds = new ArrayList<>();
-		connectDB.getInstance();
+
 		String sql = "SELECT qc.*, dvt.TenDonViTinh " + "FROM QuyCachDongGoi qc "
 				+ "JOIN DonViTinh dvt ON qc.MaDonViTinh = dvt.MaDonViTinh " + "WHERE qc.MaSanPham = ? "
 				+ "ORDER BY qc.HeSoQuyDoi ASC"; // Sắp xếp Đơn vị gốc lên đầu
@@ -192,7 +241,16 @@ public class QuyCachDongGoi_DAO {
 
 	/** 🔹 Tìm quy cách đóng gói theo mã sản phẩm + mã đơn vị tính */
 	public QuyCachDongGoi timQuyCachTheoSanPhamVaDonVi(String maSanPham, String maDonViTinh) {
-		connectDB.getInstance();
+		// 1. Check Cache
+		if (cacheAllQuyCach != null) {
+			for (QuyCachDongGoi qc : cacheAllQuyCach) {
+				if (qc.getSanPham().getMaSanPham().equals(maSanPham)
+						&& qc.getDonViTinh().getMaDonViTinh().equals(maDonViTinh)) {
+					return qc;
+				}
+			}
+		}
+
 		Connection con = connectDB.getConnection();
 
 		PreparedStatement ps = null;
@@ -233,18 +291,19 @@ public class QuyCachDongGoi_DAO {
 
 		return null;
 	}
+
 	/** 🔹 Xóa quy cách đóng gói */
-    public boolean xoaQuyCachDongGoi(String maQuyCach) {
-        connectDB.getInstance();
-        Connection con = connectDB.getConnection();
-        String sql = "DELETE FROM QuyCachDongGoi WHERE MaQuyCach = ?";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, maQuyCach);
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
+	public boolean xoaQuyCachDongGoi(String maQuyCach) {
+
+		Connection con = connectDB.getConnection();
+		String sql = "DELETE FROM QuyCachDongGoi WHERE MaQuyCach = ?";
+		try (PreparedStatement ps = con.prepareStatement(sql)) {
+			ps.setString(1, maQuyCach);
+			return ps.executeUpdate() > 0;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
 
 }

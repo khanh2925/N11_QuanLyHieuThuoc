@@ -18,13 +18,13 @@ import enums.LoaiSanPham;
 
 public class ChiTietPhieuNhap_DAO {
 
-	// ============================================================
-	// 📦 CACHE - Lưu chi tiết phiếu nhập theo mã phiếu
-	// ============================================================
-	private static Map<String, List<ChiTietPhieuNhap>> cacheChiTietByPhieu = new HashMap<>();
+    // ============================================================
+    // 📦 CACHE - Lưu chi tiết phiếu nhập theo mã phiếu
+    // ============================================================
+    private static Map<String, List<ChiTietPhieuNhap>> cacheChiTietByPhieu = new HashMap<>();
 
-	public ChiTietPhieuNhap_DAO() {
-	}
+    public ChiTietPhieuNhap_DAO() {
+    }
 
     /**
      * Lấy danh sách chi tiết phiếu nhập theo mã phiếu nhập.
@@ -33,20 +33,20 @@ public class ChiTietPhieuNhap_DAO {
      */
     public List<ChiTietPhieuNhap> timKiemChiTietPhieuNhapBangMa(String maPhieuNhap) {
         List<ChiTietPhieuNhap> dsChiTiet = new ArrayList<>();
-        connectDB.getInstance();
+
         Connection con = connectDB.getConnection();
 
         // Câu lệnh JOIN lấy đầy đủ thông tin cần thiết để hiển thị lên GUI
         String sql = "SELECT " +
-                     "   ct.MaPhieuNhap, ct.SoLuongNhap, ct.DonGiaNhap, ct.ThanhTien, " +
-                     "   lo.MaLo, lo.HanSuDung, lo.SoLuongTon, " +
-                     "   sp.MaSanPham, sp.TenSanPham, sp.LoaiSanPham, " +
-                     "   dvt.MaDonViTinh, dvt.TenDonViTinh " +
-                     "FROM ChiTietPhieuNhap ct " +
-                     "JOIN LoSanPham lo ON ct.MaLo = lo.MaLo " +
-                     "JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham " +
-                     "JOIN DonViTinh dvt ON ct.MaDonViTinh = dvt.MaDonViTinh " +
-                     "WHERE ct.MaPhieuNhap = ?";
+                "   ct.MaPhieuNhap, ct.SoLuongNhap, ct.DonGiaNhap, ct.ThanhTien, " +
+                "   lo.MaLo, lo.HanSuDung, lo.SoLuongTon, " +
+                "   sp.MaSanPham, sp.TenSanPham, sp.LoaiSanPham, " +
+                "   dvt.MaDonViTinh, dvt.TenDonViTinh " +
+                "FROM ChiTietPhieuNhap ct " +
+                "JOIN LoSanPham lo ON ct.MaLo = lo.MaLo " +
+                "JOIN SanPham sp ON lo.MaSanPham = sp.MaSanPham " +
+                "JOIN DonViTinh dvt ON ct.MaDonViTinh = dvt.MaDonViTinh " +
+                "WHERE ct.MaPhieuNhap = ?";
 
         try (PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setString(1, maPhieuNhap);
@@ -57,12 +57,13 @@ public class ChiTietPhieuNhap_DAO {
                     SanPham sp = new SanPham();
                     sp.setMaSanPham(rs.getString("MaSanPham"));
                     sp.setTenSanPham(rs.getString("TenSanPham"));
-                    
+
                     String loaiStr = rs.getString("LoaiSanPham");
                     if (loaiStr != null) {
                         try {
                             sp.setLoaiSanPham(LoaiSanPham.valueOf(loaiStr));
-                        } catch (Exception e) {}
+                        } catch (Exception e) {
+                        }
                     }
 
                     // 2. Tạo đối tượng Lô Sản Phẩm
@@ -79,9 +80,9 @@ public class ChiTietPhieuNhap_DAO {
 
                     // 4. Tạo đối tượng Chi Tiết Phiếu Nhập
                     ChiTietPhieuNhap ct = new ChiTietPhieuNhap();
-                    // Lưu ý: Không cần setPhieuNhap ở đây để tránh vòng lặp vô tận nếu in ra, 
+                    // Lưu ý: Không cần setPhieuNhap ở đây để tránh vòng lặp vô tận nếu in ra,
                     // hoặc có thể set new PhieuNhap(maPhieuNhap) nếu cần.
-                    
+
                     ct.setLoSanPham(lo);
                     ct.setDonViTinh(dvt);
                     ct.setSoLuongNhap(rs.getInt("SoLuongNhap"));
@@ -95,7 +96,7 @@ public class ChiTietPhieuNhap_DAO {
             e.printStackTrace();
         }
         // KHÔNG ĐƯỢC ĐÓNG CONNECTION (con.close()) Ở ĐÂY VÌ ĐANG DÙNG SINGLETON
-        
+
         return dsChiTiet;
     }
 }

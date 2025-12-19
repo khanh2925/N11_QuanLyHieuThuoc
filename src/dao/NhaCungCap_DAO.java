@@ -25,7 +25,7 @@ public class NhaCungCap_DAO {
 
 		// Cache rỗng → Query DB và lưu vào cache
 		List<NhaCungCap> ds = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -54,7 +54,7 @@ public class NhaCungCap_DAO {
 
 	/** 🔹 Thêm nhà cung cấp mới */
 	public boolean themNhaCungCap(NhaCungCap ncc) {
-		connectDB.getInstance();
+
 		String sql = """
 				    INSERT INTO NhaCungCap (MaNhaCungCap, TenNhaCungCap, SoDienThoai, DiaChi, Email, HoatDong)
 				    VALUES (?, ?, ?, ?, ?, ?)
@@ -85,7 +85,7 @@ public class NhaCungCap_DAO {
 
 	/** 🔹 Cập nhật nhà cung cấp */
 	public boolean capNhatNhaCungCap(NhaCungCap ncc) {
-		connectDB.getInstance();
+
 		String sql = """
 				    UPDATE NhaCungCap
 				    SET TenNhaCungCap=?, SoDienThoai=?, DiaChi=?, Email=?, HoatDong=?
@@ -102,8 +102,15 @@ public class NhaCungCap_DAO {
 			ps.setString(6, ncc.getMaNhaCungCap());
 
 			boolean result = ps.executeUpdate() > 0;
-			if (result) {
-				cacheAllNhaCungCap = null; // Xóa cache sau khi cập nhật thành công
+
+			// ✅ Cập nhật cache trực tiếp
+			if (result && cacheAllNhaCungCap != null) {
+				for (int i = 0; i < cacheAllNhaCungCap.size(); i++) {
+					if (cacheAllNhaCungCap.get(i).getMaNhaCungCap().equals(ncc.getMaNhaCungCap())) {
+						cacheAllNhaCungCap.set(i, ncc);
+						break;
+					}
+				}
 			}
 			return result;
 		} catch (SQLException e) {
@@ -114,7 +121,7 @@ public class NhaCungCap_DAO {
 
 	/** 🔹 Sinh mã tự động NCC-yyyyMMdd-xxxx */
 	public String taoMaTuDong() {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String sql = """
 				    SELECT MAX(RIGHT(MaNhaCungCap, 4)) AS SoCuoi
@@ -135,7 +142,7 @@ public class NhaCungCap_DAO {
 	}
 
 	public NhaCungCap timNhaCungCapTheoMaHoacSDT(String keyword) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		// Tìm kiếm chính xác theo Mã hoặc SĐT
@@ -177,7 +184,7 @@ public class NhaCungCap_DAO {
 	public List<NhaCungCap> timKiemNCC(String keyword, String khuVuc, String trangThai, String tieuChi) {
 
 		List<NhaCungCap> ds = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """

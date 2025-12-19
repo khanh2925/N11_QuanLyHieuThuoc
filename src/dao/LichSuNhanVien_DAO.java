@@ -46,7 +46,6 @@ public class LichSuNhanVien_DAO {
 		List<String> danhSachMa = new ArrayList<>();
 		List<HoaDon> ketQua = new ArrayList<>();
 
-		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -121,7 +120,6 @@ public class LichSuNhanVien_DAO {
 		List<PhieuTra> ketQua = new ArrayList<>();
 		PhieuTra_DAO ptDAO = new PhieuTra_DAO();
 
-		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -194,7 +192,6 @@ public class LichSuNhanVien_DAO {
 		List<PhieuHuy> ketQua = new ArrayList<>();
 		PhieuHuy_DAO phDAO = new PhieuHuy_DAO();
 
-		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null;

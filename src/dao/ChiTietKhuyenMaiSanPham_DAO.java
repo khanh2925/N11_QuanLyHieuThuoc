@@ -20,7 +20,7 @@ public class ChiTietKhuyenMaiSanPham_DAO {
 	// =====================================================
 	public List<ChiTietKhuyenMaiSanPham> timKiemChiTietKhuyenMaiSanPhamBangMa(String maKM) {
 		List<ChiTietKhuyenMaiSanPham> ds = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String sql = "SELECT MaSanPham FROM ChiTietKhuyenMaiSanPham WHERE MaKM = ?";
 		try (PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -52,7 +52,7 @@ public class ChiTietKhuyenMaiSanPham_DAO {
 	// 2. THÊM SẢN PHẨM VÀO KM
 	// =====================================================
 	public boolean themChiTietKhuyenMaiSanPham(ChiTietKhuyenMaiSanPham ctkm) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		// Không thêm trùng
@@ -76,7 +76,7 @@ public class ChiTietKhuyenMaiSanPham_DAO {
 	// 3. XOÁ 1 SP RA KHỎI KM
 	// =====================================================
 	public boolean xoaChiTietKhuyenMaiSanPham(String maKM, String maSP) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String sql = "DELETE FROM ChiTietKhuyenMaiSanPham WHERE MaKM=? AND MaSanPham=?";
 		try (PreparedStatement ps = con.prepareStatement(sql)) {
@@ -93,7 +93,7 @@ public class ChiTietKhuyenMaiSanPham_DAO {
 	// ⭐ 4. XOÁ TOÀN BỘ SP CỦA 1 KM — DÙNG KHI XOÁ KM
 	// =====================================================
 	public boolean xoaTatCaSanPhamCuaKM(String maKM) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String sql = "DELETE FROM ChiTietKhuyenMaiSanPham WHERE MaKM=?";
 		try (PreparedStatement ps = con.prepareStatement(sql)) {
@@ -110,7 +110,7 @@ public class ChiTietKhuyenMaiSanPham_DAO {
 	// ⭐ 5. CHECK TỒN TẠI — TRÁNH THÊM TRÙNG
 	// =====================================================
 	public boolean daTonTai(String maKM, String maSP) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String sql = "SELECT 1 FROM ChiTietKhuyenMaiSanPham WHERE MaKM=? AND MaSanPham=?";
 		try (PreparedStatement ps = con.prepareStatement(sql)) {
@@ -130,7 +130,7 @@ public class ChiTietKhuyenMaiSanPham_DAO {
 	// =====================================================
 	public List<ChiTietKhuyenMaiSanPham> layChiTietKhuyenMaiTheoMaCoJoin(String maKM) {
 		List<ChiTietKhuyenMaiSanPham> ds = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 		String sql = """
 				    SELECT ctkm.MaKM, ctkm.MaSanPham,
@@ -182,7 +182,7 @@ public class ChiTietKhuyenMaiSanPham_DAO {
 	// =====================================================
 	public List<ChiTietKhuyenMaiSanPham> layChiTietKhuyenMaiDangHoatDongTheoMaSP(String maSP) {
 		List<ChiTietKhuyenMaiSanPham> ds = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """

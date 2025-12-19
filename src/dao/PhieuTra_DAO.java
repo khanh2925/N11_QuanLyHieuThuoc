@@ -1014,7 +1014,7 @@ public class PhieuTra_DAO {
 
 	// Đếm số PT của nhân viên đã tạo trong ngày hiện tại
 	public int demSoPhieuTraHomNayCuaNhanVien(String maNhanVien) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """

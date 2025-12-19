@@ -29,7 +29,7 @@ public class LoSanPham_DAO {
 		}
 
 		ArrayList<LoSanPham> danhSach = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -65,16 +65,16 @@ public class LoSanPham_DAO {
 		} catch (SQLException e) {
 			System.err.println("Lỗi lấy danh sách lô sản phẩm: " + e.getMessage());
 		}
-		
+
 		// 3. Update Cache
 		cacheAllLoSanPham = new ArrayList<>(danhSach);
-		
+
 		return danhSach;
 	}
 
 	/** Thêm mới lô sản phẩm */
 	public boolean themLoSanPham(LoSanPham lo) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -88,7 +88,7 @@ public class LoSanPham_DAO {
 			stmt.setInt(3, lo.getSoLuongTon());
 			stmt.setString(4, lo.getSanPham() != null ? lo.getSanPham().getMaSanPham() : null);
 			boolean result = stmt.executeUpdate() > 0;
-			if(result && cacheAllLoSanPham != null) {
+			if (result && cacheAllLoSanPham != null) {
 				cacheAllLoSanPham.add(0, lo);
 			}
 			return result;
@@ -100,7 +100,7 @@ public class LoSanPham_DAO {
 
 	/** Cập nhật thông tin lô sản phẩm */
 	public boolean capNhatLoSanPham(LoSanPham lo) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -114,7 +114,18 @@ public class LoSanPham_DAO {
 			stmt.setInt(2, lo.getSoLuongTon());
 			stmt.setString(3, lo.getSanPham() != null ? lo.getSanPham().getMaSanPham() : null);
 			stmt.setString(4, lo.getMaLo());
-			return stmt.executeUpdate() > 0;
+			boolean result = stmt.executeUpdate() > 0;
+
+			// ✅ Cập nhật cache trực tiếp
+			if (result && cacheAllLoSanPham != null) {
+				for (int i = 0; i < cacheAllLoSanPham.size(); i++) {
+					if (cacheAllLoSanPham.get(i).getMaLo().equals(lo.getMaLo())) {
+						cacheAllLoSanPham.set(i, lo);
+						break;
+					}
+				}
+			}
+			return result;
 		} catch (SQLException e) {
 			System.err.println("Lỗi cập nhật lô sản phẩm: " + e.getMessage());
 		}
@@ -123,14 +134,20 @@ public class LoSanPham_DAO {
 
 	/** Xóa lô sản phẩm theo mã */
 	public boolean xoaLoSanPham(String maLo) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = "DELETE FROM LoSanPham WHERE MaLo=?";
 
 		try (PreparedStatement stmt = con.prepareStatement(sql)) {
 			stmt.setString(1, maLo);
-			return stmt.executeUpdate() > 0;
+			boolean result = stmt.executeUpdate() > 0;
+
+			// ✅ Xóa khỏi cache
+			if (result && cacheAllLoSanPham != null) {
+				cacheAllLoSanPham.removeIf(l -> l.getMaLo().equals(maLo));
+			}
+			return result;
 		} catch (SQLException e) {
 			System.err.println("Lỗi xóa lô sản phẩm: " + e.getMessage());
 		}
@@ -139,7 +156,7 @@ public class LoSanPham_DAO {
 
 	/** Tìm lô sản phẩm chính xác theo mã (OPTIMIZED - dùng JOIN) */
 	public LoSanPham timLoTheoMa(String maLo) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		// ✅ OPTIMIZED: Dùng JOIN thay vì gọi SanPham_DAO riêng
@@ -226,7 +243,7 @@ public class LoSanPham_DAO {
 	 */
 	public List<LoSanPham> layDanhSachLoTheoMaSanPham(String maSanPham) {
 		List<LoSanPham> danhSach = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		// Chỉ lấy lô còn tồn (> 0) và chưa hết hạn (>= GETDATE())
@@ -260,7 +277,7 @@ public class LoSanPham_DAO {
 
 	/** Tìm lô có hạn sử dụng sắp hết (cũ nhất) theo mã sản phẩm */
 	public LoSanPham timLoGanHetHanTheoSanPham(String maSanPham) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -299,7 +316,7 @@ public class LoSanPham_DAO {
 
 	/** Lấy lô kế tiếp (hạn tiếp theo) nếu lô hiện tại đã hết hàng */
 	public LoSanPham timLoKeTiepTheoSanPham(String maSanPham, LocalDate hanSuDungHienTai) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -340,7 +357,7 @@ public class LoSanPham_DAO {
 
 	/** 🔹 Tính số lượng tồn thực tế (ĐÃ SỬA CHỈ TRỪ CÁC GIAO DỊCH CHỜ DUYỆT) */
 	public int tinhSoLuongTonThucTe(String maLo) {
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		// Hằng số trạng thái
@@ -443,7 +460,6 @@ public class LoSanPham_DAO {
 		LocalDate today = LocalDate.now();
 		LocalDate canhBao = today.plusDays(soNgayCanhBao);
 
-		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -485,7 +501,6 @@ public class LoSanPham_DAO {
 		for (LoaiSanPham l : LoaiSanPham.values())
 			map.put(l, 0);
 
-		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -526,7 +541,6 @@ public class LoSanPham_DAO {
 	public List<LoSanPham> layDanhSachLoSPToiHanSuDung() {
 		List<LoSanPham> danhSach = new ArrayList<>();
 
-		connectDB.getInstance();
 		Connection con = connectDB.getConnection();
 
 		// ✅ GIỮ NGUYÊN rule như demSoLoSPToiHanSuDung(): 60/90 ngày theo loại
@@ -571,7 +585,7 @@ public class LoSanPham_DAO {
 	/** ✅ Tìm lô sản phẩm theo keyword (Mã lô hoặc Mã SP) */
 	public List<LoSanPham> timLoSanPhamTheoKeyword(String keyword) {
 		List<LoSanPham> danhSach = new ArrayList<>();
-		connectDB.getInstance();
+
 		Connection con = connectDB.getConnection();
 
 		String sql = """
@@ -618,12 +632,13 @@ public class LoSanPham_DAO {
 
 	/** ✅ Kiểm tra lô có cảnh báo hết hạn hay không (Logic lọc in-memory) */
 	public boolean kiemTraLoToiHan(LoSanPham lo) {
-		if (lo == null || lo.getSanPham() == null) return false;
-		
+		if (lo == null || lo.getSanPham() == null)
+			return false;
+
 		int days = soNgayCanhBaoTheoLoai(lo.getSanPham().getLoaiSanPham());
 		LocalDate today = LocalDate.now();
 		LocalDate canhBao = today.plusDays(days);
-		
+
 		// HanSuDung < canhBao => Tới hạn/Hết hạn
 		return lo.getHanSuDung().isBefore(canhBao);
 	}

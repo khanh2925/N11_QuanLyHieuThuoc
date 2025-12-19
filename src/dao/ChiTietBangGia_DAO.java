@@ -20,7 +20,7 @@ public class ChiTietBangGia_DAO {
      */
     public List<ChiTietBangGia> layChiTietTheoMaBangGia(String maBangGia) {
         List<ChiTietBangGia> ds = new ArrayList<>();
-        connectDB.getInstance();
+
         Connection con = connectDB.getConnection();
         String sql = "SELECT MaBangGia, GiaTu, GiaDen, TiLe FROM ChiTietBangGia WHERE MaBangGia = ?";
 
@@ -50,7 +50,7 @@ public class ChiTietBangGia_DAO {
      * SanPham)
      */
     public ChiTietBangGia timChiTietTheoKhoangGia(String maBangGia, double giaNhap) {
-        connectDB.getInstance();
+
         Connection con = connectDB.getConnection();
         // SQL: Tìm kiếm tỉ lệ áp dụng nếu gia nhập nằm trong khoảng [GiaTu, GiaDen]
         String sql = "SELECT GiaTu, GiaDen, TiLe FROM ChiTietBangGia WHERE MaBangGia = ? AND ? BETWEEN GiaTu AND GiaDen";
@@ -78,7 +78,7 @@ public class ChiTietBangGia_DAO {
 
     /** 🔹 Thêm chi tiết bảng giá mới (ĐÃ SỬA) */
     public boolean themChiTietBangGia(ChiTietBangGia ctbg) {
-        connectDB.getInstance();
+
         Connection con = connectDB.getConnection();
         // ĐÃ SỬA: Loại bỏ MaSanPham
         String sql = """
@@ -100,7 +100,7 @@ public class ChiTietBangGia_DAO {
 
     /** 🔹 Cập nhật chi tiết bảng giá (sửa giá trị hoặc tỉ lệ) (ĐÃ SỬA) */
     public boolean capNhatChiTietBangGia(ChiTietBangGia ctbg, double giaTuCu, double giaDenCu) {
-        connectDB.getInstance();
+
         Connection con = connectDB.getConnection();
         // Dùng GiaTuCu và GiaDenCu để định danh bản ghi
         String sql = """
@@ -125,7 +125,7 @@ public class ChiTietBangGia_DAO {
 
     /** 🔹 Xóa chi tiết bảng giá (Theo khoảng giá) (ĐÃ SỬA) */
     public boolean xoaChiTietBangGia(String maBangGia, double giaTu, double giaDen) {
-        connectDB.getInstance();
+
         Connection con = connectDB.getConnection();
         // Xóa dựa trên MaBangGia và Khoảng giá
         String sql = "DELETE FROM ChiTietBangGia WHERE MaBangGia=? AND GiaTu=? AND GiaDen=?";
@@ -145,7 +145,7 @@ public class ChiTietBangGia_DAO {
      * 🔹 Xóa toàn bộ chi tiết của 1 bảng giá (khi xóa bảng giá chính) (Giữ nguyên)
      */
     public boolean xoaChiTietTheoMaBangGia(String maBangGia) {
-        connectDB.getInstance();
+
         Connection con = connectDB.getConnection();
         String sql = "DELETE FROM ChiTietBangGia WHERE MaBangGia=?";
 
