@@ -22,7 +22,7 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
 
     // Input fields
     private JTextField txtMaDVT, txtTenDVT;
-    
+
     // Search & Table
     private JTextField txtTimKiem;
     private JTable tblDonViTinh;
@@ -34,7 +34,7 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
     // DAO & data
     private DonViTinh_DAO dvtDAO;
     private List<DonViTinh> dsDonViTinh;
-    
+
     // Style
     private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 16);
     private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 16);
@@ -60,13 +60,22 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
 
         // 3. LOAD DATA
         loadDataLenBang();
-        
+
         // 4. THIẾT LẬP PHÍM TẮT
         setupKeyboardShortcuts();
+
+        // 5. AUTO FOCUS
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+                SwingUtilities.invokeLater(() -> {
+                    txtTimKiem.requestFocusInWindow();
+                });
+            }
+        });
     }
 
     // ======================================================================
-    //                              PHẦN HEADER
+    // PHẦN HEADER
     // ======================================================================
     private void taoPhanHeader() {
         pnHeader = new JPanel(null);
@@ -80,7 +89,7 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         txtTimKiem.setBounds(25, 17, 500, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
-        txtTimKiem.setForeground(Color.GRAY);
+        // txtTimKiem.setForeground(Color.GRAY); // Let PlaceholderSupport handle this
         txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
         txtTimKiem.addActionListener(e -> xuLyTimKiem());
         pnHeader.add(txtTimKiem);
@@ -102,7 +111,7 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
     }
 
     // ======================================================================
-    //                              PHẦN CENTER
+    // PHẦN CENTER
     // ======================================================================
     private void taoPhanCenter() {
         pnCenter = new JPanel(new BorderLayout());
@@ -135,16 +144,16 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pnTopWrapper, pnTable);
         splitPane.setDividerLocation(400);
         splitPane.setResizeWeight(0.0);
-        
+
         pnCenter.add(splitPane, BorderLayout.CENTER);
     }
 
     private void taoFormNhapLieu(JPanel p) {
-        int xStart = 100;       
+        int xStart = 100;
         int yStart = 50;
-        int hText = 40;         
-        int wTxt = 400;         
-        int gap = 30;           
+        int hText = 40;
+        int wTxt = 400;
+        int gap = 30;
 
         // Hàng 1: Mã Đơn Vị
         p.add(createLabel("Mã ĐVT:", xStart, yStart));
@@ -163,14 +172,14 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
 
     // Panel nút bên phải
     private void taoPanelNutBam(JPanel p) {
-        p.setPreferredSize(new Dimension(200, 0)); 
-        p.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, Color.LIGHT_GRAY)); 
-        
+        p.setPreferredSize(new Dimension(200, 0));
+        p.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, Color.LIGHT_GRAY));
+
         p.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.insets = new Insets(8, 0, 8, 0); 
-        gbc.fill = GridBagConstraints.HORIZONTAL; 
+        gbc.insets = new Insets(8, 0, 8, 0);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         int btnH = 45;
         int btnW = 140;
@@ -186,7 +195,8 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         btnThem.setPreferredSize(new Dimension(btnW, btnH));
         btnThem.setToolTipText("<html><b>Phím tắt:</b> Ctrl+N<br>Thêm đơn vị tính mới</html>");
         btnThem.addActionListener(this);
-        gbc.gridy = 0; p.add(btnThem, gbc);
+        gbc.gridy = 0;
+        p.add(btnThem, gbc);
 
         btnSua = new PillButton(
                 "<html>" +
@@ -200,7 +210,8 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         btnSua.setToolTipText("<html><b>Phím tắt:</b> Ctrl+U<br>Cập nhật thông tin đơn vị tính đang chọn</html>");
         btnSua.addActionListener(this);
         btnSua.setEnabled(false);
-        gbc.gridy = 1; p.add(btnSua, gbc);
+        gbc.gridy = 1;
+        p.add(btnSua, gbc);
 
         btnLamMoi = new PillButton(
                 "<html>" +
@@ -213,13 +224,17 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         btnLamMoi.setPreferredSize(new Dimension(btnW, btnH));
         btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới form nhập liệu</html>");
         btnLamMoi.addActionListener(this);
-        gbc.gridy = 2; p.add(btnLamMoi, gbc);
+        gbc.gridy = 2;
+        p.add(btnLamMoi, gbc);
     }
 
     private void taoBangDanhSach(JPanel p) {
-        String[] cols = {"Mã Đơn Vị Tính", "Tên Đơn Vị Tính"};
+        String[] cols = { "Mã Đơn Vị Tính", "Tên Đơn Vị Tính" };
         modelDonViTinh = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
         tblDonViTinh = setupTable(modelDonViTinh);
 
@@ -230,9 +245,9 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         left.setHorizontalAlignment(JLabel.LEFT);
 
         tblDonViTinh.getColumnModel().getColumn(0).setCellRenderer(center);
-        tblDonViTinh.getColumnModel().getColumn(1).setCellRenderer(center);       
+        tblDonViTinh.getColumnModel().getColumn(1).setCellRenderer(center);
         tblDonViTinh.getColumnModel().getColumn(0).setPreferredWidth(200);
-        
+
         // Click: đổ dữ liệu lên form
         tblDonViTinh.addMouseListener(new MouseAdapter() {
             @Override
@@ -248,25 +263,29 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
 
     // Đổ từ bảng lên form
     private void doToForm(int row) {
-        if (row < 0) return;
+        if (row < 0)
+            return;
         txtMaDVT.setText(tblDonViTinh.getValueAt(row, 0).toString());
+        txtMaDVT.setForeground(Color.BLACK);
+
         txtTenDVT.setText(tblDonViTinh.getValueAt(row, 1).toString());
+        txtTenDVT.setForeground(Color.BLACK);
+
         txtMaDVT.setEditable(false);
-        
+
         // Disable nút Thêm, Enable nút Cập nhật khi có selection
         btnThem.setEnabled(false);
         btnSua.setEnabled(true);
     }
-
 
     /** Load dữ liệu từ DB lên bảng */
     private void loadDataLenBang() {
         modelDonViTinh.setRowCount(0);
         dsDonViTinh = dvtDAO.layTatCaDonViTinh();
         for (DonViTinh dvt : dsDonViTinh) {
-            modelDonViTinh.addRow(new Object[]{
-                dvt.getMaDonViTinh(),
-                dvt.getTenDonViTinh()
+            modelDonViTinh.addRow(new Object[] {
+                    dvt.getMaDonViTinh(),
+                    dvt.getTenDonViTinh()
             });
         }
     }
@@ -284,10 +303,19 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
 
     private void lamMoiForm() {
         txtMaDVT.setText("");
+        PlaceholderSupport.addPlaceholder(txtMaDVT, dvtDAO.taoMaTuDong());
+
         txtTenDVT.setText("");
-        txtTenDVT.requestFocus();
+        PlaceholderSupport.addPlaceholder(txtTenDVT, "Nhập tên đơn vị tính");
+
+        // txtTenDVT.requestFocus();
+        if (txtTimKiem != null) {
+            txtTimKiem.setText("");
+            PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm kiếm theo tên đơn vị tính... (F1 / Ctrl+F)");
+            txtTimKiem.requestFocus(); // User requested focus on search after Refresh
+        }
         tblDonViTinh.clearSelection();
-        
+
         // Enable nút Thêm, Disable nút Cập nhật khi không có selection
         btnThem.setEnabled(true);
         btnSua.setEnabled(false);
@@ -305,9 +333,9 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         if (dsDonViTinh != null) {
             for (DonViTinh dvt : dsDonViTinh) {
                 if (dvt.getTenDonViTinh().toLowerCase().contains(kw)) {
-                    modelDonViTinh.addRow(new Object[]{
-                        dvt.getMaDonViTinh(),
-                        dvt.getTenDonViTinh()
+                    modelDonViTinh.addRow(new Object[] {
+                            dvt.getMaDonViTinh(),
+                            dvt.getTenDonViTinh()
                     });
                 }
             }
@@ -331,7 +359,7 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
     }
 
     // ======================================================================
-    //                              SỰ KIỆN CRUD
+    // SỰ KIỆN CRUD
     // ======================================================================
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -340,14 +368,12 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         if (o.equals(btnThem)) {
             themDonViTinh();
             return;
-        } 
-        else if (o.equals(btnSua)) {
-            
+        } else if (o.equals(btnSua)) {
+
             suaDonViTinh();
             return;
 
-        }
-        else if (o.equals(btnLamMoi)) {
+        } else if (o.equals(btnLamMoi)) {
             lamMoiForm();
             loadDataLenBang();
             return;
@@ -375,11 +401,11 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         if (dvtDAO.themDonViTinh(dvt)) {
             JOptionPane.showMessageDialog(this, "Thêm đơn vị tính thành công!");
             txtMaDVT.setText(maMoi);
-            modelDonViTinh.addRow(new Object[]{
+            modelDonViTinh.addRow(new Object[] {
                     dvt.getMaDonViTinh(),
                     dvt.getTenDonViTinh()
-                });
-            lamMoiForm();        // nếu muốn giữ lại mã thì bỏ dòng này
+            });
+            lamMoiForm(); // nếu muốn giữ lại mã thì bỏ dòng này
         } else {
             JOptionPane.showMessageDialog(this, "Thêm thất bại (Trùng mã hoặc lỗi DB)!");
         }
@@ -392,7 +418,6 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng cần sửa!");
             return;
         }
-        
 
         String ma = txtMaDVT.getText().trim();
         if (ma.isEmpty()) {
@@ -418,10 +443,8 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
         }
     }
 
-    
-
     // ======================================================================
-    //                              UI Helpers
+    // UI Helpers
     // ======================================================================
     private JLabel createLabel(String text, int x, int y) {
         JLabel lbl = new JLabel(text);
@@ -451,11 +474,10 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
 
     private TitledBorder createTitledBorder(String title) {
         return BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
-            TitledBorder.LEFT, TitledBorder.TOP, FONT_BOLD, Color.DARK_GRAY
-        );
+                BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
+                TitledBorder.LEFT, TitledBorder.TOP, FONT_BOLD, Color.DARK_GRAY);
     }
-    
+
     /**
      * Thiết lập phím tắt cho màn hình Quản lý Đơn vị tính
      */
@@ -511,7 +533,7 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
             }
         });
     }
-    
+
     // Test riêng màn hình
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {

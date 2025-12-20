@@ -39,8 +39,7 @@ import java.util.List;
  */
 public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 
-
-	
+	private static final String PLACEHOLDER_TIM_KIEM = "Tìm theo mã lô, mã/tên sản phẩm (F1)";
 	// ====== TÌM KIẾM / DANH SÁCH ======
 	private JTextField txtTimLo;
 	private JPanel pnCotPhaiCenter;
@@ -73,7 +72,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 	// ===========================================
 	// ============= CONSTRUCTOR =================
 	// ===========================================
-	
+
 	public HuyHangNhanVien_GUI() {
 		setPreferredSize(new Dimension(1537, 850));
 		initialize();
@@ -82,7 +81,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 	// ===========================================
 	// ============= KHỞI TẠO GIAO DIỆN ==========
 	// ===========================================
-	
+
 	private void initialize() {
 		setLayout(new BorderLayout());
 		setPreferredSize(new Dimension(1537, 1168));
@@ -96,13 +95,14 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		txtTimLo = TaoJtextNhanh.timKiem();
 		txtTimLo.setBorder(new LineBorder(new Color(0x00C0E2), 3, true));
 		txtTimLo.setBounds(25, 17, 480, 60);
+		PlaceholderSupport.addPlaceholder(txtTimLo, PLACEHOLDER_TIM_KIEM);
 		txtTimLo.setForeground(Color.GRAY);
-
-		PlaceholderSupport.addPlaceholder(txtTimLo, "Nhập mã lô, mã/tên SP (F1)");
 		txtTimLo.setToolTipText("<html><b>Phím tắt:</b> F1<br>Nhập mã lô (LO-xxxxxx), mã SP hoặc tên SP</html>");
+
 		pnHeader.add(txtTimLo);
 
-		btnHSD = new PillButton("<html><center>HUỶ THEO HSD<br><span style='font-size:9px;color:#888'>(F2)</span></center></html>");
+		btnHSD = new PillButton(
+				"<html><center>HUỶ THEO HSD<br><span style='font-size:9px;color:#888'>(F2)</span></center></html>");
 		btnHSD.setToolTipText("<html><b>Phím tắt:</b> F2<br>Mở dialog chọn lô gần hết hạn sử dụng</html>");
 		pnHeader.add(btnHSD);
 		btnHSD.setBounds(545, 28, 154, 40);
@@ -168,41 +168,41 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		pnRight.add(boxTongTien);
 		pnRight.add(Box.createVerticalStrut(20));
 
-		// ==== NÚT TẠO PHIẾU HUỶ  ====
+		// ==== NÚT TẠO PHIẾU HUỶ ====
 		btnTaoPhieu = TaoButtonNhanh.huyHang();
 		btnTaoPhieu.setForeground(Color.BLACK);
 		btnTaoPhieu.setText(
-			"<html>" +
-				"<center>" +
-					"TẠO PHIẾU HUỶ<br>" +
-					"<span style='font-size:10px; color:#888888;'>(Ctrl + Enter)</span>" +
-				"</center>" +
-			"</html>"
-		);
+				"<html>" +
+						"<center>" +
+						"TẠO PHIẾU HUỶ<br>" +
+						"<span style='font-size:10px; color:#888888;'>(Ctrl + Enter)</span>" +
+						"</center>" +
+						"</html>");
 		btnTaoPhieu.setAlignmentX(Component.CENTER_ALIGNMENT);
 		btnTaoPhieu.setToolTipText("<html><b>Phím tắt:</b> Ctrl+Enter<br>Tạo phiếu huỷ hàng</html>");
 		pnRight.add(btnTaoPhieu);
-		
+
 		pnRight.add(Box.createVerticalStrut(8));
 
-		// ==== LINK HUỶ BỎ  ====
+		// ==== LINK HUỶ BỎ ====
 		btnHuyBo = new JButton("Huỷ bỏ (F4)");
 		btnHuyBo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-		btnHuyBo.setForeground(new Color(120, 120, 120)); 
-		btnHuyBo.setBackground(new Color(250, 250, 250)); 
+		btnHuyBo.setForeground(new Color(120, 120, 120));
+		btnHuyBo.setBackground(new Color(250, 250, 250));
 		btnHuyBo.setFocusPainted(false);
 		btnHuyBo.setBorder(null);
 		btnHuyBo.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		btnHuyBo.setMaximumSize(new Dimension(200, 30));
 		btnHuyBo.setAlignmentX(Component.CENTER_ALIGNMENT);
 		btnHuyBo.setToolTipText("<html><b>Phím tắt:</b> F4<br>Huỷ bỏ danh sách và làm mới form</html>");
-		
+
 		// Hover effect nhẹ
 		btnHuyBo.addMouseListener(new java.awt.event.MouseAdapter() {
 			public void mouseEntered(java.awt.event.MouseEvent evt) {
 				btnHuyBo.setForeground(new Color(220, 53, 69)); // Đỏ khi hover
 				btnHuyBo.setBackground(new Color(255, 245, 245));
 			}
+
 			public void mouseExited(java.awt.event.MouseEvent evt) {
 				btnHuyBo.setForeground(new Color(120, 120, 120));
 				btnHuyBo.setBackground(new Color(250, 250, 250));
@@ -225,15 +225,24 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		btnHSD.addActionListener(this);
 		btnTaoPhieu.addActionListener(this);
 		btnHuyBo.addActionListener(this);
-		
+
 		// ===== PHÍM TẮT =====
 		setupKeyboardShortcuts();
+
+		// ===== FOCUS TỰ ĐỘNG VÀO Ô TÌM KIẾM KHI HIỂN THỊ =====
+		addHierarchyListener(e -> {
+			if ((e.getChangeFlags() & java.awt.event.HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+				SwingUtilities.invokeLater(() -> {
+					txtTimLo.requestFocusInWindow();
+				});
+			}
+		});
 	}
 
 	// ===========================================
 	// ============= SỰ KIỆN (ACTION) ============
 	// ===========================================
-	
+
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object src = e.getSource();
@@ -254,7 +263,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		}
 
 		if (src == btnHSD) {
-			MoDialogChonLo("", "HSD"); 
+			MoDialogChonLo("", "HSD");
 			return;
 		}
 	}
@@ -460,6 +469,13 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 				pnDanhSachLo.repaint();
 			}
 
+			@Override
+			public void onClone(ItemHuyHang itemMoi) {
+				dsItem.add(itemMoi);
+				addPanelItem(itemMoi);
+				capNhatTongSoLuongVaTien();
+			}
+
 		}, "thuoc_default.png");
 
 		pnDanhSachLo.add(panel);
@@ -542,7 +558,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		tongTienHuy = tongTien;
 
 		lblTongDong.setText(soDong + " dòng");
-		lblTongSoLuong.setText(String.valueOf(tongSLGoc)); 
+		lblTongSoLuong.setText(String.valueOf(tongSLGoc));
 		lblTongTien.setText(String.format("%,.0f đ", tongTienHuy));
 	}
 
@@ -633,7 +649,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 			String lyDo = it.getLyDo();
 			ct.setLyDoChiTiet(lyDo == null || lyDo.isEmpty() ? null : lyDo);
 
-			//  Set đơn vị tính (lấy DonViTinh từ QuyCachGoc)
+			// Set đơn vị tính (lấy DonViTinh từ QuyCachGoc)
 			if (it.getQuyCachGoc() != null && it.getQuyCachGoc().getDonViTinh() != null) {
 				ct.setDonViTinh(it.getQuyCachGoc().getDonViTinh());
 			}
@@ -678,15 +694,15 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 				String.format("✔ Tạo phiếu huỷ thành công!\nMã phiếu: %s\nTổng tiền huỷ: %,.0f đ", ph.getMaPhieuHuy(),
 						ph.getTongTien()),
 				"Thành công", JOptionPane.INFORMATION_MESSAGE);
-		
+
 		int confirmHienThiPhieuHuy = JOptionPane.showConfirmDialog(this,
-		        "Tạo phiếu huỷ thành công!\nBạn có muốn xem phiếu không?",
-		        "Xem phiếu",
-		        JOptionPane.YES_NO_OPTION);
+				"Tạo phiếu huỷ thành công!\nBạn có muốn xem phiếu không?",
+				"Xem phiếu",
+				JOptionPane.YES_NO_OPTION);
 
 		if (confirmHienThiPhieuHuy == JOptionPane.YES_OPTION) {
-		    Window w = SwingUtilities.getWindowAncestor(this);
-		    new PhieuHuyPreviewDialog(w, ph).setVisible(true);
+			Window w = SwingUtilities.getWindowAncestor(this);
+			new PhieuHuyPreviewDialog(w, ph).setVisible(true);
 		}
 
 		resetForm();
@@ -728,17 +744,17 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (dsItem.isEmpty()) {
-					JOptionPane.showMessageDialog(HuyHangNhanVien_GUI.this, 
-						"Danh sách trống!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+					JOptionPane.showMessageDialog(HuyHangNhanVien_GUI.this,
+							"Danh sách trống!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
 					return;
 				}
 				int confirm = JOptionPane.showConfirmDialog(HuyHangNhanVien_GUI.this,
-					"Bạn có chắc muốn huỷ bỏ danh sách huỷ hàng hiện tại?", "Xác nhận",
-					JOptionPane.YES_NO_OPTION);
+						"Bạn có chắc muốn huỷ bỏ danh sách huỷ hàng hiện tại?", "Xác nhận",
+						JOptionPane.YES_NO_OPTION);
 				if (confirm == JOptionPane.YES_OPTION) {
 					resetForm();
 					JOptionPane.showMessageDialog(HuyHangNhanVien_GUI.this,
-						"Đã làm mới danh sách!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+							"Đã làm mới danh sách!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
 				}
 			}
 		});
@@ -759,7 +775,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 			public void actionPerformed(ActionEvent e) {
 				if (txtTimLo.isFocusOwner()) {
 					txtTimLo.setText("");
-					PlaceholderSupport.addPlaceholder(txtTimLo, "Nhập mã lô, mã/tên SP (F1)");
+					PlaceholderSupport.addPlaceholder(txtTimLo, PLACEHOLDER_TIM_KIEM);
 					HuyHangNhanVien_GUI.this.requestFocus();
 				}
 			}

@@ -38,6 +38,7 @@ public class HuyHangItemPanel extends JPanel {
 	private JTextField txtThanhTien;
 
 	private JTextField txtLyDo;
+	private JButton btnClone;
 	private JButton btnXoa;
 
 	private LoSanPham_DAO loDAO = new LoSanPham_DAO();
@@ -50,9 +51,13 @@ public class HuyHangItemPanel extends JPanel {
 		void onUpdate(ItemHuyHang it);
 
 		void onDelete(ItemHuyHang it, HuyHangItemPanel panel);
+
+		void onClone(ItemHuyHang itemMoi);
 	}
 
 	private Listener listener;
+
+	private JLabel lblQuyDoi;
 
 	public HuyHangItemPanel(ItemHuyHang item, int stt, Listener listener, String anh) {
 		this.item = item;
@@ -68,8 +73,6 @@ public class HuyHangItemPanel extends JPanel {
 		setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
 		setBorder(new CompoundBorder(new LineBorder(new Color(0xDDDDDD), 1), new EmptyBorder(8, 10, 8, 10)));
 		setBackground(new Color(0xFAFAFA));
-		setOpaque(true);
-
 
 		// ===== STT =====
 		lblSTT = new JLabel(String.valueOf(stt));
@@ -82,8 +85,9 @@ public class HuyHangItemPanel extends JPanel {
 		lblAnh = new JLabel();
 		lblAnh.setPreferredSize(new Dimension(80, 80));
 		lblAnh.setBorder(new LineBorder(Color.LIGHT_GRAY));
+		lblAnh.setHorizontalAlignment(JLabel.CENTER);
 		try {
-			ImageIcon icon = new ImageIcon(getClass().getResource("/images/" + anhPath));
+			ImageIcon icon = new ImageIcon(getClass().getResource("/resources/images/" + anhPath));
 			lblAnh.setIcon(new ImageIcon(icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH)));
 		} catch (Exception e) {
 			lblAnh.setText("Ảnh");
@@ -93,7 +97,6 @@ public class HuyHangItemPanel extends JPanel {
 
 		// ==== INFO BOX (Tên – Lô – DVT – Tồn) ====
 		Box infoBox = Box.createVerticalBox();
-		infoBox.setBorder(new LineBorder(Color.BLACK));
 
 		txtTenSP = TaoJtextNhanh.taoTextDonHang(item.getTenSanPham(), new Font("Segoe UI", Font.BOLD, 16),
 				new Color(0x00796B), 300);
@@ -105,7 +108,6 @@ public class HuyHangItemPanel extends JPanel {
 		txtLo = TaoJtextNhanh.taoTextDonHang("Lô: " + item.getMaLo(), new Font("Segoe UI", Font.BOLD, 14),
 				new Color(0x00796B), 150);
 		loBox.add(txtLo);
-		loBox.add(Box.createHorizontalStrut(8));
 
 		// Label hiển thị số lượng tồn (sẽ thay đổi theo đơn vị)
 		lblSoLuongTon = new JLabel("Tồn: " + item.getSoLuongTon());
@@ -115,21 +117,25 @@ public class HuyHangItemPanel extends JPanel {
 
 		infoBox.add(loBox);
 		add(infoBox);
-		
+
 		add(Box.createHorizontalStrut(10));
-		
+
 		// ComboBox Đơn vị tính (load từ sản phẩm)
 		cboDonVi = new JComboBox<>();
 		cboDonVi.setPreferredSize(new Dimension(70, 30));
 		cboDonVi.setMaximumSize(new Dimension(70, 30));
 		cboDonVi.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		add(cboDonVi);
-		
-		add(Box.createHorizontalStrut(10));
-
+		cboDonVi.setMinimumSize(new Dimension(80, 26));
 		// Load đơn vị tính của sản phẩm
 		loadDonViTinh();
+		add(cboDonVi);
+		lblQuyDoi = new JLabel();
+		lblQuyDoi.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+		lblQuyDoi.setPreferredSize(new Dimension(70, 30));
+		add(Box.createHorizontalStrut(3));
+		add(lblQuyDoi);
 
+		add(Box.createHorizontalStrut(5));
 		// ===== SỐ LƯỢNG HUỶ =====
 		Box soLuongBox = Box.createHorizontalBox();
 		soLuongBox.setMaximumSize(new Dimension(140, 30));
@@ -144,29 +150,27 @@ public class HuyHangItemPanel extends JPanel {
 		btnGiam.setFocusPainted(false);
 		soLuongBox.add(btnGiam);
 
-		// ô nhập SL huỷ
 		txtSLHuy = TaoJtextNhanh.hienThi(
-		        String.valueOf(item.getSoLuongHuy()),
-		        new Font("Segoe UI", Font.PLAIN, 16),
-		        Color.BLACK
-		);
-		txtSLHuy.setMaximumSize(new Dimension(60, 30));
+				String.valueOf(item.getSoLuongHuy()),
+				new Font("Segoe UI", Font.PLAIN, 16),
+				Color.BLACK);
+		txtSLHuy.setMaximumSize(new Dimension(600, 30));
 		txtSLHuy.setHorizontalAlignment(SwingConstants.CENTER);
 		txtSLHuy.setEditable(true);
 		soLuongBox.add(txtSLHuy);
 
-		// nút Tăng  >>> BỊ THIẾU Ở BẢN CŨ
+		// nút Tăng >>> BỊ THIẾU Ở BẢN CŨ
 		btnTang = new JButton("+");
 		btnTang.setFont(new Font("Segoe UI", Font.BOLD, 16));
 		btnTang.setPreferredSize(new Dimension(40, 30));
 		btnTang.setMargin(new Insets(0, 0, 0, 0));
 		btnTang.setFocusPainted(false);
+		btnTang.setName("btnTang");
 		soLuongBox.add(btnTang);
 
 		// thêm box số lượng vào panel
 		add(soLuongBox);
 		add(Box.createHorizontalStrut(5));
-
 
 		// ===== ĐƠN GIÁ NHẬP =====
 		txtDonGia = TaoJtextNhanh.taoTextDonHang(formatTien(item.getDonGiaNhap()), new Font("Segoe UI", Font.PLAIN, 16),
@@ -180,12 +184,13 @@ public class HuyHangItemPanel extends JPanel {
 				new Font("Segoe UI", Font.BOLD, 16), new Color(0xD32F2F), 120);
 		txtThanhTien.setHorizontalAlignment(SwingConstants.RIGHT);
 		add(txtThanhTien);
-		add(Box.createHorizontalStrut(10));
+		add(Box.createHorizontalGlue());
 
 		// ===== LÝ DO =====
 		txtLyDo = new JTextField("Lý do huỷ (không bắt buộc)");
 		txtLyDo.setFont(new Font("Segoe UI", Font.ITALIC, 12));
 		txtLyDo.setForeground(Color.GRAY);
+		txtLyDo.setPreferredSize(new Dimension(85, 26));
 		txtLyDo.setMaximumSize(new Dimension(220, 26));
 
 		// Hiển thị lý do có sẵn từ ItemHuyHang (nếu có)
@@ -197,7 +202,23 @@ public class HuyHangItemPanel extends JPanel {
 		}
 
 		add(txtLyDo);
-		add(Box.createHorizontalStrut(10));
+
+		// ===== CLONE =====
+		btnClone = new JButton();
+		btnClone.setPreferredSize(new Dimension(40, 40));
+		btnClone.setBorderPainted(false);
+		btnClone.setContentAreaFilled(false);
+		btnClone.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		try {
+			ImageIcon icon = new ImageIcon(getClass().getResource("/resources/images/dublicate.png"));
+			btnClone.setIcon(new ImageIcon(icon.getImage().getScaledInstance(22, 22, Image.SCALE_SMOOTH)));
+		} catch (Exception ignored) {
+		}
+		add(btnClone);
+
+		// ===== ENABLE / DISABLE CLONE =====
+		int soLuongDVTLoad = cboDonVi.getItemCount();
+		btnClone.setVisible(soLuongDVTLoad > 1);
 
 		// ===== XÓA =====
 		btnXoa = new JButton();
@@ -314,6 +335,73 @@ public class HuyHangItemPanel extends JPanel {
 				}
 			}
 		});
+
+		// ===== CLONE =====
+		btnClone.addActionListener(e -> {
+			// 1) Không clone khi chỉ có 1 DVT
+			int soLuongDVTLoad = cboDonVi.getItemCount();
+			if (soLuongDVTLoad <= 1)
+				return;
+
+			// 2) Lấy danh sách các DVT đã được dùng ở các dòng cùng lô
+			java.util.Set<String> usedDV = new java.util.HashSet<>();
+			Container parent = getParent();
+
+			for (Component c : parent.getComponents()) {
+				if (c instanceof HuyHangItemPanel p) {
+					ItemHuyHang it = p.item;
+
+					if (!it.getMaLo().equals(item.getMaLo()))
+						continue;
+					if (!it.getTenSanPham().equals(item.getTenSanPham()))
+						continue;
+
+					if (it.getQuyCachHienTai() != null) {
+						usedDV.add(it.getQuyCachHienTai().getDonViTinh().getTenDonViTinh());
+					}
+				}
+			}
+
+			// 3) Tìm đơn vị tính chưa dùng
+			String dvMoi = null;
+			QuyCachDongGoi qcMoi = null;
+			for (int i = 0; i < soLuongDVTLoad; i++) {
+				String dv = cboDonVi.getItemAt(i);
+				if (!usedDV.contains(dv)) {
+					dvMoi = dv;
+					if (danhSachQuyCach != null && i < danhSachQuyCach.size()) {
+						qcMoi = danhSachQuyCach.get(i);
+					}
+					break;
+				}
+			}
+
+			// 4) Nếu không còn DVT để clone
+			if (dvMoi == null) {
+				JOptionPane.showMessageDialog(this,
+						"Đã dùng hết tất cả đơn vị tính cho sản phẩm này.\nKhông thể clone thêm dòng.",
+						"Không thể clone", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+
+			// 5) Clone item
+			ItemHuyHang itemMoi = new ItemHuyHang(
+					item.getMaLo(),
+					item.getTenSanPham(),
+					soLuongTonGoc,
+					item.getDonGiaNhap());
+			itemMoi.setSoLuongHuy(1);
+			itemMoi.setLyDo(item.getLyDo());
+			itemMoi.setQuyCachGoc(item.getQuyCachGoc());
+			if (qcMoi != null) {
+				itemMoi.setQuyCachHienTai(qcMoi);
+			}
+
+			// 6) Callback thêm dòng clone
+			if (listener != null) {
+				listener.onClone(itemMoi);
+			}
+		});
 	}
 
 	private void loadDonViTinh() {
@@ -384,6 +472,20 @@ public class HuyHangItemPanel extends JPanel {
 	public void updateUIValue() {
 		txtSLHuy.setText(String.valueOf(item.getSoLuongHuy()));
 		txtThanhTien.setText(formatTien(item.getThanhTien()));
+
+		// Cập nhật quy đổi (giống TraHangItemPanel)
+		if (item.getQuyCachHienTai() != null && danhSachQuyCach != null) {
+			int heSo = item.getQuyCachHienTai().getHeSoQuyDoi();
+			String dvGoc = item.getQuyCachHienTai().getDonViTinh().getTenDonViTinh();
+			// Tìm đơn vị gốc (hệ số = 1)
+			for (QuyCachDongGoi qc : danhSachQuyCach) {
+				if (qc.getHeSoQuyDoi() == 1) {
+					dvGoc = qc.getDonViTinh().getTenDonViTinh();
+					break;
+				}
+			}
+			lblQuyDoi.setText("x" + heSo + " " + dvGoc);
+		}
 	}
 
 	public void setSTT(int stt) {

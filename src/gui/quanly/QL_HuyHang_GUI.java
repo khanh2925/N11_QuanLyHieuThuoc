@@ -8,28 +8,27 @@ package gui.quanly;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.InputEvent;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.regex.Pattern;
-import javax.swing.RowFilter;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
-import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
 
 import com.toedter.calendar.JDateChooser;
+
+import java.awt.event.HierarchyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -44,8 +43,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 import database.connectDB;
 import component.button.PillButton;
@@ -54,11 +51,17 @@ import component.border.RoundedBorder;
 import dao.ChiTietPhieuHuy_DAO;
 import dao.PhieuHuy_DAO;
 import entity.ChiTietPhieuHuy;
+import entity.ChiTietPhieuTra;
 import entity.PhieuHuy;
+import entity.PhieuTra;
+import gui.dialog.PhieuHuyPreviewDialog;
+import gui.dialog.PhieuTraPreviewDialog;
 
-public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentListener {
+public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListener {
 
 	private static final long serialVersionUID = 1L;
+	private static final String PLACEHOLDER_TIM_KIEM = "Tìm theo mã phiếu hoặc tên NV (F1/Ctrl+F)";
+
 	private JPanel pnPhieuHuy;
 	private JPanel pnHeader;
 	private JPanel pnCTPH;
@@ -80,11 +83,13 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 	private JDateChooser dateTuNgay;
 	private JDateChooser dateDenNgay;
 	private PillButton btnLamMoi;
+	private PillButton btnTimKiem;
 	private TableRowSorter<DefaultTableModel> sorter;
 	private JPanel pnBtnCTPH;
 	private JSplitPane pnCenter;
 
-	// private static final String TEN_NHA_THUOC = "NHÀ THUỐC HÒA AN"; // đổi tên theo nhà thuốc của bạn
+	// private static final String TEN_NHA_THUOC = "NHÀ THUỐC HÒA AN"; // đổi tên
+	// theo nhà thuốc của bạn
 
 	DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 	DecimalFormat df = new DecimalFormat("#,###đ");
@@ -111,19 +116,23 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 		TaoHeader();
 		initTable();// tạo bảng và load dữ liệu từ database lên bảng
 		TaoPanelCenter();
+		configureTableRenderers();
 
 		// Event listeners
+		txtSearch.addActionListener(e -> refreshFilters()); // Nhấn Enter để tìm kiếm
 		cbTrangThai.addActionListener(e -> refreshFilters());
 		dateTuNgay.addPropertyChangeListener("date", e -> refreshFilters());
 		dateDenNgay.addPropertyChangeListener("date", e -> refreshFilters());
+		btnTimKiem.addActionListener(this);
 		btnLamMoi.addActionListener(this);
 		btnHuyHang.addActionListener(this);
 		btnTuChoi.addActionListener(this);
 		btnXuatFile.addActionListener(this);
-		txtSearch.getDocument().addDocumentListener(this);
+		tblPH.addMouseListener(this);
 
-		// Thiết lập phím tắt
+		// Thiết lập phím tắt và focus
 		thietLapPhimTat();
+		addFocusOnShow();
 	}
 
 	private void TaoHeader() {
@@ -133,86 +142,84 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 		pnHeader.setBackground(new Color(0xE3F2F5));
 		add(pnHeader, BorderLayout.NORTH);
 
-		// --- Ô TÌM KIẾM (Font 20) ---
+		// --- 1. Ô TÌM KIẾM (Font 20) ---
 		txtSearch = new JTextField();
-		PlaceholderSupport.addPlaceholder(txtSearch, "Nhập mã phiếu hủy,Tên NV (F1/Ctrl+F)");
+		PlaceholderSupport.addPlaceholder(txtSearch, PLACEHOLDER_TIM_KIEM);
 		txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 20));
-		txtSearch.setBounds(25, 17, 500, 60);
+		txtSearch.setBounds(25, 17, 480, 60);
 		txtSearch.setBorder(new RoundedBorder(20));
 		txtSearch.setBackground(Color.WHITE);
-		txtSearch.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Gõ để lọc dữ liệu theo thời gian thực</html>");
+		txtSearch.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
 		pnHeader.add(txtSearch);
 
-		// --- BỘ LỌC (Font 18) ---
-		// 1. Từ ngày
-		addFilterLabel("Từ:", 530, 28, 35, 35);
+		// --- 2. BỘ LỌC NGÀY ---
+		// Từ ngày
+		addFilterLabel("Từ:", 525, 28, 35, 35);
 		dateTuNgay = new JDateChooser();
 		dateTuNgay.setDateFormatString("dd/MM/yyyy");
-		dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		dateTuNgay.setBounds(565, 28, 160, 38);
+		dateTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+		dateTuNgay.setBounds(560, 28, 140, 38);
 		pnHeader.add(dateTuNgay);
 
-		// 2. Đến ngày
-		addFilterLabel("Đến:", 740, 28, 45, 35);
+		// Đến ngày
+		addFilterLabel("Đến:", 710, 28, 40, 35);
 		dateDenNgay = new JDateChooser();
 		dateDenNgay.setDateFormatString("dd/MM/yyyy");
-		dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		dateDenNgay.setBounds(785, 28, 160, 38);
+		dateDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+		dateDenNgay.setBounds(750, 28, 140, 38);
 		pnHeader.add(dateDenNgay);
 
-		// 3. Trạng thái ComboBox
-		addFilterLabel("Trạng thái:", 965, 28, 90, 35);
+		// --- 3. TRẠNG THÁI ---
+		addFilterLabel("Trạng thái:", 905, 28, 85, 35);
 		cbTrangThai = new JComboBox<>(new String[] { "Tất cả", "Đã duyệt", "Chờ duyệt" });
-		cbTrangThai.setBounds(1055, 28, 150, 38);
+		cbTrangThai.setBounds(990, 28, 130, 38);
 		cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 18));
 		pnHeader.add(cbTrangThai);
 
-		// --- NÚT (Font 18) ---
-		btnLamMoi = new PillButton(
-			"<html>" +
-				"<center>" +
-					"LÀM MỚI<br>" +
-					"<span style='font-size:10px; color:#888888;'>(F5/Ctrl+N)</span>" +
-				"</center>" +
-			"</html>"
-		);
-		btnLamMoi.setBounds(1320, 22, 130, 50);
+		// --- 4. CÁC NÚT CHỨC NĂNG ---
+		btnTimKiem = new PillButton("<html>" + "<center>" + "TÌM KIẾM<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(Enter)</span>" + "</center>" + "</html>");
+		btnTimKiem.setBounds(1135, 22, 130, 50);
+		btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnTimKiem.setToolTipText(
+				"<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã phiếu, tên NV và bộ lọc</html>");
+		pnHeader.add(btnTimKiem);
+
+		btnLamMoi = new PillButton("<html>" + "<center>" + "LÀM MỚI<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(F5)</span>" + "</center>" + "</html>");
+		btnLamMoi.setBounds(1275, 22, 130, 50);
 		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5 hoặc Ctrl+N<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
+		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
 		pnHeader.add(btnLamMoi);
 
-		btnXuatFile = new PillButton(
-			"<html>" +
-				"<center>" +
-					"XUẤT FILE<br>" +
-					"<span style='font-size:10px; color:#888888;'>(Ctrl+E)</span>" +
-				"</center>" +
-			"</html>"
-		);
-		btnXuatFile.setBounds(1465, 22, 130, 50);
+		btnXuatFile = new PillButton("<html>" + "<center>" + "XUẤT FILE<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(F8)</span>" + "</center>" + "</html>");
+		btnXuatFile.setBounds(1415, 22, 180, 50);
 		btnXuatFile.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnXuatFile.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất phiếu hủy đang chọn ra file Excel</html>");
+		btnXuatFile.setToolTipText("<html><b>Phím tắt:</b> F8<br>Xuất danh sách phiếu hủy ra file Excel</html>");
 		pnHeader.add(btnXuatFile);
 	}
 
-	// Helper tạo label (Font 18)
+	// Helper tạo label (Font 16)
 	private void addFilterLabel(String text, int x, int y, int w, int h) {
 		JLabel lbl = new JLabel(text);
 		lbl.setBounds(x, y, w, h);
-		lbl.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		lbl.setFont(new Font("Segoe UI", Font.PLAIN, 16));
 		pnHeader.add(lbl);
 	}
 
 	/**
 	 * Thiết lập phím tắt cho các component
 	 */
+	/**
+	 * Thiết lập phím tắt cho màn hình Quản lý hủy hàng
+	 */
 	private void thietLapPhimTat() {
 		InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
 		ActionMap actionMap = getActionMap();
 
-		// F1, Ctrl+F: Focus vào ô tìm kiếm
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), "focusTimKiem");
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "focusTimKiem");
+		// F1: Focus tìm kiếm
+		inputMap.put(KeyStroke.getKeyStroke("F1"), "focusTimKiem");
 		actionMap.put("focusTimKiem", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -221,13 +228,13 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 			}
 		});
 
-		// F5, Ctrl+N: Làm mới
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), "lamMoi");
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK), "lamMoi");
+		// F5: Làm mới
+		inputMap.put(KeyStroke.getKeyStroke("F5"), "lamMoi");
 		actionMap.put("lamMoi", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				txtSearch.setText("");
+				PlaceholderSupport.addPlaceholder(txtSearch, PLACEHOLDER_TIM_KIEM);
 				cbTrangThai.setSelectedIndex(0);
 				dateTuNgay.setDate(null);
 				dateDenNgay.setDate(null);
@@ -236,12 +243,54 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 			}
 		});
 
-		// Ctrl+E: Xuất Excel
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK), "xuatExcel");
-		actionMap.put("xuatExcel", new AbstractAction() {
+		// Ctrl+F: Focus tìm kiếm
+		inputMap.put(KeyStroke.getKeyStroke("control F"), "timKiem");
+		actionMap.put("timKiem", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				txtSearch.requestFocus();
+				txtSearch.selectAll();
+			}
+		});
+
+		// F8: Xuất file Excel
+		inputMap.put(KeyStroke.getKeyStroke("F8"), "xuatFile");
+		actionMap.put("xuatFile", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				xuatExcel();
+			}
+		});
+
+		// Ctrl+D: Duyệt hủy hàng
+		inputMap.put(KeyStroke.getKeyStroke("control D"), "huyHang");
+		actionMap.put("huyHang", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				HuyHang();
+			}
+		});
+
+		// Ctrl+R: Từ chối hủy
+		inputMap.put(KeyStroke.getKeyStroke("control R"), "tuChoi");
+		actionMap.put("tuChoi", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				TuChoiHuy();
+			}
+		});
+	}
+
+	/**
+	 * Focus vào ô tìm kiếm khi panel được hiển thị
+	 */
+	private void addFocusOnShow() {
+		addHierarchyListener(e -> {
+			if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+				SwingUtilities.invokeLater(() -> {
+					txtSearch.requestFocusInWindow();
+					txtSearch.selectAll();
+				});
 			}
 		});
 	}
@@ -277,11 +326,19 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 
 		pnBtnCTPH = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
 
-		btnHuyHang = new PillButton("Hủy hàng");
+		btnHuyHang = new PillButton("<html>" + "<center>" + "HỦY HÀNG<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(Ctrl+D)</span>" + "</center>" + "</html>");
 		btnHuyHang.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnHuyHang.setPreferredSize(new Dimension(150, 50));
+		btnHuyHang.setToolTipText("<html><b>Phím tắt:</b> Ctrl+D<br>Duyệt hủy hàng cho chi tiết đang chọn</html>");
+		btnHuyHang.setEnabled(false); // Mặc định disable
 
-		btnTuChoi = new PillButton("Từ chối");
+		btnTuChoi = new PillButton("<html>" + "<center>" + "TỪ CHỐI<br>"
+				+ "<span style='font-size:10px; color:#888888;'>(Ctrl+R)</span>" + "</center>" + "</html>");
 		btnTuChoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		btnTuChoi.setPreferredSize(new Dimension(150, 50));
+		btnTuChoi.setToolTipText("<html><b>Phím tắt:</b> Ctrl+R<br>Từ chối hủy hàng cho chi tiết đang chọn</html>");
+		btnTuChoi.setEnabled(false); // Mặc định disable
 
 		pnBtnCTPH.add(btnHuyHang);
 		pnBtnCTPH.add(btnTuChoi);
@@ -297,21 +354,21 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 
 		List<RowFilter<Object, Object>> filters = new ArrayList<>();
 
-		// --- Lọc theo text: cột 0 (Mã PH) và 2 (Nhân viên)
+		// --- Lọc theo text: cột 1 (Mã PH) và 3 (Nhân viên)
 		String text = txtSearch.getText().trim();
-		// Kiểm tra placeholder: nếu text chứa placeholder text hoặc rỗng thì bỏ qua
-		String placeholderText = "Nhập mã phiếu hủy";
-		if (!text.isEmpty() && !text.contains(placeholderText)) {
-			filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(text), 0, 2));
+		// Kiểm tra placeholder: nếu text màu xám (placeholder) hoặc rỗng thì bỏ qua
+		if (!text.isEmpty() && !txtSearch.getForeground().equals(Color.GRAY)) {
+			// STT, Mã PH, Ngày lập, Nhân viên, Tổng tiền, Trạng thái
+			filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(text), 1, 3));
 		}
 
-		// --- Lọc theo trạng thái ComboBox: cột 4
+		// --- Lọc theo trạng thái ComboBox: cột 5
 		String trangThai = (String) cbTrangThai.getSelectedItem();
 		if (trangThai != null && !trangThai.equals("Tất cả")) {
-			filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(trangThai), 4));
+			filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(trangThai), 5));
 		}
 
-		// --- Lọc theo ngày: cột 3 (Ngày lập)
+		// --- Lọc theo ngày: cột 2 (Ngày lập)
 		java.util.Date tuNgay = dateTuNgay.getDate();
 		java.util.Date denNgay = dateDenNgay.getDate();
 
@@ -320,7 +377,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 				@Override
 				public boolean include(Entry<? extends Object, ? extends Object> entry) {
 					try {
-						String ngayStr = entry.getStringValue(1); // Cột Ngày lập
+						String ngayStr = entry.getStringValue(2); // Cột Ngày lập (index 2)
 						LocalDate ngay = LocalDate.parse(ngayStr, fmt);
 
 						LocalDate tu = tuNgay != null
@@ -355,7 +412,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 
 	private void initTable() {
 		// Bảng phiếu huỷ
-		String[] phieuHuyCols = { "Mã PH", "Ngày lập phiếu", "Nhân viên", "Tổng tiền", "Trạng thái" };
+		String[] phieuHuyCols = { "STT", "Mã PH", "Ngày lập phiếu", "Nhân viên", "Tổng tiền", "Trạng thái" };
 		modelPH = new DefaultTableModel(phieuHuyCols, 0) {
 			@Override
 			public boolean isCellEditable(int r, int c) {
@@ -368,10 +425,16 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 				"Danh sách phiếu hủy", TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 18),
 				Color.DARK_GRAY);
 		scrPH.setBorder(tbPH);
+
+		// Khởi tạo sorter TRƯỚC khi load data để bộ lọc 30 ngày được áp dụng ngay
+		sorter = new TableRowSorter<>(modelPH);
+		tblPH.setRowSorter(sorter);
+
 		loadDataTablePH();
 
 		// Bảng chi tiết phiếu huỷ
-		String[] cTPhieuCols = { "Mã lô", "Tên SP", "SL huỷ", "Lý do", "Đơn vị tính", "Thành tiền", "Trạng thái" };
+		String[] cTPhieuCols = { "STT", "Mã lô", "Tên SP", "SL huỷ", "Lý do", "Đơn vị tính", "Thành tiền",
+				"Trạng thái" };
 
 		modelCTPH = new DefaultTableModel(cTPhieuCols, 0) {
 			@Override
@@ -382,129 +445,56 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 		tblCTPH = setupTable(modelCTPH);
 		scrCTPH = new JScrollPane(tblCTPH);
 
-		// ===== Format chung (giữ nguyên style cũ của bạn) =====
-		formatTable(tblPH);
-		formatTable(tblCTPH);
-
-		// ===================================================================
-		// ---- 1) Trạng thái bảng PHIẾU HỦY: Đã duyệt = xanh, Chờ duyệt = đỏ ----
-		tblPH.getColumnModel().getColumn(4).setCellRenderer(new DefaultTableCellRenderer() {
-			@Override
-			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-					boolean hasFocus, int row, int column) {
-				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
-						column);
-				lbl.setHorizontalAlignment(SwingConstants.CENTER);
-
-				String text = value == null ? "" : value.toString().trim();
-
-				if (text.equalsIgnoreCase("Đã duyệt")) {
-					lbl.setForeground(new Color(0, 128, 0)); // Xanh lá
-				} else if (text.equalsIgnoreCase("Chờ duyệt")) {
-					lbl.setForeground(Color.RED);
-				} else {
-					lbl.setForeground(Color.BLACK);
-				}
-
-				// Không đụng tới background để vẫn giữ màu chọn dòng
-				return lbl;
-			}
-		});
-
-		// ---- 2) Trạng thái bảng CHI TIẾT: Đã hủy hàng = xanh, Đã từ chối hủy = đỏ
-		// Cột 5 (không phải cột 4) vì đã thêm cột "Đơn vị tính"
-		tblCTPH.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
-			@Override
-			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-					boolean hasFocus, int row, int column) {
-				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
-						column);
-				lbl.setHorizontalAlignment(SwingConstants.CENTER);
-
-				String text = value == null ? "" : value.toString().trim();
-
-				if (text.equalsIgnoreCase("Đã hủy hàng")) {
-					lbl.setForeground(new Color(0, 128, 0)); // Xanh lá
-				} else if (text.equalsIgnoreCase("Đã từ chối hủy")) {
-					lbl.setForeground(Color.RED);
-				} else { // Chờ duyệt, hoặc trạng thái khác
-					lbl.setForeground(Color.BLACK);
-				}
-
-				return lbl;
-			}
-		});
-
-		// bắt sự kiện chọn dòng để tự nạp chi tiết
+		// bắt sự kiện chọn dòng phiếu hủy để tự nạp chi tiết
 		tblPH.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tblPH.getSelectionModel().addListSelectionListener(e -> {
-			if (!e.getValueIsAdjusting())
+			if (!e.getValueIsAdjusting()) {
 				loadTableCTPH();
+				capNhatTrangThaiNut();
+			}
 		});
 
-		// sắp xếp tăng giảm tự động khi click vào header
-		sorter = new TableRowSorter<>(modelPH);
-		tblPH.setRowSorter(sorter);
+		// bắt sự kiện chọn dòng CTPH để cập nhật trạng thái nút
+		tblCTPH.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		tblCTPH.getSelectionModel().addListSelectionListener(e -> {
+			if (!e.getValueIsAdjusting()) {
+				capNhatTrangThaiNut();
+			}
+		});
 	}
 
 	private JTable setupTable(DefaultTableModel model) {
 		JTable table = new JTable(model);
-		table.setFont(new Font("Segoe UI", Font.PLAIN, 16)); // Font 16
-		table.setRowHeight(35); // Cao 35
-		table.setSelectionBackground(new Color(0xC8E6C9));
+		table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+		table.setRowHeight(35);
 		table.setGridColor(new Color(230, 230, 230));
+		table.setSelectionBackground(new Color(0xC8E6C9));
+		table.setSelectionForeground(Color.BLACK);
 
 		JTableHeader header = table.getTableHeader();
-		header.setFont(new Font("Segoe UI", Font.BOLD, 16)); // Header Font 16 Bold
-		header.setOpaque(true);
+		header.setFont(new Font("Segoe UI", Font.BOLD, 16));
 		header.setBackground(new Color(33, 150, 243));
 		header.setForeground(Color.WHITE);
-		header.setPreferredSize(new Dimension(100, 40)); // Header Cao 40
-		header.setReorderingAllowed(false);
+		header.setPreferredSize(new Dimension(100, 40));
 		return table;
 	}
 
-	private void formatTable(JTable table) {
-		table.getTableHeader().setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		table.getTableHeader().setBorder(null);
-
-		table.setRowHeight(28);
-		table.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-		table.setSelectionBackground(new Color(180, 205, 230));
-		table.setShowGrid(false);
-
-		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-		centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-
-		DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
-		rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
-
-		DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
-		leftRenderer.setHorizontalAlignment(JLabel.LEFT);
-
-		TableColumnModel m = table.getColumnModel();
-		for (int i = 0; i < m.getColumnCount(); i++) {
-			String col = m.getColumn(i).getHeaderValue().toString().toLowerCase();
-
-			if (col.contains("mã"))
-				m.getColumn(i).setCellRenderer(centerRenderer);
-			else if (col.contains("số lượng") || col.contains("sl"))
-				m.getColumn(i).setCellRenderer(rightRenderer);
-			else if (col.contains("giá") || col.contains("tiền"))
-				m.getColumn(i).setCellRenderer(rightRenderer);
-			else if (col.contains("ngày") || col.contains("hạn"))
-				m.getColumn(i).setCellRenderer(centerRenderer);
-			else
-				m.getColumn(i).setCellRenderer(leftRenderer);
-		}
-
-		table.getTableHeader().setReorderingAllowed(false);
-	}
-
-	// đưa dữ liệu Phiếu Hủy lên bảng
+	// đưa dữ liệu Phiếu Hủy lên bảng với 30 ngày mặc định
 	private void loadDataTablePH() {
 		dsPhieuHuy = new ArrayList<PhieuHuy>();
 		modelPH.setRowCount(0);
+
+		// --- CHỌN NGÀY MẶC ĐỊNH ---
+		Calendar cal = Calendar.getInstance();
+
+		// Đến ngày: Hôm nay
+		java.util.Date now = cal.getTime();
+		dateDenNgay.setDate(now);
+
+		// Từ ngày: 30 ngày trước
+		cal.add(Calendar.DAY_OF_MONTH, -30);
+		java.util.Date d30 = cal.getTime();
+		dateTuNgay.setDate(d30);
 
 		try {
 			dsPhieuHuy = ph_dao.layTatCaPhieuHuy();
@@ -512,22 +502,31 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 			e.printStackTrace();
 		}
 
+		int stt = 1;
 		for (PhieuHuy ph : dsPhieuHuy) {
-			modelPH.addRow(new Object[] { ph.getMaPhieuHuy(), ph.getNgayLapPhieu().format(fmt),
+			modelPH.addRow(new Object[] { stt++, ph.getMaPhieuHuy(), ph.getNgayLapPhieu().format(fmt),
 					ph.getNhanVien().getTenNhanVien(), df.format(ph.getTongTien()), ph.getTrangThaiText() });
 		}
 
+		// Áp dụng bộ lọc ngày mặc định
+		refreshFilters();
+		capNhatTrangThaiNut();
 	}
 
 	// đưa dữ liệu CTPH lên bảng
 	private void loadTableCTPH() {
-		int selectRow = tblPH.getSelectedRow();
+		int viewRow = tblPH.getSelectedRow();
 
-		if (selectRow == -1) {
+		if (viewRow == -1) {
+			modelCTPH.setRowCount(0);
+			capNhatTrangThaiNut();
 			return;
 		}
 
-		String maPH = modelPH.getValueAt(selectRow, 0).toString();
+		// Convert view row to model row (quan trọng khi có sorter/filter)
+		// Convert view row to model row (quan trọng khi có sorter/filter)
+		int modelRow = tblPH.convertRowIndexToModel(viewRow);
+		String maPH = modelPH.getValueAt(modelRow, 1).toString(); // Cột 1 là Mã PH
 
 		dsCTPhieuHuy = new ArrayList<ChiTietPhieuHuy>();
 		modelCTPH.setRowCount(0);
@@ -538,35 +537,149 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 			e.printStackTrace();
 		}
 
+		int stt = 1;
 		for (ChiTietPhieuHuy ctph : dsCTPhieuHuy) {
-			// ✅ Xử lý trường hợp DonViTinh = null
+			// Xử lý trường hợp DonViTinh = null
 			String tenDonViTinh = "N/A";
 			if (ctph.getDonViTinh() != null) {
 				tenDonViTinh = ctph.getDonViTinh().getTenDonViTinh();
 			}
 
-			modelCTPH.addRow(
-					new Object[] { ctph.getLoSanPham().getMaLo(), ctph.getLoSanPham().getSanPham().getTenSanPham(),
-							ctph.getSoLuongHuy(), ctph.getLyDoChiTiet(), tenDonViTinh, df.format(ctph.getThanhTien()), // ✅ Cột 4:
-																											// Đơn vị
-																											// tính
-							ctph.getTrangThaiText() // ✅ Cột 5: Trạng thái
-					});
+			modelCTPH.addRow(new Object[] { stt++, ctph.getLoSanPham().getMaLo(),
+					ctph.getLoSanPham().getSanPham().getTenSanPham(), ctph.getSoLuongHuy(), ctph.getLyDoChiTiet(),
+					tenDonViTinh, df.format(ctph.getThanhTien()), ctph.getTrangThaiText() });
 		}
 
+		capNhatTrangThaiNut();
+	}
+
+	/**
+	 * Cấu hình renderer cho các cột trong bảng - Bảng phiếu hủy: Đã duyệt = xanh
+	 * đậm, Chờ duyệt = đỏ nghiêng - Bảng chi tiết: Đã hủy hàng = xanh đậm, Đã từ
+	 * chối hủy = đỏ đậm, Chờ duyệt = đỏ nghiêng
+	 */
+	private void configureTableRenderers() {
+		DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+		center.setHorizontalAlignment(SwingConstants.CENTER);
+		DefaultTableCellRenderer right = new DefaultTableCellRenderer();
+		right.setHorizontalAlignment(SwingConstants.RIGHT);
+
+		// Bảng phiếu hủy: căn giữa cho Mã PH, Ngày lập, Trạng thái; căn phải cho Tổng
+		// tiền
+		// Bảng phiếu hủy
+		tblPH.getColumnModel().getColumn(0).setCellRenderer(center); // STT
+		tblPH.getColumnModel().getColumn(1).setCellRenderer(center); // Mã PH
+		tblPH.getColumnModel().getColumn(2).setCellRenderer(center); // Ngày lập
+		tblPH.getColumnModel().getColumn(4).setCellRenderer(right); // Tổng tiền
+
+		// Cột trạng thái phiếu hủy (index 5)
+		tblPH.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
+			@Override
+			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+					boolean hasFocus, int row, int column) {
+				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
+						column);
+				lbl.setHorizontalAlignment(SwingConstants.CENTER);
+
+				String text = value == null ? "" : value.toString().trim();
+
+				if (text.equalsIgnoreCase("Đã duyệt")) {
+					lbl.setForeground(new Color(0x2E7D32)); // Xanh lá đậm
+					lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
+				} else if (text.equalsIgnoreCase("Chờ duyệt")) {
+					lbl.setForeground(Color.RED);
+					lbl.setFont(new Font("Segoe UI", Font.ITALIC, 15));
+				} else {
+					lbl.setForeground(Color.BLACK);
+					lbl.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+				}
+
+				return lbl;
+			}
+		});
+
+		// Bảng chi tiết
+		tblCTPH.getColumnModel().getColumn(0).setCellRenderer(center); // STT
+		tblCTPH.getColumnModel().getColumn(1).setCellRenderer(center); // Mã lô
+		tblCTPH.getColumnModel().getColumn(3).setCellRenderer(right); // SL hủy
+		tblCTPH.getColumnModel().getColumn(6).setCellRenderer(right); // Thành tiền
+
+		// Cột trạng thái chi tiết (index 7)
+		tblCTPH.getColumnModel().getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
+			@Override
+			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+					boolean hasFocus, int row, int column) {
+				JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
+						column);
+				lbl.setHorizontalAlignment(SwingConstants.CENTER);
+
+				String text = value == null ? "" : value.toString().trim();
+
+				if (text.equalsIgnoreCase("Đã hủy hàng")) {
+					lbl.setForeground(new Color(0x2E7D32)); // Xanh lá đậm
+					lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
+				} else if (text.equalsIgnoreCase("Đã từ chối hủy")) {
+					lbl.setForeground(Color.RED);
+					lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
+				} else if (text.equalsIgnoreCase("Chờ duyệt")) {
+					lbl.setForeground(Color.RED);
+					lbl.setFont(new Font("Segoe UI", Font.ITALIC, 15));
+				} else {
+					lbl.setForeground(Color.BLACK);
+					lbl.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+				}
+
+				return lbl;
+			}
+		});
+	}
+
+	/**
+	 * Cập nhật trạng thái hiển thị các nút dựa trên việc có chọn dòng hay không -
+	 * Không chọn dòng CTPH: Disable nút Hủy Hàng và Từ Chối - Có chọn dòng CTPH (và
+	 * PH): Enable nút Hủy Hàng và Từ Chối - Chi tiết đã xử lý (Đã hủy hàng / Đã từ
+	 * chối hủy): Disable cả 2 nút
+	 */
+	private void capNhatTrangThaiNut() {
+		// Null check để tránh NPE khi khởi tạo
+		if (tblPH == null || tblCTPH == null || btnHuyHang == null || btnTuChoi == null) {
+			return;
+		}
+
+		int rowPH = tblPH.getSelectedRow();
+		int rowCTPH = tblCTPH.getSelectedRow();
+		boolean coDongCTPHDuocChon = (rowCTPH != -1);
+		boolean coDongPHDuocChon = (rowPH != -1);
+
+		// Kiểm tra trạng thái chi tiết - chỉ enable nếu còn "Chờ duyệt"
+		boolean chiTietChuaXuLy = false;
+		if (coDongCTPHDuocChon && modelCTPH != null) {
+			String trangThai = modelCTPH.getValueAt(rowCTPH, 7).toString().trim(); // Cột 7 - Trạng thái
+			chiTietChuaXuLy = trangThai.equalsIgnoreCase("Chờ duyệt");
+		}
+
+		// Buttons only enabled when a CTPH row with status "Chờ duyệt" is selected
+		btnHuyHang.setEnabled(coDongCTPHDuocChon && coDongPHDuocChon && chiTietChuaXuLy);
+		btnTuChoi.setEnabled(coDongCTPHDuocChon && coDongPHDuocChon && chiTietChuaXuLy);
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object src = e.getSource();
 
+		if (src == btnTimKiem) {
+			refreshFilters();
+			return;
+		}
 		if (src == btnLamMoi) {
 			txtSearch.setText("");
+			PlaceholderSupport.addPlaceholder(txtSearch, PLACEHOLDER_TIM_KIEM);
 			cbTrangThai.setSelectedIndex(0);
 			dateTuNgay.setDate(null);
 			dateDenNgay.setDate(null);
 			loadDataTablePH();
 			modelCTPH.setRowCount(0);
+			txtSearch.requestFocus(); // Focus vào ô tìm kiếm sau khi làm mới
 			return;
 		}
 		if (src == btnHuyHang) {
@@ -578,8 +691,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 			return;
 		}
 		if (src == btnXuatFile) {
-		    xuatExcel();
-		    return;
+			xuatExcel();
+			return;
 		}
 
 	}
@@ -593,8 +706,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 			JOptionPane.showMessageDialog(null, "Vui lòng chọn chi tiết phiếu hủy để cập nhật trạng thái!!");
 			return;
 		}
-		// ✅ Đọc cột 6 (Trạng thái)
-		String trangThai = modelCTPH.getValueAt(selectRowCT, 6).toString();
+		// ✅ Đọc cột 7 (Trạng thái)
+		String trangThai = modelCTPH.getValueAt(selectRowCT, 7).toString();
 		if (trangThai.trim().equals("Đã từ chối")) {
 			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy này đã ở trạng thái từ chối hủy");
 			return;
@@ -605,12 +718,12 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy này đã hủy hàng, không được cập nhật trạng thái");
 			return;
 		}
-		String maPH = modelPH.getValueAt(selectRowPH, 0).toString();
-		String maLo = modelCTPH.getValueAt(selectRowCT, 0).toString();
+		String maPH = modelPH.getValueAt(selectRowPH, 1).toString(); // Mã PH index 1
+		String maLo = modelCTPH.getValueAt(selectRowCT, 1).toString(); // Mã lô index 1
 
 		if (ctph_dao.capNhatTrangThaiChiTiet(maPH, maLo, 3)) {
-			// ✅ Update cột 6 (Trạng thái)
-			modelCTPH.setValueAt("Đã từ chối hủy", selectRowCT, 6);
+			// ✅ Update cột 7 (Trạng thái)
+			modelCTPH.setValueAt("Đã từ chối hủy", selectRowCT, 7);
 			JOptionPane.showMessageDialog(null, "Đã từ chối hủy hàng!");
 
 			capNhatTrangThaiPhieuSauKhiCapNhatCTPH(maPH);
@@ -629,8 +742,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 			JOptionPane.showMessageDialog(null, "Vui lòng chọn chi tiết phiếu hủy để cập nhật trạng thái!!");
 			return;
 		}
-		// ✅ Đọc cột 5 (Trạng thái), không phải cột 4 (Đơn vị tính)
-		String trangThai = modelCTPH.getValueAt(selectRowCT, 6).toString();
+		// ✅ Đọc cột 7 (Trạng thái)
+		String trangThai = modelCTPH.getValueAt(selectRowCT, 7).toString();
 
 		if (trangThai.trim().equals("Đã hủy hàng")) {
 			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy đã ở trạng thái đã hủy!!");
@@ -638,15 +751,16 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 		}
 		// Không cho phép chuyển từ "Đã từ chối hủy" sang "Hủy hàng"
 		if (trangThai.trim().equals("Đã từ chối hủy")) {
-			JOptionPane.showMessageDialog(null, "Chi tiết phiếu hủy đã bị từ chối, không thể chuyển sang trạng thái hủy hàng!");
+			JOptionPane.showMessageDialog(null,
+					"Chi tiết phiếu hủy đã bị từ chối, không thể chuyển sang trạng thái hủy hàng!");
 			return;
 		}
-		String maPH = modelPH.getValueAt(selectRowPH, 0).toString();
-		String maLo = modelCTPH.getValueAt(selectRowCT, 0).toString();
+		String maPH = modelPH.getValueAt(selectRowPH, 1).toString(); // Mã PH index 1
+		String maLo = modelCTPH.getValueAt(selectRowCT, 1).toString(); // Mã lô index 1
 
 		if (ctph_dao.capNhatTrangThaiChiTiet(maPH, maLo, 2)) {
-			// ✅ Update cột 6 (Trạng thái)
-			modelCTPH.setValueAt("Đã hủy hàng", selectRowCT, 6);
+			// ✅ Update cột 7 (Trạng thái)
+			modelCTPH.setValueAt("Đã hủy hàng", selectRowCT, 7);
 			JOptionPane.showMessageDialog(null, "Hủy hàng thành công!");
 
 			capNhatTrangThaiPhieuSauKhiCapNhatCTPH(maPH);
@@ -683,7 +797,7 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 			return;
 		}
 
-		modelPH.setValueAt("Đã duyệt", rowModel, 4);
+		modelPH.setValueAt("Đã duyệt", rowModel, 5); // Cột trạng thái index 5
 
 	}
 
@@ -698,7 +812,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setDialogTitle("Chọn nơi lưu file Excel");
-		fileChooser.setSelectedFile(new File("DanhSachPhieuHuy_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".xlsx"));
+		fileChooser.setSelectedFile(new File(
+				"DanhSachPhieuHuy_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".xlsx"));
 		fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
 
 		int userSelection = fileChooser.showSaveDialog(this);
@@ -792,7 +907,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 
 				// Header chi tiết
 				Row headerRowCT = sheetCTPH.createRow(0);
-				String[] headersCT = { "Mã lô", "Tên SP", "SL hủy", "Lý do", "Đơn vị tính", "Thành tiền", "Trạng thái" };
+				String[] headersCT = { "Mã lô", "Tên SP", "SL hủy", "Lý do", "Đơn vị tính", "Thành tiền",
+						"Trạng thái" };
 				for (int i = 0; i < headersCT.length; i++) {
 					Cell cell = headerRowCT.createCell(i);
 					cell.setCellValue(headersCT[i]);
@@ -836,24 +952,6 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 		}
 	}
 
-
-	@Override
-	public void insertUpdate(DocumentEvent e) {
-		refreshFilters();
-	}
-
-	@Override
-	public void removeUpdate(DocumentEvent e) {
-		refreshFilters();
-	}
-
-	@Override
-	public void changedUpdate(DocumentEvent e) {
-		refreshFilters();
-	}
-
-
-
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
 			JFrame frame = new JFrame("Quản lý phiếu hủy hàng");
@@ -863,5 +961,53 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, DocumentLi
 			frame.setContentPane(new QL_HuyHang_GUI());
 			frame.setVisible(true);
 		});
+	}
+
+	/**
+	 * Mở dialog xem phiếu hủy
+	 */
+	private void xemPhieuHuy(String maPH) {
+		PhieuHuy ph = ph_dao.layTheoMa(maPH);
+		if (ph != null) {
+			List<ChiTietPhieuHuy> dsCT = ctph_dao.timKiemChiTietPhieuHuyBangMa(maPH);
+			ph.setChiTietPhieuHuyList(dsCT);
+			new PhieuHuyPreviewDialog(SwingUtilities.getWindowAncestor(this), ph).setVisible(true);
+		}
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		if (e.getSource() == tblPH && e.getClickCount() == 2) {
+			int row = tblPH.getSelectedRow();
+			if (row != -1) {
+				int modelRow = tblPH.convertRowIndexToModel(row);
+				String maPH = modelPH.getValueAt(modelRow, 1).toString(); // MaPH at index 1
+				xemPhieuHuy(maPH);
+			}
+		}
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+
 	}
 }
