@@ -6,6 +6,7 @@ import entity.QuyCachDongGoi;
 import javax.swing.*;
 import javax.swing.border.*;
 
+import component.input.PlaceholderSupport;
 import component.input.TaoJtextNhanh;
 
 import java.awt.*;
@@ -206,7 +207,8 @@ public class TraHangItemPanel extends JPanel {
 		add(Box.createHorizontalGlue());
 
 		// ===== LÝ DO TRẢ (đặt ở dưới – không phá layout gốc) =====
-		txtLyDo = new JTextField("Lý do trả");
+		txtLyDo = new JTextField();
+		PlaceholderSupport.addPlaceholder(txtLyDo, "Lý do trả");
 		txtLyDo.setFont(new Font("Segoe UI", Font.ITALIC, 12));
 		txtLyDo.setForeground(Color.GRAY);
 		txtLyDo.setPreferredSize(new Dimension(85, 26));
