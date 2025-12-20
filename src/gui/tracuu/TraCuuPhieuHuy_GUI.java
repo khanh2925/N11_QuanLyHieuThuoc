@@ -269,13 +269,13 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         tblPhieuHuy.getColumnModel().getColumn(1).setPreferredWidth(150);
         tblPhieuHuy.getColumnModel().getColumn(2).setPreferredWidth(200);
         tblPhieuHuy.getColumnModel().getColumn(4).setPreferredWidth(180);
-
         JScrollPane scrollPH = new JScrollPane(tblPhieuHuy);
         scrollPH.setBorder(createTitledBorder("Danh sách phiếu hủy hàng"));
         splitPane.setTopComponent(scrollPH);
 
         // --- BẢNG 2: CHI TIẾT PHIẾU HỦY (BOTTOM) ---
-        String[] colChiTiet = { "STT", "Mã Lô", "Sản phẩm", "Lý do chi tiết", "Số lượng", "Giá vốn", "Thành tiền",
+        String[] colChiTiet = { "STT", "Mã Lô", "Sản phẩm", "Lý do chi tiết", "Số lượng", "Đơn vị tính", "Giá vốn",
+                "Thành tiền",
                 "Trạng thái" };
         modelChiTiet = new DefaultTableModel(colChiTiet, 0) {
             @Override
@@ -291,9 +291,10 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         tblChiTiet.getColumnModel().getColumn(2).setPreferredWidth(250); // Tên SP
         tblChiTiet.getColumnModel().getColumn(3).setPreferredWidth(200); // Lý do
         tblChiTiet.getColumnModel().getColumn(4).setCellRenderer(right); // SL
-        tblChiTiet.getColumnModel().getColumn(5).setCellRenderer(right); // Giá nhập
-        tblChiTiet.getColumnModel().getColumn(6).setCellRenderer(right); // Thành tiền
-        tblChiTiet.getColumnModel().getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
+        tblChiTiet.getColumnModel().getColumn(5).setCellRenderer(center); // DVT
+        tblChiTiet.getColumnModel().getColumn(6).setCellRenderer(right); // Giá nhập
+        tblChiTiet.getColumnModel().getColumn(7).setCellRenderer(right); // Thành tiền
+        tblChiTiet.getColumnModel().getColumn(8).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                     boolean hasFocus, int row, int column) {
@@ -378,18 +379,18 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         btnTim.addActionListener(this);
         btnXemPhieuHuy.addActionListener(this);
         txtTimKiem.addActionListener(this);
-        
-		tblPhieuHuy.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2) {
-					int row = tblPhieuHuy.getSelectedRow();
-					if (row != -1) {
-						xuLyXemPhieuHuy();
-					}
-				}
-			}
-		});
+
+        tblPhieuHuy.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int row = tblPhieuHuy.getSelectedRow();
+                    if (row != -1) {
+                        xuLyXemPhieuHuy();
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -621,12 +622,19 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         }
         int stt = 1;
         for (ChiTietPhieuHuy ctph : dsCTPH) {
+            // Lấy tên đơn vị tính
+            String tenDVT = "";
+            if (ctph.getDonViTinh() != null) {
+                tenDVT = ctph.getDonViTinh().getTenDonViTinh();
+            }
+
             modelChiTiet.addRow(new Object[] {
                     stt++,
                     ctph.getLoSanPham().getMaLo(),
                     ctph.getLoSanPham().getSanPham().getTenSanPham(),
                     ctph.getLyDoChiTiet(),
                     ctph.getSoLuongHuy(),
+                    tenDVT,
                     df.format(ctph.getDonGiaNhap()),
                     df.format(ctph.getThanhTien()),
                     ctph.getTrangThaiText()

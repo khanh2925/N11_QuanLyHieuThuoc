@@ -12,6 +12,7 @@ import component.button.*;
 import dao.LoSanPham_DAO;
 import dao.PhieuHuy_DAO;
 import dao.QuyCachDongGoi_DAO;
+import dao.SanPham_DAO;
 
 import entity.ChiTietPhieuHuy;
 import entity.ItemHuyHang;
@@ -19,6 +20,7 @@ import entity.LoSanPham;
 import entity.NhanVien;
 import entity.PhieuHuy;
 import entity.QuyCachDongGoi;
+import entity.SanPham;
 import entity.Session;
 import entity.TaiKhoan;
 import gui.panel.HuyHangItemPanel;
@@ -39,7 +41,7 @@ import java.util.List;
  */
 public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 
-	private static final String PLACEHOLDER_TIM_KIEM = "Tìm theo mã lô, mã/tên sản phẩm (F1)";
+	private static final String PLACEHOLDER_TIM_KIEM = "Tìm theo mã lô, mã/tên sản phẩm";
 	// ====== TÌM KIẾM / DANH SÁCH ======
 	private JTextField txtTimLo;
 	private JPanel pnCotPhaiCenter;
@@ -61,6 +63,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 	private final LoSanPham_DAO loDAO = new LoSanPham_DAO();
 	private final PhieuHuy_DAO phieuHuyDAO = new PhieuHuy_DAO();
 	private final QuyCachDongGoi_DAO quyCachDAO = new QuyCachDongGoi_DAO();
+	private final SanPham_DAO spDAO = new SanPham_DAO();
 
 	// ====== NGÀY ======
 	private final LocalDate today = LocalDate.now();
@@ -278,31 +281,67 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 	 * - Nếu nhập mã SP / tên SP → mở dialog chọn lô
 	 * - Nếu nhập hạn dùng → mở dialog và lọc theo HSD
 	 */
+	/**
+	 * Xử lý ô tìm kiếm:
+	 * - Nếu nhập LO-xxxxxx (không phân biệt hoa thường) → tải lô trực tiếp
+	 * - Nếu không phải lô:
+	 * + Tìm chính xác mã SP -> Mở dialog
+	 * + Nếu giống mã SP (SP-...) mà không thấy -> Báo lỗi
+	 * + Còn lại -> Tìm theo tên
+	 */
 	private void xuLyTimKiem() {
 		String input = txtTimLo.getText().trim();
 		if (input.isEmpty())
 			return;
 
-		// 1) Nếu nhập MÃ LÔ → load trực tiếp, bỏ qua dialog
-		if (input.matches("^LO-\\d{6}$")) {
-			LoSanPham lo = loDAO.timLoTheoMa(input);
+		// 1) Nếu nhập MÃ LÔ (chấp nhận lo-xxxxxx)
+		if (input.matches("(?i)^LO-\\d{6}$")) {
+			// Chuẩn hóa về chữ hoa để tìm trong DB
+			String maLoChuan = input.toUpperCase();
+			LoSanPham lo = loDAO.timLoTheoMa(maLoChuan);
 			if (lo == null) {
-				JOptionPane.showMessageDialog(this, "Không tìm thấy lô " + input, "Không tồn tại",
+				JOptionPane.showMessageDialog(this, "Không tìm thấy lô " + maLoChuan, "Không tồn tại",
 						JOptionPane.WARNING_MESSAGE);
 				return;
 			}
 
-			double giaNhap = lo.getSanPham().getGiaNhap();
+			// Đảm bảo SanPham được load đầy đủ (có thể cache trả về dữ liệu không đầy đủ)
+			SanPham sp = lo.getSanPham();
+			if (sp == null) {
+				JOptionPane.showMessageDialog(this, "Lô " + maLoChuan + " không có sản phẩm liên kết!", "Lỗi dữ liệu",
+						JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+
+			// Nếu giaNhap = 0, thử load lại SanPham từ DB
+			double giaNhap = sp.getGiaNhap();
+			if (giaNhap <= 0) {
+				SanPham spFull = spDAO.laySanPhamTheoMa(sp.getMaSanPham());
+				if (spFull != null) {
+					lo.setSanPham(spFull);
+					giaNhap = spFull.getGiaNhap();
+				}
+			}
+
 			addDongHuy(lo, giaNhap);
 
 			txtTimLo.setText("");
 			return;
 		}
 
-		// 2) Nếu là mã sản phẩm → mở dialog chọn lô theo mã SP
-		if (input.matches("^SP-\\w+$") || input.matches("^[A-Za-z0-9_-]+$")) {
+		// 2) Tìm theo MÃ SẢN PHẨM (Ưu tiên tìm chính xác trước)
+		SanPham sp = spDAO.laySanPhamTheoMa(input);
+		if (sp != null) {
 			MoDialogChonLo(input, "MASP");
 			txtTimLo.setText("");
+			return;
+		}
+
+		// Nếu không tìm thấy mã, nhưng người dùng nhập dạng mã (SP-...) -> Báo lỗi chứ
+		// không mở dialog
+		if (input.toUpperCase().startsWith("SP-")) {
+			JOptionPane.showMessageDialog(this, "Không tìm thấy sản phẩm có mã: " + input, "Thông báo",
+					JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 
@@ -321,13 +360,65 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		DialogChonLo dialog = new DialogChonLo(keyword, loaiTim);
 		dialog.setVisible(true);
 
-		// Kiểm tra nếu chọn tất cả
-		if (dialog.isSelectedAll()) {
-			ArrayList<LoSanPham> danhSachLo = dialog.getDanhSachLoChon();
-			if (danhSachLo != null && !danhSachLo.isEmpty()) {
-				int soLoThem = 0;
-				int soLoTrung = 0;
+		// Ưu tiên: Lấy danh sách lô đã chọn (hỗ trợ nhiều dòng)
+		ArrayList<LoSanPham> danhSachLo = dialog.getDanhSachLoChon();
 
+		// Logic cũ: nếu dialog chưa hỗ trợ getDanhSachLoChon đúng nghĩa (trả về list
+		// selected),
+		// ta có thể kiểm tra getSelectedLo() cho single select nếu list rỗng.
+		// NHƯNG theo kế hoạch, ta sẽ update DialogChonLo để trả về list các item được
+		// chọn.
+
+		if (danhSachLo != null && !danhSachLo.isEmpty()) {
+			// Nếu danh sách lớn (200+), dùng SwingWorker với loading dialog
+			if (danhSachLo.size() >= 200) {
+				importLargeDataWithLoading(danhSachLo, loaiTim);
+			} else {
+				// Import trực tiếp cho danh sách nhỏ
+				importDanhSachLo(danhSachLo, loaiTim);
+			}
+		}
+		// Fallback check single (nếu list null hoặc empty mà user vẫn chọn 1 cái?
+		// Thực tế logic DialogChonLo sẽ trả về list chứa 1 phần tử nếu chọn 1).
+		else {
+			LoSanPham lo = dialog.getSelectedLo();
+			if (lo != null) {
+				if ("HSD".equals(loaiTim)) {
+					addDongHuyVoiLyDo(lo, lo.getSanPham().getGiaNhap(), "Gần hết hạn sử dụng");
+				} else {
+					addDongHuy(lo, lo.getSanPham().getGiaNhap());
+				}
+			}
+		}
+	}
+
+	/**
+	 * Import danh sách lô với loading indicator (cho 200+ items)
+	 */
+	private void importLargeDataWithLoading(ArrayList<LoSanPham> danhSachLo, String loaiTim) {
+		JDialog loadingDialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Đang tải dữ liệu...",
+				Dialog.ModalityType.APPLICATION_MODAL);
+		JPanel panel = new JPanel(new BorderLayout(10, 10));
+		panel.setBorder(new EmptyBorder(20, 30, 20, 30));
+
+		JLabel lblMessage = new JLabel("Đang thêm " + danhSachLo.size() + " lô vào danh sách huỷ...");
+		lblMessage.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+		JProgressBar progressBar = new JProgressBar(0, danhSachLo.size());
+		progressBar.setStringPainted(true);
+
+		panel.add(lblMessage, BorderLayout.NORTH);
+		panel.add(progressBar, BorderLayout.CENTER);
+		loadingDialog.add(panel);
+		loadingDialog.pack();
+		loadingDialog.setLocationRelativeTo(this);
+
+		SwingWorker<Void, Integer> worker = new SwingWorker<>() {
+			int soLoThem = 0;
+			int soLoTrung = 0;
+
+			@Override
+			protected Void doInBackground() throws Exception {
+				int count = 0;
 				for (LoSanPham lo : danhSachLo) {
 					// Kiểm tra trùng
 					boolean daTonTai = false;
@@ -340,30 +431,80 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 					}
 
 					if (!daTonTai) {
-						addDongHuyVoiLyDo(lo, lo.getSanPham().getGiaNhap(), "Gần hết hạn sử dụng");
+						// Thêm vào danh sách trên EDT
+						final LoSanPham loFinal = lo;
+						SwingUtilities.invokeAndWait(() -> {
+							if ("HSD".equals(loaiTim)) {
+								addDongHuyVoiLyDo(loFinal, loFinal.getSanPham().getGiaNhap(), "Gần hết hạn sử dụng");
+							} else {
+								addDongHuy(loFinal, loFinal.getSanPham().getGiaNhap());
+							}
+						});
 						soLoThem++;
 					}
+
+					count++;
+					publish(count);
 				}
-
-				String thongBao = String.format("✅ Đã thêm %d lô vào danh sách huỷ!", soLoThem);
-
-				if (soLoTrung > 0) {
-					thongBao += String.format("\n⚠️ Bỏ qua %d lô đã có trong danh sách.", soLoTrung);
-				}
-
-				JOptionPane.showMessageDialog(this, thongBao, "Thành công", JOptionPane.INFORMATION_MESSAGE);
+				return null;
 			}
-		} else {
-			// Chọn 1 lô
-			LoSanPham lo = dialog.getSelectedLo();
-			if (lo != null) {
-				// Nếu chọn từ dialog HSD, tự động gán lý do
+
+			@Override
+			protected void process(java.util.List<Integer> chunks) {
+				int latest = chunks.get(chunks.size() - 1);
+				progressBar.setValue(latest);
+			}
+
+			@Override
+			protected void done() {
+				loadingDialog.dispose();
+				if (soLoTrung > 0 && soLoThem == 0) {
+					JOptionPane.showMessageDialog(HuyHangNhanVien_GUI.this, "Các lô đã chọn đều có trong danh sách!",
+							"Thông báo",
+							JOptionPane.WARNING_MESSAGE);
+				} else if (soLoThem > 0) {
+					JOptionPane.showMessageDialog(HuyHangNhanVien_GUI.this,
+							"Đã thêm " + soLoThem + " lô vào danh sách huỷ.", "Hoàn thành",
+							JOptionPane.INFORMATION_MESSAGE);
+				}
+			}
+		};
+
+		worker.execute();
+		loadingDialog.setVisible(true);
+	}
+
+	/**
+	 * Import danh sách lô (cho danh sách nhỏ, không cần loading)
+	 */
+	private void importDanhSachLo(ArrayList<LoSanPham> danhSachLo, String loaiTim) {
+		int soLoThem = 0;
+		int soLoTrung = 0;
+
+		for (LoSanPham lo : danhSachLo) {
+			// Kiểm tra trùng
+			boolean daTonTai = false;
+			for (ItemHuyHang t : dsItem) {
+				if (t.getMaLo().equals(lo.getMaLo())) {
+					daTonTai = true;
+					soLoTrung++;
+					break;
+				}
+			}
+
+			if (!daTonTai) {
 				if ("HSD".equals(loaiTim)) {
 					addDongHuyVoiLyDo(lo, lo.getSanPham().getGiaNhap(), "Gần hết hạn sử dụng");
 				} else {
 					addDongHuy(lo, lo.getSanPham().getGiaNhap());
 				}
+				soLoThem++;
 			}
+		}
+
+		if (soLoTrung > 0 && soLoThem == 0) {
+			JOptionPane.showMessageDialog(this, "Các lô đã chọn đều có trong danh sách!", "Thông báo",
+					JOptionPane.WARNING_MESSAGE);
 		}
 	}
 
@@ -598,7 +739,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 	// ===========================================
 
 	private void xuLyTaoPhieuHuy() {
-		if (modelHuy.getRowCount() == 0) {
+		if (dsItem.isEmpty()) {
 			JOptionPane.showMessageDialog(this, "Chưa có sản phẩm nào trong danh sách huỷ!", "Thông báo",
 					JOptionPane.WARNING_MESSAGE);
 			return;
@@ -695,15 +836,9 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 						ph.getTongTien()),
 				"Thành công", JOptionPane.INFORMATION_MESSAGE);
 
-		int confirmHienThiPhieuHuy = JOptionPane.showConfirmDialog(this,
-				"Tạo phiếu huỷ thành công!\nBạn có muốn xem phiếu không?",
-				"Xem phiếu",
-				JOptionPane.YES_NO_OPTION);
-
-		if (confirmHienThiPhieuHuy == JOptionPane.YES_OPTION) {
-			Window w = SwingUtilities.getWindowAncestor(this);
-			new PhieuHuyPreviewDialog(w, ph).setVisible(true);
-		}
+		// Tự động hiện preview
+		Window w = SwingUtilities.getWindowAncestor(this);
+		new PhieuHuyPreviewDialog(w, ph).setVisible(true);
 
 		resetForm();
 	}

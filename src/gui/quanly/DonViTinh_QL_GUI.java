@@ -345,7 +345,9 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
     /** Validate dữ liệu form (tên ĐVT) */
     private boolean validData() {
         String ten = txtTenDVT.getText() != null ? txtTenDVT.getText().trim() : "";
-        if (ten.isEmpty()) {
+
+        // Kiểm tra placeholder - nếu text là placeholder thì coi như rỗng
+        if (ten.isEmpty() || ten.equals("Nhập tên đơn vị tính")) {
             JOptionPane.showMessageDialog(this, "Tên đơn vị tính không được rỗng!");
             txtTenDVT.requestFocus();
             return false;
@@ -405,7 +407,8 @@ public class DonViTinh_QL_GUI extends JPanel implements ActionListener {
                     dvt.getMaDonViTinh(),
                     dvt.getTenDonViTinh()
             });
-            lamMoiForm(); // nếu muốn giữ lại mã thì bỏ dòng này
+            lamMoiForm();
+            txtTenDVT.requestFocus(); // Focus vào ô tên sau khi thêm xong
         } else {
             JOptionPane.showMessageDialog(this, "Thêm thất bại (Trùng mã hoặc lỗi DB)!");
         }

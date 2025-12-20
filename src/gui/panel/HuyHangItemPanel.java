@@ -126,8 +126,7 @@ public class HuyHangItemPanel extends JPanel {
 		cboDonVi.setMaximumSize(new Dimension(70, 30));
 		cboDonVi.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 		cboDonVi.setMinimumSize(new Dimension(80, 26));
-		// Load đơn vị tính của sản phẩm
-		loadDonViTinh();
+		// NOTE: loadDonViTinh() is called later after btnClone is created
 		add(cboDonVi);
 		lblQuyDoi = new JLabel();
 		lblQuyDoi.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -184,14 +183,16 @@ public class HuyHangItemPanel extends JPanel {
 				new Font("Segoe UI", Font.BOLD, 16), new Color(0xD32F2F), 120);
 		txtThanhTien.setHorizontalAlignment(SwingConstants.RIGHT);
 		add(txtThanhTien);
-		add(Box.createHorizontalGlue());
+		add(Box.createHorizontalStrut(10)); // Fixed spacing instead of glue
 
 		// ===== LÝ DO =====
 		txtLyDo = new JTextField("Lý do huỷ (không bắt buộc)");
 		txtLyDo.setFont(new Font("Segoe UI", Font.ITALIC, 12));
 		txtLyDo.setForeground(Color.GRAY);
-		txtLyDo.setPreferredSize(new Dimension(85, 26));
-		txtLyDo.setMaximumSize(new Dimension(220, 26));
+		// Set consistent sizes to prevent misalignment when text is pre-populated
+		txtLyDo.setMinimumSize(new Dimension(140, 26));
+		txtLyDo.setPreferredSize(new Dimension(140, 26));
+		txtLyDo.setMaximumSize(new Dimension(140, 26));
 
 		// Hiển thị lý do có sẵn từ ItemHuyHang (nếu có)
 		String lyDoCoSan = item.getLyDo();
@@ -202,6 +203,7 @@ public class HuyHangItemPanel extends JPanel {
 		}
 
 		add(txtLyDo);
+		add(Box.createHorizontalStrut(5)); // Add spacing before buttons
 
 		// ===== CLONE =====
 		btnClone = new JButton();
@@ -215,10 +217,7 @@ public class HuyHangItemPanel extends JPanel {
 		} catch (Exception ignored) {
 		}
 		add(btnClone);
-
-		// ===== ENABLE / DISABLE CLONE =====
-		int soLuongDVTLoad = cboDonVi.getItemCount();
-		btnClone.setVisible(soLuongDVTLoad > 1);
+		// Visibility is set in loadDonViTinh() based on number of DVT
 
 		// ===== XÓA =====
 		btnXoa = new JButton();
@@ -233,6 +232,9 @@ public class HuyHangItemPanel extends JPanel {
 		}
 		add(btnXoa);
 
+		// Load đơn vị tính của sản phẩm (phải gọi sau khi btnClone được tạo)
+		loadDonViTinh();
+
 		addEvents();
 	}
 
@@ -246,48 +248,53 @@ public class HuyHangItemPanel extends JPanel {
 		btnTang.addActionListener(e -> {
 			int sl = item.getSoLuongHuy();
 			int slTonHienThi = getSoLuongTonTheoQuyCachHienTai();
-			if (sl < slTonHienThi) {
-				item.setSoLuongHuy(sl + 1);
-				updateUIValue();
-				if (listener != null) {
-					listener.onUpdate(item);
-				}
+
+			if (slTonHienThi <= 0) {
+				JOptionPane.showMessageDialog(this,
+						"Lô này đã hết hàng!",
+						"Cảnh báo", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+
+			if (sl >= slTonHienThi) {
+				JOptionPane.showMessageDialog(this,
+						"Số lượng huỷ đã đạt tối đa tồn kho (" + slTonHienThi + ")!",
+						"Cảnh báo", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+
+			item.setSoLuongHuy(sl + 1);
+			updateUIValue();
+			if (listener != null) {
+				listener.onUpdate(item);
 			}
 		});
 
 		// Giảm
 		btnGiam.addActionListener(e -> {
 			int sl = item.getSoLuongHuy();
-			if (sl > 1) {
-				item.setSoLuongHuy(sl - 1);
-				updateUIValue();
-				if (listener != null) {
-					listener.onUpdate(item);
-				}
+			if (sl <= 1) {
+				JOptionPane.showMessageDialog(this,
+						"Số lượng huỷ không thể nhỏ hơn 1!",
+						"Cảnh báo", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+
+			item.setSoLuongHuy(sl - 1);
+			updateUIValue();
+			if (listener != null) {
+				listener.onUpdate(item);
 			}
 		});
 
-		// Nhập tay số lượng
+		// Nhập tay số lượng - Enter key
+		txtSLHuy.addActionListener(e -> xuLySoLuongNhapTay());
+
+		// Nhập tay số lượng - Lost focus
 		txtSLHuy.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent e) {
-				int soMoi;
-				try {
-					soMoi = Integer.parseInt(txtSLHuy.getText().trim());
-				} catch (Exception ex) {
-					soMoi = 1;
-				}
-				if (soMoi < 1)
-					soMoi = 1;
-				int slTonHienThi = getSoLuongTonTheoQuyCachHienTai();
-				if (soMoi > slTonHienThi)
-					soMoi = slTonHienThi;
-
-				item.setSoLuongHuy(soMoi);
-				updateUIValue();
-				if (listener != null) {
-					listener.onUpdate(item);
-				}
+				xuLySoLuongNhapTay();
 			}
 		});
 
@@ -296,6 +303,36 @@ public class HuyHangItemPanel extends JPanel {
 			int idx = cboDonVi.getSelectedIndex();
 			if (idx >= 0 && idx < danhSachQuyCach.size()) {
 				QuyCachDongGoi qcChon = danhSachQuyCach.get(idx);
+
+				// CHECK TRÙNG ĐƠN VỊ VỚI PANEL KHÁC
+				Container parent = getParent();
+				for (Component c : parent.getComponents()) {
+					if (c instanceof HuyHangItemPanel p) {
+						ItemHuyHang it = p.item;
+						if (p == this)
+							continue; // Skip self
+
+						if (!it.getMaLo().equals(item.getMaLo()))
+							continue;
+						if (!it.getTenSanPham().equals(item.getTenSanPham()))
+							continue;
+
+						if (it.getQuyCachHienTai() != null
+								&& it.getQuyCachHienTai().getDonViTinh().getMaDonViTinh()
+										.equals(qcChon.getDonViTinh().getMaDonViTinh())) {
+
+							JOptionPane.showMessageDialog(this,
+									"Đơn vị '" + qcChon.getDonViTinh().getTenDonViTinh()
+											+ "' đã được dùng ở dòng khác.",
+									"Trùng đơn vị", JOptionPane.WARNING_MESSAGE);
+
+							// Rollback
+							cboDonVi.setSelectedItem(item.getQuyCachHienTai().getDonViTinh().getTenDonViTinh());
+							return;
+						}
+					}
+				}
+
 				item.setQuyCachHienTai(qcChon);
 				capNhatSoLuongTonTheoQuyCach();
 				if (listener != null) {
@@ -343,7 +380,7 @@ public class HuyHangItemPanel extends JPanel {
 			if (soLuongDVTLoad <= 1)
 				return;
 
-			// 2) Lấy danh sách các DVT đã được dùng ở các dòng cùng lô
+			// 2) Lấy danh sách các DVT đã được dùng
 			java.util.Set<String> usedDV = new java.util.HashSet<>();
 			Container parent = getParent();
 
@@ -353,8 +390,6 @@ public class HuyHangItemPanel extends JPanel {
 
 					if (!it.getMaLo().equals(item.getMaLo()))
 						continue;
-					if (!it.getTenSanPham().equals(item.getTenSanPham()))
-						continue;
 
 					if (it.getQuyCachHienTai() != null) {
 						usedDV.add(it.getQuyCachHienTai().getDonViTinh().getTenDonViTinh());
@@ -362,29 +397,27 @@ public class HuyHangItemPanel extends JPanel {
 				}
 			}
 
-			// 3) Tìm đơn vị tính chưa dùng
-			String dvMoi = null;
+			// 3) Tìm MỘT đơn vị tính chưa dùng (đơn vị đầu tiên chưa được sử dụng)
 			QuyCachDongGoi qcMoi = null;
 			for (int i = 0; i < soLuongDVTLoad; i++) {
 				String dv = cboDonVi.getItemAt(i);
 				if (!usedDV.contains(dv)) {
-					dvMoi = dv;
 					if (danhSachQuyCach != null && i < danhSachQuyCach.size()) {
 						qcMoi = danhSachQuyCach.get(i);
+						break; // Chỉ lấy 1 đơn vị
 					}
-					break;
 				}
 			}
 
-			// 4) Nếu không còn DVT để clone
-			if (dvMoi == null) {
+			// 4) Nếu không còn đơn vị nào chưa dùng
+			if (qcMoi == null) {
 				JOptionPane.showMessageDialog(this,
 						"Đã dùng hết tất cả đơn vị tính cho sản phẩm này.\nKhông thể clone thêm dòng.",
 						"Không thể clone", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
 
-			// 5) Clone item
+			// 5) Clone MỘT đơn vị chưa dùng
 			ItemHuyHang itemMoi = new ItemHuyHang(
 					item.getMaLo(),
 					item.getTenSanPham(),
@@ -393,15 +426,49 @@ public class HuyHangItemPanel extends JPanel {
 			itemMoi.setSoLuongHuy(1);
 			itemMoi.setLyDo(item.getLyDo());
 			itemMoi.setQuyCachGoc(item.getQuyCachGoc());
-			if (qcMoi != null) {
-				itemMoi.setQuyCachHienTai(qcMoi);
-			}
+			itemMoi.setQuyCachHienTai(qcMoi);
 
-			// 6) Callback thêm dòng clone
+			// Callback thêm dòng clone
 			if (listener != null) {
 				listener.onClone(itemMoi);
 			}
 		});
+	}
+
+	/**
+	 * Xử lý khi nhập số lượng bằng tay (Enter hoặc mất focus)
+	 */
+	private void xuLySoLuongNhapTay() {
+		int soMoi;
+		try {
+			soMoi = Integer.parseInt(txtSLHuy.getText().trim());
+		} catch (Exception ex) {
+			JOptionPane.showMessageDialog(this,
+					"Vui lòng nhập số hợp lệ!",
+					"Lỗi", JOptionPane.ERROR_MESSAGE);
+			txtSLHuy.setText(String.valueOf(item.getSoLuongHuy()));
+			return;
+		}
+
+		int slTonHienThi = getSoLuongTonTheoQuyCachHienTai();
+
+		if (soMoi < 1) {
+			JOptionPane.showMessageDialog(this,
+					"Số lượng huỷ phải lớn hơn 0!",
+					"Cảnh báo", JOptionPane.WARNING_MESSAGE);
+			soMoi = 1;
+		} else if (soMoi > slTonHienThi) {
+			JOptionPane.showMessageDialog(this,
+					"Số lượng huỷ không được vượt quá tồn kho (" + slTonHienThi + ")!",
+					"Cảnh báo", JOptionPane.WARNING_MESSAGE);
+			soMoi = slTonHienThi;
+		}
+
+		item.setSoLuongHuy(soMoi);
+		updateUIValue();
+		if (listener != null) {
+			listener.onUpdate(item);
+		}
 	}
 
 	private void loadDonViTinh() {
@@ -417,33 +484,64 @@ public class HuyHangItemPanel extends JPanel {
 			if (danhSachQuyCach == null || danhSachQuyCach.isEmpty()) {
 				cboDonVi.addItem("Không có đơn vị");
 				cboDonVi.setEnabled(false);
+				btnClone.setVisible(false);
 				return;
 			}
 
 			// Lưu số lượng tồn gốc từ item
 			soLuongTonGoc = item.getSoLuongTon();
 
-			   // Chỉ load quy cách đang hoạt động vào combo và tìm quy cách gốc
-			   for (QuyCachDongGoi qc : danhSachQuyCach) {
-				   if (qc.isTrangThai()) {
-					   cboDonVi.addItem(qc.getDonViTinh().getTenDonViTinh());
-					   if (qc.isDonViGoc()) {
-						   item.setQuyCachGoc(qc);
-						   item.setQuyCachHienTai(qc);
-					   }
-				   }
-			   }
+			// Tìm quy cách gốc và đơn vị mặc định
+			QuyCachDongGoi quyCachGoc = null;
+			int indexGoc = 0;
 
-			// Chọn đơn vị gốc mặc định
+			// Load vào combo và tìm quy cách gốc
 			for (int i = 0; i < danhSachQuyCach.size(); i++) {
-				if (danhSachQuyCach.get(i).isDonViGoc()) {
-					cboDonVi.setSelectedIndex(i);
-					break;
+				QuyCachDongGoi qc = danhSachQuyCach.get(i);
+				cboDonVi.addItem(qc.getDonViTinh().getTenDonViTinh());
+
+				if (qc.isDonViGoc()) {
+					quyCachGoc = qc;
+					indexGoc = i;
 				}
 			}
+
+			// Nếu không tìm thấy đơn vị gốc, dùng đơn vị đầu tiên
+			if (quyCachGoc == null && !danhSachQuyCach.isEmpty()) {
+				quyCachGoc = danhSachQuyCach.get(0);
+				indexGoc = 0;
+			}
+
+			// Set quy cách cho item
+			if (quyCachGoc != null) {
+				item.setQuyCachGoc(quyCachGoc);
+				// Chỉ set quyCachHienTai nếu chưa được set từ trước (khi clone)
+				if (item.getQuyCachHienTai() == null) {
+					item.setQuyCachHienTai(quyCachGoc);
+				}
+			}
+
+			// Chọn đơn vị trong combo
+			// Nếu item đã có quyCachHienTai (từ clone), chọn đúng đơn vị đó
+			if (item.getQuyCachHienTai() != null) {
+				String tenDVHienTai = item.getQuyCachHienTai().getDonViTinh().getTenDonViTinh();
+				for (int i = 0; i < cboDonVi.getItemCount(); i++) {
+					if (cboDonVi.getItemAt(i).equals(tenDVHienTai)) {
+						cboDonVi.setSelectedIndex(i);
+						break;
+					}
+				}
+			} else {
+				cboDonVi.setSelectedIndex(indexGoc);
+			}
+
+			// Cập nhật visibility của nút clone sau khi load xong
+			btnClone.setVisible(danhSachQuyCach.size() > 1);
+
 		} else {
 			cboDonVi.addItem("Lỗi");
 			cboDonVi.setEnabled(false);
+			btnClone.setVisible(false);
 		}
 	}
 

@@ -186,7 +186,7 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
         p.add(createLabel("Số ĐT:", xCol2, yStart));
         txtSDT = createTextField(xCol2 + wLbl, yStart, wTxt);
         p.add(txtSDT);
-        PlaceholderSupport.addPlaceholder(txtSDT, "Nhập số điện thoại: dạng 0xxxxxxxxx");
+        PlaceholderSupport.addPlaceholder(txtSDT, "Nhập số điện thoại");
 
         p.add(createLabel("Ngày sinh:", xCol2, yStart + gap + hText));
         dateNgaySinh = new JDateChooser();
@@ -455,12 +455,14 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
 
         if (ten.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Tên khách hàng không được rỗng!!");
+            txtTenKH.requestFocus();
             return false;
         }
 
         // Không quá 100 ký tự
         if (ten.length() > 100) {
             JOptionPane.showMessageDialog(this, "Tên khách hàng không được vượt quá 100 ký tự");
+            txtTenKH.requestFocus();
             return false;
         }
 
@@ -470,29 +472,35 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
         if (!ten.matches(nameRegex)) {
             JOptionPane.showMessageDialog(this,
                     "Tên khách hàng phải viết hoa chữ cái đầu mỗi từ và không chứa số hoặc ký tự đặc biệt.");
+            txtTenKH.requestFocus();
             return false;
         }
 
         String sdt = txtSDT.getText() != null ? txtSDT.getText().trim() : "";
         if (!sdt.matches("^0\\d{9}$")) {
             JOptionPane.showMessageDialog(this, "Số điện thoại phải gồm 10 số và bắt đầu bằng số 0");
+            txtSDT.requestFocus();
             return false;
         }
 
         java.util.Date d = dateNgaySinh.getDate();
         if (d == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày sinh");
+            dateNgaySinh.requestFocus();
             return false;
         }
 
         try {
-            LocalDate ngaySinh = d.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-            if (ngaySinh.isAfter(LocalDate.now().minusYears(16))) {
-                JOptionPane.showMessageDialog(this, "Khách hàng phải ít nhất 16 tuổi");
-                return false;
-            }
+			LocalDate ngaySinh = d.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+			LocalDate today = LocalDate.now();
+			if (ngaySinh.isAfter(today)) {
+				JOptionPane.showMessageDialog(this, "Ngày sinh không được sau ngày hiện tại");
+				dateNgaySinh.requestFocus();
+				return false;
+			}
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Ngày sinh không hợp lệ");
+            dateNgaySinh.requestFocus();
             return false;
         }
 
@@ -555,6 +563,7 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
             JOptionPane.showMessageDialog(this, "Thêm khách hàng thành công");
             loadDataLenBang();
             lamMoiForm();
+            txtTenKH.requestFocus(); // Focus vào ô tên sau khi thêm xong
         } else {
             JOptionPane.showMessageDialog(this, "Thêm khách hàng thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
