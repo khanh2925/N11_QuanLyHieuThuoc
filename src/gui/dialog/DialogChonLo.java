@@ -11,13 +11,15 @@ import javax.swing.table.DefaultTableModel;
 
 import com.toedter.calendar.JDateChooser;
 
+import component.input.PlaceholderSupport;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-
+//Class này dùng cho chọn lô trong huỷ hàng nhân viên
 public class DialogChonLo extends JDialog {
 
     private JTextField txtTim;
@@ -59,6 +61,7 @@ public class DialogChonLo extends JDialog {
 
         txtTim = new JTextField(keyword);
         txtTim.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        PlaceholderSupport.addPlaceholder(txtTim, "Tìm theo mã lô, mã sản phẩm hoặc tên sản phẩm...");
         txtTim.addActionListener(e -> loc());
         pnTop.add(txtTim, BorderLayout.CENTER);
 

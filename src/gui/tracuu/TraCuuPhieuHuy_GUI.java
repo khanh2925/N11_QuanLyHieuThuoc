@@ -10,6 +10,8 @@ package gui.tracuu;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -76,7 +78,6 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         setupKeyboardShortcuts(); // Thiết lập phím tắt
         initData();
 
-
     }
 
     // ==============================================================================
@@ -90,7 +91,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         taoPhanHeader();
         add(pnHeader, BorderLayout.NORTH);
 
-        // CENTER 
+        // CENTER
         taoPhanCenter();
         add(pnCenter, BorderLayout.CENTER);
     }
@@ -108,7 +109,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         txtTimKiem = new JTextField();
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã phiếu, tên nhân viên (F1 / Ctrl+F)");
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20)); // Font 20
-        txtTimKiem.setBounds(25, 17, 480, 60); 
+        txtTimKiem.setBounds(25, 17, 480, 60);
         txtTimKiem.setBorder(new RoundedBorder(20));
         txtTimKiem.setBackground(Color.WHITE);
         txtTimKiem.setToolTipText("<html><b>Phím tắt:</b> F1 hoặc Ctrl+F<br>Nhấn Enter để tìm kiếm</html>");
@@ -142,53 +143,52 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
 
         // Trạng thái
         JLabel lblTT = new JLabel("Trạng thái:");
-        lblTT.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
+        lblTT.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         lblTT.setBounds(895, 30, 90, 35);
         pnHeader.add(lblTT);
 
         cbTrangThai = new JComboBox<>();
-        cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 18)); 
+        cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         cbTrangThai.setBounds(990, 28, 115, 38);
         pnHeader.add(cbTrangThai);
 
         // --- 3. CÁC BUTTON ---
         btnTim = new PillButton(
                 "<html>" +
-                    "<center>" +
+                        "<center>" +
                         "TÌM KIẾM<br>" +
                         "<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
-                    "</center>" +
-                "</html>"
-            );
+                        "</center>" +
+                        "</html>");
         btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnTim.setBounds(1120, 22, 130, 50);
-        btnTim.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã phiếu, tên nhân viên và bộ lọc ngày</html>");
+        btnTim.setToolTipText(
+                "<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã phiếu, tên nhân viên và bộ lọc ngày</html>");
         pnHeader.add(btnTim);
 
         btnLamMoi = new PillButton(
                 "<html>" +
-                    "<center>" +
+                        "<center>" +
                         "LÀM MỚI<br>" +
                         "<span style='font-size:10px; color:#888888;'>(F5)</span>" +
-                    "</center>" +
-                "</html>"
-            );
+                        "</center>" +
+                        "</html>");
         btnLamMoi.setBounds(1265, 22, 130, 50);
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
         pnHeader.add(btnLamMoi);
-        
+
         btnXemPhieuHuy = new PillButton(
-				"<html>" +
-						"<center>" +
-						"XEM PHIẾU HỦY<br>" +
-						"<span style='font-size:10px; color:#888888;'>(F3)</span>" +
-						"</center>" +
-						"</html>");
+                "<html>" +
+                        "<center>" +
+                        "XEM PHIẾU HỦY<br>" +
+                        "<span style='font-size:10px; color:#888888;'>(F3)</span>" +
+                        "</center>" +
+                        "</html>");
         btnXemPhieuHuy.setBounds(1410, 22, 175, 50);
-		btnXemPhieuHuy.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnXemPhieuHuy.setToolTipText("<html><b>Phím tắt:</b> F3<br>Xem chi tiết phiếu hủy đang chọn</html>");
-		pnHeader.add(btnXemPhieuHuy);
+        btnXemPhieuHuy.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnXemPhieuHuy.setToolTipText("<html><b>Phím tắt:</b> F3<br>Xem chi tiết phiếu hủy đang chọn</html>");
+        pnHeader.add(btnXemPhieuHuy);
     }
 
     // ==============================================================================
@@ -197,26 +197,32 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
     private void taoPhanCenter() {
         pnCenter = new JPanel(new BorderLayout());
         pnCenter.setBackground(Color.WHITE);
-        pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));        
-        
+        pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
+
         createTable();
-        
+
+        // Auto focus search field
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & java.awt.event.HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+                SwingUtilities.invokeLater(() -> {
+                    txtTimKiem.requestFocusInWindow();
+                });
+            }
+        });
     }
-    
-    
+
     // ==============================================================================
     // TAO BẢNG
     // ==============================================================================
-    
+
     private void createTable() {
-    	
-    	JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         splitPane.setDividerLocation(400);
         splitPane.setResizeWeight(0.5);
         pnCenter.add(splitPane, BorderLayout.CENTER);
-        
-        
-    	// --- BẢNG 1: DANH SÁCH PHIẾU HỦY (TOP) ---
+
+        // --- BẢNG 1: DANH SÁCH PHIẾU HỦY (TOP) ---
         String[] colPhieuHuy = { "STT", "Mã phiếu hủy", "Người lập / Hệ thống", "Ngày lập", "Tổng tiền", "Trạng thái" };
         modelPhieuHuy = new DefaultTableModel(colPhieuHuy, 0) {
             @Override
@@ -233,27 +239,28 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         DefaultTableCellRenderer right = new DefaultTableCellRenderer();
         right.setHorizontalAlignment(SwingConstants.RIGHT);
 
-
         tblPhieuHuy.getColumnModel().getColumn(0).setCellRenderer(center); // STT
         tblPhieuHuy.getColumnModel().getColumn(1).setCellRenderer(center); // Mã
 
         tblPhieuHuy.getColumnModel().getColumn(3).setCellRenderer(center); // Ngày
-        tblPhieuHuy.getColumnModel().getColumn(4).setCellRenderer(right);  // Tiền
+        tblPhieuHuy.getColumnModel().getColumn(4).setCellRenderer(right); // Tiền
 
         // Render cột Trạng Thái (Màu sắc)
         tblPhieuHuy.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                           boolean hasFocus, int row, int column) {
+                    boolean hasFocus, int row, int column) {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
                         column);
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
-                lbl.setFont(new Font("Segoe UI", Font.BOLD, 16));
                 String status = (String) value;
                 if ("Đã duyệt".equals(status)) {
-                    lbl.setForeground(new Color(0x2E7D32)); 
+                    lbl.setForeground(new Color(0x2E7D32));
+                    lbl.setFont(new Font("Segoe UI", Font.BOLD, 16));
                 } else {
-                    lbl.setForeground(new Color(0xE65100)); 
+                    // Chờ duyệt
+                    lbl.setForeground(Color.RED);
+                    lbl.setFont(new Font("Segoe UI", Font.ITALIC, 16));
                 }
                 return lbl;
             }
@@ -281,26 +288,31 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
 
         tblChiTiet.getColumnModel().getColumn(0).setCellRenderer(center);// stt
         tblChiTiet.getColumnModel().getColumn(1).setCellRenderer(center);// mã lô
-        tblChiTiet.getColumnModel().getColumn(2).setPreferredWidth(250);  // Tên SP
-        tblChiTiet.getColumnModel().getColumn(3).setPreferredWidth(200);  // Lý do
-        tblChiTiet.getColumnModel().getColumn(4).setCellRenderer(right);  // SL
-        tblChiTiet.getColumnModel().getColumn(5).setCellRenderer(right);  // Giá nhập
-        tblChiTiet.getColumnModel().getColumn(6).setCellRenderer(right);  // Thành tiền
+        tblChiTiet.getColumnModel().getColumn(2).setPreferredWidth(250); // Tên SP
+        tblChiTiet.getColumnModel().getColumn(3).setPreferredWidth(200); // Lý do
+        tblChiTiet.getColumnModel().getColumn(4).setCellRenderer(right); // SL
+        tblChiTiet.getColumnModel().getColumn(5).setCellRenderer(right); // Giá nhập
+        tblChiTiet.getColumnModel().getColumn(6).setCellRenderer(right); // Thành tiền
         tblChiTiet.getColumnModel().getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                           boolean hasFocus, int row, int column) {
+                    boolean hasFocus, int row, int column) {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
                         column);
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
-                lbl.setFont(new Font("Segoe UI", Font.BOLD, 16));
                 String status = (String) value;
                 if ("Đã hủy hàng".equals(status)) {
                     lbl.setForeground(new Color(0x2E7D32)); // Xanh lá
+                    lbl.setFont(new Font("Segoe UI", Font.BOLD, 16));
                 } else if ("Đã từ chối hủy".equals(status)) {
-                    lbl.setForeground(new Color(0xE65100)); // Cam
+                    lbl.setForeground(new Color(0xD32F2F)); // Đỏ đậm
+                    lbl.setFont(new Font("Segoe UI", Font.BOLD, 16));
                 } else if ("Chờ duyệt".equals(status)) {
+                    lbl.setForeground(Color.RED); // Đỏ nghiêng
+                    lbl.setFont(new Font("Segoe UI", Font.ITALIC, 16));
+                } else {
                     lbl.setForeground(Color.BLACK);
+                    lbl.setFont(new Font("Segoe UI", Font.PLAIN, 16));
                 }
                 return lbl;
             }
@@ -309,15 +321,15 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         JScrollPane scrollChiTiet = new JScrollPane(tblChiTiet);
         scrollChiTiet.setBorder(createTitledBorder("Chi tiết sản phẩm hủy"));
         splitPane.setBottomComponent(scrollChiTiet);
-	}
-    
+    }
+
     private JTable setupTable(DefaultTableModel model) {
         JTable table = new JTable(model);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 16)); // Font 16
         table.setRowHeight(35); // Cao 35
-        table.setSelectionBackground(new Color(0xC8E6C9)); 
+        table.setSelectionBackground(new Color(0xC8E6C9));
         table.setGridColor(new Color(230, 230, 230));
-        
+
         JTableHeader header = table.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 16)); // Header Font 16 Bold
         header.setBackground(new Color(33, 150, 243));
@@ -329,17 +341,16 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
     private TitledBorder createTitledBorder(String title) {
         return BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
-                TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 18), Color.DARK_GRAY
-        );
+                TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 18), Color.DARK_GRAY);
     }
 
     // ==============================================================================
-    // INIT DATA 
+    // INIT DATA
     // ==============================================================================
     private void initData() {
         loadComboTrangThai();
-        xuLyLamMoi(); 
-        loadDuLieuPhieuHuyTheoPH(); 
+        xuLyLamMoi();
+        loadDuLieuPhieuHuyTheoPH();
     }
 
     private void loadComboTrangThai() {
@@ -366,7 +377,19 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         btnLamMoi.addActionListener(this);
         btnTim.addActionListener(this);
         btnXemPhieuHuy.addActionListener(this);
-        txtTimKiem.addActionListener(this); 
+        txtTimKiem.addActionListener(this);
+        
+		tblPhieuHuy.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					int row = tblPhieuHuy.getSelectedRow();
+					if (row != -1) {
+						xuLyXemPhieuHuy();
+					}
+				}
+			}
+		});
     }
 
     /**
@@ -404,7 +427,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
                 txtTimKiem.selectAll();
             }
         });
-        
+
         // Enter: Lọc/Tìm kiếm (hoạt động ở bất kỳ đâu trong cửa sổ)
         inputMap.put(KeyStroke.getKeyStroke("ENTER"), "enterTimKiem");
         actionMap.put("enterTimKiem", new AbstractAction() {
@@ -413,7 +436,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
                 xuLyTimKiem(true);
             }
         });
-        
+
         // F3: Xem phiếu hủy
         inputMap.put(KeyStroke.getKeyStroke("F3"), "xemPhieuHuy");
         actionMap.put("xemPhieuHuy", new AbstractAction() {
@@ -433,14 +456,14 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
             return;
         }
 
-        if (src == btnTim || src == txtTimKiem) {            
+        if (src == btnTim || src == txtTimKiem) {
             xuLyTimKiem(true);
             return;
         }
     }
 
     // ==============================================================================
-    // TÌM KIẾM 
+    // TÌM KIẾM
     // ==============================================================================
     private void xuLyTimKiem(boolean includeDateRange) {
         String keyword = txtTimKiem.getText().trim();
@@ -450,7 +473,8 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         }
 
         String tt = (String) cbTrangThai.getSelectedItem();
-        if (tt == null) tt = "Tất cả";
+        if (tt == null)
+            tt = "Tất cả";
 
         // Clone list gốc
         List<PhieuHuy> ds = new ArrayList<>(allPhieuHuy);
@@ -481,8 +505,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
                             this,
                             "Ngày đến không được trước ngày từ!",
                             "Lỗi ngày",
-                            JOptionPane.WARNING_MESSAGE
-                    );
+                            JOptionPane.WARNING_MESSAGE);
                     return;
                 }
             }
@@ -497,7 +520,8 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
 
                 ds.removeIf(ph -> {
                     LocalDate ngayLap = ph.getNgayLapPhieu();
-                    if (ngayLap == null) return true;
+                    if (ngayLap == null)
+                        return true;
                     return ngayLap.isBefore(fromDate) || ngayLap.isAfter(toDate);
                 });
             }
@@ -508,7 +532,8 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
             String ttFilter = tt.trim();
             ds.removeIf(ph -> {
                 String text = ph.getTrangThaiText();
-                if (text == null) return true;
+                if (text == null)
+                    return true;
                 return !text.equalsIgnoreCase(ttFilter);
             });
         }
@@ -518,15 +543,16 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         loadTablePhieuHuy(dsPhieuHuyHienTai);
         // Clear chi tiết khi tìm mới
         modelChiTiet.setRowCount(0);
-        
+
         // Nếu tìm kiếm cụ thể (có nhập text) mà không thấy thì báo
         if (ds.isEmpty() && !keyword.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Không tìm thấy phiếu hủy nào!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Không tìm thấy phiếu hủy nào!", "Thông báo",
+                    JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
     // ==============================================================================
-    // LÀM MỚI 
+    // LÀM MỚI
     // ==============================================================================
     private void xuLyLamMoi() {
         // 1. Reset ô tìm kiếm + placeholder
@@ -540,30 +566,18 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         Date now = new Date();
         dateDenNgay.setDate(now);
 
-        // 4. Từ ngày: Ngày cũ nhất của phiếu hủy (nếu có)
-        if (!allPhieuHuy.isEmpty()) {
-            java.time.LocalDate oldestDate = allPhieuHuy.stream()
-                    .map(PhieuHuy::getNgayLapPhieu)
-                    .min(java.time.LocalDate::compareTo)
-                    .orElse(java.time.LocalDate.now());
-            Date fromDate = Date.from(oldestDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
-            dateTuNgay.setDate(fromDate);
-        } else {
-            // Nếu không có phiếu hủy nào, đặt từ ngày là hôm nay
-            dateTuNgay.setDate(now);
-        }
+        // 4. Từ ngày: 30 ngày trước mặc định
+        LocalDate thirtyDaysAgo = LocalDate.now().minusDays(30);
+        dateTuNgay.setDate(Date.from(thirtyDaysAgo.atStartOfDay(ZoneId.systemDefault()).toInstant()));
 
         // 5. Trạng thái = Tất cả
         cbTrangThai.setSelectedIndex(0);
 
-        // 6. Hiển thị tất cả
-        loadTablePhieuHuy(allPhieuHuy);
+        // 6. Hiển thị (áp dụng lọc ngày ngay lập tức)
+        xuLyTimKiem(true);
+        // loadTablePhieuHuy(allPhieuHuy); // Cũ
         modelChiTiet.setRowCount(0);
-    }
-
-
-    private void lamMoi() {
-        xuLyLamMoi();
+        txtTimKiem.requestFocus();
     }
 
     // ==============================================================================
@@ -573,7 +587,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         modelPhieuHuy.setRowCount(0);
         int stt = 1;
         for (PhieuHuy ph : ds) {
-            modelPhieuHuy.addRow(new Object[]{
+            modelPhieuHuy.addRow(new Object[] {
                     stt++,
                     ph.getMaPhieuHuy(),
                     (ph.getNhanVien() != null) ? ph.getNhanVien().getTenNhanVien() : "",
@@ -584,7 +598,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         }
     }
 
-    private void loadDuLieuPhieuHuyTheoPH() {       
+    private void loadDuLieuPhieuHuyTheoPH() {
         tblPhieuHuy.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 int row = tblPhieuHuy.getSelectedRow();
@@ -607,7 +621,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         }
         int stt = 1;
         for (ChiTietPhieuHuy ctph : dsCTPH) {
-            modelChiTiet.addRow(new Object[]{
+            modelChiTiet.addRow(new Object[] {
                     stt++,
                     ctph.getLoSanPham().getMaLo(),
                     ctph.getLoSanPham().getSanPham().getTenSanPham(),
@@ -619,8 +633,6 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
             });
         }
     }
-    
-   
 
     // ==============================================================================
     // TEST MAIN
@@ -629,7 +641,8 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
         SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
             JFrame frame = new JFrame("Tra cứu phiếu hủy");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1450, 850);
@@ -638,6 +651,7 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
             frame.setVisible(true);
         });
     }
+
     private void xuLyXemPhieuHuy() {
         int row = tblPhieuHuy.getSelectedRow();
         if (row == -1) {
