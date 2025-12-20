@@ -1,17 +1,16 @@
 package gui.quanly;
 
+import component.border.RoundedBorder;
+import component.button.PillButton;
+import component.input.PlaceholderSupport;
+import dao.NhaCungCap_DAO;
+import entity.NhaCungCap;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
-
-import component.button.PillButton;
-import component.input.PlaceholderSupport;
-import component.border.RoundedBorder;
-import dao.NhaCungCap_DAO;
-import entity.NhaCungCap;
 
 @SuppressWarnings("serial")
 public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListener {
@@ -42,6 +41,13 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
     private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 16);
     private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 16);
     private final Color COLOR_PRIMARY = new Color(33, 150, 243);
+    
+    // Placeholder constants
+    private static final String PH_TEN_NCC = "Nhập tên nhà cung cấp";
+    private static final String PH_SDT = "Nhập số điện thoại";
+    private static final String PH_EMAIL = "Nhập email (không bắt buộc)";
+    private static final String PH_DIA_CHI = "Nhập địa chỉ";
+    private static final String PH_TIM_KIEM = "Tìm NCC theo mã hoặc SĐT... (F1 / Ctrl+F)";
 
     public NhaCungCap_GUI() {
         setPreferredSize(new Dimension(1537, 850));
@@ -70,9 +76,12 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         });
         
         // 4. THIẾT LẬP PHÍM TẮT
-        thietLapPhimTat();
+        setupKeyboardShortcuts();
         
-        // 5. KHỚI TẠO TRẠNG THÁI NÚT BAN ĐẦU
+        // 5. TỰ ĐỘNG FOCUS Ô TÌM KIẾM KHI HIỂN THỊ
+        addFocusOnShow();
+        
+        // 6. KHỞI TẠO TRẠNG THÁI NÚT BAN ĐẦU
         lamMoiForm();
     }
 
@@ -83,7 +92,7 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
     /**
      * Thiết lập phím tắt cho các component
      */
-    private void thietLapPhimTat() {
+    private void setupKeyboardShortcuts() {
         InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap actionMap = getActionMap();
         
@@ -177,13 +186,27 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         txtTimKiem.addActionListener(e -> xuLyTimKiem());
     }
     
+    /**
+     * Tự động focus vào ô tìm kiếm khi panel được hiển thị
+     */
+    private void addFocusOnShow() {
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+                SwingUtilities.invokeLater(() -> {
+                    txtTimKiem.requestFocusInWindow();
+                    txtTimKiem.selectAll();
+                });
+            }
+        });
+    }
+    
     private void taoPhanHeader() {
         pnHeader = new JPanel(null);
         pnHeader.setPreferredSize(new Dimension(1073, 94));
         pnHeader.setBackground(new Color(0xE3F2F5));
 
         txtTimKiem = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm NCC theo mã hoặc SĐT... (F1 / Ctrl+F)");
+        PlaceholderSupport.addPlaceholder(txtTimKiem, PH_TIM_KIEM);
         
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 20));
         txtTimKiem.setBounds(25, 17, 500, 60);
@@ -259,12 +282,12 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
 
         p.add(createLabel("Tên NCC:", xStart, yStart + gap + hText));
         txtTenNCC = createTextField(xStart + wLbl, yStart + gap + hText, wTxt);
-        PlaceholderSupport.addPlaceholder(txtTenNCC, "Nhập tên nhà cung cấp");
+        PlaceholderSupport.addPlaceholder(txtTenNCC, PH_TEN_NCC);
         p.add(txtTenNCC);
         
         p.add(createLabel("SĐT:", xStart, yStart + (gap + hText) * 2));
         txtSDT = createTextField(xStart + wLbl, yStart + (gap + hText) * 2, wTxt);
-        PlaceholderSupport.addPlaceholder(txtSDT, "Nhập số điện thoại");
+        PlaceholderSupport.addPlaceholder(txtSDT, PH_SDT);
         p.add(txtSDT);
 
         // Cột 2
@@ -272,12 +295,12 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         
         p.add(createLabel("Email:", xCol2, yStart));
         txtEmail = createTextField(xCol2 + wLbl, yStart, wTxt);
-        PlaceholderSupport.addPlaceholder(txtEmail, "Nhập email (không bắt buộc)");
+        PlaceholderSupport.addPlaceholder(txtEmail, PH_EMAIL);
         p.add(txtEmail);
         
         p.add(createLabel("Địa chỉ:", xCol2, yStart + gap + hText));
         txtDiaChi = createTextField(xCol2 + wLbl, yStart + gap + hText, wTxt);
-        PlaceholderSupport.addPlaceholder(txtDiaChi, "Nhập địa chỉ");
+        PlaceholderSupport.addPlaceholder(txtDiaChi, PH_DIA_CHI);
         p.add(txtDiaChi);
         
         p.add(createLabel("Trạng thái:", xCol2, yStart + (gap + hText) * 2));
@@ -487,10 +510,10 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
      */
     private NhaCungCap getFromForm() {
         String ma = txtMaNCC.getText();
-        String ten = txtTenNCC.getText().trim();
-        String sdt = txtSDT.getText().trim();
-        String email = txtEmail.getText().trim();
-        String dc = txtDiaChi.getText().trim();
+        String ten = getTextIgnorePlaceholder(txtTenNCC, PH_TEN_NCC);
+        String sdt = getTextIgnorePlaceholder(txtSDT, PH_SDT);
+        String email = getTextIgnorePlaceholder(txtEmail, PH_EMAIL);
+        String dc = getTextIgnorePlaceholder(txtDiaChi, PH_DIA_CHI);
         boolean hoatDong = cboTrangThai.getSelectedItem().equals("Đang hợp tác");
         
         NhaCungCap ncc = new NhaCungCap();
@@ -508,13 +531,13 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         // Tự động gợi ý mã mới
         txtMaNCC.setText(nccDAO.taoMaTuDong());
         txtTenNCC.setText("");
-        PlaceholderSupport.addPlaceholder(txtTenNCC, "Nhập tên nhà cung cấp");
+        PlaceholderSupport.addPlaceholder(txtTenNCC, PH_TEN_NCC);
         txtSDT.setText("");
-        PlaceholderSupport.addPlaceholder(txtSDT, "Nhập số điện thoại");
+        PlaceholderSupport.addPlaceholder(txtSDT, PH_SDT);
         txtEmail.setText("");
-        PlaceholderSupport.addPlaceholder(txtEmail, "Nhập email (không bắt buộc)");
+        PlaceholderSupport.addPlaceholder(txtEmail, PH_EMAIL);
         txtDiaChi.setText("");
-        PlaceholderSupport.addPlaceholder(txtDiaChi, "Nhập địa chỉ");
+        PlaceholderSupport.addPlaceholder(txtDiaChi, PH_DIA_CHI);
         cboTrangThai.setSelectedIndex(0);
         txtTenNCC.requestFocus();
         tblNhaCungCap.clearSelection();
@@ -526,7 +549,7 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
 
     private void xuLyTimKiem() {
         String keyword = txtTimKiem.getText().trim().toLowerCase();
-        if (keyword.isEmpty() || keyword.equals("tìm ncc theo mã hoặc sđt...")) { 
+        if (keyword.isEmpty() || keyword.equals(PH_TIM_KIEM.toLowerCase())) { 
             hienThiDanhSach(danhSachNhaCungCap);
             return;
         }
@@ -550,10 +573,10 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
     }
 
     private boolean validData() {
-        String ten = txtTenNCC.getText().trim();
-        String sdt = txtSDT.getText().trim();
-        String email = txtEmail.getText().trim();
-        String diaChi = txtDiaChi.getText().trim();
+        String ten = getTextIgnorePlaceholder(txtTenNCC, PH_TEN_NCC);
+        String sdt = getTextIgnorePlaceholder(txtSDT, PH_SDT);
+        String email = getTextIgnorePlaceholder(txtEmail, PH_EMAIL);
+        String diaChi = getTextIgnorePlaceholder(txtDiaChi, PH_DIA_CHI);
 
         if (ten.isEmpty()) {
             showError("Tên nhà cung cấp không được rỗng", txtTenNCC);
@@ -578,6 +601,17 @@ public class NhaCungCap_GUI extends JPanel implements ActionListener, MouseListe
         JOptionPane.showMessageDialog(this, mess, "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
         txt.requestFocus();
         txt.selectAll();
+    }
+    
+    /**
+     * Lấy text từ JTextField, bỏ qua nếu là placeholder
+     * @param txt JTextField cần lấy text
+     * @param placeholder Chuỗi placeholder cần kiểm tra
+     * @return Chuỗi text đã trim, hoặc rỗng nếu là placeholder
+     */
+    private String getTextIgnorePlaceholder(JTextField txt, String placeholder) {
+        String text = txt.getText().trim();
+        return text.equals(placeholder) ? "" : text;
     }
 
     /**

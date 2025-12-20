@@ -60,7 +60,7 @@ import gui.dialog.ChonLo_Dialog;
 import gui.dialog.ThemLo_Dialog;
 
 
-public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Serializable{
+public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Serializable,MouseListener{
     private JPanel pnDanhSachDon;
     private JTextField txtSearch;
     private JTextField txtTimNCC;
@@ -134,6 +134,7 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
         this.setPreferredSize(new Dimension(1537, 850));
         initialize(); //
         setupKeyboardShortcuts();
+        addFocusOnShow(); // Tự động focus ô tìm kiếm khi hiển thị
     }
 
     /**
@@ -178,6 +179,7 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
         this.setPreferredSize(new Dimension(1537, 850));
         initialize(); // <-- ĐÃ VIỆT HÓA (từ initialize)
         setupKeyboardShortcuts();
+        addFocusOnShow(); // Tự động focus ô tìm kiếm khi hiển thị
     }
 
 
@@ -195,7 +197,7 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
         pnHeader.setBorder(new EmptyBorder(15, 20, 15, 20));
         add(pnHeader, BorderLayout.NORTH);
 
-        txtSearch = TaoJtextNhanh.nhapLieu("Nhập Mã SP để thêm lô(F1/Ctrl+F)");
+        txtSearch = TaoJtextNhanh.nhapLieu("Tìm theo Mã SP để thêm lô(F1/Ctrl+F)");
         txtSearch.setBounds(20, 15, 420, 58);
 //        PlaceholderSupport.addPlaceholder(txtSearch, "Nhập Mã SP để thêm lô và nhấn Enter...");
 //        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 16));
@@ -400,18 +402,24 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
         
         pnSidebar.add(Box.createVerticalStrut(5));
         
-        // Button "Hủy phiếu (F4)" phía dưới nút Nhập Phiếu
+        // Button "Hủy phiếu (F4)" phía dưới nút Nhập Phiếu - Căn giữa trong Box
+        Box boxHuyPhieu = Box.createHorizontalBox();
+        boxHuyPhieu.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
         btnHuyPhieu = new JButton("Hủy phiếu (F4)");
         btnHuyPhieu.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         btnHuyPhieu.setForeground(new Color(120, 120, 120)); // Màu xám nhẹ
         btnHuyPhieu.setBackground(new Color(250, 250, 250)); // Nền xám rất nhạt
         btnHuyPhieu.setFocusPainted(false);
-        btnHuyPhieu.setBorder(null);
+        btnHuyPhieu.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         btnHuyPhieu.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnHuyPhieu.setMaximumSize(new Dimension(900, 30));
-        btnHuyPhieu.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnHuyPhieu.addActionListener(this);
-        pnSidebar.add(btnHuyPhieu);
+        btnHuyPhieu.addMouseListener(this); // Đăng ký mouse listener cho hover effect
+        
+        boxHuyPhieu.add(Box.createHorizontalGlue());
+        boxHuyPhieu.add(btnHuyPhieu);
+        boxHuyPhieu.add(Box.createHorizontalGlue());
+        pnSidebar.add(boxHuyPhieu);
     }
 
 
@@ -578,6 +586,17 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
                 if (choice == JOptionPane.YES_OPTION) {
                     xoaTatCaDuLieu();
                 }
+            }
+        });
+    }
+
+    private void addFocusOnShow() {
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+                SwingUtilities.invokeLater(() -> {
+                    txtSearch.requestFocusInWindow();
+                    txtSearch.selectAll();
+                });
             }
         });
     }
@@ -1895,6 +1914,41 @@ private void xuLyTimNhaCungCap() {
             repaint();
         }
     }
+
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		if (e.getSource() == btnHuyPhieu) {
+			btnHuyPhieu.setForeground(new Color(220, 53, 69)); // Đỏ khi hover
+			btnHuyPhieu.setBackground(new Color(255, 245, 245));
+		}
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		if (e.getSource() == btnHuyPhieu) {
+			btnHuyPhieu.setForeground(new Color(120, 120, 120));
+			btnHuyPhieu.setBackground(new Color(250, 250, 250));
+		}
+	}
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
 			JFrame frame = new JFrame("Nhập Phiếu");
