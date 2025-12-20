@@ -10,6 +10,8 @@ import java.util.Date;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import com.toedter.calendar.JDateChooser;
 
@@ -19,7 +21,7 @@ import entity.LoSanPham;
 import entity.QuyCachDongGoi;
 import entity.SanPham;
 
-public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListener {
+public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListener,ChangeListener {
 
     // ===== I. CÁC TRƯỜNG DỮ LIỆU (FIELDS) =====
     private final DateTimeFormatter fmtDate = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -165,7 +167,7 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
         cmbQuyCachMoi.setBackground(Color.WHITE);
         loadQuyCachComboBox(cmbQuyCachMoi);
         
-        spinnerSoLuongMoi = new JSpinner(new SpinnerNumberModel(1, 1, 10000, 1));
+        spinnerSoLuongMoi = new JSpinner(new SpinnerNumberModel(1, Integer.MIN_VALUE, 10000, 1));
         spinnerSoLuongMoi.setFont(fontField);
 
         txtDonGiaMoi = new JTextField();
@@ -224,7 +226,7 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
         cmbQuyCachCu.setBackground(Color.WHITE);
         loadQuyCachComboBox(cmbQuyCachCu);
 
-        spinnerSoLuongCu = new JSpinner(new SpinnerNumberModel(1, 0, 10000, 1));
+        spinnerSoLuongCu = new JSpinner(new SpinnerNumberModel(1, Integer.MIN_VALUE, 10000, 1));
         spinnerSoLuongCu.setFont(fontField);
         
         txtDonGiaCu = new JTextField();
@@ -291,6 +293,10 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
 
         // Đăng ký MouseListener cho List
         listLoCu.addMouseListener(this);
+        
+        // Đăng ký ChangeListener cho Spinner
+        spinnerSoLuongMoi.addChangeListener(this);
+        spinnerSoLuongCu.addChangeListener(this);
     }
     
     /**
@@ -371,7 +377,39 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
                 }
 
                 int soLuongQuyCach = (Integer) spinnerSoLuongMoi.getValue();
+                
+                // Kiểm tra số lượng > 0
+                if (soLuongQuyCach <= 0) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Số lượng nhập phải lớn hơn 0!", 
+                        "Số lượng không hợp lệ", 
+                        JOptionPane.WARNING_MESSAGE);
+                    spinnerSoLuongMoi.requestFocus();
+                    return;
+                }
+                
                 this.soLuongNhapGoc = soLuongQuyCach * qcDaChon.getHeSoQuyDoi();
+                
+                // Kiểm tra giới hạn 1,000,000 đơn vị gốc
+                if (this.soLuongNhapGoc > 1000000) {
+                    int choice = JOptionPane.showConfirmDialog(this,
+                        String.format("⚠️ CẢNH BÁO: Số lượng vượt quá giới hạn!\n\n" +
+                            "Số lượng nhập: %,d %s\n" +
+                            "Quy đổi về đơn vị gốc: %,d %s\n" +
+                            "Giới hạn tối đa: 1,000,000 đơn vị gốc\n\n" +
+                            "Bạn có chắc chắn muốn nhập số lượng này không?",
+                            soLuongQuyCach, qcDaChon.getDonViTinh().getTenDonViTinh(),
+                            this.soLuongNhapGoc, quyCachGoc.getDonViTinh().getTenDonViTinh()),
+                        "Cảnh báo - Vượt giới hạn số lượng",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE);
+                    
+                    if (choice != JOptionPane.YES_OPTION) {
+                        spinnerSoLuongMoi.requestFocus();
+                        return;
+                    }
+                }
+                
                 String maLo = txtMaLoMoi.getText();
 
                 this.loDaChon = new LoSanPham(maLo, hsd, 0, this.sanPham);
@@ -389,7 +427,39 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
                 }
 
                 int soLuongQuyCach = (Integer) spinnerSoLuongCu.getValue();
+                
+                // Kiểm tra số lượng > 0
+                if (soLuongQuyCach <= 0) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Số lượng nhập phải lớn hơn 0!", 
+                        "Số lượng không hợp lệ", 
+                        JOptionPane.WARNING_MESSAGE);
+                    spinnerSoLuongCu.requestFocus();
+                    return;
+                }
+                
                 this.soLuongNhapGoc = soLuongQuyCach * qcDaChon.getHeSoQuyDoi();
+                
+                // Kiểm tra giới hạn 1,000,000 đơn vị gốc
+                if (this.soLuongNhapGoc > 1000000) {
+                    int choice = JOptionPane.showConfirmDialog(this,
+                        String.format("⚠️ CẢNH BÁO: Số lượng vượt quá giới hạn!\n\n" +
+                            "Số lượng nhập: %,d %s\n" +
+                            "Quy đổi về đơn vị gốc: %,d %s\n" +
+                            "Giới hạn tối đa: 1,000,000 đơn vị gốc\n\n" +
+                            "Bạn có chắc chắn muốn nhập số lượng này không?",
+                            soLuongQuyCach, qcDaChon.getDonViTinh().getTenDonViTinh(),
+                            this.soLuongNhapGoc, quyCachGoc.getDonViTinh().getTenDonViTinh()),
+                        "Cảnh báo - Vượt giới hạn số lượng",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE);
+                    
+                    if (choice != JOptionPane.YES_OPTION) {
+                        spinnerSoLuongCu.requestFocus();
+                        return;
+                    }
+                }
+                
                 this.chiTietCanSua = ctDuocChon;
                 this.loDaChon = ctDuocChon.getLoSanPham();
             }
@@ -521,4 +591,94 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
             return this;
         }
     }
+
+	@Override
+	public void stateChanged(ChangeEvent e) {
+		Object source = e.getSource();
+		
+		if (source == spinnerSoLuongMoi) {
+			int giaTri = (Integer) spinnerSoLuongMoi.getValue();
+			
+			// Kiểm tra số lượng <= 0
+			if (giaTri <= 0) {
+				SwingUtilities.invokeLater(() -> {
+					JOptionPane.showMessageDialog(this, 
+						"Số lượng nhập phải lớn hơn 0!", 
+						"Số lượng không hợp lệ", 
+						JOptionPane.WARNING_MESSAGE);
+					spinnerSoLuongMoi.setValue(1);
+					spinnerSoLuongMoi.requestFocus();
+				});
+				return;
+			}
+			
+			// Kiểm tra giới hạn 1,000,000 đơn vị gốc
+			QuyCachDongGoi qc = (QuyCachDongGoi) cmbQuyCachMoi.getSelectedItem();
+			if (qc != null) {
+				int soLuongGoc = giaTri * qc.getHeSoQuyDoi();
+				if (soLuongGoc > 1000000) {
+					SwingUtilities.invokeLater(() -> {
+						int choice = JOptionPane.showConfirmDialog(this,
+							String.format("⚠️ CẢNH BÁO: Số lượng vượt quá giới hạn!\n\n" +
+								"Số lượng nhập: %,d %s\n" +
+								"Quy đổi về đơn vị gốc: %,d %s\n" +
+								"Giới hạn tối đa: 1,000,000 đơn vị gốc\n\n" +
+								"Bạn có chắc chắn muốn nhập số lượng này không?",
+								giaTri, qc.getDonViTinh().getTenDonViTinh(),
+								soLuongGoc, quyCachGoc.getDonViTinh().getTenDonViTinh()),
+							"Cảnh báo - Vượt giới hạn số lượng",
+							JOptionPane.YES_NO_OPTION,
+							JOptionPane.WARNING_MESSAGE);
+						
+						if (choice != JOptionPane.YES_OPTION) {
+							spinnerSoLuongMoi.setValue(1);
+							spinnerSoLuongMoi.requestFocus();
+						}
+					});
+				}
+			}
+			
+		} else if (source == spinnerSoLuongCu) {
+			int giaTri = (Integer) spinnerSoLuongCu.getValue();
+			
+			// Kiểm tra số lượng <= 0
+			if (giaTri <= 0) {
+				SwingUtilities.invokeLater(() -> {
+					JOptionPane.showMessageDialog(this, 
+						"Số lượng nhập phải lớn hơn 0!", 
+						"Số lượng không hợp lệ", 
+						JOptionPane.WARNING_MESSAGE);
+					spinnerSoLuongCu.setValue(1);
+					spinnerSoLuongCu.requestFocus();
+				});
+				return;
+			}
+			
+			// Kiểm tra giới hạn 1,000,000 đơn vị gốc
+			QuyCachDongGoi qc = (QuyCachDongGoi) cmbQuyCachCu.getSelectedItem();
+			if (qc != null) {
+				int soLuongGoc = giaTri * qc.getHeSoQuyDoi();
+				if (soLuongGoc > 1000000) {
+					SwingUtilities.invokeLater(() -> {
+						int choice = JOptionPane.showConfirmDialog(this,
+							String.format("⚠️ CẢNH BÁO: Số lượng vượt quá giới hạn!\n\n" +
+								"Số lượng nhập: %,d %s\n" +
+								"Quy đổi về đơn vị gốc: %,d %s\n" +
+								"Giới hạn tối đa: 1,000,000 đơn vị gốc\n\n" +
+								"Bạn có chắc chắn muốn nhập số lượng này không?",
+								giaTri, qc.getDonViTinh().getTenDonViTinh(),
+								soLuongGoc, quyCachGoc.getDonViTinh().getTenDonViTinh()),
+							"Cảnh báo - Vượt giới hạn số lượng",
+							JOptionPane.YES_NO_OPTION,
+							JOptionPane.WARNING_MESSAGE);
+						
+						if (choice != JOptionPane.YES_OPTION) {
+							spinnerSoLuongCu.setValue(1);
+							spinnerSoLuongCu.requestFocus();
+						}
+					});
+				}
+			}
+		}
+	}
 }

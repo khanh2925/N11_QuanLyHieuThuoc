@@ -602,45 +602,82 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
     }
 
     /**
-     * Xóa tất cả dữ liệu và làm mới form
+     * Xóa tất cả dữ liệu và làm mới form hoàn toàn
      */
     private void xoaTatCaDuLieu() {
-        // Xóa tất cả sản phẩm trong danh sách
+        // 1. Xóa tất cả sản phẩm trong danh sách
         pnDanhSachDon.removeAll();
-        capNhatTongTienHang();
-
-        // Reset thông tin nhà cung cấp
+        
+        // 2. Reset thông tin nhà cung cấp
+        nhaCungCapDaChon = null;
         txtTimNCC.setText("");
         datLaiThongTinNCC();
 
-        // Reset ô tìm kiếm sản phẩm
+        // 3. Reset ô tìm kiếm sản phẩm
         txtSearch.setText("");
+        
+        // 4. Reset tổng tiền về 0
+        capNhatTongTienHang();
+        
+        // 5. Reset số lô tiếp theo về giá trị mới từ database
+        try {
+            String maLoDauTien = loSanPhamDAO.taoMaLoTuDong();
+            if (maLoDauTien != null && maLoDauTien.matches("^LO-\\d{6}$")) {
+                this.soLoTiepTheo = Integer.parseInt(maLoDauTien.substring(3));
+            } else {
+                this.soLoTiepTheo = 1;
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ Lỗi khi reset mã lô: " + e.getMessage());
+            this.soLoTiepTheo = 1;
+        }
 
-        // Cập nhật lại giao diện
+        // 6. Cập nhật lại giao diện
         pnDanhSachDon.revalidate();
         pnDanhSachDon.repaint();
 
-        // Reset lại nhà cung cấp đã chọn
-        nhaCungCapDaChon = null;
-
-        // Focus vào ô tìm sản phẩm
-        txtSearch.requestFocus();
+        // 7. Focus vào ô tìm kiếm nhà cung cấp (bắt đầu quy trình mới)
+        txtTimNCC.requestFocus();
     }
 
     /**
-     * Xử lý hủy phiếu nhập (F4)
+     * Xử lý hủy phiếu nhập (F4) - Reset toàn bộ form
      */
     private void xuLyHuyPhieu() {
-        if (pnDanhSachDon.getComponentCount() == 0) {
+        // Kiểm tra nếu form đã rỗng
+        boolean formRong = (pnDanhSachDon.getComponentCount() == 0 && 
+                           nhaCungCapDaChon == null && 
+                           txtSearch.getText().trim().isEmpty() && 
+                           txtTimNCC.getText().trim().isEmpty());
+        
+        if (formRong) {
+            JOptionPane.showMessageDialog(QuanLyPhieuNhap_GUI.this,
+                "Form đã rỗng, không cần làm mới!", 
+                "Thông báo", 
+                JOptionPane.INFORMATION_MESSAGE);
+            txtSearch.requestFocus();
             return;
         }
+        
+        // Xác nhận trước khi xóa
+        String message = "Bạn có chắc muốn hủy phiếu và xóa toàn bộ dữ liệu đã nhập?";
+        if (pnDanhSachDon.getComponentCount() > 0) {
+            message += "\n\n📦 Số sản phẩm đang có: " + pnDanhSachDon.getComponentCount() + " loại";
+            message += "\n💰 Tổng giá trị: " + txtTongTienHang.getText();
+        }
+        
         int confirm = JOptionPane.showConfirmDialog(QuanLyPhieuNhap_GUI.this,
-            "Bạn có chắc muốn xóa toàn bộ đơn nhập hàng?", "Xác nhận",
-            JOptionPane.YES_NO_OPTION);
+            message, 
+            "⚠️ Xác nhận hủy phiếu",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE);
+            
         if (confirm == JOptionPane.YES_OPTION) {
             xoaTatCaDuLieu();
             JOptionPane.showMessageDialog(QuanLyPhieuNhap_GUI.this,
-                "Đã làm mới đơn nhập hàng!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                "✅ Đã hủy phiếu và làm mới toàn bộ form!", 
+                "Thành công", 
+                JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
@@ -828,8 +865,11 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
                             throw new Exception("Mã SP không hợp lệ. Định dạng: SP-xxxxxx (VD: SP-000001)");
                         }
 
-                        // Validate số lượng nhập phải > 0 (theo ChiTietPhieuNhap)
-                        if (soLuong <= 0) {
+                        // Validate số lượng nhập phải > 0, không được âm (theo ChiTietPhieuNhap)
+                        if (soLuong < 0) {
+                            throw new Exception("Số lượng nhập không được là số âm! Giá trị hiện tại: " + soLuong);
+                        }
+                        if (soLuong == 0) {
                             throw new Exception("Số lượng nhập phải lớn hơn 0. Giá trị hiện tại: " + soLuong);
                         }
 
@@ -1259,9 +1299,7 @@ private void xuLyTimNhaCungCap() {
         String maLoHienThi = String.format("LO-%06d", this.soLoTiepTheo);
         
         ArrayList<QuyCachDongGoi> dsQuyCach = quyCachDAO.layDanhSachQuyCachTheoSanPham(sp.getMaSanPham());
-        // Lọc chỉ lấy quy cách đang hoạt động
-        dsQuyCach.removeIf(qc -> !qc.isTrangThai());
-        QuyCachDongGoi qc_goc = dsQuyCach.stream().filter(QuyCachDongGoi::isDonViGoc).findFirst().orElse(null);
+        QuyCachDongGoi qc_goc = quyCachDAO.timQuyCachGocTheoSanPham(sp.getMaSanPham());
 
         if (dsQuyCach == null || dsQuyCach.isEmpty() || qc_goc == null) {
             JOptionPane.showMessageDialog(this, "Sản phẩm '" + sp.getTenSanPham() + "' chưa được cấu hình Quy Cách Đóng Gói (hoặc thiếu Đơn Vị Gốc).\nVui lòng kiểm tra trong Quản lý sản phẩm.", "Lỗi cấu hình", JOptionPane.ERROR_MESSAGE);
@@ -1274,6 +1312,23 @@ private void xuLyTimNhaCungCap() {
         if (dialog.isConfirmed()) {
             try {
                 int soLuongNhapDaQuyDoi = dialog.getSoLuongNhap();
+                
+                // Kiểm tra số lượng không được âm hoặc bằng 0
+                if (soLuongNhapDaQuyDoi < 0) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Số lượng nhập không được là số âm!\nGiá trị: " + soLuongNhapDaQuyDoi, 
+                        "Lỗi số lượng", 
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                if (soLuongNhapDaQuyDoi == 0) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Số lượng nhập phải lớn hơn 0!", 
+                        "Lỗi số lượng", 
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
                 double donGiaGoc = dialog.getDonGiaNhap(); 
                 DonViTinh dvtGoc = dialog.getDonViTinh(); 
                 LoSanPham loMoi = dialog.getLoSanPham();
@@ -1790,13 +1845,12 @@ private void xuLyTimNhaCungCap() {
         // Copy lại các hàm xuLyChonLoNoiBo, getters, themLot, xoaTagChiTiet, capNhatTongSoLuongVaTien từ code cũ vào đây
         
         private void xuLyChonLoNoiBo() {
-        	 // Copy y nguyên logic cũ
+             // Copy y nguyên logic cũ
             SanPham sp = this.sanPham; 
             String maLoHienThi = String.format("LO-%06d", soLoTiepTheo);
             ArrayList<QuyCachDongGoi> dsQuyCach = quyCachDAO.layDanhSachQuyCachTheoSanPham(sp.getMaSanPham());
-            dsQuyCach.removeIf(qc -> !qc.isTrangThai());
-            QuyCachDongGoi qc_goc = dsQuyCach.stream().filter(QuyCachDongGoi::isDonViGoc).findFirst().orElse(null);
-            
+            QuyCachDongGoi qc_goc = quyCachDAO.timQuyCachGocTheoSanPham(sp.getMaSanPham());
+
             if (dsQuyCach == null || dsQuyCach.isEmpty() || qc_goc == null) {
                 JOptionPane.showMessageDialog(this, "Sản phẩm chưa cấu hình Quy Cách.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
