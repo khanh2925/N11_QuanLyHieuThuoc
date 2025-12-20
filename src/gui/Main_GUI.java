@@ -11,6 +11,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import entity.NhanVien;
+import gui.dialog.ThongTinCaNhan_Dialog;
 import gui.nhanvien.BanHang_GUI;
 import gui.nhanvien.HuyHangNhanVien_GUI;
 import gui.nhanvien.ThongKeNhanVien_GUI;
@@ -43,6 +44,8 @@ import gui.tracuu.TraCuuLoSanPham_GUI;
 import gui.trogiup.*;
 
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.*;
 
@@ -343,6 +346,25 @@ public class Main_GUI extends JFrame {
 		lblUserTop = new JLabel("Chưa đăng nhập");
 		lblUserTop.setFont(new Font("SansSerif", Font.BOLD, 14));
 		lblUserTop.setAlignmentX(Component.LEFT_ALIGNMENT);
+		lblUserTop.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		lblUserTop.setToolTipText("Click để xem/chỉnh sửa thông tin cá nhân");
+		lblUserTop.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				moThongTinCaNhan();
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				lblUserTop.setText(
+						"<html><u>" + nvDangNhap.getMaNhanVien() + " - " + nvDangNhap.getTenNhanVien() + "</u></html>");
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e) {
+				hienThongTinNhanVien();
+			}
+		});
 		bottomPanel.add(lblUserTop);
 		bottomPanel.add(Box.createVerticalStrut(8));
 
@@ -805,4 +827,21 @@ public class Main_GUI extends JFrame {
 		menuPanel.repaint();
 	}
 
+	/**
+	 * Mở dialog thông tin cá nhân để xem/chỉnh sửa thông tin nhân viên đang đăng
+	 * nhập
+	 */
+	private void moThongTinCaNhan() {
+		if (nvDangNhap == null) {
+			JOptionPane.showMessageDialog(this, "Chưa đăng nhập!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+		ThongTinCaNhan_Dialog dialog = new ThongTinCaNhan_Dialog(this, () -> {
+			// Callback: refresh thông tin sau khi cập nhật
+			// Lấy lại thông tin nhân viên từ Session (đã được cập nhật trong dialog)
+			nvDangNhap = Session.getInstance().getTaiKhoanDangNhap().getNhanVien();
+			hienThongTinNhanVien();
+		});
+		dialog.setVisible(true);
+	}
 }

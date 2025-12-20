@@ -31,7 +31,7 @@ public class ChiTietHoaDon_DAO {
 					ct.MaLo, ct.SoLuong, ct.GiaBan, ct.ThanhTien,
 					ct.MaDonViTinh, dvt.TenDonViTinh,
 					lo.HanSuDung, lo.SoLuongTon,
-					sp.MaSanPham, sp.TenSanPham, sp.GiaNhap,
+					sp.MaSanPham, sp.TenSanPham, sp.GiaNhap, sp.HinhAnh,
 					km.MaKM, km.TenKM, km.GiaTri, km.HinhThuc
 				FROM ChiTietHoaDon ct
 				LEFT JOIN DonViTinh dvt ON ct.MaDonViTinh = dvt.MaDonViTinh
@@ -64,6 +64,7 @@ public class ChiTietHoaDon_DAO {
 					sp.setMaSanPham(rs.getString("MaSanPham"));
 					sp.setTenSanPham(rs.getString("TenSanPham"));
 					sp.setGiaNhap(rs.getDouble("GiaNhap"));
+					sp.setHinhAnh(rs.getString("HinhAnh"));
 				}
 
 				// ========== TẠO LÔ SẢN PHẨM ==========
@@ -128,7 +129,7 @@ public class ChiTietHoaDon_DAO {
 					ct.MaLo, ct.SoLuong, ct.GiaBan, ct.ThanhTien,
 					ct.MaDonViTinh, dvt.TenDonViTinh,
 					lo.HanSuDung, lo.SoLuongTon,
-					sp.MaSanPham, sp.TenSanPham, sp.GiaNhap,
+					sp.MaSanPham, sp.TenSanPham, sp.GiaNhap, sp.HinhAnh,
 					km.MaKM, km.TenKM, km.GiaTri, km.HinhThuc
 				FROM ChiTietHoaDon ct
 				LEFT JOIN DonViTinh dvt ON ct.MaDonViTinh = dvt.MaDonViTinh
@@ -159,6 +160,7 @@ public class ChiTietHoaDon_DAO {
 					sp.setMaSanPham(rs.getString("MaSanPham"));
 					sp.setTenSanPham(rs.getString("TenSanPham"));
 					sp.setGiaNhap(rs.getDouble("GiaNhap"));
+					sp.setHinhAnh(rs.getString("HinhAnh"));
 				}
 
 				// ========== TẠO LÔ SẢN PHẨM ==========
