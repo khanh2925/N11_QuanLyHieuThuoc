@@ -78,6 +78,7 @@ public class HuyHangItemPanel extends JPanel {
 		lblSTT = new JLabel(String.valueOf(stt));
 		lblSTT.setFont(new Font("Segoe UI", Font.BOLD, 16));
 		lblSTT.setPreferredSize(new Dimension(40, 30));
+		lblSTT.setMaximumSize(new Dimension(40, 30));
 		add(lblSTT);
 		add(Box.createHorizontalStrut(5));
 
@@ -85,7 +86,7 @@ public class HuyHangItemPanel extends JPanel {
 		lblAnh = new JLabel();
 		lblAnh.setPreferredSize(new Dimension(80, 80));
 		lblAnh.setBorder(new LineBorder(Color.LIGHT_GRAY));
-		lblAnh.setHorizontalAlignment(JLabel.CENTER);
+		lblAnh.setMaximumSize(new Dimension(80, 80));
 		try {
 			// Logic load ảnh thông minh hơn
 			// 1. Thử load trực tiếp
@@ -106,6 +107,7 @@ public class HuyHangItemPanel extends JPanel {
 				lblAnh.setIcon(new ImageIcon(icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH)));
 			} else {
 				lblAnh.setText("Ảnh");
+				lblAnh.setMaximumSize(new Dimension(80, 25));
 			}
 		} catch (Exception e) {
 			lblAnh.setText("Ảnh");
@@ -167,9 +169,7 @@ public class HuyHangItemPanel extends JPanel {
 		btnGiam.setFocusPainted(false);
 		soLuongBox.add(btnGiam);
 
-		txtSLHuy = TaoJtextNhanh.hienThi(
-				String.valueOf(item.getSoLuongHuy()),
-				new Font("Segoe UI", Font.PLAIN, 16),
+		txtSLHuy = TaoJtextNhanh.hienThi(String.valueOf(item.getSoLuongHuy()), new Font("Segoe UI", Font.PLAIN, 16),
 				Color.BLACK);
 		txtSLHuy.setMaximumSize(new Dimension(600, 30));
 		txtSLHuy.setHorizontalAlignment(SwingConstants.CENTER);
@@ -208,9 +208,8 @@ public class HuyHangItemPanel extends JPanel {
 		txtLyDo.setFont(new Font("Segoe UI", Font.ITALIC, 12));
 		txtLyDo.setForeground(Color.GRAY);
 		// Set consistent sizes to prevent misalignment when text is pre-populated
-		txtLyDo.setMinimumSize(new Dimension(140, 26));
-		txtLyDo.setPreferredSize(new Dimension(140, 26));
-		txtLyDo.setMaximumSize(new Dimension(140, 26));
+		txtLyDo.setPreferredSize(new Dimension(85, 26));
+		txtLyDo.setMaximumSize(new Dimension(180, 26));
 
 		// Hiển thị lý do có sẵn từ ItemHuyHang (nếu có)
 		String lyDoCoSan = item.getLyDo();
@@ -268,15 +267,12 @@ public class HuyHangItemPanel extends JPanel {
 			int slTonHienThi = getSoLuongTonTheoQuyCachHienTai();
 
 			if (slTonHienThi <= 0) {
-				JOptionPane.showMessageDialog(this,
-						"Lô này đã hết hàng!",
-						"Cảnh báo", JOptionPane.WARNING_MESSAGE);
+				JOptionPane.showMessageDialog(this, "Lô này đã hết hàng!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
 
 			if (sl >= slTonHienThi) {
-				JOptionPane.showMessageDialog(this,
-						"Số lượng huỷ đã đạt tối đa tồn kho (" + slTonHienThi + ")!",
+				JOptionPane.showMessageDialog(this, "Số lượng huỷ đã đạt tối đa tồn kho (" + slTonHienThi + ")!",
 						"Cảnh báo", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
@@ -292,9 +288,8 @@ public class HuyHangItemPanel extends JPanel {
 		btnGiam.addActionListener(e -> {
 			int sl = item.getSoLuongHuy();
 			if (sl <= 1) {
-				JOptionPane.showMessageDialog(this,
-						"Số lượng huỷ không thể nhỏ hơn 1!",
-						"Cảnh báo", JOptionPane.WARNING_MESSAGE);
+				JOptionPane.showMessageDialog(this, "Số lượng huỷ không thể nhỏ hơn 1!", "Cảnh báo",
+						JOptionPane.WARNING_MESSAGE);
 				return;
 			}
 
@@ -335,9 +330,8 @@ public class HuyHangItemPanel extends JPanel {
 						if (!it.getTenSanPham().equals(item.getTenSanPham()))
 							continue;
 
-						if (it.getQuyCachHienTai() != null
-								&& it.getQuyCachHienTai().getDonViTinh().getMaDonViTinh()
-										.equals(qcChon.getDonViTinh().getMaDonViTinh())) {
+						if (it.getQuyCachHienTai() != null && it.getQuyCachHienTai().getDonViTinh().getMaDonViTinh()
+								.equals(qcChon.getDonViTinh().getMaDonViTinh())) {
 
 							JOptionPane.showMessageDialog(this,
 									"Đơn vị '" + qcChon.getDonViTinh().getTenDonViTinh()
@@ -436,12 +430,8 @@ public class HuyHangItemPanel extends JPanel {
 			}
 
 			// 5) Clone MỘT đơn vị chưa dùng
-			ItemHuyHang itemMoi = new ItemHuyHang(
-					item.getMaLo(),
-					item.getTenSanPham(),
-					soLuongTonGoc,
-					item.getDonGiaNhap(),
-					item.getHinhAnh());
+			ItemHuyHang itemMoi = new ItemHuyHang(item.getMaLo(), item.getTenSanPham(), soLuongTonGoc,
+					item.getDonGiaNhap(), item.getHinhAnh());
 			itemMoi.setSoLuongHuy(1);
 			itemMoi.setLyDo(item.getLyDo());
 			itemMoi.setQuyCachGoc(item.getQuyCachGoc());
@@ -462,9 +452,7 @@ public class HuyHangItemPanel extends JPanel {
 		try {
 			soMoi = Integer.parseInt(txtSLHuy.getText().trim());
 		} catch (Exception ex) {
-			JOptionPane.showMessageDialog(this,
-					"Vui lòng nhập số hợp lệ!",
-					"Lỗi", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, "Vui lòng nhập số hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
 			txtSLHuy.setText(String.valueOf(item.getSoLuongHuy()));
 			return;
 		}
@@ -472,13 +460,11 @@ public class HuyHangItemPanel extends JPanel {
 		int slTonHienThi = getSoLuongTonTheoQuyCachHienTai();
 
 		if (soMoi < 1) {
-			JOptionPane.showMessageDialog(this,
-					"Số lượng huỷ phải lớn hơn 0!",
-					"Cảnh báo", JOptionPane.WARNING_MESSAGE);
+			JOptionPane.showMessageDialog(this, "Số lượng huỷ phải lớn hơn 0!", "Cảnh báo",
+					JOptionPane.WARNING_MESSAGE);
 			soMoi = 1;
 		} else if (soMoi > slTonHienThi) {
-			JOptionPane.showMessageDialog(this,
-					"Số lượng huỷ không được vượt quá tồn kho (" + slTonHienThi + ")!",
+			JOptionPane.showMessageDialog(this, "Số lượng huỷ không được vượt quá tồn kho (" + slTonHienThi + ")!",
 					"Cảnh báo", JOptionPane.WARNING_MESSAGE);
 			soMoi = slTonHienThi;
 		}

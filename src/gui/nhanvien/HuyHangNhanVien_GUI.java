@@ -111,12 +111,12 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		btnHSD.setBounds(545, 28, 154, 40);
 
 		// ===== CENTER (DANH SÁCH LÔ HUỶ) =====
-		pnCotPhaiCenter = new JPanel();
-		pnCotPhaiCenter.setPreferredSize(new Dimension(1073, 992));
+		pnCotPhaiCenter = new JPanel(new BorderLayout());
 		pnCotPhaiCenter.setBackground(Color.WHITE);
+		pnCotPhaiCenter.setPreferredSize(new Dimension(1087, 1080));
 		pnCotPhaiCenter.setBorder(
-				new CompoundBorder(new LineBorder(new Color(0xD32F2F), 3, true), new EmptyBorder(5, 5, 5, 5)));
-		pnCotPhaiCenter.setLayout(new BorderLayout(0, 0));
+				new CompoundBorder(new LineBorder(new Color(0xD32F2F), 3, true), new EmptyBorder(10, 10, 10, 10)));
+//		pnCotPhaiCenter.setLayout(new BorderLayout(0, 0));
 		add(pnCotPhaiCenter, BorderLayout.CENTER);
 
 		pnDanhSachLo = new JPanel();
