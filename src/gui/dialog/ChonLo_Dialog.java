@@ -306,19 +306,28 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
         ChiTietPhieuNhap itemDuocChon = listLoCu.getSelectedValue();
         
         if (itemDuocChon != null) {
-            // 1. Cập nhật số lượng
-            spinnerSoLuongCu.setValue(itemDuocChon.getSoLuongNhap());
-
-            // 2. Cập nhật ComboBox Đơn vị tính
+            // 1. Cập nhật ComboBox Đơn vị tính trước
             DonViTinh dvtHienTai = itemDuocChon.getDonViTinh();
+            QuyCachDongGoi quyCachDuocChon = null;
+            
             if (dvtHienTai != null) {
                 for (int i = 0; i < cmbQuyCachCu.getItemCount(); i++) {
                     QuyCachDongGoi qc = cmbQuyCachCu.getItemAt(i);
                     if (qc.getDonViTinh().getMaDonViTinh().equals(dvtHienTai.getMaDonViTinh())) {
                         cmbQuyCachCu.setSelectedIndex(i);
+                        quyCachDuocChon = qc;
                         break;
                     }
                 }
+            }
+            
+            // 2. Quy đổi số lượng từ đơn vị gốc về đơn vị hiển thị
+            int soLuongGoc = itemDuocChon.getSoLuongNhap();
+            if (quyCachDuocChon != null && quyCachDuocChon.getHeSoQuyDoi() > 0) {
+                int soLuongHienThi = soLuongGoc / quyCachDuocChon.getHeSoQuyDoi();
+                spinnerSoLuongCu.setValue(soLuongHienThi);
+            } else {
+                spinnerSoLuongCu.setValue(soLuongGoc);
             }
             
             // 3. Cập nhật giá tiền
@@ -489,6 +498,46 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
         
         txtDonGia.setText(df.format(giaHienThi));
     }
+    
+    /**
+     * Kiểm tra giới hạn số lượng khi thay đổi đơn vị tính
+     */
+    private void kiemTraGioiHanSoLuong(JSpinner spinner, JComboBox<QuyCachDongGoi> cmb) {
+        int giaTri = (Integer) spinner.getValue();
+        
+        // Kiểm tra số lượng <= 0
+        if (giaTri <= 0) {
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(this, 
+                    "Số lượng nhập phải lớn hơn 0!", 
+                    "Số lượng không hợp lệ", 
+                    JOptionPane.WARNING_MESSAGE);
+                spinner.setValue(1);
+                spinner.requestFocus();
+            });
+            return;
+        }
+        
+        // Chỉ hiển thị cảnh báo thông tin, không chặn nhập liệu
+        QuyCachDongGoi qc = (QuyCachDongGoi) cmb.getSelectedItem();
+        if (qc != null) {
+            int soLuongGoc = giaTri * qc.getHeSoQuyDoi();
+            if (soLuongGoc > 1000000) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this,
+                        String.format("⚠️ CẢNH BÁO: Số lượng vượt quá giới hạn khuyến nghị!\n\n" +
+                            "Số lượng nhập: %,d %s\n" +
+                            "Quy đổi về đơn vị gốc: %,d %s\n" +
+                            "Giới hạn khuyến nghị: 1,000,000 đơn vị gốc\n\n" +
+                            "Bạn có thể tiếp tục nhập, nhưng sẽ cần xác nhận lại khi lưu.",
+                            giaTri, qc.getDonViTinh().getTenDonViTinh(),
+                            soLuongGoc, quyCachGoc.getDonViTinh().getTenDonViTinh()),
+                        "Cảnh báo - Vượt giới hạn số lượng",
+                        JOptionPane.WARNING_MESSAGE);
+                });
+            }
+        }
+    }
 
     // ===== V. TẢI DỮ LIỆU (DATA) =====
 
@@ -540,8 +589,12 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
             dispose();
         } else if (source == cmbQuyCachMoi) {
             capNhatGiaTheoQuyCach(cmbQuyCachMoi, txtDonGiaMoi);
+            // Trigger validation lại cho số lượng hiện tại
+            kiemTraGioiHanSoLuong(spinnerSoLuongMoi, cmbQuyCachMoi);
         } else if (source == cmbQuyCachCu) {
             capNhatGiaTheoQuyCach(cmbQuyCachCu, txtDonGiaCu);
+            // Trigger validation lại cho số lượng hiện tại
+            kiemTraGioiHanSoLuong(spinnerSoLuongCu, cmbQuyCachCu);
         }
     }
 
@@ -579,11 +632,32 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (value instanceof ChiTietPhieuNhap ct) {
                 LoSanPham lo = ct.getLoSanPham();
+                
+                // Lấy đơn vị tính đã nhập và số lượng gốc
+                DonViTinh dvtDaNhap = ct.getDonViTinh();
+                int soLuongGoc = ct.getSoLuongNhap();
+                
+                // Tìm quy cách tương ứng với đơn vị tính đã nhập
+                int soLuongHienThi = soLuongGoc;
+                String tenDonViHienThi = quyCachGoc.getDonViTinh().getTenDonViTinh();
+                
+                if (dvtDaNhap != null) {
+                    for (QuyCachDongGoi qc : dsQuyCach) {
+                        if (qc.getDonViTinh().getMaDonViTinh().equals(dvtDaNhap.getMaDonViTinh())) {
+                            if (qc.getHeSoQuyDoi() > 0) {
+                                soLuongHienThi = soLuongGoc / qc.getHeSoQuyDoi();
+                            }
+                            tenDonViHienThi = dvtDaNhap.getTenDonViTinh();
+                            break;
+                        }
+                    }
+                }
+                
                 String text = String.format("%s - HSD: %s - (Hiện có: %d %s)",
                         lo.getMaLo(),
                         lo.getHanSuDung().format(fmtDate),
-                        ct.getSoLuongNhap(),
-                        quyCachGoc.getDonViTinh().getTenDonViTinh()
+                        soLuongHienThi,
+                        tenDonViHienThi
                 );
                 setText(text);
                 setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -597,88 +671,9 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
 		Object source = e.getSource();
 		
 		if (source == spinnerSoLuongMoi) {
-			int giaTri = (Integer) spinnerSoLuongMoi.getValue();
-			
-			// Kiểm tra số lượng <= 0
-			if (giaTri <= 0) {
-				SwingUtilities.invokeLater(() -> {
-					JOptionPane.showMessageDialog(this, 
-						"Số lượng nhập phải lớn hơn 0!", 
-						"Số lượng không hợp lệ", 
-						JOptionPane.WARNING_MESSAGE);
-					spinnerSoLuongMoi.setValue(1);
-					spinnerSoLuongMoi.requestFocus();
-				});
-				return;
-			}
-			
-			// Kiểm tra giới hạn 1,000,000 đơn vị gốc
-			QuyCachDongGoi qc = (QuyCachDongGoi) cmbQuyCachMoi.getSelectedItem();
-			if (qc != null) {
-				int soLuongGoc = giaTri * qc.getHeSoQuyDoi();
-				if (soLuongGoc > 1000000) {
-					SwingUtilities.invokeLater(() -> {
-						int choice = JOptionPane.showConfirmDialog(this,
-							String.format("⚠️ CẢNH BÁO: Số lượng vượt quá giới hạn!\n\n" +
-								"Số lượng nhập: %,d %s\n" +
-								"Quy đổi về đơn vị gốc: %,d %s\n" +
-								"Giới hạn tối đa: 1,000,000 đơn vị gốc\n\n" +
-								"Bạn có chắc chắn muốn nhập số lượng này không?",
-								giaTri, qc.getDonViTinh().getTenDonViTinh(),
-								soLuongGoc, quyCachGoc.getDonViTinh().getTenDonViTinh()),
-							"Cảnh báo - Vượt giới hạn số lượng",
-							JOptionPane.YES_NO_OPTION,
-							JOptionPane.WARNING_MESSAGE);
-						
-						if (choice != JOptionPane.YES_OPTION) {
-							spinnerSoLuongMoi.setValue(1);
-							spinnerSoLuongMoi.requestFocus();
-						}
-					});
-				}
-			}
-			
+			kiemTraGioiHanSoLuong(spinnerSoLuongMoi, cmbQuyCachMoi);
 		} else if (source == spinnerSoLuongCu) {
-			int giaTri = (Integer) spinnerSoLuongCu.getValue();
-			
-			// Kiểm tra số lượng <= 0
-			if (giaTri <= 0) {
-				SwingUtilities.invokeLater(() -> {
-					JOptionPane.showMessageDialog(this, 
-						"Số lượng nhập phải lớn hơn 0!", 
-						"Số lượng không hợp lệ", 
-						JOptionPane.WARNING_MESSAGE);
-					spinnerSoLuongCu.setValue(1);
-					spinnerSoLuongCu.requestFocus();
-				});
-				return;
-			}
-			
-			// Kiểm tra giới hạn 1,000,000 đơn vị gốc
-			QuyCachDongGoi qc = (QuyCachDongGoi) cmbQuyCachCu.getSelectedItem();
-			if (qc != null) {
-				int soLuongGoc = giaTri * qc.getHeSoQuyDoi();
-				if (soLuongGoc > 1000000) {
-					SwingUtilities.invokeLater(() -> {
-						int choice = JOptionPane.showConfirmDialog(this,
-							String.format("⚠️ CẢNH BÁO: Số lượng vượt quá giới hạn!\n\n" +
-								"Số lượng nhập: %,d %s\n" +
-								"Quy đổi về đơn vị gốc: %,d %s\n" +
-								"Giới hạn tối đa: 1,000,000 đơn vị gốc\n\n" +
-								"Bạn có chắc chắn muốn nhập số lượng này không?",
-								giaTri, qc.getDonViTinh().getTenDonViTinh(),
-								soLuongGoc, quyCachGoc.getDonViTinh().getTenDonViTinh()),
-							"Cảnh báo - Vượt giới hạn số lượng",
-							JOptionPane.YES_NO_OPTION,
-							JOptionPane.WARNING_MESSAGE);
-						
-						if (choice != JOptionPane.YES_OPTION) {
-							spinnerSoLuongCu.setValue(1);
-							spinnerSoLuongCu.requestFocus();
-						}
-					});
-				}
-			}
+			kiemTraGioiHanSoLuong(spinnerSoLuongCu, cmbQuyCachCu);
 		}
 	}
 }
