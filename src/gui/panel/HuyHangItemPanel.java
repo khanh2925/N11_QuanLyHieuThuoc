@@ -87,8 +87,26 @@ public class HuyHangItemPanel extends JPanel {
 		lblAnh.setBorder(new LineBorder(Color.LIGHT_GRAY));
 		lblAnh.setHorizontalAlignment(JLabel.CENTER);
 		try {
-			ImageIcon icon = new ImageIcon(getClass().getResource("/resources/images/" + anhPath));
-			lblAnh.setIcon(new ImageIcon(icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH)));
+			// Logic load ảnh thông minh hơn
+			// 1. Thử load trực tiếp
+			java.net.URL imgUrl = getClass().getResource("/resources/images/" + anhPath);
+
+			// 2. Nếu không thấy & path chưa có 'products/' -> thử thêm vào
+			if (imgUrl == null && anhPath != null && !anhPath.startsWith("products/")) {
+				imgUrl = getClass().getResource("/resources/images/products/" + anhPath);
+			}
+
+			// 3. Nếu vẫn null -> thử tìm trong folder gốc images (fallback legacy)
+			if (imgUrl == null && anhPath != null) {
+				imgUrl = getClass().getResource("/images/" + anhPath);
+			}
+
+			if (imgUrl != null) {
+				ImageIcon icon = new ImageIcon(imgUrl);
+				lblAnh.setIcon(new ImageIcon(icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH)));
+			} else {
+				lblAnh.setText("Ảnh");
+			}
 		} catch (Exception e) {
 			lblAnh.setText("Ảnh");
 		}
@@ -422,7 +440,8 @@ public class HuyHangItemPanel extends JPanel {
 					item.getMaLo(),
 					item.getTenSanPham(),
 					soLuongTonGoc,
-					item.getDonGiaNhap());
+					item.getDonGiaNhap(),
+					item.getHinhAnh());
 			itemMoi.setSoLuongHuy(1);
 			itemMoi.setLyDo(item.getLyDo());
 			itemMoi.setQuyCachGoc(item.getQuyCachGoc());

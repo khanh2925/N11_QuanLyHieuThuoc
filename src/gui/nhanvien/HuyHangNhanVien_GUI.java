@@ -522,7 +522,8 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		// Lấy số lượng tồn theo đơn vị gốc
 		int slTonGoc = lo.getSoLuongTon();
 
-		ItemHuyHang it = new ItemHuyHang(lo.getMaLo(), lo.getSanPham().getTenSanPham(), slTonGoc, giaNhap);
+		ItemHuyHang it = new ItemHuyHang(lo.getMaLo(), lo.getSanPham().getTenSanPham(), slTonGoc, giaNhap,
+				lo.getSanPham().getHinhAnh());
 
 		// Lấy và set quy cách gốc
 		QuyCachDongGoi qcGoc = quyCachDAO.timQuyCachGocTheoSanPham(lo.getSanPham().getMaSanPham());
@@ -553,7 +554,8 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		// Lấy số lượng tồn theo đơn vị gốc
 		int slTonGoc = lo.getSoLuongTon();
 
-		ItemHuyHang it = new ItemHuyHang(lo.getMaLo(), lo.getSanPham().getTenSanPham(), slTonGoc, giaNhap);
+		ItemHuyHang it = new ItemHuyHang(lo.getMaLo(), lo.getSanPham().getTenSanPham(), slTonGoc, giaNhap,
+				lo.getSanPham().getHinhAnh());
 
 		// ✅ Set số lượng huỷ = toàn bộ số lượng tồn (cho chức năng "Huỷ tất cả")
 		it.setSoLuongHuy(slTonGoc);
@@ -617,7 +619,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 				capNhatTongSoLuongVaTien();
 			}
 
-		}, "thuoc_default.png");
+		}, it.getHinhAnh());
 
 		pnDanhSachLo.add(panel);
 		pnDanhSachLo.revalidate();

@@ -8,14 +8,16 @@ public class ItemHuyHang {
 	private int soLuongHuy;
 	private double donGiaNhap;
 	private String lyDo;
+	private String hinhAnh; // Thêm trường hình ảnh
 	private QuyCachDongGoi quyCachHienTai; // Quy cách đang chọn
 	private QuyCachDongGoi quyCachGoc; // Quy cách gốc (để tính toán cuối)
 
-	public ItemHuyHang(String maLo, String tenSanPham, int soLuongTon, double donGiaNhap) {
+	public ItemHuyHang(String maLo, String tenSanPham, int soLuongTon, double donGiaNhap, String hinhAnh) {
 		this.maLo = maLo;
 		this.tenSanPham = tenSanPham;
 		this.soLuongTon = soLuongTon;
 		this.donGiaNhap = donGiaNhap;
+		this.hinhAnh = hinhAnh;
 		this.soLuongHuy = 1; // default
 		this.lyDo = "";
 	}
@@ -79,5 +81,13 @@ public class ItemHuyHang {
 
 	public void setQuyCachGoc(QuyCachDongGoi qc) {
 		this.quyCachGoc = qc;
+	}
+
+	public String getHinhAnh() {
+		return hinhAnh;
+	}
+
+	public void setHinhAnh(String hinhAnh) {
+		this.hinhAnh = hinhAnh;
 	}
 }
