@@ -147,18 +147,18 @@ public class TraHangItemPanel extends JPanel {
 		add(cboDonViTinh);
 
 		Box lblBox = Box.createVerticalBox();
-		
+
 		lblQuyDoi = new JLabel();
 		lblQuyDoi.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 		lblQuyDoi.setPreferredSize(new Dimension(70, 30));
 		lblBox.add(lblQuyDoi);
-		
+
 		// Label hiển thị số lượng đã trả trước đó (nằm dưới combobox)
 		lblDaTra = new JLabel();
 		lblDaTra.setFont(new Font("Segoe UI", Font.ITALIC, 12));
 		lblDaTra.setForeground(new Color(0xE65100)); // Màu cam
 		lblBox.add(lblDaTra);
-		
+
 		add(lblBox);
 		// ===== SỐ LƯỢNG TRẢ (+/-) =====
 		Box soLuongBox = Box.createHorizontalBox();
@@ -230,7 +230,10 @@ public class TraHangItemPanel extends JPanel {
 
 		// ===== ENABLE / DISABLE CLONE =====
 		int soLuongDVTLoad = cboDonViTinh.getItemCount();
-		btnClone.setVisible(soLuongDVTLoad > 1);
+		// btnClone.setVisible(soLuongDVTLoad > 1); // logic cũ
+		if (soLuongDVTLoad <= 1) {
+			btnClone.setEnabled(false);
+		}
 
 		// ===== XÓA =====
 		btnXoa = new JButton();
@@ -446,7 +449,7 @@ public class TraHangItemPanel extends JPanel {
 				}
 			}
 
-			btnClone.setVisible(cboDonViTinh.getItemCount() > 1);
+			btnClone.setEnabled(cboDonViTinh.getItemCount() > 1);
 		});
 
 	}

@@ -208,7 +208,7 @@ public class Main_GUI extends JFrame {
 			addSubmenuButton("tracuu", "tracuulo", "Lô sản phẩm", "/resources/images/icon_san_pham.png",
 					() -> new TraCuuLoSanPham_GUI());
 
-			addMenuButton(menuScrollContent, "Quản lý phiếu nhập", "nhaphang", "/resources/images/icon_nhap_hang.png");
+			addMenuButton(menuScrollContent, "Nhập hàng", "nhaphang", "/resources/images/icon_nhap_hang.png");
 			addMenuButton(menuScrollContent, "Quản lý xuất huỷ", "xuathuy", "/resources/images/icon_xuat_huy.png");
 			addMenuButton(menuScrollContent, "Quản lý trả hàng", "trahang", "/resources/images/icon_tra_hang.png");
 
