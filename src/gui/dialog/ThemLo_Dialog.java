@@ -3,6 +3,8 @@ package gui.dialog;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -10,6 +12,8 @@ import java.util.Date;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import com.toedter.calendar.JDateChooser;
 import entity.DonViTinh;
@@ -17,7 +21,7 @@ import entity.LoSanPham;
 import entity.QuyCachDongGoi;
 import entity.SanPham;
 
-public class ThemLo_Dialog extends JDialog {
+public class ThemLo_Dialog extends JDialog implements ActionListener,MouseListener,ChangeListener  {
 
     private JTextField txtMaLo;
     private JSpinner spinnerSoLuong;
@@ -62,6 +66,15 @@ public class ThemLo_Dialog extends JDialog {
         
         cmbQuyCach.setSelectedIndex(0);
         capNhatGiaTheoQuyCach();
+        
+        registerEvents();
+    }
+    
+    private void registerEvents() {
+        btnLuu.addActionListener(this);
+        btnThoat.addActionListener(this);
+        cmbQuyCach.addActionListener(this);
+        spinnerSoLuong.addChangeListener(this);
     }
 
     private void initialize() {
@@ -125,7 +138,6 @@ public class ThemLo_Dialog extends JDialog {
                 return this;
             }
         });
-        cmbQuyCach.addActionListener(e -> capNhatGiaTheoQuyCach());
         mainPanel.add(cmbQuyCach, gbc);
         
         // Hàng 3: Số Lượng
@@ -135,7 +147,7 @@ public class ThemLo_Dialog extends JDialog {
         mainPanel.add(lblSoLuong, gbc);
 
         gbc.gridx = 1; gbc.gridy = 3;
-        spinnerSoLuong = new JSpinner(new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
+        spinnerSoLuong = new JSpinner(new SpinnerNumberModel(1, Integer.MIN_VALUE, Integer.MAX_VALUE, 1));
         spinnerSoLuong.setFont(fontField);
         mainPanel.add(spinnerSoLuong, gbc);
 
@@ -260,6 +272,26 @@ public class ThemLo_Dialog extends JDialog {
             // QUY ĐỔI VỀ GỐC
             this.soLuongNhapGoc = soLuongQuyCach * qcDaChon.getHeSoQuyDoi();
             
+            // Kiểm tra giới hạn 1,000,000 đơn vị gốc
+            if (this.soLuongNhapGoc > 1000000) {
+                int choice = JOptionPane.showConfirmDialog(this,
+                    String.format("⚠️ CẢNH BÁO: Số lượng vượt quá giới hạn!\n\n" +
+                        "Số lượng nhập: %,d %s\n" +
+                        "Quy đổi về đơn vị gốc: %,d %s\n" +
+                        "Giới hạn tối đa: 1,000,000 đơn vị gốc\n\n" +
+                        "Bạn có chắc chắn muốn nhập số lượng này không?",
+                        soLuongQuyCach, qcDaChon.getDonViTinh().getTenDonViTinh(),
+                        this.soLuongNhapGoc, quyCachGoc.getDonViTinh().getTenDonViTinh()),
+                    "Cảnh báo - Vượt giới hạn số lượng",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+                
+                if (choice != JOptionPane.YES_OPTION) {
+                    spinnerSoLuong.requestFocus();
+                    return;
+                }
+            }
+            
             // Kiểm tra sau khi quy đổi
             if (this.soLuongNhapGoc <= 0) {
                 JOptionPane.showMessageDialog(this, 
@@ -302,4 +334,86 @@ public class ThemLo_Dialog extends JDialog {
     public DonViTinh getDonViTinh() {
         return donViTinhGoc;
     }
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void stateChanged(ChangeEvent e) {
+		if (e.getSource() == spinnerSoLuong) {
+			int giaTri = (Integer) spinnerSoLuong.getValue();
+			
+			// Kiểm tra số lượng <= 0
+			if (giaTri <= 0) {
+				SwingUtilities.invokeLater(() -> {
+					JOptionPane.showMessageDialog(this, 
+						"Số lượng nhập phải lớn hơn 0!", 
+						"Số lượng không hợp lệ", 
+						JOptionPane.WARNING_MESSAGE);
+					spinnerSoLuong.setValue(1);
+					spinnerSoLuong.requestFocus();
+				});
+				return;
+			}
+			
+			// Kiểm tra giới hạn 1,000,000 đơn vị gốc
+			QuyCachDongGoi qc = (QuyCachDongGoi) cmbQuyCach.getSelectedItem();
+			if (qc != null) {
+				int soLuongGoc = giaTri * qc.getHeSoQuyDoi();
+				if (soLuongGoc > 1000000) {
+					SwingUtilities.invokeLater(() -> {
+						int choice = JOptionPane.showConfirmDialog(this,
+							String.format("⚠️ CẢNH BÁO: Số lượng vượt quá giới hạn!\n\n" +
+								"Số lượng nhập: %,d %s\n" +
+								"Quy đổi về đơn vị gốc: %,d %s\n" +
+								"Giới hạn tối đa: 1,000,000 đơn vị gốc\n\n" +
+								"Bạn có chắc chắn muốn nhập số lượng này không?",
+								giaTri, qc.getDonViTinh().getTenDonViTinh(),
+								soLuongGoc, quyCachGoc.getDonViTinh().getTenDonViTinh()),
+							"Cảnh báo - Vượt giới hạn số lượng",
+							JOptionPane.YES_NO_OPTION,
+							JOptionPane.WARNING_MESSAGE);
+						
+						if (choice != JOptionPane.YES_OPTION) {
+							spinnerSoLuong.setValue(1);
+							spinnerSoLuong.requestFocus();
+						}
+					});
+				}
+			}
+		}
+	}
 }
