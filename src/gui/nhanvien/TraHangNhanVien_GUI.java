@@ -303,11 +303,9 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 		String maHD = txtTimHoaDon.getText().trim();
 
 		if (!maHD.matches(REGEX_MA_HOA_DON)) {
-			JOptionPane.showMessageDialog(this,
-					"Mã hoá đơn không đúng định dạng!\n\n"
-							+ "Định dạng hợp lệ: HD-YYYYMMDD-XXXX\n"
-							+ "Ví dụ: HD-20250210-0001",
-					"Sai định dạng mã hóa đơn", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, "Mã hoá đơn không đúng định dạng!\n\n"
+					+ "Định dạng hợp lệ: HD-YYYYMMDD-XXXX\n" + "Ví dụ: HD-20250210-0001", "Sai định dạng mã hóa đơn",
+					JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 
@@ -321,25 +319,22 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 	private void xuLyTimHDTheoSDTKH() {
 		String sdt = txtTimKH.getText().trim();
 		if (sdt.isEmpty() || !sdt.matches("0\\d{9}")) {
-			JOptionPane.showMessageDialog(this,
-					"Vui lòng nhập SĐT hợp lệ (10 số, bắt đầu bằng 0).",
-					"SĐT không hợp lệ", JOptionPane.WARNING_MESSAGE);
+			JOptionPane.showMessageDialog(this, "Vui lòng nhập SĐT hợp lệ (10 số, bắt đầu bằng 0).", "SĐT không hợp lệ",
+					JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 
 		KhachHang kh = new KhachHang_DAO().timKhachHangTheoSoDienThoai(sdt);
 		if (kh == null) {
-			JOptionPane.showMessageDialog(this,
-					"Không tìm thấy khách hàng với SĐT: " + sdt,
-					"Không tìm thấy", JOptionPane.WARNING_MESSAGE);
+			JOptionPane.showMessageDialog(this, "Không tìm thấy khách hàng với SĐT: " + sdt, "Không tìm thấy",
+					JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 
 		List<HoaDon> ds = hoaDonDAO.timHoaDonTheoSoDienThoai(sdt);
 		if (ds.isEmpty()) {
-			JOptionPane.showMessageDialog(this,
-					"Khách hàng chưa có hóa đơn nào.",
-					"Thông báo", JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(this, "Khách hàng chưa có hóa đơn nào.", "Thông báo",
+					JOptionPane.INFORMATION_MESSAGE);
 			return;
 		}
 
@@ -404,17 +399,15 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 	private void hienThiChiTietHoaDon(String maHD) {
 		HoaDon hd = hoaDonDAO.timHoaDonTheoMa(maHD);
 		if (hd == null) {
-			JOptionPane.showMessageDialog(this,
-					"Không tìm thấy hóa đơn với mã: " + maHD,
-					"Không tìm thấy", JOptionPane.WARNING_MESSAGE);
+			JOptionPane.showMessageDialog(this, "Không tìm thấy hóa đơn với mã: " + maHD, "Không tìm thấy",
+					JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 
 		long days = ChronoUnit.DAYS.between(hd.getNgayLap(), today);
 		if (days > MAX_RETURN_DAYS) {
 			JOptionPane.showMessageDialog(this,
-					"Hoá đơn đã quá " + MAX_RETURN_DAYS + " ngày - không thể trả hàng!\n\n"
-							+ "Ngày lập hoá đơn: "
+					"Hoá đơn đã quá " + MAX_RETURN_DAYS + " ngày - không thể trả hàng!\n\n" + "Ngày lập hoá đơn: "
 							+ hd.getNgayLap().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) + "\n"
 							+ "Số ngày đã trôi qua: " + days + " ngày",
 					"Hết hạn trả hàng", JOptionPane.WARNING_MESSAGE);
@@ -676,9 +669,8 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 	private void xuLyTraHang(ActionEvent e) {
 
 		if (dsTraHang.isEmpty()) {
-			JOptionPane.showMessageDialog(this,
-					"Không có sản phẩm để trả!",
-					"Thông báo", JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(this, "Không có sản phẩm để trả!", "Thông báo",
+					JOptionPane.INFORMATION_MESSAGE);
 			txtTimHoaDon.requestFocus();
 			return;
 		}
@@ -780,9 +772,8 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 
 		boolean ok = ptDAO.themPhieuTraVaChiTiet(pt, dsCT);
 		if (!ok) {
-			JOptionPane.showMessageDialog(this,
-					"Không thể lưu phiếu trả! Vui lòng thử lại.",
-					"Lỗi", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, "Không thể lưu phiếu trả! Vui lòng thử lại.", "Lỗi",
+					JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 
@@ -834,9 +825,29 @@ public class TraHangNhanVien_GUI extends JPanel implements ActionListener {
 
 		// --- HUỶ ---
 		if (o == btnHuy) {
-			resetForm();
+			xuLyHuyDon();
 			return;
 		}
+	}
+
+	private void xuLyHuyDon() {
+		// Nếu đơn hàng trống thì không cần confirm
+		if (dsTraHang == null || dsTraHang.isEmpty()) {
+			JOptionPane.showMessageDialog(this, "Đơn trả hàng đang trống!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+			txtTimHoaDon.requestFocus();
+			return;
+		}
+
+		// Confirm trước khi huỷ
+		int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn huỷ toàn bộ đơn hàng hiện tại?",
+				"Xác nhận huỷ đơn", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+		if (confirm == JOptionPane.YES_OPTION) {
+			resetForm();
+			JOptionPane.showMessageDialog(this, "Đã huỷ đơn hàng thành công!", "Thông báo",
+					JOptionPane.INFORMATION_MESSAGE);
+		}
+
 	}
 
 	public static void main(String[] args) {
