@@ -65,6 +65,9 @@ public class Main_GUI extends JFrame {
 	private NhanVien nvDangNhap;
 	private JLabel lblUserTop;
 
+	// Lưu key của menu đang active để restore sau khi đóng dialog
+	private String currentActiveKey;
+
 	// Reference đến Dashboard để có thể refresh khi cần
 	private gui.quanly.TongQuanQuanLy_GUI dashboardQL;
 	private gui.nhanvien.TongQuanNV_GUI dashboardNV;
@@ -119,6 +122,7 @@ public class Main_GUI extends JFrame {
 			registerCard("khachhang", () -> new KhachHang_NV_GUI());
 			registerCard("khuyenmai", () -> new KhuyenMai_GUI());
 			registerCard("nhanvien", () -> new NhanVien_QL_GUI());
+			registerCard("huongdan", () -> new HuongDan_GUI(true)); // true = QL
 
 			showCard("tongquan");
 		} else {
@@ -131,6 +135,7 @@ public class Main_GUI extends JFrame {
 			registerCard("xuathuy", () -> new HuyHangNhanVien_GUI());
 			registerCard("khachhang", () -> new KhachHang_NV_GUI());
 			registerCard("thongke", () -> new ThongKeNhanVien_GUI(nvDangNhap.getMaNhanVien()));
+			registerCard("huongdan", () -> new HuongDan_GUI(false)); // false = NV
 
 			// Default view cho NV là Bán hàng -> Phải load ngay hoặc lazy trong showCard
 			// showCard sẽ tự handle load nếu chưa có
@@ -222,21 +227,8 @@ public class Main_GUI extends JFrame {
 			addMenuButton(menuScrollContent, "Quản lý khuyến mãi", "khuyenmai",
 					"/resources/images/icon_khuyen_mai.png");
 			addMenuButton(menuScrollContent, "Quản lý nhân viên", "nhanvien", "/resources/images/icon_nhan_vien.png");
-			addMenuButton(menuScrollContent, "Trợ giúp", "trogiup", "/resources/images/icon_tro_giup.png");
-			addSubmenuButton("trogiup", "gioithieu", "Giới thiệu", "/resources/images/icon_gioi_thieu.png", () -> {
-				GioiThieu_GUI.moGioiThieu();
-				return null;
-			}); // Hacky:
-				// Giới
-				// thiệu
-				// GUI
-				// không
-				// return
-				// panel
-			addSubmenuButton("trogiup", "huongdan", "Hướng dẫn", "/resources/images/icon_gioi_thieu.png",
-					() -> new HuongDan_GUI(true)); // true
-													// =
-													// QL
+			addMenuButton(menuScrollContent, "Hướng dẫn", "huongdan", "/resources/images/icon_huong_dan.png");
+			addGioiThieuButton(menuScrollContent);
 
 			menuScrollContent.add(Box.createVerticalGlue());
 		} else {
@@ -264,16 +256,8 @@ public class Main_GUI extends JFrame {
 			addMenuButton(menuScrollContent, "Quản lý khách hàng", "khachhang",
 					"/resources/images/icon_khach_hang.png");
 			addMenuButton(menuScrollContent, "Thống kê cá nhân", "thongke", "/resources/images/icon_thong_ke.png");
-			addMenuButton(menuScrollContent, "Trợ giúp", "trogiup", "/resources/images/icon_tro_giup.png");
-			addSubmenuButton("trogiup", "gioithieu", "Giới thiệu", "/resources/images/icon_gioi_thieu.png", () -> {
-				GioiThieu_GUI.moGioiThieu();
-				return null;
-			});
-			addSubmenuButton("trogiup", "huongdan", "Hướng dẫn", "/resources/images/icon_gioi_thieu.png",
-					() -> new HuongDan_GUI(false)); // false
-													// =
-													// Nhân
-													// viên
+			addMenuButton(menuScrollContent, "Hướng dẫn", "huongdan", "/resources/images/icon_huong_dan.png");
+			addGioiThieuButton(menuScrollContent);
 
 			menuScrollContent.add(Box.createVerticalGlue());
 		}
@@ -458,20 +442,79 @@ public class Main_GUI extends JFrame {
 		int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn đăng xuất không?", "Đăng xuất",
 				JOptionPane.YES_NO_OPTION);
 		if (confirm == JOptionPane.YES_OPTION) {
-			dispose(); // hoặc
-						// chuyển
-						// về
-						// form
-						// đăng
-						// nhập
+			dispose();
 			new DangNhap_GUI().setVisible(true);
 		}
+	}
+
+	/**
+	 * Thêm nút Giới thiệu - khi click sẽ tô màu, hiện dialog, rồi restore màu menu
+	 * trước đó
+	 */
+	private void addGioiThieuButton(JPanel menu) {
+		JButton btn = new JButton("Giới thiệu");
+		btn.setFocusPainted(false);
+		btn.setPreferredSize(new Dimension(MENU_WIDTH, MENU_BUTTON_HEIGHT));
+		btn.setMaximumSize(new Dimension(MENU_WIDTH, MENU_BUTTON_HEIGHT));
+		btn.setHorizontalAlignment(SwingConstants.LEFT);
+		btn.setBackground(new Color(0, 0, 0, 0));
+		btn.setBorder(null);
+		btn.setFont(new Font("SansSerif", Font.BOLD, 16));
+
+		// Thêm icon
+		ImageIcon icon = null;
+		String iconPath = "/resources/images/icon_gioi_thieu.png";
+		java.net.URL url = getClass().getResource(iconPath);
+		if (url != null) {
+			icon = new ImageIcon(url);
+			Image scaledIcon = icon.getImage().getScaledInstance(MENU_ICON_WIDTH, MENU_ICON_WIDTH, Image.SCALE_SMOOTH);
+			btn.setIcon(new ImageIcon(scaledIcon));
+		}
+
+		btn.addActionListener(e -> {
+			// Lưu menu đang active để restore sau
+			String previousActiveKey = currentActiveKey;
+
+			// Tô màu nút Giới thiệu
+			menuContainers.forEach((k, b) -> {
+				b.setBackground(new Color(0, 0, 0, 0));
+				b.setForeground(Color.BLACK);
+				b.setOpaque(false);
+			});
+			btn.setBackground(new Color(0x1E9086));
+			btn.setForeground(Color.WHITE);
+			btn.setOpaque(true);
+
+			// Ẩn tất cả submenu
+			submenuContainers.forEach((k2, p) -> p.setVisible(false));
+
+			// Hiện dialog Giới thiệu
+			GioiThieu_GUI.moGioiThieu();
+
+			// Sau khi đóng dialog, reset màu nút Giới thiệu và restore menu trước đó
+			btn.setBackground(new Color(0, 0, 0, 0));
+			btn.setForeground(Color.BLACK);
+			btn.setOpaque(false);
+
+			// Restore màu cho menu trước đó
+			if (previousActiveKey != null && menuContainers.containsKey(previousActiveKey)) {
+				showCard(previousActiveKey);
+			}
+		});
+
+		menu.add(btn);
+		menuContainers.put("gioithieu", btn);
 	}
 
 	private void showCard(String key) {
 		// LAZY LOAD: Nếu chưa load thì load ngay
 		if (!loadedCards.contains(key) && cardSuppliers.containsKey(key)) {
 			JPanel p = cardSuppliers.get(key).get();
+			// Nếu supplier trả về null (ví dụ: giới thiệu mở dialog riêng), không add vào
+			// cardPanel
+			if (p == null) {
+				return;
+			}
 			cardPanel.add(p, key);
 			loadedCards.add(key);
 		}
@@ -528,30 +571,45 @@ public class Main_GUI extends JFrame {
 			final String keepKey = parentKeyHolder[0];
 			submenuContainers.forEach((k2, p) -> p.setVisible(k2.equals(keepKey)));
 		} else {
-			// Là menu cha — tô màu và mở submenu nếu có
+			// Là menu cha — tô màu
 			activeBtn.setBackground(new Color(0x1E9086));
 			activeBtn.setForeground(Color.WHITE);
 			activeBtn.setOpaque(true);
 
 			JPanel sub = submenuContainers.get(key);
 			if (sub != null && sub.getComponentCount() > 0 && sub.getComponent(0) instanceof JButton) {
+				// Menu cha có submenu - tô màu submenu đầu tiên
 				JButton firstSub = (JButton) sub.getComponent(0);
-				String firstSubKey = menuContainers.entrySet().stream().filter(entry -> entry.getValue() == firstSub)
+				firstSub.setBackground(new Color(0x0E736A));
+				firstSub.setForeground(Color.WHITE);
+				firstSub.setOpaque(true);
+
+				// Hiển thị card đầu tiên của submenu
+				String firstKey = menuContainers.entrySet().stream().filter(entry -> entry.getValue() == firstSub)
 						.map(Map.Entry::getKey).findFirst().orElse(null);
-				if (firstSubKey != null) {
-					// Recursively call showCard (which handles lazy load)
-					showCard(firstSubKey);
-					firstSub.setBackground(new Color(0x0E736A));
-					firstSub.setForeground(Color.WHITE);
-					firstSub.setOpaque(true);
+				if (firstKey != null && !loadedCards.contains(firstKey) && cardSuppliers.containsKey(firstKey)) {
+					JPanel p = cardSuppliers.get(firstKey).get();
+					if (p != null) {
+						cardPanel.add(p, firstKey);
+						loadedCards.add(firstKey);
+					}
 				}
+				if (firstKey != null) {
+					((CardLayout) cardPanel.getLayout()).show(cardPanel, firstKey);
+					currentActiveKey = firstKey;
+				}
+
+				// Khi click sang menu cha khác: Ẩn toàn bộ submenu KHÔNG thuộc menu này
+				submenuContainers.forEach((k2, p) -> {
+					if (!k2.equals(key))
+						p.setVisible(false);
+				});
+			} else {
+				// Menu cha không có submenu
+				submenuContainers.forEach((k2, p) -> p.setVisible(false));
 			}
-			// Khi click sang menu cha khác: Ẩn toàn bộ submenu KHÔNG thuộc menu này
-			submenuContainers.forEach((k2, p) -> {
-				if (!k2.equals(key))
-					p.setVisible(false);
-			});
 		}
+		currentActiveKey = key;
 	}
 
 	/**

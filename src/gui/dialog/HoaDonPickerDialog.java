@@ -13,6 +13,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.text.DecimalFormat;
 import java.util.List;
 
 public class HoaDonPickerDialog extends JDialog {
@@ -27,11 +28,13 @@ public class HoaDonPickerDialog extends JDialog {
 
 	private String selectedMaHD = null;
 
+	DecimalFormat df = new DecimalFormat("#,###đ");
+
 	public HoaDonPickerDialog(Window owner, String soDT) {
 		super(owner, "", ModalityType.APPLICATION_MODAL);
 		KhachHang currentKH = khDAO.timKhachHangTheoSoDienThoai(soDT);
 		setTitle("Chọn hoá đơn của khách hàng: " + currentKH.getTenKhachHang());
-		setSize(900, 520);
+		setSize(1500, 1000);
 		setLocationRelativeTo(owner);
 		setLayout(new BorderLayout(8, 8));
 
@@ -155,8 +158,8 @@ public class HoaDonPickerDialog extends JDialog {
 		for (HoaDon hd : ds) {
 			modelHD.addRow(new Object[] { hd.getMaHoaDon(), hd.getNgayLap(),
 					hd.getNhanVien() != null ? hd.getNhanVien().getTenNhanVien() : "",
-					hd.getKhachHang() != null ? hd.getKhachHang().getTenKhachHang() : "", hd.getTongTien(),
-					hd.getTongThanhToan() });
+					hd.getKhachHang() != null ? hd.getKhachHang().getTenKhachHang() : "", df.format(hd.getTongTien()),
+					df.format(hd.getTongThanhToan()) });
 		}
 		if (modelHD.getRowCount() > 0) {
 			tblHoaDon.setRowSelectionInterval(0, 0);
@@ -177,8 +180,8 @@ public class HoaDonPickerDialog extends JDialog {
 							: (ct.getLoSanPham() != null && ct.getLoSanPham().getSanPham() != null
 									? ct.getLoSanPham().getSanPham().getTenSanPham()
 									: ""),
-					(int) ct.getSoLuong(), ct.getGiaBan(),
-					ct.getKhuyenMai() != null ? ct.getKhuyenMai().getTenKM() : "Không có", ct.getThanhTien() });
+					(int) ct.getSoLuong(), df.format(ct.getGiaBan()), 
+					ct.getKhuyenMai() != null ? ct.getKhuyenMai().getTenKM() : "Không có", df.format(ct.getThanhTien()) });
 		}
 	}
 
