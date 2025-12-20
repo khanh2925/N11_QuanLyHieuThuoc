@@ -235,7 +235,8 @@ public class QuyCachDongGoi_Dialog extends JDialog implements ActionListener {
                 sp,                 // sanPham
                 heSo,               // heSoQuyDoi
                 tiLe,               // tiLeGiam
-                isGoc               // isDonViGoc
+                isGoc,              // isDonViGoc
+                true                // trangThai (mặc định là Hoạt động)
             );
 
             boolean kq;

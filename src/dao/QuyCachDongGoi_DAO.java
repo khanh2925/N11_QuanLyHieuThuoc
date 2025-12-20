@@ -30,7 +30,7 @@ public class QuyCachDongGoi_DAO {
 
 		Connection con = connectDB.getConnection();
 
-		String sql = "SELECT qc.MaQuyCach, qc.HeSoQuyDoi, qc.TiLeGiam, qc.DonViGoc, "
+		String sql = "SELECT qc.MaQuyCach, qc.HeSoQuyDoi, qc.TiLeGiam, qc.DonViGoc, qc.TrangThai, "
 				+ "       sp.MaSanPham, sp.TenSanPham, sp.LoaiSanPham, sp.SoDangKy, sp.DuongDung, sp.GiaNhap, sp.HinhAnh, sp.KeBanSanPham, sp.HoatDong, "
 				+ "       dvt.MaDonViTinh, dvt.TenDonViTinh " + "FROM QuyCachDongGoi qc "
 				+ "JOIN SanPham sp ON qc.MaSanPham = sp.MaSanPham "
@@ -70,7 +70,7 @@ public class QuyCachDongGoi_DAO {
 							rs.getString("KeBanSanPham"), rs.getBoolean("HoatDong"));
 
 					QuyCachDongGoi qc = new QuyCachDongGoi(maQC, dvt, sp, rs.getInt("HeSoQuyDoi"),
-							rs.getDouble("TiLeGiam"), rs.getBoolean("DonViGoc"));
+							rs.getDouble("TiLeGiam"), rs.getBoolean("DonViGoc"), rs.getBoolean("TrangThai"));
 					ds.add(qc);
 
 				} catch (IllegalArgumentException e) {
@@ -108,7 +108,7 @@ public class QuyCachDongGoi_DAO {
 	public boolean themQuyCachDongGoi(QuyCachDongGoi q) {
 
 		Connection con = connectDB.getConnection();
-		String sql = "INSERT INTO QuyCachDongGoi (MaQuyCach, MaSanPham, MaDonViTinh, HeSoQuyDoi, TiLeGiam, DonViGoc) VALUES (?, ?, ?, ?, ?, ?)";
+		String sql = "INSERT INTO QuyCachDongGoi (MaQuyCach, MaSanPham, MaDonViTinh, HeSoQuyDoi, TiLeGiam, DonViGoc, TrangThai) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
 		try (PreparedStatement ps = con.prepareStatement(sql)) {
 			ps.setString(1, q.getMaQuyCach());
@@ -117,6 +117,7 @@ public class QuyCachDongGoi_DAO {
 			ps.setInt(4, q.getHeSoQuyDoi());
 			ps.setDouble(5, q.getTiLeGiam());
 			ps.setBoolean(6, q.isDonViGoc());
+			ps.setBoolean(7, q.isTrangThai());
 			boolean result = ps.executeUpdate() > 0;
 
 			// ✅ Update Cache
@@ -134,7 +135,7 @@ public class QuyCachDongGoi_DAO {
 	public boolean capNhatQuyCachDongGoi(QuyCachDongGoi q) {
 
 		Connection con = connectDB.getConnection();
-		String sql = "UPDATE QuyCachDongGoi SET MaSanPham = ?, MaDonViTinh = ?, HeSoQuyDoi = ?, TiLeGiam = ?, DonViGoc = ? WHERE MaQuyCach = ?";
+		String sql = "UPDATE QuyCachDongGoi SET MaSanPham = ?, MaDonViTinh = ?, HeSoQuyDoi = ?, TiLeGiam = ?, DonViGoc = ?, TrangThai = ? WHERE MaQuyCach = ?";
 
 		try (PreparedStatement ps = con.prepareStatement(sql)) {
 			ps.setString(1, q.getSanPham().getMaSanPham());
@@ -142,7 +143,8 @@ public class QuyCachDongGoi_DAO {
 			ps.setInt(3, q.getHeSoQuyDoi());
 			ps.setDouble(4, q.getTiLeGiam());
 			ps.setBoolean(5, q.isDonViGoc());
-			ps.setString(6, q.getMaQuyCach());
+			ps.setBoolean(6, q.isTrangThai());
+			ps.setString(7, q.getMaQuyCach());
 			boolean result = ps.executeUpdate() > 0;
 
 			// ✅ Update Cache directly
@@ -188,7 +190,7 @@ public class QuyCachDongGoi_DAO {
 					sp.setMaSanPham(maSanPham);
 
 					return new QuyCachDongGoi(rs.getString("MaQuyCach"), dvt, sp, rs.getInt("HeSoQuyDoi"),
-							rs.getDouble("TiLeGiam"), rs.getBoolean("DonViGoc"));
+							rs.getDouble("TiLeGiam"), rs.getBoolean("DonViGoc"), rs.getBoolean("TrangThai"));
 				}
 			}
 		} catch (Exception e) {
@@ -229,7 +231,7 @@ public class QuyCachDongGoi_DAO {
 					SanPham sp = new SanPham(maSanPham);
 
 					QuyCachDongGoi qc = new QuyCachDongGoi(rs.getString("MaQuyCach"), dvt, sp, rs.getInt("HeSoQuyDoi"),
-							rs.getDouble("TiLeGiam"), rs.getBoolean("DonViGoc"));
+							rs.getDouble("TiLeGiam"), rs.getBoolean("DonViGoc"), rs.getBoolean("TrangThai"));
 					ds.add(qc);
 				}
 			}
@@ -274,7 +276,7 @@ public class QuyCachDongGoi_DAO {
 				sp.setMaSanPham(maSanPham);
 
 				return new QuyCachDongGoi(rs.getString("MaQuyCach"), dvt, sp, rs.getInt("HeSoQuyDoi"),
-						rs.getDouble("TiLeGiam"), rs.getBoolean("DonViGoc"));
+						rs.getDouble("TiLeGiam"), rs.getBoolean("DonViGoc"), rs.getBoolean("TrangThai"));
 			}
 		} catch (SQLException e) {
 			System.err.println("❌ Lỗi tìm quy cách SP=" + maSanPham + ", DVT=" + maDonViTinh + ": " + e.getMessage());

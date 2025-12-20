@@ -1,5 +1,5 @@
 /**
- * @author Quốc Khánh cute
+ * @author Khôi
  * @version 2.0
  * @since Nov 19, 2025
  *
@@ -9,6 +9,8 @@
 package gui.tracuu;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.HierarchyEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DecimalFormat;
@@ -111,6 +113,7 @@ public class TraCuuKhachHang_GUI extends JPanel {
         // 3. DATA
         addEvents();
         setupKeyboardShortcuts(); // Thiết lập phím tắt
+        addFocusOnShow(); // Tự động focus ô tìm kiếm khi hiển thị
         loadDuLieuKhachHang();
     }
 
@@ -391,7 +394,80 @@ public class TraCuuKhachHang_GUI extends JPanel {
     }
     
     private void timKiem() {
-        JOptionPane.showMessageDialog(this, "Chức năng tìm kiếm đang phát triển!");
+        String keyword = txtTimKiem.getText().trim();
+        String gioiTinh = cbGioiTinh.getSelectedItem().toString();
+        String trangThai = cbTrangThai.getSelectedItem().toString();
+
+        List<KhachHang> ketQua = new ArrayList<>();
+
+        // LOGIC TỐI ƯU: Tìm kiếm trên cache
+        // 1. Nếu chỉ có bộ lọc → Filter trên cache (nhanh hơn)
+        if (keyword.isEmpty() || keyword.equals(PLACEHOLDER_TIM_KIEM)) {
+            // Đảm bảo cache đã được load
+            if (danhSachGoc == null || danhSachGoc.isEmpty()) {
+                danhSachGoc = khachHangDAO.layTatCaKhachHang();
+            }
+            ketQua = new ArrayList<>(danhSachGoc); // Clone từ cache
+        }
+        // 2. Nếu có keyword cụ thể → Tìm kiếm trong cache
+        else {
+            String kw = keyword.toLowerCase();
+            // Đảm bảo cache đã được load
+            if (danhSachGoc == null || danhSachGoc.isEmpty()) {
+                danhSachGoc = khachHangDAO.layTatCaKhachHang();
+            }
+            // Tìm kiếm trên cache
+            for (KhachHang kh : danhSachGoc) {
+                if (kh.getMaKhachHang().toLowerCase().contains(kw)
+                        || kh.getTenKhachHang().toLowerCase().contains(kw)
+                        || (kh.getSoDienThoai() != null && kh.getSoDienThoai().contains(kw))) {
+                    ketQua.add(kh);
+                }
+            }
+        }
+
+        // --- Áp dụng bộ lọc: giới tính ---
+        if (!"Tất cả".equals(gioiTinh)) {
+            boolean isNam = gioiTinh.equals("Nam");
+            ketQua.removeIf(kh -> kh.isGioiTinh() != isNam);
+        }
+
+        // --- Áp dụng bộ lọc: trạng thái ---
+        if (!"Tất cả".equals(trangThai)) {
+            boolean isActive = trangThai.equals("Hoạt động");
+            ketQua.removeIf(kh -> kh.isHoatDong() != isActive);
+        }
+
+        loadKetQuaTimKiem(ketQua);
+
+        // Nếu tìm kiếm cụ thể (có nhập text) mà không thấy thì báo
+        if (ketQua.isEmpty() && !keyword.isEmpty() && !keyword.equals(PLACEHOLDER_TIM_KIEM)) {
+            JOptionPane.showMessageDialog(this, "Không tìm thấy khách hàng nào!", "Thông báo",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    /**
+     * Load kết quả tìm kiếm lên bảng
+     */
+    private void loadKetQuaTimKiem(List<KhachHang> dsKhachHang) {
+        modelKhachHang.setRowCount(0);
+        int stt = 1;
+        for (KhachHang kh : dsKhachHang) {
+            String gioiTinh = kh.isGioiTinh() ? "Nam" : "Nữ";
+            String ngaySinh = kh.getNgaySinh() != null ? kh.getNgaySinh().format(dtf) : "";
+            String trangThai = kh.isHoatDong() ? "Hoạt động" : "Ngừng";
+
+            modelKhachHang.addRow(new Object[]{
+                stt++,
+                kh.getMaKhachHang(),
+                kh.getTenKhachHang(),
+                kh.getSoDienThoai(),
+                ngaySinh,
+                gioiTinh,
+                trangThai
+            });
+        }
     }
     
     private void lamMoi() {
@@ -402,7 +478,24 @@ public class TraCuuKhachHang_GUI extends JPanel {
         modelKhachHang.setRowCount(0);
         modelLichSuMuaHang.setRowCount(0);
         modelLichSuTraHang.setRowCount(0);
+        
+        // Refresh cache và tải lại dữ liệu từ DB
+        khachHangDAO.refreshCache();
         loadDuLieuKhachHang();
+    }
+
+    /**
+     * Tự động focus vào ô tìm kiếm khi form được hiển thị
+     */
+    private void addFocusOnShow() {
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+                SwingUtilities.invokeLater(() -> {
+                    txtTimKiem.requestFocusInWindow();
+                    txtTimKiem.selectAll();
+                });
+            }
+        });
     }
     
     /**

@@ -92,7 +92,7 @@ public class QuyCachDongGoi_GUI extends JPanel {
         pnCenter.setBorder(new LineBorder(new Color(200, 200, 200)));
         add(pnCenter, BorderLayout.CENTER);
 
-        String[] columnNames = {"Mã Quy Cách", "Sản Phẩm", "Đơn Vị Tính", "Loại Sản Phẩm", "Hệ Số", "Tỉ Lệ Giảm", "Đơn Vị Gốc"};
+        String[] columnNames = {"Mã Quy Cách", "Sản Phẩm", "Đơn Vị Tính", "Loại Sản Phẩm", "Hệ Số", "Tỉ Lệ Giảm", "Đơn Vị Gốc", "Trạng thái"};
         model = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -166,7 +166,8 @@ public class QuyCachDongGoi_GUI extends JPanel {
             qc.getSanPham().getLoaiSanPham().getTenLoai(),
             qc.getHeSoQuyDoi(),
             String.format("%.0f%%", qc.getTiLeGiam() * 100),
-            qc.isDonViGoc() ? "Có" : "Không"
+            qc.isDonViGoc() ? "Có" : "Không",
+            qc.isTrangThai() ? "Hoạt động" : "Ngừng"
         });
     }
 
@@ -177,6 +178,7 @@ public class QuyCachDongGoi_GUI extends JPanel {
         model.setValueAt(qc.getHeSoQuyDoi(), rowIndex, 4);
         model.setValueAt(String.format("%.0f%%", qc.getTiLeGiam() * 100), rowIndex, 5);
         model.setValueAt(qc.isDonViGoc() ? "Có" : "Không", rowIndex, 6);
+        model.setValueAt(qc.isTrangThai() ? "Hoạt động" : "Ngừng", rowIndex, 7);
     }
     
     private void setupTable() {
@@ -213,6 +215,23 @@ public class QuyCachDongGoi_GUI extends JPanel {
         table.getColumnModel().getColumn(5).setCellRenderer(centerRenderer);
         table.getColumnModel().getColumn(6).setCellRenderer(centerRenderer);
         
+        // Renderer cột Trạng thái với màu sắc
+        table.getColumnModel().getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                lbl.setHorizontalAlignment(SwingConstants.CENTER);
+                if ("Hoạt động".equals(value)) {
+                    lbl.setForeground(new Color(0x2E7D32)); // Xanh lá
+                    lbl.setFont(new Font("Segoe UI", Font.BOLD, 18));
+                } else {
+                    lbl.setForeground(Color.RED);
+                    lbl.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+                }
+                return lbl;
+            }
+        });
+        
         table.getColumnModel().getColumn(0).setPreferredWidth(120);
         table.getColumnModel().getColumn(1).setPreferredWidth(300);
         table.getColumnModel().getColumn(2).setPreferredWidth(120);
@@ -220,6 +239,7 @@ public class QuyCachDongGoi_GUI extends JPanel {
         table.getColumnModel().getColumn(4).setPreferredWidth(80);
         table.getColumnModel().getColumn(5).setPreferredWidth(100);
         table.getColumnModel().getColumn(6).setPreferredWidth(100);
+        table.getColumnModel().getColumn(7).setPreferredWidth(120);
 
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override

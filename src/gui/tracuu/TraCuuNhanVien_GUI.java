@@ -161,7 +161,7 @@ public class TraCuuNhanVien_GUI extends JPanel {
 						"</center>" +
 						"</html>");
 		btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnTim.setBounds(1135, 22, 130, 50);
+		btnTim.setBounds(1120, 22, 130, 50);
 		btnTim.setToolTipText(
 				"<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã, tên và bộ lọc</html>");
 		pnHeader.add(btnTim);
@@ -175,7 +175,7 @@ public class TraCuuNhanVien_GUI extends JPanel {
 						"</center>" +
 						"</html>");
 		btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnLamMoi.setBounds(1275, 22, 130, 50);
+		btnLamMoi.setBounds(1265, 22, 130, 50);
 		btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
 		pnHeader.add(btnLamMoi);
 
@@ -188,7 +188,7 @@ public class TraCuuNhanVien_GUI extends JPanel {
 						"</center>" +
 						"</html>");
 		btnXuatExcel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnXuatExcel.setBounds(1420, 22, 180, 50);
+		btnXuatExcel.setBounds(1410, 22, 170, 50);
 		btnXuatExcel.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất danh sách và lịch sử chi tiết ra Excel</html>");
 		pnHeader.add(btnXuatExcel);
 	}

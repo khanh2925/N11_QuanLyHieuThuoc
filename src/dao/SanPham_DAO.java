@@ -51,7 +51,12 @@ public class SanPham_DAO {
 		cachedChiTietBangGia = null;
 	}
 
-	/** 🔍 Tìm chi tiết bảng giá theo khoảng giá (trong cache thay vì query DB) */
+	/** � Refresh cache sản phẩm - Load lại từ database */
+	public static void refreshCache() {
+		cacheAllSanPham = null;
+	}
+
+	/** �🔍 Tìm chi tiết bảng giá theo khoảng giá (trong cache thay vì query DB) */
 	private ChiTietBangGia timChiTietTheoKhoangGiaTrongCache(double giaNhap) {
 		if (cachedChiTietBangGia == null || cachedChiTietBangGia.isEmpty()) {
 			return null;

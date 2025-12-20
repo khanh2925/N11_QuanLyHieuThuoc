@@ -109,7 +109,8 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
         
         // Gán sự kiện (ActionListener & MouseListener)
         addEvents();
-
+        setupKeyboardShortcuts();
+        addFocusOnShow();
         // Load data ban đầu
         xuLyLamMoi(); 
     }
@@ -125,7 +126,7 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
 
         // --- Ô TÌM KIẾM (Font 20) ---
         txtTimThuoc = new JTextField();
-        PlaceholderSupport.addPlaceholder(txtTimThuoc, "Nhập tên thuốc, mã SP, số đăng ký... (F1 / Ctrl+F)");
+        PlaceholderSupport.addPlaceholder(txtTimThuoc, "Tìm theo mã SP, số đăng ký... (F1 / Ctrl+F)");
         txtTimThuoc.setFont(new Font("Segoe UI", Font.PLAIN, 20)); 
         txtTimThuoc.setBounds(25, 17, 480, 60);
         txtTimThuoc.setBorder(new RoundedBorder(20));
@@ -436,6 +437,17 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
                 xuLyTimKiem();
             }
         });
+        
+    }
+    private void addFocusOnShow() {
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+                SwingUtilities.invokeLater(() -> {
+                    txtTimThuoc.requestFocusInWindow();
+                    txtTimThuoc.selectAll();
+                });
+            }
+        });
     }
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -472,10 +484,17 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
 
     private void xuLyLamMoi() {
         txtTimThuoc.setText("");
-        PlaceholderSupport.addPlaceholder(txtTimThuoc, "Nhập tên thuốc, mã SP, số đăng ký... (F1 / Ctrl+F)");
+        SwingUtilities.invokeLater(() -> {
+            txtTimThuoc.requestFocusInWindow();
+            txtTimThuoc.selectAll();
+        });
+        // Refresh cache để lấy dữ liệu mới nhất từ database
+        SanPham_DAO.refreshCache();
+        SanPham_DAO.refreshCacheBangGia();
+        
+        PlaceholderSupport.addPlaceholder(txtTimThuoc, "Tìm theo mã SP, số đăng ký... (F1 / Ctrl+F)");
         cbLoai.setSelectedIndex(0);
         cbTrangThai.setSelectedIndex(0);
-        
         dsSanPhamHienTai = sanPhamDao.layTatCaSanPham(); 
         renderBangSanPham(dsSanPhamHienTai);
         
@@ -530,7 +549,7 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
             
             String duongDungText = sp.getDuongDung() != null ? sp.getDuongDung().getTenDuongDung() : "Không xác định"; 
             
-            double giaBanGoc = sp.getGiaBan(); 
+            double giaNhapGoc = sp.getGiaNhap(); 
 
             modelSanPham.addRow(new Object[] {
                 stt++,
@@ -539,7 +558,7 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
                 loaiText,
                 sp.getSoDangKy(),
                 duongDungText,   
-                df.format(giaBanGoc), 
+                df.format(giaNhapGoc), 
                 sp.getKeBanSanPham(),
                 trangThaiText
             });
@@ -680,7 +699,7 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
 
             // Tạo header
             Row headerRow = sheetSP.createRow(0);
-            String[] headers = {"Mã SP", "Tên sản phẩm", "Loại", "Số ĐK", "Đường dùng", "Giá Bán Gốc", "Vị trí", "Trạng thái"};
+            String[] headers = {"Mã SP", "Tên sản phẩm", "Loại", "Số ĐK", "Đường dùng", "Giá Nhập Gốc", "Vị trí", "Trạng thái"};
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
@@ -771,7 +790,7 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
             for (SanPham sp : danhSachCanXuat) {
                 String maSP = sp.getMaSanPham();
                 String tenSP = sp.getTenSanPham();
-                double giaBanGoc = sp.getGiaBan();
+                double giaNhap = sp.getGiaNhap(); // Giá nhập gốc - không đổi khi đổi bảng giá
                 
                 List<QuyCachDongGoi> listQC = quyCachDao.layDanhSachQuyCachTheoSanPham(maSP);
                 
@@ -779,7 +798,7 @@ public class TraCuuSanPham_GUI extends JPanel implements ActionListener {
                     for (QuyCachDongGoi qc : listQC) {
                         Row dataRow = sheetQC.createRow(qcRowIdx++);
                         String tenDVT = qc.getDonViTinh() != null ? qc.getDonViTinh().getTenDonViTinh() : "N/A";
-                        double giaBanQuyCach = giaBanGoc * qc.getHeSoQuyDoi() * (1 - qc.getTiLeGiam());
+                        double giaBanQuyCach = giaNhap * qc.getHeSoQuyDoi() * (1 - qc.getTiLeGiam());
                         String loaiDVT = qc.isDonViGoc() ? "Đơn vị gốc" : "Quy đổi";
                         String tiLeGiamText = (int)(qc.getTiLeGiam() * 100) + "%";
                         

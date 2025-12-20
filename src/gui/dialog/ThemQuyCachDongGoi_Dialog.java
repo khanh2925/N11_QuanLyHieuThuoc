@@ -154,7 +154,7 @@ public class ThemQuyCachDongGoi_Dialog extends JDialog {
             double tiLeGiam = Double.parseDouble(txtTiLeGiam.getText().trim()) / 100.0;
             boolean isDonViGoc = chkDonViGoc.isSelected();
 
-            this.quyCachMoi = new QuyCachDongGoi(maQCDG, donViTinh, sanPham, heSo, tiLeGiam, isDonViGoc);
+            this.quyCachMoi = new QuyCachDongGoi(maQCDG, donViTinh, sanPham, heSo, tiLeGiam, isDonViGoc, true);
             dispose();
         } catch (NumberFormatException ex) {
             showError("Hệ số quy đổi và tỉ lệ giảm phải là số hợp lệ.", null);

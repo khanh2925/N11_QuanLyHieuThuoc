@@ -3,6 +3,7 @@ package gui.tracuu;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.HierarchyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
@@ -88,6 +89,7 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         // 4. DATA & EVENTS
         addEvents();
         setupKeyboardShortcuts(); // Thiết lập phím tắt
+        addFocusOnShow(); // Tự động focus ô tìm kiếm khi hiển thị
         xuLyLamMoi(); // Load dữ liệu ban đầu
     }
 
@@ -353,6 +355,16 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         // Enter trên ô tìm kiếm
         txtTimKiem.addActionListener(ev -> xuLyTimKiem());
     }
+    private void addFocusOnShow() {
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+                SwingUtilities.invokeLater(() -> {
+                    txtTimKiem.requestFocusInWindow();
+                    txtTimKiem.selectAll();
+                });
+            }
+        });
+    }
     
     /**
      * Xử lý xem hóa đơn đang chọn
@@ -386,6 +398,11 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
     private void xuLyLamMoi() {
     	allHoaDon = hoaDonDao.layTatCaHoaDon();
         txtTimKiem.setText("");
+        SwingUtilities.invokeLater(() -> {
+            txtTimKiem.requestFocusInWindow();
+            txtTimKiem.selectAll();
+        });
+
         PlaceholderSupport.addPlaceholder(txtTimKiem, "Tìm theo mã hóa đơn, SĐT khách hàng (F1 / Ctrl+F)");
         
         // --- CHỌN NGÀY MẶC ĐỊNH ---

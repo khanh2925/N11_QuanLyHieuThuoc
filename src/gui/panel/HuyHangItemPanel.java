@@ -423,15 +423,16 @@ public class HuyHangItemPanel extends JPanel {
 			// Lưu số lượng tồn gốc từ item
 			soLuongTonGoc = item.getSoLuongTon();
 
-			// Load vào combo và tìm quy cách gốc
-			for (QuyCachDongGoi qc : danhSachQuyCach) {
-				cboDonVi.addItem(qc.getDonViTinh().getTenDonViTinh());
-
-				if (qc.isDonViGoc()) {
-					item.setQuyCachGoc(qc);
-					item.setQuyCachHienTai(qc);
-				}
-			}
+			   // Chỉ load quy cách đang hoạt động vào combo và tìm quy cách gốc
+			   for (QuyCachDongGoi qc : danhSachQuyCach) {
+				   if (qc.isTrangThai()) {
+					   cboDonVi.addItem(qc.getDonViTinh().getTenDonViTinh());
+					   if (qc.isDonViGoc()) {
+						   item.setQuyCachGoc(qc);
+						   item.setQuyCachHienTai(qc);
+					   }
+				   }
+			   }
 
 			// Chọn đơn vị gốc mặc định
 			for (int i = 0; i < danhSachQuyCach.size(); i++) {

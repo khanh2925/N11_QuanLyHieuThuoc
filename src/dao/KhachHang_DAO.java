@@ -229,6 +229,10 @@ public class KhachHang_DAO {
 		return null; // Không tìm thấy
 	}
 
+	public void refreshCache() {
+		cacheAllKhachHang = null;
+		layTatCaKhachHang(); // Load lại ngay
+	}
 	/** 🔹 Tìm 1 khách hàng chính xác theo SĐT */
 	public KhachHang timKhachHangTheoSoDienThoai(String soDienThoai) {
 		if (soDienThoai == null || soDienThoai.trim().isEmpty()) {

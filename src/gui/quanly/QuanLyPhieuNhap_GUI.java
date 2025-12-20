@@ -1259,7 +1259,9 @@ private void xuLyTimNhaCungCap() {
         String maLoHienThi = String.format("LO-%06d", this.soLoTiepTheo);
         
         ArrayList<QuyCachDongGoi> dsQuyCach = quyCachDAO.layDanhSachQuyCachTheoSanPham(sp.getMaSanPham());
-        QuyCachDongGoi qc_goc = quyCachDAO.timQuyCachGocTheoSanPham(sp.getMaSanPham());
+        // Lọc chỉ lấy quy cách đang hoạt động
+        dsQuyCach.removeIf(qc -> !qc.isTrangThai());
+        QuyCachDongGoi qc_goc = dsQuyCach.stream().filter(QuyCachDongGoi::isDonViGoc).findFirst().orElse(null);
 
         if (dsQuyCach == null || dsQuyCach.isEmpty() || qc_goc == null) {
             JOptionPane.showMessageDialog(this, "Sản phẩm '" + sp.getTenSanPham() + "' chưa được cấu hình Quy Cách Đóng Gói (hoặc thiếu Đơn Vị Gốc).\nVui lòng kiểm tra trong Quản lý sản phẩm.", "Lỗi cấu hình", JOptionPane.ERROR_MESSAGE);
@@ -1788,12 +1790,13 @@ private void xuLyTimNhaCungCap() {
         // Copy lại các hàm xuLyChonLoNoiBo, getters, themLot, xoaTagChiTiet, capNhatTongSoLuongVaTien từ code cũ vào đây
         
         private void xuLyChonLoNoiBo() {
-             // Copy y nguyên logic cũ
+        	 // Copy y nguyên logic cũ
             SanPham sp = this.sanPham; 
             String maLoHienThi = String.format("LO-%06d", soLoTiepTheo);
             ArrayList<QuyCachDongGoi> dsQuyCach = quyCachDAO.layDanhSachQuyCachTheoSanPham(sp.getMaSanPham());
-            QuyCachDongGoi qc_goc = quyCachDAO.timQuyCachGocTheoSanPham(sp.getMaSanPham());
-
+            dsQuyCach.removeIf(qc -> !qc.isTrangThai());
+            QuyCachDongGoi qc_goc = dsQuyCach.stream().filter(QuyCachDongGoi::isDonViGoc).findFirst().orElse(null);
+            
             if (dsQuyCach == null || dsQuyCach.isEmpty() || qc_goc == null) {
                 JOptionPane.showMessageDialog(this, "Sản phẩm chưa cấu hình Quy Cách.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;

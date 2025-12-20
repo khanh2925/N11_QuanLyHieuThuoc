@@ -149,7 +149,7 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
                         "</center>" +
                         "</html>");
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnLamMoi.setBounds(1250, 22, 130, 50);
+        btnLamMoi.setBounds(1390, 22, 130, 50);
         btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
         pnHeader.add(btnLamMoi);
 
@@ -162,7 +162,7 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
                         "</center>" +
                         "</html>");
         btnXuatExcel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnXuatExcel.setBounds(1390, 22, 150, 50);
+        btnXuatExcel.setBounds(1530, 22, 145, 50);
         btnXuatExcel.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất dữ liệu khuyến mãi ra file Excel</html>");
         pnHeader.add(btnXuatExcel);
     }

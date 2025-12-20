@@ -838,6 +838,10 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 
 		// ===== Quy cách =====
 		List<QuyCachDongGoi> dsQuyCach = quyCachDongGoiDao.layDanhSachQuyCachTheoSanPham(sp.getMaSanPham());
+		// Lọc chỉ lấy quy cách đang hoạt động (trangThai = true)
+		dsQuyCach = dsQuyCach.stream()
+				.filter(QuyCachDongGoi::isTrangThai)
+				.collect(java.util.stream.Collectors.toList());
 		QuyCachDongGoi quyCachGoc = dsQuyCach.stream().filter(QuyCachDongGoi::isDonViGoc).findFirst().orElse(null);
 
 		if (quyCachGoc == null) {

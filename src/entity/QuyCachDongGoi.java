@@ -16,16 +16,18 @@ public class QuyCachDongGoi {
     private int heSoQuyDoi;
     private double tiLeGiam;
     private boolean donViGoc;
+    private boolean trangThai; // true = Hoạt động, false = Ngừng
 
     // ===== CONSTRUCTORS =====
     public QuyCachDongGoi() {}
 
     public QuyCachDongGoi(String maQuyCach, DonViTinh donViTinh, SanPham sanPham,
-                          int heSoQuyDoi, double tiLeGiam, boolean donViGoc) {
+                          int heSoQuyDoi, double tiLeGiam, boolean donViGoc, boolean trangThai) {
         setMaQuyCach(maQuyCach);
         setDonViTinh(donViTinh);
         setSanPham(sanPham);
         setTiLeGiam(tiLeGiam);
+        setTrangThai(trangThai);
 
         // Gán trực tiếp để tránh vòng lặp setter
         this.heSoQuyDoi = heSoQuyDoi;
@@ -81,6 +83,12 @@ public class QuyCachDongGoi {
     public void setDonViGoc(boolean donViGoc) {
         this.donViGoc = donViGoc;
         validateConsistency();
+    }
+
+    public boolean isTrangThai() { return trangThai; }
+
+    public void setTrangThai(boolean trangThai) {
+        this.trangThai = trangThai;
     }
 
     /** Kiểm tra ràng buộc giữa heSoQuyDoi và donViGoc */

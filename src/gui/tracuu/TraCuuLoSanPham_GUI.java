@@ -6,6 +6,7 @@ package gui.tracuu;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.HierarchyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.text.DecimalFormat;
@@ -56,6 +57,7 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 		initialize();
 		addEvents();
 		setupKeyboardShortcuts(); // Thiết lập phím tắt
+		addFocusOnShow(); // Tự động focus ô tìm kiếm khi hiển thị
 		initData();
 	}
 
@@ -410,6 +412,19 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 	    modelSanPham.setRowCount(0);
 	}
 
+	/**
+	 * Tự động focus vào ô tìm kiếm khi form được hiển thị
+	 */
+	private void addFocusOnShow() {
+		addHierarchyListener(e -> {
+			if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+				SwingUtilities.invokeLater(() -> {
+					txtTimKiem.requestFocusInWindow();
+					txtTimKiem.selectAll();
+				});
+			}
+		});
+	}
 
 	// ==============================================================================
 	// TÌM KIẾM 

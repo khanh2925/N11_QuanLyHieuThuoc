@@ -44,7 +44,7 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
     private DefaultTableModel modelSanPham;
     private JTable tblQuyCach;
     private DefaultTableModel modelQuyCach;
-    private PillButton btnThemQC, btnXoaQC, btnSuaQC;
+    private PillButton btnThemQC, btnToggleStatus, btnSuaQC;
 
     private SanPham_DAO sanPhamDAO;
     private QuyCachDongGoi_DAO quyCachDAO;
@@ -126,6 +126,7 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         actionMap.put("lamMoi", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                SanPham_DAO.refreshCache(); // Refresh cache
                 xoaTrangForm();
                 taiDuLieuSanPham();
             }
@@ -225,15 +226,6 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
             @Override
             public void actionPerformed(ActionEvent e) {
                 xuLyThemQuyCach();
-            }
-        });
-        
-        // F8: Xóa quy cách
-        inputMap.put(KeyStroke.getKeyStroke("F8"), "xoaQuyCach");
-        actionMap.put("xoaQuyCach", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                xuLyXoaQuyCach();
             }
         });
         
@@ -537,23 +529,22 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         btnSuaQC.addActionListener(this);
         pnToolBar.add(btnSuaQC);
 
-        btnXoaQC = new PillButton(
+        btnToggleStatus = new PillButton(
                 "<html>" +
                     "<center>" +
-                        "XÓA QUY CÁCH<br>" +
-                        "<span style='font-size:9px; color:#888888;'>(F8)</span>" +
+                        "CHUYỂN ĐỔI TRẠNG THÁI" +
                     "</center>" +
                 "</html>"
             );
-        btnXoaQC.setPreferredSize(new Dimension(165, 40));
-        btnXoaQC.setFont(FONT_BOLD);
-        btnXoaQC.setToolTipText("<html><b>Phím tắt:</b> F8<br>Xóa quy cách đã chọn</html>");
-        btnXoaQC.addActionListener(this);
-        pnToolBar.add(btnXoaQC);
+        btnToggleStatus.setPreferredSize(new Dimension(200, 40));
+        btnToggleStatus.setFont(FONT_BOLD);
+        btnToggleStatus.setToolTipText("Chuyển đổi trạng thái quy cách đã chọn");
+        btnToggleStatus.addActionListener(this);
+        pnToolBar.add(btnToggleStatus);
         
         p.add(pnToolBar, BorderLayout.NORTH);
         
-        String[] cols = {"STT", "Mã quy cách", "Đơn vị tính", "Hệ số quy đổi", "Tỉ lệ giảm", "Là gốc", "Giá bán"};
+        String[] cols = {"STT", "Mã quy cách", "Đơn vị tính", "Hệ số quy đổi", "Tỉ lệ giảm", "Là gốc", "Giá bán", "Trạng thái"};
         modelQuyCach = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -562,12 +553,35 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         TableColumnModel cm = tblQuyCach.getColumnModel();
         cm.getColumn(0).setPreferredWidth(50); // STT
         
-        // Căn giữa cho STT, Mã quy cách, Là gốc
+        // Căn giữa cho STT, Mã quy cách, Là gốc, Trạng thái
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
         cm.getColumn(0).setCellRenderer(centerRenderer); // STT
         cm.getColumn(1).setCellRenderer(centerRenderer); // Mã quy cách
         cm.getColumn(5).setCellRenderer(centerRenderer); // Là gốc
+        
+        // Renderer cho cột Trạng thái với màu sắc và font
+        DefaultTableCellRenderer statusRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                setHorizontalAlignment(JLabel.CENTER);
+                if (!isSelected) {
+                    if (value != null && value.toString().equals("Hoạt động")) {
+                        c.setForeground(new Color(46, 125, 50)); // Màu xanh lá đậm
+                        c.setFont(FONT_BOLD); // In đậm
+                    } else {
+                        c.setForeground(Color.RED);
+                        c.setFont(new Font("Segoe UI", Font.ITALIC, 16)); // In nghiêng
+                    }
+                } else {
+                    c.setFont(FONT_TEXT);
+                }
+                return c;
+            }
+        };
+        cm.getColumn(7).setCellRenderer(statusRenderer); // Trạng thái
         
         // Căn phải cho các cột số
         DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
@@ -575,6 +589,25 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         cm.getColumn(3).setCellRenderer(rightRenderer); // Hệ số quy đổi
         cm.getColumn(4).setCellRenderer(rightRenderer); // Tỉ lệ giảm
         cm.getColumn(6).setCellRenderer(rightRenderer); // Giá bán
+        
+        // Disable các nút khi chưa chọn dòng
+        btnThemQC.setEnabled(false);
+        btnSuaQC.setEnabled(false);
+        btnToggleStatus.setEnabled(false);
+        
+        // Listener để enable/disable nút khi chọn/bỏ chọn dòng
+        tblQuyCach.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                boolean hasSelection = tblQuyCach.getSelectedRow() != -1;
+                boolean hasProduct = !txtMaSP.getText().isEmpty();
+                
+                // Thêm: cần có sản phẩm
+                btnThemQC.setEnabled(hasProduct);
+                // Sửa và Chuyển đổi: cần có dòng được chọn
+                btnSuaQC.setEnabled(hasSelection);
+                btnToggleStatus.setEnabled(hasSelection);
+            }
+        });
 
         p.add(new JScrollPane(tblQuyCach), BorderLayout.CENTER);
     }
@@ -623,7 +656,9 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
             }
         }
         else if (o.equals(btnLamMoi)) {
+            SanPham_DAO.refreshCache(); // Refresh cache
             xoaTrangForm();
+            taiDuLieuSanPham();
         }
         else if (o.equals(btnChonAnh)) {
             chonHinhAnh();
@@ -635,8 +670,8 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         else if (o.equals(btnSuaQC)) {
             xuLySuaQuyCach();
         }
-        else if (o.equals(btnXoaQC)) {
-            xuLyXoaQuyCach();
+        else if (o.equals(btnToggleStatus)) {
+            xuLyChuyenDoiTrangThai();
         }
     }
 
@@ -762,30 +797,41 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         new QuyCachDongGoi_Dialog(this, maSP, maQC).setVisible(true);
     }
 
-    private void xuLyXoaQuyCach() {
+    private void xuLyChuyenDoiTrangThai() {
         int row = tblQuyCach.getSelectedRow();
         if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng quy cách cần xóa!");
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng quy cách cần chuyển đổi trạng thái!");
             return;
         }
         String maQC = tblQuyCach.getValueAt(row, 1).toString(); // Cột 1 vì đã có STT ở cột 0
-        String isGoc = tblQuyCach.getValueAt(row, 5).toString(); // Cột 5 vì đã có STT
+        String trangThaiHienTai = tblQuyCach.getValueAt(row, 7).toString(); // Cột 7 là cột Trạng thái
 
-        if (isGoc.equals("Có")) {
-            JOptionPane.showMessageDialog(this, "Không thể xóa Đơn vị gốc! Hãy thiết lập đơn vị khác làm gốc trước.");
-            return;
-        }
-
+        String trangThaiMoi = trangThaiHienTai.equals("Hoạt động") ? "Ngừng" : "Hoạt động";
+        
         int confirm = JOptionPane.showConfirmDialog(this, 
-                "Bạn có chắc chắn muốn xóa quy cách " + maQC + " không?", 
-                "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
+                "Bạn có chắc chắn muốn chuyển quy cách " + maQC + " sang trạng thái '" + trangThaiMoi + "' không?", 
+                "Xác nhận chuyển đổi", JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            if (quyCachDAO.xoaQuyCachDongGoi(maQC)) {
-                JOptionPane.showMessageDialog(this, "Xóa thành công!");
-                taiDuLieuQuyCach(txtMaSP.getText());
+            // Lấy quy cách từ DAO
+            QuyCachDongGoi qc = quyCachDAO.layTatCaQuyCachDongGoi().stream()
+                .filter(q -> q.getMaQuyCach().equals(maQC))
+                .findFirst()
+                .orElse(null);
+            
+            if (qc != null) {
+                // Chuyển đổi trạng thái
+                qc.setTrangThai(!qc.isTrangThai());
+                
+                // Cập nhật vào database
+                if (quyCachDAO.capNhatQuyCachDongGoi(qc)) {
+                    JOptionPane.showMessageDialog(this, "Chuyển đổi trạng thái thành công!");
+                    taiDuLieuQuyCach(txtMaSP.getText());
+                } else {
+                    JOptionPane.showMessageDialog(this, "Chuyển đổi trạng thái thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
             } else {
-                JOptionPane.showMessageDialog(this, "Xóa thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Không tìm thấy quy cách!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -854,6 +900,7 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
     }
 
     private void taiDuLieuSanPham() {
+        SanPham_DAO.refreshCache(); // Refresh cache trước khi load
         danhSachSanPham = sanPhamDAO.layTatCaSanPham();
         hienThiDanhSach(danhSachSanPham);
     }
@@ -928,6 +975,12 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         
         SanPham spFull = sanPhamDAO.laySanPhamTheoMa(maSP); 
         double giaBanSP = (spFull != null) ? spFull.getGiaBan() : 0;
+        
+        // Enable nút Thêm khi có sản phẩm
+        btnThemQC.setEnabled(maSP != null && !maSP.isEmpty());
+        // Disable nút Sửa và Chuyển đổi khi chưa chọn dòng
+        btnSuaQC.setEnabled(false);
+        btnToggleStatus.setEnabled(false);
 
         if(listQC != null) {
             int stt = 1;
@@ -941,7 +994,8 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
                     qc.getHeSoQuyDoi(),
                     (int)(qc.getTiLeGiam() * 100) + "%",
                     qc.isDonViGoc() ? "Có" : "Không",
-                    df.format(giaBanQuyCach)
+                    df.format(giaBanQuyCach),
+                    qc.isTrangThai() ? "Hoạt động" : "Ngừng"
                 });
             }
         }
@@ -1023,6 +1077,11 @@ public class QuanLySanPham_GUI extends JPanel implements ActionListener, MouseLi
         // Enable nút Thêm, Disable nút Cập nhật khi không có selection
         btnThem.setEnabled(true);
         btnSua.setEnabled(false);
+        
+        // Disable các nút quy cách khi chưa có sản phẩm
+        btnThemQC.setEnabled(false);
+        btnSuaQC.setEnabled(false);
+        btnToggleStatus.setEnabled(false);
     }
 
     private void timKiemSanPham() {

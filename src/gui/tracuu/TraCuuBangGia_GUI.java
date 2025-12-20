@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.HierarchyEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DecimalFormat;
@@ -101,7 +102,7 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
         // Center
         taoPhanCenter();
         add(pnCenter, BorderLayout.CENTER);
-
+        addFocusOnShow(); // Tự động focus ô tìm kiếm khi hiển thị
         // Events
         addEvents();
         
@@ -409,7 +410,16 @@ public class TraCuuBangGia_GUI extends JPanel implements ActionListener {
         // Enter trên ô tìm kiếm
         txtTimKiem.addActionListener(ev -> xuLyTimKiem());
     }
-
+    private void addFocusOnShow() {
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+                SwingUtilities.invokeLater(() -> {
+                	txtTimKiem.requestFocusInWindow();
+                	txtTimKiem.selectAll();
+                });
+            }
+        });
+    }
 
     @Override
     public void actionPerformed(ActionEvent e) {
