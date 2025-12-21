@@ -61,7 +61,9 @@ public class QuyCachDongGoi_DAO {
 						try {
 							dd = DuongDung.valueOf(duongDungStr.trim().toUpperCase());
 						} catch (IllegalArgumentException e) {
-							System.err.println("DuongDung không hợp lệ cho MaQuyCach " + maQC + ": " + duongDungStr);
+//							throw new IllegalArgumentException();
+							System.out.println(e.getMessage());
+//							System.err.println("DuongDung không hợp lệ cho MaQuyCach " + maQC + ": " + duongDungStr);
 						}
 					}
 

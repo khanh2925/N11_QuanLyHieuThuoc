@@ -101,7 +101,7 @@ CREATE TABLE SanPham (
     LoaiSanPham VARCHAR(50) NOT NULL CHECK (LoaiSanPham IN 
         ('THUOC','THUC_PHAM_BO_SUNG','MY_PHAM','DUNG_CU_Y_TE','SAN_PHAM_CHO_ME_VA_BE','SAN_PHAM_KHAC')),
     SoDangKy VARCHAR(20),
-    DuongDung VARCHAR(20) CHECK (DuongDung IN ('UONG','TIEM','NHO','BOI','HIT','NGAM','DAT','DAN')),
+    DuongDung VARCHAR(20) CHECK (DuongDung IN ('UONG','TIEM','NHO','BOI','HIT','NGAM','DAT','DAN','Khac')),
     GiaNhap FLOAT NOT NULL CHECK (GiaNhap > 0),
     GiaBan FLOAT,
     HinhAnh NVARCHAR(255),
