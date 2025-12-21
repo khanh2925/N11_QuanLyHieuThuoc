@@ -498,16 +498,18 @@ public class PhieuTra_DAO {
 			con.setAutoCommit(false);
 
 			// =====================================================
-			// 1. Lấy trạng thái cũ + số lượng + lý do (ĐÃ FIX)
+			// 1. Lấy trạng thái cũ + số lượng + mã sản phẩm (để quy đổi đơn vị)
 			// =====================================================
 			String sqlGetOld = """
-					        SELECT TrangThai, SoLuong, LyDoChiTiet
-					        FROM ChiTietPhieuTra
-					        WHERE MaPhieuTra=? AND MaHoaDon=? AND MaLo=? AND MaDonViTinh=?
+					        SELECT ct.TrangThai, ct.SoLuong, ct.LyDoChiTiet, lo.MaSanPham
+					        FROM ChiTietPhieuTra ct
+					        JOIN LoSanPham lo ON ct.MaLo = lo.MaLo
+					        WHERE ct.MaPhieuTra=? AND ct.MaHoaDon=? AND ct.MaLo=? AND ct.MaDonViTinh=?
 					""";
 
 			int trangThaiCu = 0;
 			int soLuongTra = 0;
+			String maSanPham = null;
 
 			try (PreparedStatement ps = con.prepareStatement(sqlGetOld)) {
 
@@ -520,6 +522,7 @@ public class PhieuTra_DAO {
 					if (rs.next()) {
 						trangThaiCu = rs.getInt("TrangThai");
 						soLuongTra = rs.getInt("SoLuong");
+						maSanPham = rs.getString("MaSanPham");
 					}
 				}
 			}
@@ -533,30 +536,53 @@ public class PhieuTra_DAO {
 			}
 
 			// =====================================================
-			// 3. Tính delta thay đổi tồn kho
+			// 3. Lấy hệ số quy đổi để tính delta theo đơn vị gốc
+			// =====================================================
+			int heSoQuyDoi = 1; // Mặc định = 1 (đơn vị gốc)
+
+			if (maSanPham != null && maDonViTinh != null && !maDonViTinh.isEmpty()) {
+				// Truy vấn hệ số quy đổi từ bảng QuyCachDongGoi
+				String sqlQuyDoi = """
+						SELECT HeSoQuyDoi FROM QuyCachDongGoi
+						WHERE MaSanPham = ? AND MaDonViTinh = ?
+						""";
+				try (PreparedStatement psQD = con.prepareStatement(sqlQuyDoi)) {
+					psQD.setString(1, maSanPham);
+					psQD.setString(2, maDonViTinh);
+					try (ResultSet rsQD = psQD.executeQuery()) {
+						if (rsQD.next()) {
+							heSoQuyDoi = rsQD.getInt("HeSoQuyDoi");
+						}
+					}
+				}
+			}
+
+			// =====================================================
+			// 4. Tính delta thay đổi tồn kho (QUY VỀ ĐƠN VỊ GỐC)
 			// =====================================================
 			int delta = 0;
 
 			if (trangThaiCu != trangThaiMoi) {
+				// Số lượng quy về đơn vị gốc = số lượng trả × hệ số quy đổi
+				int soLuongGoc = soLuongTra * heSoQuyDoi;
 
-				// 0 → 1: nhập kho
+				// 0 → 1: nhập kho → cộng tồn theo đơn vị gốc
 				if (trangThaiCu == 0 && trangThaiMoi == 1)
-					delta = +soLuongTra;
+					delta = +soLuongGoc;
 
 				// 1 → 0: trả lại trạng thái chờ → giảm tồn
 				if (trangThaiCu == 1 && trangThaiMoi == 0)
-					delta = -soLuongTra;
+					delta = -soLuongGoc;
 
 				// 1 → 2: từ nhập kho sang hủy → giảm tồn
 				if (trangThaiCu == 1 && trangThaiMoi == 2)
-					delta = -soLuongTra;
+					delta = -soLuongGoc;
 
 				// ❗ 2 → 1 KHÔNG HỢP LỆ (GUI cũng không cho)
-				// đoạn cũ của bạn "+soLuong" bị sai → loại bỏ
 			}
 
 			// =====================================================
-			// 4. Update tồn kho nếu có delta
+			// 5. Update tồn kho nếu có delta
 			// =====================================================
 			if (delta != 0) {
 				String sqlUpdTon = """
@@ -571,7 +597,7 @@ public class PhieuTra_DAO {
 			}
 
 			// =====================================================
-			// 5. Update trạng thái chi tiết
+			// 6. Update trạng thái chi tiết
 			// =====================================================
 			String sqlUpdCT = """
 					        UPDATE ChiTietPhieuTra
@@ -588,7 +614,7 @@ public class PhieuTra_DAO {
 				ps.executeUpdate();
 			}
 			// =====================================================
-			// 6. Nếu chuyển sang HỦY → tạo/nhóm phiếu hủy tự động
+			// 7. Nếu chuyển sang HỦY → tạo/nhóm phiếu hủy tự động
 			// =====================================================
 			if (trangThaiMoi == 2 && trangThaiCu != 2) {
 
@@ -718,7 +744,7 @@ public class PhieuTra_DAO {
 			}
 
 			// =====================================================
-			// 7. Kiểm tra phiếu đã xử lý hết chưa
+			// 8. Kiểm tra phiếu đã xử lý hết chưa
 			// =====================================================
 			String sqlCheck = """
 					        SELECT COUNT(*) FROM ChiTietPhieuTra

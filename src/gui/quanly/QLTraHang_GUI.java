@@ -903,14 +903,29 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			}
 		}
 
-		// Lấy số lượng và đơn vị gốc từ chi tiết phiếu trả
+		// Lấy số lượng từ chi tiết phiếu trả và quy đổi về đơn vị gốc
+		int heSoQuyDoi = 1;
 		for (ChiTietPhieuTra ct : dsCTPhieuTra) {
 			if (ct.getChiTietHoaDon().getHoaDon().getMaHoaDon().equals(maHD)
 					&& ct.getChiTietHoaDon().getLoSanPham().getMaLo().equals(maLo)) {
 				soLuongTra = ct.getSoLuong();
+
+				// 🔍 Lấy hệ số quy đổi từ đơn vị tính của chi tiết phiếu trả
+				if (ct.getDonViTinh() != null && loSanPham != null) {
+					QuyCachDongGoi_DAO qcDAO = new QuyCachDongGoi_DAO();
+					QuyCachDongGoi qc = qcDAO.timQuyCachTheoSanPhamVaDonVi(
+							loSanPham.getSanPham().getMaSanPham(),
+							ct.getDonViTinh().getMaDonViTinh());
+					if (qc != null) {
+						heSoQuyDoi = qc.getHeSoQuyDoi();
+					}
+				}
 				break;
 			}
 		}
+
+		// Quy đổi số lượng về đơn vị gốc
+		int soLuongTraGoc = soLuongTra * heSoQuyDoi;
 
 		// Gọi DAO: 1 = Nhập lại kho
 		String kq = pt_dao.capNhatTrangThai_GiaoDich(maPT, maHD, maLo, maDVT, nv, 1);
@@ -919,15 +934,15 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			// ✅ Cập nhật lại GUI - cột 8 (do thêm STT)
 			modelCTPT.setValueAt("Nhập lại hàng", selectRowCT, 8);
 
-			// ✅ Hiển thị thông báo chi tiết về số lượng tăng với tồn kho
-			int tonKhoSau = tonKhoTruoc + soLuongTra;
+			// ✅ Hiển thị thông báo chi tiết về số lượng tăng với tồn kho (theo đơn vị gốc)
+			int tonKhoSau = tonKhoTruoc + soLuongTraGoc;
 
 			String thongBao = String.format(
 					"Nhập kho thành công!\n\n" +
 							"Sản phẩm: %s\n" +
 							"Lô: %s\n" +
 							"Tồn kho: %d + %d = %d (%s)",
-					tenSP, maLo, tonKhoTruoc, soLuongTra, tonKhoSau, tenDonViGoc);
+					tenSP, maLo, tonKhoTruoc, soLuongTraGoc, tonKhoSau, tenDonViGoc);
 
 			JOptionPane.showMessageDialog(this, thongBao, "Thành công", JOptionPane.INFORMATION_MESSAGE);
 

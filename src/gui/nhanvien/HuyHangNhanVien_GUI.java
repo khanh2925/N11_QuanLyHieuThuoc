@@ -116,7 +116,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		pnCotPhaiCenter.setPreferredSize(new Dimension(1087, 1080));
 		pnCotPhaiCenter.setBorder(
 				new CompoundBorder(new LineBorder(new Color(0xD32F2F), 3, true), new EmptyBorder(10, 10, 10, 10)));
-//		pnCotPhaiCenter.setLayout(new BorderLayout(0, 0));
+		// pnCotPhaiCenter.setLayout(new BorderLayout(0, 0));
 		add(pnCotPhaiCenter, BorderLayout.CENTER);
 
 		pnDanhSachLo = new JPanel();
@@ -762,10 +762,22 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 
 		// Duyệt qua dsItem thay vì model
 		for (ItemHuyHang it : dsItem) {
-			// Lấy số lượng huỷ theo đơn vị gốc (đã quy đổi)
+			// ✅ VALIDATION: Kiểm tra lý do huỷ không quá 200 ký tự
+			String lyDo = it.getLyDo();
+			if (lyDo != null && lyDo.length() > 200) {
+				JOptionPane.showMessageDialog(this,
+						"Lý do huỷ của lô " + it.getMaLo() + " vượt quá 200 ký tự!\n" +
+								"Độ dài hiện tại: " + lyDo.length() + " ký tự.",
+						"Lý do quá dài", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+
+			// ✅ Lấy số lượng huỷ THEO ĐƠN VỊ ĐANG CHỌN (không quy đổi)
+			int slHuy = it.getSoLuongHuy();
+			// Số lượng quy về gốc để kiểm tra tồn kho
 			int slHuyGoc = it.getSoLuongHuyTheoGoc();
 
-			if (slHuyGoc <= 0) {
+			if (slHuy <= 0) {
 				JOptionPane.showMessageDialog(this, "Số lượng huỷ của lô " + it.getMaLo() + " phải > 0.",
 						"Dữ liệu không hợp lệ", JOptionPane.WARNING_MESSAGE);
 				return;
@@ -787,14 +799,18 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 			// Tạo chi tiết
 			ChiTietPhieuHuy ct = new ChiTietPhieuHuy();
 			ct.setLoSanPham(lo);
-			ct.setSoLuongHuy(slHuyGoc); // Lưu theo đơn vị gốc
-			ct.setDonGiaNhap(it.getDonGiaNhap());
-			String lyDo = it.getLyDo();
+			// ✅ LƯU SỐ LƯỢNG THEO ĐƠN VỊ ĐANG CHỌN (không quy đổi về gốc)
+			ct.setSoLuongHuy(slHuy);
+
+			// ✅ Đơn giá = giá nhập gốc × hệ số quy đổi của đơn vị đang chọn
+			int heSo = (it.getQuyCachHienTai() != null) ? it.getQuyCachHienTai().getHeSoQuyDoi() : 1;
+			ct.setDonGiaNhap(it.getDonGiaNhap() * heSo);
+
 			ct.setLyDoChiTiet(lyDo == null || lyDo.isEmpty() ? null : lyDo);
 
-			// Set đơn vị tính (lấy DonViTinh từ QuyCachGoc)
-			if (it.getQuyCachGoc() != null && it.getQuyCachGoc().getDonViTinh() != null) {
-				ct.setDonViTinh(it.getQuyCachGoc().getDonViTinh());
+			// ✅ Set đơn vị tính ĐANG CHỌN (QuyCachHienTai, KHÔNG phải QuyCachGoc)
+			if (it.getQuyCachHienTai() != null && it.getQuyCachHienTai().getDonViTinh() != null) {
+				ct.setDonViTinh(it.getQuyCachHienTai().getDonViTinh());
 			}
 
 			ct.setTrangThai(ChiTietPhieuHuy.CHO_DUYET); // 1 = Chờ duyệt
