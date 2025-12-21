@@ -466,7 +466,76 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
     // ==============================================================================
     // TÌM KIẾM
     // ==============================================================================
+    /**
+     * Validate dữ liệu trước khi tìm kiếm
+     * 
+     * @return true nếu dữ liệu hợp lệ, false nếu không
+     */
+    private boolean validateTimKiem() {
+        String tuKhoa = txtTimKiem.getText().trim();
+        // Nếu có placeholder dạng "Tìm theo mã phiếu..." thì coi như rỗng
+        if (tuKhoa.toLowerCase().startsWith("tìm theo")) {
+            tuKhoa = "";
+        }
+
+        // VALIDATION 1: Kiểm tra độ dài từ khóa tìm kiếm (tối đa 35 ký tự)
+        if (!tuKhoa.isEmpty() && tuKhoa.length() > 35) {
+            JOptionPane.showMessageDialog(this,
+                    "Từ khóa tìm kiếm không được vượt quá 35 ký tự!",
+                    "Lỗi nhập liệu",
+                    JOptionPane.ERROR_MESSAGE);
+            txtTimKiem.requestFocus();
+            txtTimKiem.selectAll();
+            return false;
+        }
+
+        // VALIDATION 2: Kiểm tra ngày hợp lệ
+        Date dTu = dateTuNgay.getDate();
+        Date dDen = dateDenNgay.getDate();
+        Date today = new Date();
+
+        // Kiểm tra ngày bắt đầu không được lớn hơn ngày hôm nay
+        if (dTu != null && dTu.after(today)) {
+            JOptionPane.showMessageDialog(this,
+                    "Ngày bắt đầu không được lớn hơn ngày hôm nay!\nĐã tự động reset về ngày hiện tại.",
+                    "Lỗi nhập liệu",
+                    JOptionPane.WARNING_MESSAGE);
+            dateTuNgay.setDate(today);
+            dateTuNgay.requestFocus();
+            return false;
+        }
+
+        // Kiểm tra ngày kết thúc không được lớn hơn ngày hôm nay
+        if (dDen != null && dDen.after(today)) {
+            JOptionPane.showMessageDialog(this,
+                    "Ngày kết thúc không được lớn hơn ngày hôm nay!\nĐã tự động reset về ngày hiện tại.",
+                    "Lỗi nhập liệu",
+                    JOptionPane.WARNING_MESSAGE);
+            dateDenNgay.setDate(today);
+            dateDenNgay.requestFocus();
+            return false;
+        }
+
+        // Kiểm tra ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu
+        if (dTu != null && dDen != null && dDen.before(dTu)) {
+            JOptionPane.showMessageDialog(this,
+                    "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!\nĐã tự động reset ngày kết thúc về ngày hiện tại.",
+                    "Lỗi nhập liệu",
+                    JOptionPane.WARNING_MESSAGE);
+            dateDenNgay.setDate(today);
+            dateDenNgay.requestFocus();
+            return false;
+        }
+
+        return true;
+    }
+
     private void xuLyTimKiem(boolean includeDateRange) {
+        // Validate dữ liệu trước khi tìm kiếm
+        if (!validateTimKiem()) {
+            return;
+        }
+
         String keyword = txtTimKiem.getText().trim();
         // Nếu có placeholder dạng "Tìm theo mã phiếu..." thì coi như rỗng
         if (keyword.toLowerCase().startsWith("tìm theo")) {

@@ -47,12 +47,12 @@ import entity.PhieuTra;
 
 @SuppressWarnings("serial")
 public class TraCuuKhachHang_GUI extends JPanel {
-    
+
     private static final String PLACEHOLDER_TIM_KIEM = "Tìm theo mã, tên hoặc SĐT... (F1 / Ctrl+F)";
 
     private JPanel pnHeader;
     private JPanel pnCenter;
-    
+
     // Bảng Khách Hàng (Master)
     private JTable tblKhachHang;
     private DefaultTableModel modelKhachHang;
@@ -61,7 +61,7 @@ public class TraCuuKhachHang_GUI extends JPanel {
     private JTabbedPane tabChiTiet;
     private JTable tblLichSuMuaHang; // Đổi từ Bán -> Mua
     private DefaultTableModel modelLichSuMuaHang;
-    
+
     private JTable tblLichSuTraHang;
     private DefaultTableModel modelLichSuTraHang;
 
@@ -69,32 +69,32 @@ public class TraCuuKhachHang_GUI extends JPanel {
     private JTextField txtTimKiem;
     private JComboBox<String> cbGioiTinh;
     private JComboBox<String> cbTrangThai;
-    
+
     // Buttons
     private PillButton btnTim;
     private PillButton btnLamMoi;
     private PillButton btnXuatExcel;
-    
+
     // DAO
     private final KhachHang_DAO khachHangDAO;
     private final HoaDon_DAO hoaDonDAO;
     private final PhieuTra_DAO phieuTraDAO;
-    
+
     // Data cache
     private List<KhachHang> danhSachGoc = new ArrayList<>();
-    
+
     // Formatter
     private final DecimalFormat df = new DecimalFormat("#,### đ");
     private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public TraCuuKhachHang_GUI() {
         setPreferredSize(new Dimension(1537, 850));
-        
+
         // Khởi tạo DAO
         khachHangDAO = new KhachHang_DAO();
         hoaDonDAO = new HoaDon_DAO();
         phieuTraDAO = new PhieuTra_DAO();
-        
+
         initialize();
     }
 
@@ -118,7 +118,7 @@ public class TraCuuKhachHang_GUI extends JPanel {
     }
 
     // ==============================================================================
-    //                              PHẦN HEADER
+    // PHẦN HEADER
     // ==============================================================================
     private void taoPhanHeader() {
         pnHeader = new JPanel();
@@ -138,54 +138,52 @@ public class TraCuuKhachHang_GUI extends JPanel {
 
         // --- BỘ LỌC ---
         addFilterLabel("Giới tính:", 530, 28, 80, 35);
-        cbGioiTinh = new JComboBox<>(new String[]{"Tất cả", "Nam", "Nữ"});
+        cbGioiTinh = new JComboBox<>(new String[] { "Tất cả", "Nam", "Nữ" });
         setupCombo(cbGioiTinh, 610, 28, 140, 38);
 
         addFilterLabel("Trạng thái:", 790, 28, 100, 35);
-        cbTrangThai = new JComboBox<>(new String[]{"Tất cả", "Hoạt động", "Ngừng"});
+        cbTrangThai = new JComboBox<>(new String[] { "Tất cả", "Hoạt động", "Ngừng" });
         setupCombo(cbTrangThai, 890, 28, 180, 38);
 
         // --- NÚT ---
         btnTim = new PillButton(
                 "<html>" +
-                    "<center>" +
+                        "<center>" +
                         "TÌM KIẾM<br>" +
                         "<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
-                    "</center>" +
-                "</html>"
-            );
+                        "</center>" +
+                        "</html>");
         btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnTim.setBounds(1120, 22, 130, 50);
-        btnTim.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã, tên và bộ lọc</html>");
+        btnTim.setToolTipText(
+                "<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã, tên và bộ lọc</html>");
         pnHeader.add(btnTim);
 
         btnLamMoi = new PillButton(
                 "<html>" +
-                    "<center>" +
+                        "<center>" +
                         "LÀM MỚI<br>" +
                         "<span style='font-size:10px; color:#888888;'>(F5)</span>" +
-                    "</center>" +
-                "</html>"
-            );
+                        "</center>" +
+                        "</html>");
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnLamMoi.setBounds(1265, 22, 130, 50);
         btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
         pnHeader.add(btnLamMoi);
-        
+
         btnXuatExcel = new PillButton(
                 "<html>" +
-                    "<center>" +
+                        "<center>" +
                         "XUẤT EXCEL<br>" +
                         "<span style='font-size:10px; color:#888888;'>(Ctrl+E)</span>" +
-                    "</center>" +
-                "</html>"
-            );
+                        "</center>" +
+                        "</html>");
         btnXuatExcel.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnXuatExcel.setBounds(1410, 22, 180, 50);
         btnXuatExcel.setToolTipText("<html><b>Phím tắt:</b> Ctrl+E<br>Xuất dữ liệu ra file Excel</html>");
         pnHeader.add(btnXuatExcel);
     }
-    
+
     private void addFilterLabel(String text, int x, int y, int w, int h) {
         JLabel lbl = new JLabel(text);
         lbl.setBounds(x, y, w, h);
@@ -200,7 +198,7 @@ public class TraCuuKhachHang_GUI extends JPanel {
     }
 
     // ==============================================================================
-    //                              PHẦN CENTER
+    // PHẦN CENTER
     // ==============================================================================
     private void taoPhanCenter() {
         pnCenter = new JPanel(new BorderLayout());
@@ -214,25 +212,31 @@ public class TraCuuKhachHang_GUI extends JPanel {
 
         // --- TOP: BẢNG KHÁCH HÀNG ---
         // Cột dữ liệu phù hợp với Khách Hàng
-        String[] colKH = {"STT", "Mã KH", "Tên khách hàng", "SĐT", "Ngày sinh", "Giới tính", "Trạng thái"};
+        String[] colKH = { "STT", "Mã KH", "Tên khách hàng", "SĐT", "Ngày sinh", "Giới tính", "Trạng thái" };
         modelKhachHang = new DefaultTableModel(colKH, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
         tblKhachHang = setupTable(modelKhachHang);
-        
+
         // Render căn lề
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
-        
-        for (int i=0; i<tblKhachHang.getColumnCount(); i++) {
-            if (i != 2) tblKhachHang.getColumnModel().getColumn(i).setCellRenderer(center); // Tên canh trái
+
+        for (int i = 0; i < tblKhachHang.getColumnCount(); i++) {
+            if (i != 2)
+                tblKhachHang.getColumnModel().getColumn(i).setCellRenderer(center); // Tên canh trái
         }
-        tblKhachHang.getColumnModel().getColumn(2).setPreferredWidth(200); 
-        
+        tblKhachHang.getColumnModel().getColumn(2).setPreferredWidth(200);
+
         tblKhachHang.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int column) {
+                JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
+                        column);
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
                 if ("Hoạt động".equals(value)) {
                     lbl.setForeground(new Color(0x2E7D32)); // Xanh lá
@@ -252,10 +256,10 @@ public class TraCuuKhachHang_GUI extends JPanel {
         // --- BOTTOM: TABBED PANE (LỊCH SỬ) ---
         tabChiTiet = new JTabbedPane();
         tabChiTiet.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        
+
         // Tab 1: Lịch sử Mua Hàng
         tabChiTiet.addTab("Lịch sử mua hàng", createTabMuaHang());
-        
+
         // Tab 2: Lịch sử Trả Hàng
         tabChiTiet.addTab("Lịch sử trả hàng", createTabTraHang());
 
@@ -264,9 +268,12 @@ public class TraCuuKhachHang_GUI extends JPanel {
 
     // Tạo Panel cho Tab Mua Hàng (Khác với bán hàng là hiển thị Nhân viên bán)
     private JComponent createTabMuaHang() {
-        String[] cols = {"STT", "Mã hóa đơn", "Ngày mua", "Nhân viên bán", "Tổng tiền"};
+        String[] cols = { "STT", "Mã hóa đơn", "Ngày mua", "Nhân viên bán", "Tổng tiền" };
         modelLichSuMuaHang = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
         tblLichSuMuaHang = setupTable(modelLichSuMuaHang);
         setupTableAlign(tblLichSuMuaHang);
@@ -275,9 +282,12 @@ public class TraCuuKhachHang_GUI extends JPanel {
 
     // Tạo Panel cho Tab Trả Hàng
     private JComponent createTabTraHang() {
-        String[] cols = {"STT", "Mã đơn trả", "Ngày trả", "Lý do trả", "Tiền hoàn lại"};
+        String[] cols = { "STT", "Mã đơn trả", "Ngày trả", "Lý do trả", "Tiền hoàn lại" };
         modelLichSuTraHang = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
         tblLichSuTraHang = setupTable(modelLichSuTraHang);
         setupTableAlign(tblLichSuTraHang);
@@ -291,7 +301,7 @@ public class TraCuuKhachHang_GUI extends JPanel {
         table.setRowHeight(35);
         table.setSelectionBackground(new Color(0xC8E6C9)); // Màu xanh nhạt khi chọn
         table.setGridColor(new Color(230, 230, 230));
-        
+
         JTableHeader header = table.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 16));
         header.setBackground(new Color(33, 150, 243)); // Màu xanh header
@@ -299,18 +309,18 @@ public class TraCuuKhachHang_GUI extends JPanel {
         header.setPreferredSize(new Dimension(100, 40));
         return table;
     }
-    
+
     // Setup căn lề
     private void setupTableAlign(JTable table) {
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
         DefaultTableCellRenderer right = new DefaultTableCellRenderer();
         right.setHorizontalAlignment(SwingConstants.RIGHT);
-        
+
         int lastCol = table.getColumnCount() - 1;
         // Căn giữa các cột trừ cột 3 (Nhân viên bán / Lý do trả)
-        for (int i=0; i<lastCol; i++) {
-            if (i!=3) // Cột 3 để căn trái (văn bản)
+        for (int i = 0; i < lastCol; i++) {
+            if (i != 3) // Cột 3 để căn trái (văn bản)
                 table.getColumnModel().getColumn(i).setCellRenderer(center);
         }
         // Cột cuối (tiền) căn phải
@@ -319,13 +329,12 @@ public class TraCuuKhachHang_GUI extends JPanel {
 
     private TitledBorder createTitledBorder(String title) {
         return BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
-            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 18), Color.DARK_GRAY
-        );
+                BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
+                TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 18), Color.DARK_GRAY);
     }
 
     // ==============================================================================
-    //                              DỮ LIỆU & SỰ KIỆN
+    // DỮ LIỆU & SỰ KIỆN
     // ==============================================================================
 
     private void addEvents() {
@@ -334,7 +343,7 @@ public class TraCuuKhachHang_GUI extends JPanel {
         btnLamMoi.addActionListener(e -> lamMoi());
         btnXuatExcel.addActionListener(e -> xuatExcel());
         txtTimKiem.addActionListener(e -> timKiem()); // Enter để tìm
-        
+
         // Sự kiện click vào khách hàng -> Load dữ liệu tab bên dưới
         tblKhachHang.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -346,7 +355,7 @@ public class TraCuuKhachHang_GUI extends JPanel {
             }
         });
     }
-    
+
     /**
      * Thiết lập phím tắt cho màn hình Tra cứu Khách hàng
      */
@@ -392,8 +401,38 @@ public class TraCuuKhachHang_GUI extends JPanel {
             }
         });
     }
-    
+
+    /**
+     * Validate dữ liệu trước khi tìm kiếm
+     * 
+     * @return true nếu dữ liệu hợp lệ, false nếu không
+     */
+    private boolean validateTimKiem() {
+        String tuKhoa = txtTimKiem.getText().trim();
+        if (tuKhoa.equals(PLACEHOLDER_TIM_KIEM) || tuKhoa.contains("Tìm theo mã"))
+            tuKhoa = "";
+
+        // VALIDATION: Kiểm tra độ dài từ khóa tìm kiếm (tối đa 35 ký tự cho tên khách
+        // hàng)
+        if (!tuKhoa.isEmpty() && tuKhoa.length() > 35) {
+            JOptionPane.showMessageDialog(this,
+                    "Từ khóa tìm kiếm không được vượt quá 35 ký tự!",
+                    "Lỗi nhập liệu",
+                    JOptionPane.ERROR_MESSAGE);
+            txtTimKiem.requestFocus();
+            txtTimKiem.selectAll();
+            return false;
+        }
+
+        return true;
+    }
+
     private void timKiem() {
+        // Validate dữ liệu trước khi tìm kiếm
+        if (!validateTimKiem()) {
+            return;
+        }
+
         String keyword = txtTimKiem.getText().trim();
         String gioiTinh = cbGioiTinh.getSelectedItem().toString();
         String trangThai = cbTrangThai.getSelectedItem().toString();
@@ -458,18 +497,18 @@ public class TraCuuKhachHang_GUI extends JPanel {
             String ngaySinh = kh.getNgaySinh() != null ? kh.getNgaySinh().format(dtf) : "";
             String trangThai = kh.isHoatDong() ? "Hoạt động" : "Ngừng";
 
-            modelKhachHang.addRow(new Object[]{
-                stt++,
-                kh.getMaKhachHang(),
-                kh.getTenKhachHang(),
-                kh.getSoDienThoai(),
-                ngaySinh,
-                gioiTinh,
-                trangThai
+            modelKhachHang.addRow(new Object[] {
+                    stt++,
+                    kh.getMaKhachHang(),
+                    kh.getTenKhachHang(),
+                    kh.getSoDienThoai(),
+                    ngaySinh,
+                    gioiTinh,
+                    trangThai
             });
         }
     }
-    
+
     private void lamMoi() {
         txtTimKiem.setText("");
         PlaceholderSupport.addPlaceholder(txtTimKiem, PLACEHOLDER_TIM_KIEM);
@@ -478,7 +517,7 @@ public class TraCuuKhachHang_GUI extends JPanel {
         modelKhachHang.setRowCount(0);
         modelLichSuMuaHang.setRowCount(0);
         modelLichSuTraHang.setRowCount(0);
-        
+
         // Refresh cache và tải lại dữ liệu từ DB
         khachHangDAO.refreshCache();
         loadDuLieuKhachHang();
@@ -497,7 +536,7 @@ public class TraCuuKhachHang_GUI extends JPanel {
             }
         });
     }
-    
+
     /**
      * Xuất dữ liệu ra file Excel
      */
@@ -593,21 +632,21 @@ public class TraCuuKhachHang_GUI extends JPanel {
     private void loadDuLieuKhachHang() {
         modelKhachHang.setRowCount(0);
         danhSachGoc = khachHangDAO.layTatCaKhachHang();
-        
+
         int stt = 1;
         for (KhachHang kh : danhSachGoc) {
             String gioiTinh = kh.isGioiTinh() ? "Nam" : "Nữ";
             String ngaySinh = kh.getNgaySinh() != null ? kh.getNgaySinh().format(dtf) : "";
             String trangThai = kh.isHoatDong() ? "Hoạt động" : "Ngừng";
-            
-            modelKhachHang.addRow(new Object[]{
-                stt++,
-                kh.getMaKhachHang(),
-                kh.getTenKhachHang(),
-                kh.getSoDienThoai(),
-                ngaySinh,
-                gioiTinh,
-                trangThai
+
+            modelKhachHang.addRow(new Object[] {
+                    stt++,
+                    kh.getMaKhachHang(),
+                    kh.getTenKhachHang(),
+                    kh.getSoDienThoai(),
+                    ngaySinh,
+                    gioiTinh,
+                    trangThai
             });
         }
     }
@@ -627,17 +666,17 @@ public class TraCuuKhachHang_GUI extends JPanel {
                     String ngayLap = hd.getNgayLap() != null ? hd.getNgayLap().format(dtf) : "";
                     String nhanVien = hd.getNhanVien() != null ? hd.getNhanVien().getTenNhanVien() : "";
                     String tongTien = df.format(hd.getTongTien());
-                    
-                    modelLichSuMuaHang.addRow(new Object[]{
-                        stt1++,
-                        hd.getMaHoaDon(),
-                        ngayLap,
-                        nhanVien,
-                        tongTien
+
+                    modelLichSuMuaHang.addRow(new Object[] {
+                            stt1++,
+                            hd.getMaHoaDon(),
+                            ngayLap,
+                            nhanVien,
+                            tongTien
                     });
                 }
             }
-            
+
             // Load lịch sử trả hàng - Lấy tất cả rồi filter
             List<PhieuTra> allPhieuTra = phieuTraDAO.layTatCaPhieuTra();
             int stt2 = 1;
@@ -645,7 +684,7 @@ public class TraCuuKhachHang_GUI extends JPanel {
                 // Chỉ lấy phiếu trả của khách hàng này
                 if (pt.getKhachHang() != null && pt.getKhachHang().getMaKhachHang().equals(maKH)) {
                     String ngayLap = pt.getNgayLap() != null ? pt.getNgayLap().format(dtf) : "";
-                    
+
                     // Lấy lý do từ chi tiết phiếu trả (lấy lý do đầu tiên hoặc tổng hợp)
                     String lyDo = "";
                     if (pt.getChiTietPhieuTraList() != null && !pt.getChiTietPhieuTraList().isEmpty()) {
@@ -654,23 +693,23 @@ public class TraCuuKhachHang_GUI extends JPanel {
                             lyDo += " (+" + (pt.getChiTietPhieuTraList().size() - 1) + " SP khác)";
                         }
                     }
-                    
+
                     String tienHoan = df.format(pt.getTongTienHoan());
-                    
-                    modelLichSuTraHang.addRow(new Object[]{
-                        stt2++,
-                        pt.getMaPhieuTra(),
-                        ngayLap,
-                        lyDo,
-                        tienHoan
+
+                    modelLichSuTraHang.addRow(new Object[] {
+                            stt2++,
+                            pt.getMaPhieuTra(),
+                            ngayLap,
+                            lyDo,
+                            tienHoan
                     });
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, 
-                "Lỗi khi tải lịch sử giao dịch: " + e.getMessage(),
-                "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Lỗi khi tải lịch sử giao dịch: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

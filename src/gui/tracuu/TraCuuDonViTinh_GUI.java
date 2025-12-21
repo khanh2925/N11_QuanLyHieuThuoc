@@ -48,7 +48,7 @@ public class TraCuuDonViTinh_GUI extends JPanel implements ActionListener, Mouse
     public TraCuuDonViTinh_GUI() {
         donViTinhDAO = new DonViTinh_DAO();
         quyCachDAO = new QuyCachDongGoi_DAO();
-        
+
         setPreferredSize(new Dimension(1537, 850));
         initialize();
         setupKeyboardShortcuts();
@@ -73,7 +73,7 @@ public class TraCuuDonViTinh_GUI extends JPanel implements ActionListener, Mouse
     }
 
     // ==============================================================================
-    //                              PHẦN GIAO DIỆN (VIEW)
+    // PHẦN GIAO DIỆN (VIEW)
     // ==============================================================================
     private void taoPhanDau() {
         pnHeader = new JPanel();
@@ -94,32 +94,31 @@ public class TraCuuDonViTinh_GUI extends JPanel implements ActionListener, Mouse
         // --- NÚT CHỨC NĂNG ---
         btnTim = new PillButton(
                 "<html>" +
-                    "<center>" +
+                        "<center>" +
                         "TÌM KIẾM<br>" +
                         "<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
-                    "</center>" +
-                "</html>"
-            );
+                        "</center>" +
+                        "</html>");
         btnTim.setBounds(550, 22, 140, 50);
         btnTim.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnTim.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã, tên đơn vị tính</html>");
+        btnTim.setToolTipText(
+                "<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã, tên đơn vị tính</html>");
         pnHeader.add(btnTim);
-        
+
         btnLamMoi = new PillButton(
                 "<html>" +
-                    "<center>" +
+                        "<center>" +
                         "LÀM MỚI<br>" +
                         "<span style='font-size:10px; color:#888888;'>(F5)</span>" +
-                    "</center>" +
-                "</html>"
-            );
+                        "</center>" +
+                        "</html>");
         btnLamMoi.setBounds(710, 22, 140, 50);
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
         pnHeader.add(btnLamMoi);
     }
 
-private void taoPhanGiua() {
+    private void taoPhanGiua() {
         pnCenter = new JPanel(new BorderLayout());
         pnCenter.setBackground(Color.WHITE);
         pnCenter.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -129,22 +128,25 @@ private void taoPhanGiua() {
         splitPane.setDividerLocation(400);
         splitPane.setResizeWeight(0.5);
 
-        String[] colDVT = {"STT", "Mã Đơn Vị", "Tên Đơn Vị Tính", "Số lượng sản phẩm đang dùng"};
+        String[] colDVT = { "STT", "Mã Đơn Vị", "Tên Đơn Vị Tính", "Số lượng sản phẩm đang dùng" };
         modelDonViTinh = new DefaultTableModel(colDVT, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
         tblDonViTinh = thietLapBang(modelDonViTinh);
-        
+
         // Căn chỉnh dữ liệu
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
         DefaultTableCellRenderer right = new DefaultTableCellRenderer();
         right.setHorizontalAlignment(SwingConstants.RIGHT);
-        
-        tblDonViTinh.getColumnModel().getColumn(0).setCellRenderer(center);  // STT
-        tblDonViTinh.getColumnModel().getColumn(1).setCellRenderer(center);  // Mã Đơn Vị
+
+        tblDonViTinh.getColumnModel().getColumn(0).setCellRenderer(center); // STT
+        tblDonViTinh.getColumnModel().getColumn(1).setCellRenderer(center); // Mã Đơn Vị
         // Cột 2 (Tên Đơn Vị Tính) để mặc định LEFT
-        tblDonViTinh.getColumnModel().getColumn(3).setCellRenderer(right);   // Số lượng sản phẩm
+        tblDonViTinh.getColumnModel().getColumn(3).setCellRenderer(right); // Số lượng sản phẩm
 
         JScrollPane scrollDVT = new JScrollPane(tblDonViTinh);
         scrollDVT.setBorder(taoVienTieuDe("Danh mục Đơn vị tính"));
@@ -153,30 +155,33 @@ private void taoPhanGiua() {
         // --- BOTTOM: SẢN PHẨM SỬ DỤNG (ĐÃ SỬA) ---
         // Không dùng JTabbedPane nữa, lấy trực tiếp Panel/ScrollPane
         JComponent pnlChiTiet = createTabSanPhamSuDung();
-        
+
         // Đặt viền có tiêu đề giống bảng trên
         pnlChiTiet.setBorder(taoVienTieuDe("Sản phẩm sử dụng đơn vị này"));
-        
+
         splitPane.setBottomComponent(pnlChiTiet);
         pnCenter.add(splitPane, BorderLayout.CENTER);
     }
 
     private JComponent createTabSanPhamSuDung() {
-        String[] cols = {"STT", "Mã Sản Phẩm", "Tên Sản Phẩm", "Vai trò đơn vị", "Quy đổi"};
+        String[] cols = { "STT", "Mã Sản Phẩm", "Tên Sản Phẩm", "Vai trò đơn vị", "Quy đổi" };
         modelSanPhamSuDung = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
         tblSanPhamSuDung = thietLapBang(modelSanPhamSuDung);
-        
+
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
-        
-        tblSanPhamSuDung.getColumnModel().getColumn(0).setCellRenderer(center);  // STT
-        tblSanPhamSuDung.getColumnModel().getColumn(1).setCellRenderer(center);  // Mã Sản Phẩm
+
+        tblSanPhamSuDung.getColumnModel().getColumn(0).setCellRenderer(center); // STT
+        tblSanPhamSuDung.getColumnModel().getColumn(1).setCellRenderer(center); // Mã Sản Phẩm
         // Cột 2 (Tên Sản Phẩm) để mặc định LEFT
-        tblSanPhamSuDung.getColumnModel().getColumn(3).setCellRenderer(center);  // Vai trò đơn vị
-        tblSanPhamSuDung.getColumnModel().getColumn(4).setCellRenderer(center);  // Quy đổi
-        
+        tblSanPhamSuDung.getColumnModel().getColumn(3).setCellRenderer(center); // Vai trò đơn vị
+        tblSanPhamSuDung.getColumnModel().getColumn(4).setCellRenderer(center); // Quy đổi
+
         return new JScrollPane(tblSanPhamSuDung);
     }
 
@@ -186,12 +191,12 @@ private void taoPhanGiua() {
         table.setRowHeight(30);
         table.setSelectionBackground(new Color(0xC8E6C9));
         table.setSelectionForeground(Color.BLACK);
-        
+
         JTableHeader header = table.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 16));
         header.setBackground(new Color(33, 150, 243));
         header.setForeground(Color.WHITE);
-        
+
         return table;
     }
 
@@ -201,9 +206,9 @@ private void taoPhanGiua() {
     }
 
     // ==============================================================================
-    //                              DATA & LOGIC (CONTROLLER)
+    // DATA & LOGIC (CONTROLLER)
     // ==============================================================================
-    
+
     private void dangKySuKien() {
         btnTim.addActionListener(this);
         btnLamMoi.addActionListener(this);
@@ -275,7 +280,7 @@ private void taoPhanGiua() {
      */
     private void taiDuLieuLenBang() {
         modelDonViTinh.setRowCount(0);
-        
+
         // Load dữ liệu từ DAO
         listDVT = donViTinhDAO.layTatCaDonViTinh();
         listQuyCach = quyCachDAO.layTatCaQuyCachDongGoi(); // Dùng để đếm số lượng thuốc dùng
@@ -290,11 +295,11 @@ private void taoPhanGiua() {
                     .distinct()
                     .count();
 
-            modelDonViTinh.addRow(new Object[]{
-                stt++,
-                dvt.getMaDonViTinh(),
-                dvt.getTenDonViTinh(),
-                soLuongSuDung
+            modelDonViTinh.addRow(new Object[] {
+                    stt++,
+                    dvt.getMaDonViTinh(),
+                    dvt.getTenDonViTinh(),
+                    soLuongSuDung
             });
         }
     }
@@ -304,7 +309,7 @@ private void taoPhanGiua() {
      */
     private void hienThiSanPhamTheoDonVi(String maDVT) {
         modelSanPhamSuDung.setRowCount(0);
-        
+
         // Lọc danh sách quy cách có mã đơn vị tính tương ứng
         List<QuyCachDongGoi> listLoc = listQuyCach.stream()
                 .filter(qc -> qc.getDonViTinh().getMaDonViTinh().equals(maDVT))
@@ -316,27 +321,71 @@ private void taoPhanGiua() {
             String quyDoi = "1";
 
             if (!qc.isDonViGoc()) {
-                // Nếu là đơn vị quy đổi, tìm đơn vị gốc của sản phẩm đó để hiển thị (VD: 10 Viên)
+                // Nếu là đơn vị quy đổi, tìm đơn vị gốc của sản phẩm đó để hiển thị (VD: 10
+                // Viên)
                 QuyCachDongGoi qcBase = listQuyCach.stream()
-                        .filter(q -> q.getSanPham().getMaSanPham().equals(qc.getSanPham().getMaSanPham()) && q.isDonViGoc())
+                        .filter(q -> q.getSanPham().getMaSanPham().equals(qc.getSanPham().getMaSanPham())
+                                && q.isDonViGoc())
                         .findFirst()
                         .orElse(null);
-                
+
                 String tenDonViGoc = (qcBase != null) ? qcBase.getDonViTinh().getTenDonViTinh() : "Đơn vị gốc";
                 quyDoi = qc.getHeSoQuyDoi() + " " + tenDonViGoc;
             }
 
-            modelSanPhamSuDung.addRow(new Object[]{
-                stt++,
-                qc.getSanPham().getMaSanPham(),
-                qc.getSanPham().getTenSanPham(),
-                vaiTro,
-                quyDoi
+            modelSanPhamSuDung.addRow(new Object[] {
+                    stt++,
+                    qc.getSanPham().getMaSanPham(),
+                    qc.getSanPham().getTenSanPham(),
+                    vaiTro,
+                    quyDoi
             });
         }
     }
 
+    /**
+     * Validate dữ liệu trước khi tìm kiếm
+     * 
+     * @return true nếu dữ liệu hợp lệ, false nếu không
+     */
+    private boolean validateTimKiem() {
+        String tuKhoa = txtTimKiem.getText().trim();
+        if (tuKhoa.contains("Tìm kiếm mã") || tuKhoa.contains("tìm kiếm"))
+            tuKhoa = "";
+
+        // VALIDATION: Kiểm tra độ dài từ khóa tìm kiếm (tính từ tên đơn vị dài nhất
+        // trong cache)
+        int maxLen = 0;
+        if (listDVT != null && !listDVT.isEmpty()) {
+            for (DonViTinh dvt : listDVT) {
+                if (dvt.getTenDonViTinh() != null && dvt.getTenDonViTinh().length() > maxLen) {
+                    maxLen = dvt.getTenDonViTinh().length();
+                }
+            }
+        }
+        if (maxLen == 0 || maxLen < 9) {
+            maxLen = 9; // Mặc định tối thiểu 9 ký tự
+        }
+
+        if (!tuKhoa.isEmpty() && tuKhoa.length() > maxLen) {
+            JOptionPane.showMessageDialog(this,
+                    "Từ khóa tìm kiếm không được vượt quá " + maxLen + " ký tự!",
+                    "Lỗi nhập liệu",
+                    JOptionPane.ERROR_MESSAGE);
+            txtTimKiem.requestFocus();
+            txtTimKiem.selectAll();
+            return false;
+        }
+
+        return true;
+    }
+
     private void xuLyTimKiem() {
+        // Validate dữ liệu trước khi tìm kiếm
+        if (!validateTimKiem()) {
+            return;
+        }
+
         String tuKhoa = txtTimKiem.getText().trim().toLowerCase();
         if (tuKhoa.isEmpty() || tuKhoa.contains("tìm kiếm")) {
             taiDuLieuLenBang();
@@ -356,11 +405,11 @@ private void taoPhanGiua() {
                         .distinct()
                         .count();
 
-                modelDonViTinh.addRow(new Object[]{
-                    stt++,
-                    dvt.getMaDonViTinh(),
-                    dvt.getTenDonViTinh(),
-                    soLuongSuDung
+                modelDonViTinh.addRow(new Object[] {
+                        stt++,
+                        dvt.getMaDonViTinh(),
+                        dvt.getTenDonViTinh(),
+                        soLuongSuDung
                 });
             }
         }
@@ -374,7 +423,7 @@ private void taoPhanGiua() {
     }
 
     // ==============================================================================
-    //                              EVENT HANDLERS
+    // EVENT HANDLERS
     // ==============================================================================
 
     @Override
@@ -398,15 +447,26 @@ private void taoPhanGiua() {
         }
     }
 
-    @Override public void mousePressed(MouseEvent e) {}
-    @Override public void mouseReleased(MouseEvent e) {}
-    @Override public void mouseEntered(MouseEvent e) {}
-    @Override public void mouseExited(MouseEvent e) {}
+    @Override
+    public void mousePressed(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+    }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-//                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception e) {
             }
             JFrame frame = new JFrame("Tra cứu phiếu nhập");

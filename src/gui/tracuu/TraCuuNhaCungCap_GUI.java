@@ -438,7 +438,36 @@ public class TraCuuNhaCungCap_GUI extends JPanel implements ActionListener {
 	// ==============================================================================
 	// TÌM KIẾM (giống đơn hàng - hybrid cache + filter)
 	// ==============================================================================
+	/**
+	 * Validate dữ liệu trước khi tìm kiếm
+	 * 
+	 * @return true nếu dữ liệu hợp lệ, false nếu không
+	 */
+	private boolean validateTimKiem() {
+		String tuKhoa = txtTimKiem.getText().trim();
+		if (tuKhoa.equals(PLACEHOLDER_TIM_KIEM) || tuKhoa.contains("Tìm theo mã"))
+			tuKhoa = "";
+
+		// VALIDATION: Kiểm tra độ dài từ khóa tìm kiếm (tối đa 35 ký tự)
+		if (!tuKhoa.isEmpty() && tuKhoa.length() > 35) {
+			JOptionPane.showMessageDialog(this,
+					"Từ khóa tìm kiếm không được vượt quá 35 ký tự!",
+					"Lỗi nhập liệu",
+					JOptionPane.ERROR_MESSAGE);
+			txtTimKiem.requestFocus();
+			txtTimKiem.selectAll();
+			return false;
+		}
+
+		return true;
+	}
+
 	private void xuLyTimKiem() {
+		// Validate dữ liệu trước khi tìm kiếm
+		if (!validateTimKiem()) {
+			return;
+		}
+
 		String keyword = txtTimKiem.getText().trim();
 		String tt = cbTrangThai.getSelectedItem().toString();
 

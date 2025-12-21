@@ -123,25 +123,24 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
 
         btnTimKiem = new PillButton(
                 "<html>" +
-                    "<center>" +
+                        "<center>" +
                         "TÌM KIẾM<br>" +
                         "<span style='font-size:10px; color:#888888;'>(Enter)</span>" +
-                    "</center>" +
-                "</html>"
-            );
+                        "</center>" +
+                        "</html>");
         btnTimKiem.setBounds(1120, 22, 130, 50);
         btnTimKiem.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        btnTimKiem.setToolTipText("<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã phiếu nhập, nhân viên, nhà cung cấp và bộ lọc ngày</html>");
+        btnTimKiem.setToolTipText(
+                "<html><b>Phím tắt:</b> Enter (khi ở ô tìm kiếm)<br>Tìm kiếm theo mã phiếu nhập, nhân viên, nhà cung cấp và bộ lọc ngày</html>");
         pnHeader.add(btnTimKiem);
 
         btnLamMoi = new PillButton(
                 "<html>" +
-                    "<center>" +
+                        "<center>" +
                         "LÀM MỚI<br>" +
                         "<span style='font-size:10px; color:#888888;'>(F5)</span>" +
-                    "</center>" +
-                "</html>"
-            );
+                        "</center>" +
+                        "</html>");
         btnLamMoi.setBounds(1265, 22, 130, 50);
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnLamMoi.setToolTipText("<html><b>Phím tắt:</b> F5<br>Làm mới toàn bộ dữ liệu và xóa bộ lọc</html>");
@@ -149,12 +148,11 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
 
         btnXemHoaDon = new PillButton(
                 "<html>" +
-                    "<center>" +
+                        "<center>" +
                         "XEM HÓA ĐƠN<br>" +
                         "<span style='font-size:10px; color:#888888;'>(F3)</span>" +
-                    "</center>" +
-                "</html>"
-            );
+                        "</center>" +
+                        "</html>");
         btnXemHoaDon.setBounds(1410, 22, 170, 50);
         btnXemHoaDon.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnXemHoaDon.setToolTipText("<html><b>Phím tắt:</b> F3<br>Xem chi tiết hóa đơn nhập hàng đang chọn</html>");
@@ -190,12 +188,12 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
         rightRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
 
         // Áp dụng căn chỉnh cho bảng Phiếu Nhập
-        tblPhieuNhap.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);  // STT - Giữa
-        tblPhieuNhap.getColumnModel().getColumn(1).setCellRenderer(centerRenderer);  // Mã phiếu nhập - Giữa
-        tblPhieuNhap.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);  // Ngày lập - Giữa
-        tblPhieuNhap.getColumnModel().getColumn(3).setCellRenderer(leftRenderer);    // Nhân viên - Trái
-        tblPhieuNhap.getColumnModel().getColumn(4).setCellRenderer(leftRenderer);    // Nhà cung cấp - Trái
-        tblPhieuNhap.getColumnModel().getColumn(5).setCellRenderer(rightRenderer);   // Tổng tiền - Phải
+        tblPhieuNhap.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); // STT - Giữa
+        tblPhieuNhap.getColumnModel().getColumn(1).setCellRenderer(centerRenderer); // Mã phiếu nhập - Giữa
+        tblPhieuNhap.getColumnModel().getColumn(2).setCellRenderer(centerRenderer); // Ngày lập - Giữa
+        tblPhieuNhap.getColumnModel().getColumn(3).setCellRenderer(leftRenderer); // Nhân viên - Trái
+        tblPhieuNhap.getColumnModel().getColumn(4).setCellRenderer(leftRenderer); // Nhà cung cấp - Trái
+        tblPhieuNhap.getColumnModel().getColumn(5).setCellRenderer(rightRenderer); // Tổng tiền - Phải
 
         tblPhieuNhap.getColumnModel().getColumn(0).setPreferredWidth(50);
         tblPhieuNhap.getColumnModel().getColumn(4).setPreferredWidth(250);
@@ -204,7 +202,8 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
         scrollPN.setBorder(taoVienTieuDe("Danh sách phiếu nhập hàng"));
         splitPane.setTopComponent(scrollPN);
 
-        String[] colChiTiet = { "STT", "Mã Lô", "Mã SP", "Tên sản phẩm", "ĐVT", "Số lượng", "Đơn giá nhập", "Thành tiền" };
+        String[] colChiTiet = { "STT", "Mã Lô", "Mã SP", "Tên sản phẩm", "ĐVT", "Số lượng", "Đơn giá nhập",
+                "Thành tiền" };
         modelChiTiet = new DefaultTableModel(colChiTiet, 0) {
             @Override
             public boolean isCellEditable(int r, int c) {
@@ -215,14 +214,14 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
         tblChiTiet = thietLapBang(modelChiTiet);
 
         // Áp dụng căn chỉnh cho bảng Chi Tiết
-        tblChiTiet.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);  // STT - Giữa
-        tblChiTiet.getColumnModel().getColumn(1).setCellRenderer(centerRenderer);  // Mã Lô - Giữa
-        tblChiTiet.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);  // Mã SP - Giữa
-        tblChiTiet.getColumnModel().getColumn(3).setCellRenderer(leftRenderer);    // Tên sản phẩm - Trái
-        tblChiTiet.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);  // ĐVT - Giữa
-        tblChiTiet.getColumnModel().getColumn(5).setCellRenderer(rightRenderer);   // Số lượng - Phải
-        tblChiTiet.getColumnModel().getColumn(6).setCellRenderer(rightRenderer);   // Đơn giá nhập - Phải
-        tblChiTiet.getColumnModel().getColumn(7).setCellRenderer(rightRenderer);   // Thành tiền - Phải
+        tblChiTiet.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); // STT - Giữa
+        tblChiTiet.getColumnModel().getColumn(1).setCellRenderer(centerRenderer); // Mã Lô - Giữa
+        tblChiTiet.getColumnModel().getColumn(2).setCellRenderer(centerRenderer); // Mã SP - Giữa
+        tblChiTiet.getColumnModel().getColumn(3).setCellRenderer(leftRenderer); // Tên sản phẩm - Trái
+        tblChiTiet.getColumnModel().getColumn(4).setCellRenderer(centerRenderer); // ĐVT - Giữa
+        tblChiTiet.getColumnModel().getColumn(5).setCellRenderer(rightRenderer); // Số lượng - Phải
+        tblChiTiet.getColumnModel().getColumn(6).setCellRenderer(rightRenderer); // Đơn giá nhập - Phải
+        tblChiTiet.getColumnModel().getColumn(7).setCellRenderer(rightRenderer); // Thành tiền - Phải
 
         tblChiTiet.getColumnModel().getColumn(3).setPreferredWidth(250);
 
@@ -304,12 +303,12 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
                 int selectedRow = tblPhieuNhap.getSelectedRow();
                 if (selectedRow == -1) {
                     JOptionPane.showMessageDialog(TraCuuPhieuNhap_GUI.this,
-                        "Vui lòng chọn một phiếu nhập để xem hóa đơn!",
-                        "Thông báo",
-                        JOptionPane.WARNING_MESSAGE);
+                            "Vui lòng chọn một phiếu nhập để xem hóa đơn!",
+                            "Thông báo",
+                            JOptionPane.WARNING_MESSAGE);
                     return;
                 }
-                
+
                 String maPhieuNhap = tblPhieuNhap.getValueAt(selectedRow, 1).toString();
                 PhieuNhap phieuNhap = phieuNhap_DAO.timPhieuNhapTheoMa(maPhieuNhap);
                 if (phieuNhap != null) {
@@ -344,13 +343,13 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
         } else if (source.equals(btnXemHoaDon)) {
             int selectedRow = tblPhieuNhap.getSelectedRow();
             if (selectedRow == -1) {
-                JOptionPane.showMessageDialog(this, 
-                    "Vui lòng chọn một phiếu nhập để xem hóa đơn!", 
-                    "Thông báo", 
-                    JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Vui lòng chọn một phiếu nhập để xem hóa đơn!",
+                        "Thông báo",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            
+
             String maPhieuNhap = tblPhieuNhap.getValueAt(selectedRow, 1).toString();
             PhieuNhap phieuNhap = phieuNhap_DAO.timPhieuNhapTheoMa(maPhieuNhap);
             if (phieuNhap != null) {
@@ -384,16 +383,20 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
     }
 
     @Override
-    public void mousePressed(MouseEvent e) {}
+    public void mousePressed(MouseEvent e) {
+    }
 
     @Override
-    public void mouseReleased(MouseEvent e) {}
+    public void mouseReleased(MouseEvent e) {
+    }
 
     @Override
-    public void mouseEntered(MouseEvent e) {}
+    public void mouseEntered(MouseEvent e) {
+    }
 
     @Override
-    public void mouseExited(MouseEvent e) {}
+    public void mouseExited(MouseEvent e) {
+    }
 
     private void taiDuLieuPhieuNhap() {
         modelPhieuNhap.setRowCount(0);
@@ -412,7 +415,75 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
         }
     }
 
+    /**
+     * Validate dữ liệu trước khi tìm kiếm
+     * 
+     * @return true nếu dữ liệu hợp lệ, false nếu không
+     */
+    private boolean validateTimKiem() {
+        String tuKhoa = txtTimKiem.getText().trim();
+        if (tuKhoa.equals("Tìm theo mã PN, tên nhân viên, nhà cung cấp...(F1 / Ctrl+F)")
+                || tuKhoa.contains("Tìm theo mã PN"))
+            tuKhoa = "";
+
+        // VALIDATION 1: Kiểm tra độ dài từ khóa tìm kiếm (tối đa 35 ký tự)
+        if (!tuKhoa.isEmpty() && tuKhoa.length() > 35) {
+            JOptionPane.showMessageDialog(this,
+                    "Từ khóa tìm kiếm không được vượt quá 35 ký tự!",
+                    "Lỗi nhập liệu",
+                    JOptionPane.ERROR_MESSAGE);
+            txtTimKiem.requestFocus();
+            txtTimKiem.selectAll();
+            return false;
+        }
+
+        // VALIDATION 2: Kiểm tra ngày hợp lệ
+        Date dTu = dateTuNgay.getDate();
+        Date dDen = dateDenNgay.getDate();
+        Date today = new Date();
+
+        // Kiểm tra ngày bắt đầu không được lớn hơn ngày hôm nay
+        if (dTu != null && dTu.after(today)) {
+            JOptionPane.showMessageDialog(this,
+                    "Ngày bắt đầu không được lớn hơn ngày hôm nay!\nĐã tự động reset về ngày hiện tại.",
+                    "Lỗi nhập liệu",
+                    JOptionPane.WARNING_MESSAGE);
+            dateTuNgay.setDate(today);
+            dateTuNgay.requestFocus();
+            return false;
+        }
+
+        // Kiểm tra ngày kết thúc không được lớn hơn ngày hôm nay
+        if (dDen != null && dDen.after(today)) {
+            JOptionPane.showMessageDialog(this,
+                    "Ngày kết thúc không được lớn hơn ngày hôm nay!\nĐã tự động reset về ngày hiện tại.",
+                    "Lỗi nhập liệu",
+                    JOptionPane.WARNING_MESSAGE);
+            dateDenNgay.setDate(today);
+            dateDenNgay.requestFocus();
+            return false;
+        }
+
+        // Kiểm tra ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu
+        if (dTu != null && dDen != null && dDen.before(dTu)) {
+            JOptionPane.showMessageDialog(this,
+                    "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!\nĐã tự động reset ngày kết thúc về ngày hiện tại.",
+                    "Lỗi nhập liệu",
+                    JOptionPane.WARNING_MESSAGE);
+            dateDenNgay.setDate(today);
+            dateDenNgay.requestFocus();
+            return false;
+        }
+
+        return true;
+    }
+
     private void xuLyTimKiem() {
+        // Validate dữ liệu trước khi tìm kiếm
+        if (!validateTimKiem()) {
+            return;
+        }
+
         String keyword = txtTimKiem.getText().trim();
         if (keyword.equals("Tìm theo mã PN, tên nhân viên, nhà cung cấp...(F1 / Ctrl+F)")) {
             keyword = "";
@@ -423,11 +494,6 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
 
         if (tuNgay == null || denNgay == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn đầy đủ ngày bắt đầu và kết thúc!");
-            return;
-        }
-
-        if (tuNgay.after(denNgay)) {
-            JOptionPane.showMessageDialog(this, "Ngày bắt đầu không được lớn hơn ngày kết thúc!");
             return;
         }
 
@@ -646,7 +712,7 @@ public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, Mouse
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-//                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception e) {
             }
             JFrame frame = new JFrame("Tra cứu phiếu nhập");

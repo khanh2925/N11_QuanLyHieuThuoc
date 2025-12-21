@@ -113,17 +113,17 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
 
         // Filter: Loại KM
         addFilterLabel("Loại KM:", 525, 28, 70, 35);
-        cbLoaiKM = new JComboBox<>(new String[]{"Tất cả", "Theo hóa đơn", "Theo sản phẩm"});
+        cbLoaiKM = new JComboBox<>(new String[] { "Tất cả", "Theo hóa đơn", "Theo sản phẩm" });
         setupCombo(cbLoaiKM, 605, 28, 140, 35);
 
         // Filter: Hình thức
         addFilterLabel("Hình thức:", 755, 28, 90, 35);
-        cbHinhThuc = new JComboBox<>(new String[]{"Tất cả", "Giảm tiền", "Giảm %", "Tặng quà"});
+        cbHinhThuc = new JComboBox<>(new String[] { "Tất cả", "Giảm tiền", "Giảm %", "Tặng quà" });
         setupCombo(cbHinhThuc, 845, 28, 120, 35);
 
         // Filter: Trạng thái
         addFilterLabel("Trạng thái:", 975, 28, 90, 35);
-        cbTrangThai = new JComboBox<>(new String[]{"Tất cả", "Hoạt động", "Không hoạt động"});
+        cbTrangThai = new JComboBox<>(new String[] { "Tất cả", "Hoạt động", "Không hoạt động" });
         setupCombo(cbTrangThai, 1075, 28, 150, 35);
 
         // Nút Tìm kiếm
@@ -190,18 +190,23 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
         splitPane.setResizeWeight(0.5);
 
         String[] colKM = {
-            "Mã KM", "Tên chương trình", "Loại KM", "Hình thức", 
-            "Giá trị", "Ngày bắt đầu", "Ngày kết thúc", "SL còn", "Trạng thái"
+                "Mã KM", "Tên chương trình", "Loại KM", "Hình thức",
+                "Giá trị", "Ngày bắt đầu", "Ngày kết thúc", "SL còn", "Trạng thái"
         };
         modelKhuyenMai = new DefaultTableModel(colKM, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
         tblKhuyenMai = thietLapBang(modelKhuyenMai);
 
         tblKhuyenMai.getColumnModel().getColumn(8).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int column) {
+                JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
+                        column);
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
                 String status = String.valueOf(value);
                 if ("Hoạt động".equals(status)) {
@@ -214,11 +219,13 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
                 return lbl;
             }
         });
-        
+
         tblKhuyenMai.getColumnModel().getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int column) {
+                JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
+                        column);
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
                 lbl.setFont(new Font("Segoe UI", Font.BOLD, 16));
                 if ("Hóa đơn".equals(value)) {
@@ -245,27 +252,33 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
     }
 
     private JComponent taoTabSanPhamApDung() {
-        String[] cols = {"STT", "Mã SP", "Tên sản phẩm", "Đơn vị tính", "Giá gốc", "Giá sau giảm"};
+        String[] cols = { "STT", "Mã SP", "Tên sản phẩm", "Đơn vị tính", "Giá gốc", "Giá sau giảm" };
         modelSanPhamApDung = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
         tblSanPhamApDung = thietLapBang(modelSanPhamApDung);
-        
+
         DefaultTableCellRenderer right = new DefaultTableCellRenderer();
         right.setHorizontalAlignment(SwingConstants.RIGHT);
         tblSanPhamApDung.getColumnModel().getColumn(4).setCellRenderer(right);
         tblSanPhamApDung.getColumnModel().getColumn(5).setCellRenderer(right);
-        
+
         return new JScrollPane(tblSanPhamApDung);
     }
 
     private JComponent taoTabLichSu() {
-        String[] cols = {"STT", "Mã Hóa Đơn", "Ngày lập", "Khách hàng", "Tổng tiền HĐ", "Số tiền được giảm"};
+        String[] cols = { "STT", "Mã Hóa Đơn", "Ngày lập", "Khách hàng", "Tổng tiền HĐ", "Số tiền được giảm" };
         modelLichSuApDung = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
         tblLichSuApDung = thietLapBang(modelLichSuApDung);
-        
+
         DefaultTableCellRenderer right = new DefaultTableCellRenderer();
         right.setHorizontalAlignment(SwingConstants.RIGHT);
         tblLichSuApDung.getColumnModel().getColumn(4).setCellRenderer(right);
@@ -285,21 +298,20 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
         header.setFont(new Font("Segoe UI", Font.BOLD, 16));
         header.setBackground(new Color(33, 150, 243));
         header.setForeground(Color.WHITE);
-        
+
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
-        for(int i=0; i<table.getColumnCount(); i++) {
+        for (int i = 0; i < table.getColumnCount(); i++) {
             table.getColumnModel().getColumn(i).setCellRenderer(center);
         }
-        
+
         return table;
     }
 
     private TitledBorder taoVienTieuDe(String title) {
         return BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
-            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 16), Color.DARK_GRAY
-        );
+                BorderFactory.createLineBorder(Color.LIGHT_GRAY), title,
+                TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 16), Color.DARK_GRAY);
     }
 
     private void dangKySuKien() {
@@ -405,32 +417,75 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
             if (row != -1) {
                 String maKM = tblKhuyenMai.getValueAt(row, 0).toString();
                 String loaiKM = tblKhuyenMai.getValueAt(row, 2).toString();
-                
+
                 double giaTri = 0;
                 String giaTriStr = tblKhuyenMai.getValueAt(row, 4).toString();
                 String hinhThucStr = tblKhuyenMai.getValueAt(row, 3).toString();
-                
+
                 try {
                     giaTriStr = giaTriStr.replace(",", "").replace("%", "").trim();
                     giaTri = Double.parseDouble(giaTriStr);
-                } catch (Exception ex) {}
+                } catch (Exception ex) {
+                }
 
                 hienThiChiTietKhuyenMai(maKM, loaiKM, hinhThucStr, giaTri);
             }
         }
     }
 
-    @Override public void mousePressed(MouseEvent e) {}
-    @Override public void mouseReleased(MouseEvent e) {}
-    @Override public void mouseEntered(MouseEvent e) {}
-    @Override public void mouseExited(MouseEvent e) {}
+    @Override
+    public void mousePressed(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+    }
+
+    /**
+     * Validate dữ liệu trước khi tìm kiếm
+     * 
+     * @return true nếu dữ liệu hợp lệ, false nếu không
+     */
+    private boolean validateTimKiem() {
+        String tuKhoa = txtTimKiem.getText().trim();
+        if (tuKhoa.contains("Tìm theo mã"))
+            tuKhoa = "";
+
+        // VALIDATION: Kiểm tra độ dài từ khóa tìm kiếm (tối đa 200 ký tự cho tên khuyến
+        // mãi)
+        if (!tuKhoa.isEmpty() && tuKhoa.length() > 200) {
+            JOptionPane.showMessageDialog(this,
+                    "Từ khóa tìm kiếm không được vượt quá 200 ký tự!",
+                    "Lỗi nhập liệu",
+                    JOptionPane.ERROR_MESSAGE);
+            txtTimKiem.requestFocus();
+            txtTimKiem.selectAll();
+            return false;
+        }
+
+        return true;
+    }
 
     private void taiDuLieuKhuyenMai() {
+        // Validate dữ liệu trước khi tìm kiếm
+        if (!validateTimKiem()) {
+            return;
+        }
+
         modelKhuyenMai.setRowCount(0);
         List<KhuyenMai> listKM = khuyenMaiDAO.layTatCaKhuyenMai();
-        
+
         String tuKhoa = txtTimKiem.getText().trim().toLowerCase();
-        if (tuKhoa.contains("tìm theo mã")) tuKhoa = "";
+        if (tuKhoa.contains("tìm theo mã"))
+            tuKhoa = "";
 
         String locLoai = cbLoaiKM.getSelectedItem().toString();
         String locHinhThuc = cbHinhThuc.getSelectedItem().toString();
@@ -440,11 +495,14 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
             if (!tuKhoa.isEmpty()) {
                 boolean matchMa = km.getMaKM().toLowerCase().contains(tuKhoa);
                 boolean matchTen = km.getTenKM().toLowerCase().contains(tuKhoa);
-                if (!matchMa && !matchTen) continue;
+                if (!matchMa && !matchTen)
+                    continue;
             }
 
-            if (locLoai.equals("Theo hóa đơn") && !km.isKhuyenMaiHoaDon()) continue;
-            if (locLoai.equals("Theo sản phẩm") && km.isKhuyenMaiHoaDon()) continue;
+            if (locLoai.equals("Theo hóa đơn") && !km.isKhuyenMaiHoaDon())
+                continue;
+            if (locLoai.equals("Theo sản phẩm") && km.isKhuyenMaiHoaDon())
+                continue;
 
             // Xác định hình thức khuyến mãi
             String hinhThucHienThi = "Không xác định";
@@ -453,25 +511,29 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
                     hinhThucHienThi = "Giảm %";
                 } else if (km.getHinhThuc() == HinhThucKM.GIAM_GIA_TIEN) {
                     hinhThucHienThi = "Giảm tiền";
-                } 
+                }
             }
 
             // Lọc theo hình thức
-            if (locHinhThuc.equals("Giảm tiền") && km.getHinhThuc() != HinhThucKM.GIAM_GIA_TIEN) continue;
-            if (locHinhThuc.equals("Giảm %") && km.getHinhThuc() != HinhThucKM.GIAM_GIA_PHAN_TRAM) continue;
+            if (locHinhThuc.equals("Giảm tiền") && km.getHinhThuc() != HinhThucKM.GIAM_GIA_TIEN)
+                continue;
+            if (locHinhThuc.equals("Giảm %") && km.getHinhThuc() != HinhThucKM.GIAM_GIA_PHAN_TRAM)
+                continue;
 
             LocalDate now = LocalDate.now();
             String trangThaiHienThi;
             // Đơn giản hóa: chỉ còn 2 trạng thái Hoạt động/Không hoạt động
-            if (km.isTrangThai() && km.getSoLuongKhuyenMai() > 0 && 
-                !now.isBefore(km.getNgayBatDau()) && !now.isAfter(km.getNgayKetThuc())) {
+            if (km.isTrangThai() && km.getSoLuongKhuyenMai() > 0 &&
+                    !now.isBefore(km.getNgayBatDau()) && !now.isAfter(km.getNgayKetThuc())) {
                 trangThaiHienThi = "Hoạt động";
             } else {
                 trangThaiHienThi = "Không hoạt động";
             }
 
-            if (locTrangThai.equals("Hoạt động") && !trangThaiHienThi.equals("Hoạt động")) continue;
-            if (locTrangThai.equals("Không hoạt động") && !trangThaiHienThi.equals("Không hoạt động")) continue;
+            if (locTrangThai.equals("Hoạt động") && !trangThaiHienThi.equals("Hoạt động"))
+                continue;
+            if (locTrangThai.equals("Không hoạt động") && !trangThaiHienThi.equals("Không hoạt động"))
+                continue;
 
             String giaTriHienThi = "";
             if (km.getHinhThuc() == HinhThucKM.GIAM_GIA_PHAN_TRAM) {
@@ -480,16 +542,16 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
                 giaTriHienThi = df.format(km.getGiaTri());
             }
 
-            modelKhuyenMai.addRow(new Object[]{
-                km.getMaKM(),
-                km.getTenKM(),
-                km.isKhuyenMaiHoaDon() ? "Hóa đơn" : "Sản phẩm",
-                hinhThucHienThi,
-                giaTriHienThi,
-                km.getNgayBatDau().format(fmt),
-                km.getNgayKetThuc().format(fmt),
-                km.getSoLuongKhuyenMai(),
-                trangThaiHienThi
+            modelKhuyenMai.addRow(new Object[] {
+                    km.getMaKM(),
+                    km.getTenKM(),
+                    km.isKhuyenMaiHoaDon() ? "Hóa đơn" : "Sản phẩm",
+                    hinhThucHienThi,
+                    giaTriHienThi,
+                    km.getNgayBatDau().format(fmt),
+                    km.getNgayKetThuc().format(fmt),
+                    km.getSoLuongKhuyenMai(),
+                    trangThaiHienThi
             });
         }
     }
@@ -499,13 +561,14 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
         modelLichSuApDung.setRowCount(0);
 
         if ("Hóa đơn".equals(loaiKM)) {
-            modelSanPhamApDung.addRow(new Object[]{"-", "Toàn bộ cửa hàng", "Áp dụng trên tổng tiền hóa đơn", "-", "-", "-"});
+            modelSanPhamApDung
+                    .addRow(new Object[] { "-", "Toàn bộ cửa hàng", "Áp dụng trên tổng tiền hóa đơn", "-", "-", "-" });
         } else {
             List<ChiTietKhuyenMaiSanPham> listCT = ctkmDAO.layChiTietKhuyenMaiTheoMaCoJoin(maKM);
             int stt = 1;
             for (ChiTietKhuyenMaiSanPham ct : listCT) {
                 double giaGoc = ct.getSanPham().getGiaNhap() * 1.3;
-                
+
                 double giaSauGiam = giaGoc;
                 if (hinhThuc.contains("%")) {
                     giaSauGiam = giaGoc * (1 - giaTri / 100);
@@ -513,15 +576,15 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
                     giaSauGiam = giaGoc - giaTri;
                 }
 
-                String donViTinh = "Hộp"; 
+                String donViTinh = "Hộp";
 
-                modelSanPhamApDung.addRow(new Object[]{
-                    stt++,
-                    ct.getSanPham().getMaSanPham(),
-                    ct.getSanPham().getTenSanPham(),
-                    donViTinh, 
-                    df.format(giaGoc),
-                    df.format(giaSauGiam)
+                modelSanPhamApDung.addRow(new Object[] {
+                        stt++,
+                        ct.getSanPham().getMaSanPham(),
+                        ct.getSanPham().getTenSanPham(),
+                        donViTinh,
+                        df.format(giaGoc),
+                        df.format(giaSauGiam)
                 });
             }
         }
@@ -549,20 +612,21 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
             }
 
             if (found) {
-                modelLichSuApDung.addRow(new Object[]{
-                    sttHD++,
-                    hd.getMaHoaDon(),
-                    hd.getNgayLap().format(fmt),
-                    hd.getKhachHang() != null ? hd.getKhachHang().getTenKhachHang() : "Khách vãng lai",
-                    df.format(hd.getTongThanhToan()),
-                    df.format(tienGiam)
+                modelLichSuApDung.addRow(new Object[] {
+                        sttHD++,
+                        hd.getMaHoaDon(),
+                        hd.getNgayLap().format(fmt),
+                        hd.getKhachHang() != null ? hd.getKhachHang().getTenKhachHang() : "Khách vãng lai",
+                        df.format(hd.getTongThanhToan()),
+                        df.format(tienGiam)
                 });
             }
         }
     }
 
     /**
-     * Xuất dữ liệu khuyến mãi ra file Excel đầy đủ (Danh sách + Sản phẩm áp dụng + Lịch sử áp dụng)
+     * Xuất dữ liệu khuyến mãi ra file Excel đầy đủ (Danh sách + Sản phẩm áp dụng +
+     * Lịch sử áp dụng)
      */
     private void xuatExcelDayDu() {
         if (modelKhuyenMai.getRowCount() == 0) {
@@ -575,7 +639,7 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
         int[] selectedRows = tblKhuyenMai.getSelectedRows();
         int[] rowsToExport;
         String thongTinXuat;
-        
+
         if (selectedRows.length > 0) {
             // Có chọn dòng → xuất các dòng đã chọn
             rowsToExport = selectedRows;
@@ -641,7 +705,7 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
                 Row periodRow = sheetKM.createRow(1);
                 periodRow.createCell(0).setCellValue(
                         "Ngày xuất: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-                
+
                 Row infoRow = sheetKM.createRow(2);
                 infoRow.createCell(0).setCellValue(thongTinXuat);
 
@@ -682,9 +746,10 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
                     Row dateRowSP = sheetSP.createRow(1);
                     dateRowSP.createCell(0).setCellValue(
                             "Ngày xuất: " + LocalDate.now().format(fmt));
-                    
+
                     Row countRowSP = sheetSP.createRow(2);
-                    countRowSP.createCell(0).setCellValue("Số lượng: " + modelSanPhamApDung.getRowCount() + " sản phẩm");
+                    countRowSP.createCell(0)
+                            .setCellValue("Số lượng: " + modelSanPhamApDung.getRowCount() + " sản phẩm");
 
                     // Header
                     Row headerRowSP = sheetSP.createRow(4);
@@ -723,7 +788,7 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
                     Row dateRowLS = sheetLS.createRow(1);
                     dateRowLS.createCell(0).setCellValue(
                             "Ngày xuất: " + LocalDate.now().format(fmt));
-                    
+
                     Row countRowLS = sheetLS.createRow(2);
                     countRowLS.createCell(0).setCellValue("Số lượng: " + modelLichSuApDung.getRowCount() + " hóa đơn");
 
@@ -757,13 +822,13 @@ public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, Mouse
                 workbook.close();
 
                 // Thống kê số sheet
-                int totalSheets = 1 + (modelSanPhamApDung.getRowCount() > 0 ? 1 : 0) + 
-                                  (modelLichSuApDung.getRowCount() > 0 ? 1 : 0);
+                int totalSheets = 1 + (modelSanPhamApDung.getRowCount() > 0 ? 1 : 0) +
+                        (modelLichSuApDung.getRowCount() > 0 ? 1 : 0);
 
                 JOptionPane.showMessageDialog(this,
-                        "Xuất Excel thành công!\n" + thongTinXuat + 
-                        "\nSố sheet: " + totalSheets +
-                        "\nFile: " + file.getAbsolutePath(),
+                        "Xuất Excel thành công!\n" + thongTinXuat +
+                                "\nSố sheet: " + totalSheets +
+                                "\nFile: " + file.getAbsolutePath(),
                         "Thành công", JOptionPane.INFORMATION_MESSAGE);
 
                 // Mở file

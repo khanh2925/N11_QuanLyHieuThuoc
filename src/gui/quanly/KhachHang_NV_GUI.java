@@ -468,7 +468,7 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
 
         // Kiểm tra đúng định dạng (viết chữ cái, có dấu, không chứa số hoặc ký tự đặc
         // biệt)
-        String nameRegex = "([A-ZÀ-Ỵ][a-zà-ỹ]+)(\\s[A-ZÀ-Ỵ][a-zà-ỹ]+)*$";
+        String nameRegex = "([A-ZÀ-Ỵ][a-zà-ỹ]*)(\\s[A-ZÀ-Ỵ][a-zà-ỹ]*)*$";
         if (!ten.matches(nameRegex)) {
             JOptionPane.showMessageDialog(this,
                     "Tên khách hàng phải viết hoa chữ cái đầu mỗi từ và không chứa số hoặc ký tự đặc biệt.");
