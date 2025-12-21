@@ -1,5 +1,6 @@
 package component.chart;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
@@ -15,6 +16,7 @@ import org.jfree.chart.LegendItem;
 import org.jfree.chart.LegendItemCollection;
 import org.jfree.chart.axis.CategoryAxis;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
 import org.jfree.chart.labels.StandardCategoryToolTipGenerator;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
@@ -30,11 +32,7 @@ import org.jfree.data.category.DefaultCategoryDataset;
  */
 public class BieuDoCotGroup extends JPanel {
 
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	private final DefaultCategoryDataset tapDuLieu;
+    private final DefaultCategoryDataset tapDuLieu;
     private final JFreeChart bieuDo;
     private final List<DuLieuBieuDoCot> danhSachDuLieu;
 
@@ -78,7 +76,10 @@ public class BieuDoCotGroup extends JPanel {
 
         NumberAxis trucY = (NumberAxis) plot.getRangeAxis();
         trucY.setTickLabelFont(fontTruc);
-        trucY.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+        // Sử dụng DecimalFormat để hiển thị số lớn không dùng ký hiệu khoa học
+        DecimalFormat formatTrucY = new DecimalFormat("#,##0");
+        formatTrucY.setGroupingUsed(true);
+        trucY.setNumberFormatOverride(formatTrucY);
 
         // 3. Cấu hình Renderer (QUAN TRỌNG NHẤT)
         BarRenderer renderer = new RendererTuyChinhFlat();
@@ -94,9 +95,11 @@ public class BieuDoCotGroup extends JPanel {
         // --- Dính sát nhau ---
         renderer.setItemMargin(0.0); // Khoảng cách giữa các cột trong cùng 1 tháng = 0
         
-        // --- Tooltip ---
+        // --- Tooltip - hiển thị số lớn không dùng ký hiệu khoa học ---
+        DecimalFormat formatTooltip = new DecimalFormat("#,##0");
+        formatTooltip.setGroupingUsed(true);
         renderer.setDefaultToolTipGenerator(new StandardCategoryToolTipGenerator(
-                "{0} - {1}: {2}", new DecimalFormat("#,##0")));
+                "{0} - {1}: {2}", formatTooltip));
 
         plot.setRenderer(renderer);
 
@@ -112,14 +115,8 @@ public class BieuDoCotGroup extends JPanel {
     // Class con để tô màu tùy chỉnh (theo dữ liệu truyền vào)
 private class RendererTuyChinhFlat extends BarRenderer {
         
-        /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-
-		// 1. Giữ nguyên hàm tô màu cột
-        @SuppressWarnings("rawtypes")
-		@Override
+        // 1. Giữ nguyên hàm tô màu cột
+        @Override
         public Paint getItemPaint(int row, int column) {
             Comparable rowKey = getPlot().getDataset().getRowKey(row);
             Comparable colKey = getPlot().getDataset().getColumnKey(column);
@@ -133,8 +130,7 @@ private class RendererTuyChinhFlat extends BarRenderer {
         }
 
         // 2. === THÊM MỚI: Ghi đè hàm này để Chú thích (Legend) đúng màu và thứ tự ===
-        @SuppressWarnings("rawtypes")
-		@Override
+        @Override
         public LegendItemCollection getLegendItems() {
             LegendItemCollection result = new LegendItemCollection();
             CategoryDataset dataset = getPlot().getDataset();

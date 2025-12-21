@@ -29,7 +29,6 @@ import org.jfree.chart.ui.RectangleAnchor;
 import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.category.DefaultCategoryDataset;
 
-@SuppressWarnings("serial")
 public class BieuDoCotJFreeChart extends JPanel {
 
     private final DefaultCategoryDataset tapDuLieu;
@@ -75,7 +74,10 @@ public class BieuDoCotJFreeChart extends JPanel {
         trucY.setTickMarksVisible(false);
         trucY.setTickLabelFont(fontTruc);
         trucY.setTickLabelPaint(new Color(100, 100, 100));
-        trucY.setNumberFormatOverride(new DecimalFormat("#,##0"));
+        // Sử dụng DecimalFormat để hiển thị số lớn không dùng ký hiệu khoa học
+        DecimalFormat formatTrucY = new DecimalFormat("#,##0");
+        formatTrucY.setGroupingUsed(true);
+        trucY.setNumberFormatOverride(formatTrucY);
 
         BarRenderer rendererTuyChinh = new RendererTuyChinhEnhanced();
         rendererTuyChinh.setDrawBarOutline(false);
@@ -85,13 +87,18 @@ public class BieuDoCotJFreeChart extends JPanel {
 
         rendererTuyChinh.setDefaultItemLabelsVisible(true);
         Font fontGiaTri = new Font("Segoe UI", Font.BOLD, 15);
-        DecimalFormat dinhDangSo = new DecimalFormat("#,##0"); 
+        // DecimalFormat cho label trên cột - hiển thị số lớn không dùng ký hiệu khoa học
+        DecimalFormat dinhDangSo = new DecimalFormat("#,##0");
+        dinhDangSo.setGroupingUsed(true);
         rendererTuyChinh.setDefaultItemLabelGenerator(new StandardCategoryItemLabelGenerator("{2}", dinhDangSo));
         rendererTuyChinh.setDefaultItemLabelFont(fontGiaTri);
         rendererTuyChinh.setDefaultItemLabelPaint(new Color(50, 50, 50));
         
+        // DecimalFormat cho tooltip - hiển thị số lớn không dùng ký hiệu khoa học
+        DecimalFormat formatTooltip = new DecimalFormat("#,##0");
+        formatTooltip.setGroupingUsed(true);
         rendererTuyChinh.setDefaultToolTipGenerator(new StandardCategoryToolTipGenerator(
-                "{1} ({0}): {2}", new DecimalFormat("#,##0")));
+                "{1} ({0}): {2}", formatTooltip));
         
         vungVe.setRenderer(rendererTuyChinh);
 
