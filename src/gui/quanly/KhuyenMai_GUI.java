@@ -22,8 +22,10 @@ import component.border.RoundedBorder;
 import dao.ChiTietKhuyenMaiSanPham_DAO;
 import dao.KhuyenMai_DAO;
 import dao.SanPham_DAO;
+import dao.QuyCachDongGoi_DAO;
 import entity.ChiTietKhuyenMaiSanPham;
 import entity.KhuyenMai;
+import entity.QuyCachDongGoi;
 import entity.SanPham;
 import enums.HinhThucKM;
 import gui.dialog.DialogChonSanPhamApDung;
@@ -55,6 +57,7 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 	private KhuyenMai_DAO kmDAO = new KhuyenMai_DAO();
 	private ChiTietKhuyenMaiSanPham_DAO ctkmDAO = new ChiTietKhuyenMaiSanPham_DAO();
 	private SanPham_DAO spDAO = new SanPham_DAO();
+	private QuyCachDongGoi_DAO qcDAO = new QuyCachDongGoi_DAO();
 	private List<KhuyenMai> dsKhuyenMai = new ArrayList<>();
 
 	// Format
@@ -754,8 +757,12 @@ public class KhuyenMai_GUI extends JPanel implements ActionListener {
 			double giaGoc = sp.getGiaNhap();
 			double giaKM = tinhGiaSauKhuyenMai(giaGoc, km);
 
-			modelSanPhamApDung.addRow(new Object[] { sp.getMaSanPham(), sp.getTenSanPham(), sp.getKeBanSanPham(),
-					dfNumber.format(giaGoc), dfNumber.format(giaKM) });
+			// Lấy đơn vị gốc từ QuyCachDongGoi
+			QuyCachDongGoi qcGoc = qcDAO.timQuyCachGocTheoSanPham(sp.getMaSanPham());
+			String tenDonVi = qcGoc != null && qcGoc.getDonViTinh() != null ? qcGoc.getDonViTinh().getTenDonViTinh() : "-";
+
+			modelSanPhamApDung.addRow(new Object[] { sp.getMaSanPham(), sp.getTenSanPham(), tenDonVi,
+				dfNumber.format(giaGoc), dfNumber.format(giaKM) });
 		}
 	}
 

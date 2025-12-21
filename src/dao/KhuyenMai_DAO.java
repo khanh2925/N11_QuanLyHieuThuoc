@@ -103,7 +103,7 @@ public class KhuyenMai_DAO {
 		String sql = """
 				    UPDATE KhuyenMai
 				    SET TenKM=?, NgayBatDau=?, NgayKetThuc=?, TrangThai=?, KhuyenMaiHoaDon=?,
-				        HinhThucKM=?, GiaTri=?, DieuKienApDungHoaDon=?, SoLuongKhuyenMai=?
+				        HinhThuc=?, GiaTri=?, DieuKienApDungHoaDon=?, SoLuongKhuyenMai=?
 				    WHERE MaKM=?
 				""";
 
