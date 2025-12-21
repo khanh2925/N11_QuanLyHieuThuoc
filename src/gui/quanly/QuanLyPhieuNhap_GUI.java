@@ -959,10 +959,10 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
                                 throw new Exception(String.format("DVT/Đơn giá không khớp. (Cần: %s - %.0f đ)",
                                     panelSanPham.layDonViTinh().getTenDonViTinh(), panelSanPham.layDonGia())); 
                             }
-                            panelSanPham.themLot(chiTietMoi);
+                            panelSanPham.themLot(chiTietMoi, qc_goc, soLuong);
                         } else {
                             ChiTietSanPhamPanel newPanel = new ChiTietSanPhamPanel(sp, dvtGoc, sp.getGiaNhap());
-                            newPanel.themLot(chiTietMoi);
+                            newPanel.themLot(chiTietMoi, qc_goc, soLuong);
                             pnDanhSachDon.add(newPanel);
                             capNhatLaiSTT();
                         }
@@ -1332,6 +1332,10 @@ private void xuLyTimNhaCungCap() {
                 double donGiaGoc = dialog.getDonGiaNhap(); 
                 DonViTinh dvtGoc = dialog.getDonViTinh(); 
                 LoSanPham loMoi = dialog.getLoSanPham();
+                
+                // Lấy thông tin hiển thị
+                QuyCachDongGoi quyCachDaChon = dialog.getQuyCachDaChon();
+                int soLuongHienThi = dialog.getSoLuongHienThi();
 
                 ChiTietPhieuNhap chiTietMoi = new ChiTietPhieuNhap();
                 chiTietMoi.setLoSanPham(loMoi);
@@ -1349,10 +1353,10 @@ private void xuLyTimNhaCungCap() {
                             "Lỗi Thêm Lô", JOptionPane.ERROR_MESSAGE);
                         return; // Không thêm
                     }
-                    panelSanPham.themLot(chiTietMoi);
+                    panelSanPham.themLot(chiTietMoi, quyCachDaChon, soLuongHienThi);
                 } else {
                     ChiTietSanPhamPanel newPanel = new ChiTietSanPhamPanel(sp, dvtGoc, donGiaGoc);
-                    newPanel.themLot(chiTietMoi);
+                    newPanel.themLot(chiTietMoi, quyCachDaChon, soLuongHienThi);
                     pnDanhSachDon.add(newPanel);
                     capNhatLaiSTT(); 
                 }
@@ -1614,6 +1618,19 @@ private void xuLyTimNhaCungCap() {
     }
 
 // ✅ ===================================================================
+    // ✅ CLASS HELPER ĐỂ LƯU THÔNG TIN HIỂN THỊ
+    // ✅ ===================================================================
+    class ThongTinHienThi {
+        QuyCachDongGoi quyCach;
+        int soLuong;
+        
+        ThongTinHienThi(QuyCachDongGoi quyCach, int soLuong) {
+            this.quyCach = quyCach;
+            this.soLuong = soLuong;
+        }
+    }
+
+// ✅ ===================================================================
     // ✅ CLASS CHI TIẾT SẢN PHẨM (ĐÃ CẬP NHẬT STT VÀ NÚT XÓA)
     // ✅ ===================================================================
     class ChiTietSanPhamPanel extends JPanel {
@@ -1621,6 +1638,9 @@ private void xuLyTimNhaCungCap() {
         private DonViTinh donViTinh;
         private double donGia;
         private List<ChiTietPhieuNhap> dsChiTietCuaSP;
+        
+        // Map để lưu thông tin hiển thị cho từng ChiTietPhieuNhap
+        private java.util.Map<ChiTietPhieuNhap, ThongTinHienThi> mapThongTinHienThi = new java.util.HashMap<>();
 
         // UI Components
         private JLabel lblSTT; // <-- MỚI: Label số thứ tự
@@ -1855,7 +1875,14 @@ private void xuLyTimNhaCungCap() {
                 JOptionPane.showMessageDialog(this, "Sản phẩm chưa cấu hình Quy Cách.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            ChonLo_Dialog dialog = new ChonLo_Dialog(mainFrame, sp, maLoHienThi, dsQuyCach, qc_goc, this.dsChiTietCuaSP);
+            
+            // Chuyển đổi Map sang Object để tránh lỗi kiểu
+            java.util.Map<ChiTietPhieuNhap, Object> mapObject = new java.util.HashMap<>();
+            for (java.util.Map.Entry<ChiTietPhieuNhap, ThongTinHienThi> entry : mapThongTinHienThi.entrySet()) {
+                mapObject.put(entry.getKey(), entry.getValue());
+            }
+            
+            ChonLo_Dialog dialog = new ChonLo_Dialog(mainFrame, sp, maLoHienThi, dsQuyCach, qc_goc, this.dsChiTietCuaSP, mapObject);
             dialog.setVisible(true);
 
             if (dialog.isConfirmed()) {
@@ -1866,15 +1893,20 @@ private void xuLyTimNhaCungCap() {
                         JOptionPane.showMessageDialog(this, "Lỗi: ĐVT/Giá nhập không khớp lô cũ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         return; 
                     }
+                    
+                    // Lấy thông tin hiển thị
+                    QuyCachDongGoi quyCachDaChon = dialog.getQuyCachDaChon();
+                    int soLuongHienThi = dialog.getSoLuongHienThi();
+                    
                     ChiTietPhieuNhap ctCanSua = dialog.getChiTietCanSua();
                     int soLuongNhapMoi_Goc = dialog.getSoLuongNhap();
 
                     if (ctCanSua != null) {
                         if (soLuongNhapMoi_Goc > 0) {
-                            ctCanSua.setSoLuongNhap(soLuongNhapMoi_Goc); 
+                            ctCanSua.setSoLuongNhap(soLuongNhapMoi_Goc);
                             xoaTagChiTiet(ctCanSua); 
                             dsChiTietCuaSP.remove(ctCanSua); 
-                            themLot(ctCanSua);       
+                            themLot(ctCanSua, quyCachDaChon, soLuongHienThi);       
                         } else {
                             xoaLoKhoiPanel(ctCanSua); 
                         }
@@ -1885,7 +1917,7 @@ private void xuLyTimNhaCungCap() {
                         chiTietMoi.setDonViTinh(dvtGoc);
                         chiTietMoi.setSoLuongNhap(soLuongNhapMoi_Goc);
                         chiTietMoi.setDonGiaNhap(donGiaGoc);
-                        this.themLot(chiTietMoi);
+                        this.themLot(chiTietMoi, quyCachDaChon, soLuongHienThi);
                         if (loMoi.getMaLo().equals(maLoHienThi)) soLoTiepTheo++; 
                     }
                     capNhatTongTienHang();
@@ -1909,6 +1941,11 @@ private void xuLyTimNhaCungCap() {
             }
             return dsChiTietCuaSP;
         }
+        
+        // Lấy Map thông tin hiển thị để truyền cho ChonLo_Dialog
+        public java.util.Map<ChiTietPhieuNhap, ThongTinHienThi> layMapThongTinHienThi() {
+            return mapThongTinHienThi;
+        }
         private void xoaTagChiTiet(ChiTietPhieuNhap chiTiet) {
             String maLoCanXoa = chiTiet.getLoSanPham().getMaLo();
             for (Component comp : pnDanhSachLo.getComponents()) {
@@ -1920,13 +1957,40 @@ private void xuLyTimNhaCungCap() {
                 }
             }
         }
-        public void themLot(ChiTietPhieuNhap chiTiet) {
+        public void themLot(ChiTietPhieuNhap chiTiet, QuyCachDongGoi quyCachHienThi, int soLuongHienThi) {
             dsChiTietCuaSP.add(chiTiet);
+            
+            // Lưu thông tin hiển thị vào Map
+            if (quyCachHienThi != null && soLuongHienThi > 0) {
+                mapThongTinHienThi.put(chiTiet, new ThongTinHienThi(quyCachHienThi, soLuongHienThi));
+            }
+            
             JPanel pnlLoTag = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
             pnlLoTag.setBackground(new Color(0x3B82F6));
             pnlLoTag.setBorder(new EmptyBorder(2, 5, 2, 5));
             pnlLoTag.setName(chiTiet.getLoSanPham().getMaLo());
-            String loText = String.format("%s - %s - SL: %d", chiTiet.getLoSanPham().getMaLo(), chiTiet.getLoSanPham().getHanSuDung().format(fmtDate), chiTiet.getSoLuongNhap());
+            
+            // Hiển thị số lượng theo đơn vị đã chọn
+            String tenDonViHienThi;
+            int soLuongDisplay;
+            
+            // Kiểm tra xem có thông tin hiển thị trong Map không
+            ThongTinHienThi ttht = mapThongTinHienThi.get(chiTiet);
+            if (ttht != null) {
+                tenDonViHienThi = ttht.quyCach.getDonViTinh().getTenDonViTinh();
+                soLuongDisplay = ttht.soLuong;
+            } else {
+                // Không có -> dùng đơn vị gốc
+                tenDonViHienThi = chiTiet.getDonViTinh().getTenDonViTinh();
+                soLuongDisplay = chiTiet.getSoLuongNhap();
+            }
+            
+            String loText = String.format("%s - %s - SL: %d %s", 
+                chiTiet.getLoSanPham().getMaLo(), 
+                chiTiet.getLoSanPham().getHanSuDung().format(fmtDate), 
+                soLuongDisplay,
+                tenDonViHienThi);
+            
             JLabel lblLoInfo = new JLabel(loText);
             lblLoInfo.setFont(new Font("Segoe UI", Font.BOLD, 12));
             lblLoInfo.setForeground(Color.WHITE);

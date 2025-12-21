@@ -3,6 +3,8 @@ package gui.dialog;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.text.DecimalFormat;
@@ -14,6 +16,10 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
 
 import com.toedter.calendar.JDateChooser;
 import entity.DonViTinh;
@@ -37,6 +43,10 @@ public class ThemLo_Dialog extends JDialog implements ActionListener,MouseListen
     private double donGiaNhapGoc = 0;   // Giá của đơn vị gốc
     private int soLuongNhapGoc = 0;   // Số lượng đã quy đổi về đơn vị gốc
     private DonViTinh donViTinhGoc = null; // Đơn vị tính gốc
+    
+    // Thông tin hiển thị
+    private QuyCachDongGoi quyCachDaChon = null;  // Quy cách người dùng chọn
+    private int soLuongHienThi = 0;  // Số lượng theo quy cách đã chọn
 
     // Thông tin truyền vào
     private SanPham sanPham;
@@ -149,6 +159,7 @@ public class ThemLo_Dialog extends JDialog implements ActionListener,MouseListen
         gbc.gridx = 1; gbc.gridy = 3;
         spinnerSoLuong = new JSpinner(new SpinnerNumberModel(1, Integer.MIN_VALUE, Integer.MAX_VALUE, 1));
         spinnerSoLuong.setFont(fontField);
+        applyNumericFilter(spinnerSoLuong);
         mainPanel.add(spinnerSoLuong, gbc);
 
         // Hàng 4: Đơn Giá
@@ -256,6 +267,18 @@ public class ThemLo_Dialog extends JDialog implements ActionListener,MouseListen
             return;
         }
         
+        // Validate số lượng nhập
+        try {
+            spinnerSoLuong.commitEdit();
+        } catch (java.text.ParseException ex) {
+            JOptionPane.showMessageDialog(this, 
+                "Số lượng không hợp lệ.\nVui lòng nhập một số nguyên.", 
+                "Số lượng không hợp lệ", 
+                JOptionPane.ERROR_MESSAGE);
+            spinnerSoLuong.requestFocus();
+            return;
+        }
+        
         try {
             int soLuongQuyCach = (Integer) spinnerSoLuong.getValue();
             
@@ -271,6 +294,10 @@ public class ThemLo_Dialog extends JDialog implements ActionListener,MouseListen
             
             // QUY ĐỔI VỀ GỐC
             this.soLuongNhapGoc = soLuongQuyCach * qcDaChon.getHeSoQuyDoi();
+            
+            // Lưu thông tin hiển thị
+            this.quyCachDaChon = qcDaChon;
+            this.soLuongHienThi = soLuongQuyCach;
             
             // Kiểm tra giới hạn 1,000,000 đơn vị gốc
             if (this.soLuongNhapGoc > 1000000) {
@@ -334,6 +361,14 @@ public class ThemLo_Dialog extends JDialog implements ActionListener,MouseListen
     public DonViTinh getDonViTinh() {
         return donViTinhGoc;
     }
+    
+    public QuyCachDongGoi getQuyCachDaChon() {
+        return quyCachDaChon;
+    }
+    
+    public int getSoLuongHienThi() {
+        return soLuongHienThi;
+    }
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
@@ -371,30 +406,109 @@ public class ThemLo_Dialog extends JDialog implements ActionListener,MouseListen
 		
 	}
 
+	/**
+	 * Áp dụng bộ lọc chỉ cho phép nhập số vào JSpinner
+	 */
+	private void applyNumericFilter(JSpinner spinner) {
+		JComponent editor = spinner.getEditor();
+		if (editor instanceof JSpinner.DefaultEditor) {
+			JSpinner.DefaultEditor spinnerEditor = (JSpinner.DefaultEditor) editor;
+			JTextField textField = spinnerEditor.getTextField();
+			((AbstractDocument) textField.getDocument()).setDocumentFilter(new NumericDocumentFilter());
+			
+			// Thêm FocusListener để validate khi rời khỏi field
+			textField.addFocusListener(new FocusAdapter() {
+				@Override
+				public void focusLost(FocusEvent e) {
+					String text = textField.getText().trim();
+					// Nếu text rỗng hoặc không phải số hợp lệ
+					if (text.isEmpty() || !text.matches("\\d+")) {
+						JOptionPane.showMessageDialog(ThemLo_Dialog.this, 
+							"Số lượng không hợp lệ. Đã reset về 1.", 
+							"Lỗi nhập liệu", 
+							JOptionPane.WARNING_MESSAGE);
+						spinner.setValue(1);
+					} else {
+						try {
+							int value = Integer.parseInt(text);
+							if (value <= 0) {
+								JOptionPane.showMessageDialog(ThemLo_Dialog.this, 
+									"Số lượng phải lớn hơn 0. Đã reset về 1.", 
+									"Lỗi nhập liệu", 
+									JOptionPane.WARNING_MESSAGE);
+								spinner.setValue(1);
+							}
+						} catch (NumberFormatException ex) {
+							JOptionPane.showMessageDialog(ThemLo_Dialog.this, 
+								"Số lượng không hợp lệ. Đã reset về 1.", 
+								"Lỗi nhập liệu", 
+								JOptionPane.WARNING_MESSAGE);
+							spinner.setValue(1);
+						}
+					}
+				}
+			});
+		}
+	}
+	
+	/**
+	 * DocumentFilter chỉ cho phép nhập số
+	 */
+	class NumericDocumentFilter extends DocumentFilter {
+		@Override
+		public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+			if (string != null && isValidInput(string)) {
+				super.insertString(fb, offset, string, attr);
+			} else {
+				Toolkit.getDefaultToolkit().beep();
+				JOptionPane.showMessageDialog(ThemLo_Dialog.this, 
+					"Chỉ được nhập số!", 
+					"Lỗi nhập liệu", 
+					JOptionPane.WARNING_MESSAGE);
+			}
+		}
+
+		@Override
+		public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+			if (text != null && isValidInput(text)) {
+				super.replace(fb, offset, length, text, attrs);
+			} else {
+				Toolkit.getDefaultToolkit().beep();
+				JOptionPane.showMessageDialog(ThemLo_Dialog.this, 
+					"Chỉ được nhập số!", 
+					"Lỗi nhập liệu", 
+					JOptionPane.WARNING_MESSAGE);
+			}
+		}
+		
+		private boolean isValidInput(String text) {
+			// Cho phép chuỗi rỗng (khi xóa) hoặc chỉ chứa số
+			return text.isEmpty() || text.matches("[0-9]+");
+		}
+	}
+
 	@Override
 	public void stateChanged(ChangeEvent e) {
 		if (e.getSource() == spinnerSoLuong) {
-			int giaTri = (Integer) spinnerSoLuong.getValue();
-			
-			// Kiểm tra số lượng <= 0
-			if (giaTri <= 0) {
-				SwingUtilities.invokeLater(() -> {
+			try {
+				int giaTri = (Integer) spinnerSoLuong.getValue();
+				
+				// Kiểm tra số lượng <= 0
+				if (giaTri <= 0) {
 					JOptionPane.showMessageDialog(this, 
 						"Số lượng nhập phải lớn hơn 0!", 
 						"Số lượng không hợp lệ", 
 						JOptionPane.WARNING_MESSAGE);
 					spinnerSoLuong.setValue(1);
 					spinnerSoLuong.requestFocus();
-				});
-				return;
-			}
-			
-			// Kiểm tra giới hạn 1,000,000 đơn vị gốc
-			QuyCachDongGoi qc = (QuyCachDongGoi) cmbQuyCach.getSelectedItem();
-			if (qc != null) {
-				int soLuongGoc = giaTri * qc.getHeSoQuyDoi();
-				if (soLuongGoc > 1000000) {
-					SwingUtilities.invokeLater(() -> {
+					return;
+				}
+				
+				// Kiểm tra giới hạn 1,000,000 đơn vị gốc
+				QuyCachDongGoi qc = (QuyCachDongGoi) cmbQuyCach.getSelectedItem();
+				if (qc != null) {
+					int soLuongGoc = giaTri * qc.getHeSoQuyDoi();
+					if (soLuongGoc > 1000000) {
 						int choice = JOptionPane.showConfirmDialog(this,
 							String.format("⚠️ CẢNH BÁO: Số lượng vượt quá giới hạn!\n\n" +
 								"Số lượng nhập: %,d %s\n" +
@@ -411,8 +525,22 @@ public class ThemLo_Dialog extends JDialog implements ActionListener,MouseListen
 							spinnerSoLuong.setValue(1);
 							spinnerSoLuong.requestFocus();
 						}
-					});
+					}
 				}
+			} catch (ClassCastException ex) {
+				// Xử lý trường hợp giá trị không phải Integer
+				JOptionPane.showMessageDialog(this, 
+					"Số lượng không hợp lệ. Vui lòng nhập một số nguyên.", 
+					"Lỗi định dạng", 
+					JOptionPane.ERROR_MESSAGE);
+				spinnerSoLuong.setValue(1);
+				spinnerSoLuong.requestFocus();
+			} catch (Exception ex) {
+				// Xử lý các lỗi khác
+				JOptionPane.showMessageDialog(this, 
+					"Có lỗi xảy ra khi kiểm tra số lượng: " + ex.getMessage(), 
+					"Lỗi", 
+					JOptionPane.ERROR_MESSAGE);
 			}
 		}
 	}
