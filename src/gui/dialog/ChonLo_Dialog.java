@@ -2,6 +2,8 @@ package gui.dialog;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -12,6 +14,10 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
 
 import com.toedter.calendar.JDateChooser;
 
@@ -33,6 +39,7 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
     private List<QuyCachDongGoi> dsQuyCach;
     private QuyCachDongGoi quyCachGoc;
     private List<ChiTietPhieuNhap> dsLoHienTai = null;
+    private java.util.Map<entity.ChiTietPhieuNhap, Object> mapThongTinHienThi = null; // Map để lưu thông tin hiển thị
 
     // Kết quả trả về
     private boolean confirmed = false;
@@ -41,6 +48,13 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
     private int soLuongNhapGoc = 0;
     private DonViTinh donViTinhGoc = null;
     private ChiTietPhieuNhap chiTietCanSua = null;
+    
+    // Thông tin hiển thị
+    private QuyCachDongGoi quyCachDaChon = null;
+    private int soLuongHienThi = 0;
+    
+    // Flag để phân biệt đang load data hay user đang sửa
+    private boolean isLoadingData = false;
 
     // Components Giao diện (UI)
     private JTabbedPane tabbedPane;
@@ -92,13 +106,14 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
         tabbedPane.setSelectedIndex(1); 
     }
 
-    public ChonLo_Dialog(Frame owner, SanPham sp, String maLoDeNghi, List<QuyCachDongGoi> dsQuyCach, QuyCachDongGoi quyCachGoc, List<ChiTietPhieuNhap> dsLoHienTai) {
+    public ChonLo_Dialog(Frame owner, SanPham sp, String maLoDeNghi, List<QuyCachDongGoi> dsQuyCach, QuyCachDongGoi quyCachGoc, List<ChiTietPhieuNhap> dsLoHienTai, java.util.Map<entity.ChiTietPhieuNhap, Object> mapThongTinHienThi) {
         this(owner, sp, maLoDeNghi, dsQuyCach, quyCachGoc);
 
         setTitle("Sửa lô hoặc Thêm lô mới cho: " + sp.getTenSanPham());
         setSize(550, 520);
 
         this.dsLoHienTai = dsLoHienTai;
+        this.mapThongTinHienThi = mapThongTinHienThi;
 
         tabbedPane.setTitleAt(0, "Lô cũ");
         tabbedPane.setEnabledAt(0, true); 
@@ -167,8 +182,9 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
         cmbQuyCachMoi.setBackground(Color.WHITE);
         loadQuyCachComboBox(cmbQuyCachMoi);
         
-        spinnerSoLuongMoi = new JSpinner(new SpinnerNumberModel(1, Integer.MIN_VALUE, 10000, 1));
+        spinnerSoLuongMoi = new JSpinner(new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
         spinnerSoLuongMoi.setFont(fontField);
+        applyNumericFilter(spinnerSoLuongMoi);
 
         txtDonGiaMoi = new JTextField();
         txtDonGiaMoi.setFont(fontField);
@@ -226,8 +242,9 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
         cmbQuyCachCu.setBackground(Color.WHITE);
         loadQuyCachComboBox(cmbQuyCachCu);
 
-        spinnerSoLuongCu = new JSpinner(new SpinnerNumberModel(1, Integer.MIN_VALUE, 10000, 1));
+        spinnerSoLuongCu = new JSpinner(new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
         spinnerSoLuongCu.setFont(fontField);
+        applyNumericFilter(spinnerSoLuongCu);
         
         txtDonGiaCu = new JTextField();
         txtDonGiaCu.setFont(fontField);
@@ -305,33 +322,78 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
     private void capNhatFormTuList() {
         ChiTietPhieuNhap itemDuocChon = listLoCu.getSelectedValue();
         
-        if (itemDuocChon != null) {
-            // 1. Cập nhật ComboBox Đơn vị tính trước
-            DonViTinh dvtHienTai = itemDuocChon.getDonViTinh();
-            QuyCachDongGoi quyCachDuocChon = null;
+        if (itemDuocChon == null || itemDuocChon.getLoSanPham() == null) {
+            return;
+        }
+        
+        try {
+            // Bật đầu load data - không trigger validation
+            isLoadingData = true;
             
-            if (dvtHienTai != null) {
+            QuyCachDongGoi quyCachDuocChon = null;
+            int soLuongHienThi = itemDuocChon.getSoLuongNhap();
+            
+            // Kiểm tra xem có thông tin hiển thị trong Map không
+            if (mapThongTinHienThi != null && mapThongTinHienThi.containsKey(itemDuocChon)) {
+                Object ttht = mapThongTinHienThi.get(itemDuocChon);
+                try {
+                    java.lang.reflect.Field quyCachField = ttht.getClass().getDeclaredField("quyCach");
+                    java.lang.reflect.Field soLuongField = ttht.getClass().getDeclaredField("soLuong");
+                    quyCachField.setAccessible(true);
+                    soLuongField.setAccessible(true);
+                    
+                    quyCachDuocChon = (QuyCachDongGoi) quyCachField.get(ttht);
+                    soLuongHienThi = (Integer) soLuongField.get(ttht);
+                } catch (Exception e) {
+                    // Nếu có lỗi, dùng logic cũ
+                    quyCachDuocChon = null;
+                }
+            }
+            
+            // Nếu không có thông tin trong Map, thử quy đổi ngược từ đơn vị gốc
+            if (quyCachDuocChon == null) {
+                DonViTinh dvtHienTai = itemDuocChon.getDonViTinh();
+                if (dvtHienTai != null) {
+                    for (int i = 0; i < cmbQuyCachCu.getItemCount(); i++) {
+                        QuyCachDongGoi qc = cmbQuyCachCu.getItemAt(i);
+                        if (qc.getDonViTinh().getMaDonViTinh().equals(dvtHienTai.getMaDonViTinh())) {
+                            quyCachDuocChon = qc;
+                            break;
+                        }
+                    }
+                }
+                
+                // Quy đổi số lượng từ đơn vị gốc về đơn vị hiển thị
+                if (quyCachDuocChon != null && quyCachDuocChon.getHeSoQuyDoi() > 0) {
+                    soLuongHienThi = itemDuocChon.getSoLuongNhap() / quyCachDuocChon.getHeSoQuyDoi();
+                }
+            }
+            
+            // Cập nhật ComboBox theo quy cách đã tìm được
+            if (quyCachDuocChon != null) {
                 for (int i = 0; i < cmbQuyCachCu.getItemCount(); i++) {
                     QuyCachDongGoi qc = cmbQuyCachCu.getItemAt(i);
-                    if (qc.getDonViTinh().getMaDonViTinh().equals(dvtHienTai.getMaDonViTinh())) {
+                    if (qc.getDonViTinh().getMaDonViTinh().equals(quyCachDuocChon.getDonViTinh().getMaDonViTinh())) {
                         cmbQuyCachCu.setSelectedIndex(i);
-                        quyCachDuocChon = qc;
                         break;
                     }
                 }
             }
             
-            // 2. Quy đổi số lượng từ đơn vị gốc về đơn vị hiển thị
-            int soLuongGoc = itemDuocChon.getSoLuongNhap();
-            if (quyCachDuocChon != null && quyCachDuocChon.getHeSoQuyDoi() > 0) {
-                int soLuongHienThi = soLuongGoc / quyCachDuocChon.getHeSoQuyDoi();
-                spinnerSoLuongCu.setValue(soLuongHienThi);
-            } else {
-                spinnerSoLuongCu.setValue(soLuongGoc);
-            }
+            // Cập nhật số lượng
+            spinnerSoLuongCu.setValue(soLuongHienThi);
             
-            // 3. Cập nhật giá tiền
+            // Cập nhật giá tiền
             capNhatGiaTheoQuyCach(cmbQuyCachCu, txtDonGiaCu);
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Có lỗi khi cập nhật thông tin lô: " + e.getMessage(),
+                "Lỗi",
+                JOptionPane.ERROR_MESSAGE);
+        } finally {
+            // Kết thúc load data - bật lại validation
+            isLoadingData = false;
         }
     }
 
@@ -385,6 +447,32 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
                     throw new Exception("Vui lòng chọn một Quy Cách Đóng Gói.");
                 }
 
+                // Validate số lượng nhập - kiểm tra text trong editor trước
+                JSpinner.DefaultEditor editorMoi = (JSpinner.DefaultEditor) spinnerSoLuongMoi.getEditor();
+                String textMoi = editorMoi.getTextField().getText().trim();
+                
+                // Kiểm tra xem text có phải là số nguyên dương hợp lệ không
+                if (textMoi.isEmpty() || !textMoi.matches("\\d+")) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Số lượng không hợp lệ.\nVui lòng nhập một số nguyên dương.", 
+                        "Số lượng không hợp lệ", 
+                        JOptionPane.ERROR_MESSAGE);
+                    editorMoi.getTextField().requestFocus();
+                    editorMoi.getTextField().selectAll();
+                    return;
+                }
+                
+                try {
+                    spinnerSoLuongMoi.commitEdit();
+                } catch (java.text.ParseException ex) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Số lượng không hợp lệ.\nVui lòng nhập một số nguyên.", 
+                        "Số lượng không hợp lệ", 
+                        JOptionPane.ERROR_MESSAGE);
+                    spinnerSoLuongMoi.requestFocus();
+                    return;
+                }
+
                 int soLuongQuyCach = (Integer) spinnerSoLuongMoi.getValue();
                 
                 // Kiểm tra số lượng > 0
@@ -398,6 +486,10 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
                 }
                 
                 this.soLuongNhapGoc = soLuongQuyCach * qcDaChon.getHeSoQuyDoi();
+                
+                // Lưu thông tin hiển thị
+                this.quyCachDaChon = qcDaChon;
+                this.soLuongHienThi = soLuongQuyCach;
                 
                 // Kiểm tra giới hạn 1,000,000 đơn vị gốc
                 if (this.soLuongNhapGoc > 1000000) {
@@ -425,14 +517,42 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
                 this.chiTietCanSua = null;
 
             } else { // Tab "Sửa Lô Hiện Tại"
+                // KIỂM TRA CHỌN LÔ TRƯỚC - ƯU TIÊN HÀNG ĐẦU
                 ChiTietPhieuNhap ctDuocChon = listLoCu.getSelectedValue();
                 if (ctDuocChon == null) {
                     throw new Exception("Vui lòng chọn một lô hiện tại từ danh sách để sửa.");
                 }
 
+                // Sau khi đã chọn lô, mới kiểm tra quy cách và số lượng
                 QuyCachDongGoi qcDaChon = (QuyCachDongGoi) cmbQuyCachCu.getSelectedItem();
                 if (qcDaChon == null) {
                     throw new Exception("Vui lòng chọn một Quy Cách Đóng Gói mới.");
+                }
+
+                // Validate số lượng nhập - kiểm tra text trong editor trước
+                JSpinner.DefaultEditor editorCu = (JSpinner.DefaultEditor) spinnerSoLuongCu.getEditor();
+                String textCu = editorCu.getTextField().getText().trim();
+                
+                // Kiểm tra xem text có phải là số nguyên dương hợp lệ không
+                if (textCu.isEmpty() || !textCu.matches("\\d+")) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Số lượng không hợp lệ.\nVui lòng nhập một số nguyên dương.", 
+                        "Số lượng không hợp lệ", 
+                        JOptionPane.ERROR_MESSAGE);
+                    editorCu.getTextField().requestFocus();
+                    editorCu.getTextField().selectAll();
+                    return;
+                }
+                
+                try {
+                    spinnerSoLuongCu.commitEdit();
+                } catch (java.text.ParseException ex) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Số lượng không hợp lệ.\nVui lòng nhập một số nguyên.", 
+                        "Số lượng không hợp lệ", 
+                        JOptionPane.ERROR_MESSAGE);
+                    spinnerSoLuongCu.requestFocus();
+                    return;
                 }
 
                 int soLuongQuyCach = (Integer) spinnerSoLuongCu.getValue();
@@ -448,6 +568,10 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
                 }
                 
                 this.soLuongNhapGoc = soLuongQuyCach * qcDaChon.getHeSoQuyDoi();
+                
+                // Lưu thông tin hiển thị
+                this.quyCachDaChon = qcDaChon;
+                this.soLuongHienThi = soLuongQuyCach;
                 
                 // Kiểm tra giới hạn 1,000,000 đơn vị gốc
                 if (this.soLuongNhapGoc > 1000000) {
@@ -503,39 +627,53 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
      * Kiểm tra giới hạn số lượng khi thay đổi đơn vị tính
      */
     private void kiemTraGioiHanSoLuong(JSpinner spinner, JComboBox<QuyCachDongGoi> cmb) {
-        int giaTri = (Integer) spinner.getValue();
-        
-        // Kiểm tra số lượng <= 0
-        if (giaTri <= 0) {
-            SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(this, 
-                    "Số lượng nhập phải lớn hơn 0!", 
-                    "Số lượng không hợp lệ", 
-                    JOptionPane.WARNING_MESSAGE);
-                spinner.setValue(1);
-                spinner.requestFocus();
-            });
+        // Nếu đang load data từ list, không kiểm tra
+        if (isLoadingData) {
             return;
         }
         
-        // Chỉ hiển thị cảnh báo thông tin, không chặn nhập liệu
-        QuyCachDongGoi qc = (QuyCachDongGoi) cmb.getSelectedItem();
-        if (qc != null) {
-            int soLuongGoc = giaTri * qc.getHeSoQuyDoi();
-            if (soLuongGoc > 1000000) {
-                SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(this,
-                        String.format("⚠️ CẢNH BÁO: Số lượng vượt quá giới hạn khuyến nghị!\n\n" +
+        try {
+            int giaTri = (Integer) spinner.getValue();
+            
+            // Chỉ kiểm tra giới hạn 1,000,000 đơn vị gốc (kiểm tra ≤0 sẽ làm trong xuLyXacNhan)
+            // Kiểm tra giới hạn 1,000,000 đơn vị gốc
+            QuyCachDongGoi qc = (QuyCachDongGoi) cmb.getSelectedItem();
+            if (qc != null) {
+                int soLuongGoc = giaTri * qc.getHeSoQuyDoi();
+                
+                if (soLuongGoc > 1000000) {
+                    int choice = JOptionPane.showConfirmDialog(this,
+                        String.format("⚠️ CẢNH BÁO: Số lượng vượt quá giới hạn!\n\n" +
                             "Số lượng nhập: %,d %s\n" +
                             "Quy đổi về đơn vị gốc: %,d %s\n" +
-                            "Giới hạn khuyến nghị: 1,000,000 đơn vị gốc\n\n" +
-                            "Bạn có thể tiếp tục nhập, nhưng sẽ cần xác nhận lại khi lưu.",
+                            "Giới hạn tối đa: 1,000,000 đơn vị gốc\n\n" +
+                            "Bạn có chắc chắn muốn nhập số lượng này không?",
                             giaTri, qc.getDonViTinh().getTenDonViTinh(),
                             soLuongGoc, quyCachGoc.getDonViTinh().getTenDonViTinh()),
                         "Cảnh báo - Vượt giới hạn số lượng",
+                        JOptionPane.YES_NO_OPTION,
                         JOptionPane.WARNING_MESSAGE);
-                });
+                    
+                    if (choice != JOptionPane.YES_OPTION) {
+                        spinner.setValue(1);
+                        spinner.requestFocus();
+                    }
+                }
             }
+        } catch (ClassCastException e) {
+            // Xử lý trường hợp giá trị không phải Integer
+            JOptionPane.showMessageDialog(this, 
+                "Số lượng không hợp lệ. Vui lòng nhập một số nguyên.", 
+                "Lỗi định dạng", 
+                JOptionPane.ERROR_MESSAGE);
+            spinner.setValue(1);
+            spinner.requestFocus();
+        } catch (Exception e) {
+            // Xử lý các lỗi khác
+            JOptionPane.showMessageDialog(this, 
+                "Có lỗi xảy ra khi kiểm tra số lượng: " + e.getMessage(), 
+                "Lỗi", 
+                JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -574,6 +712,14 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
 
     public ChiTietPhieuNhap getChiTietCanSua() {
         return chiTietCanSua;
+    }
+    
+    public QuyCachDongGoi getQuyCachDaChon() {
+        return quyCachDaChon;
+    }
+    
+    public int getSoLuongHienThi() {
+        return soLuongHienThi;
     }
 
     // ===== VII. IMPLEMENTS LISTENERS =====
@@ -625,6 +771,97 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
     }
 
     // ===== VIII. LỚP NỘI BỘ (INNER CLASS) =====
+    
+    /**
+     * Áp dụng bộ lọc chỉ cho phép nhập số vào JSpinner
+     */
+    private void applyNumericFilter(JSpinner spinner) {
+        JComponent editor = spinner.getEditor();
+        if (editor instanceof JSpinner.DefaultEditor) {
+            JSpinner.DefaultEditor spinnerEditor = (JSpinner.DefaultEditor) editor;
+            JTextField textField = spinnerEditor.getTextField();
+            ((AbstractDocument) textField.getDocument()).setDocumentFilter(new NumericDocumentFilter());
+            
+            // Thêm FocusListener để validate khi rời khỏi field
+            textField.addFocusListener(new FocusAdapter() {
+                @Override
+                public void focusLost(FocusEvent e) {
+                    String text = textField.getText().trim();
+                    // Nếu text rỗng hoặc không phải số hợp lệ
+                    if (text.isEmpty() || !text.matches("\\d+")) {
+                        SwingUtilities.invokeLater(() -> {
+                            JOptionPane.showMessageDialog(ChonLo_Dialog.this, 
+                                "Số lượng không hợp lệ.\nVui lòng nhập một số nguyên dương.", 
+                                "Lỗi nhập liệu", 
+                                JOptionPane.ERROR_MESSAGE);
+                            textField.requestFocus();
+                            textField.selectAll();
+                        });
+                        return;
+                    }
+                    
+                    try {
+                        int value = Integer.parseInt(text);
+                        if (value <= 0) {
+                            SwingUtilities.invokeLater(() -> {
+                                JOptionPane.showMessageDialog(ChonLo_Dialog.this, 
+                                    "Số lượng phải lớn hơn 0.\nVui lòng nhập lại.", 
+                                    "Lỗi nhập liệu", 
+                                    JOptionPane.ERROR_MESSAGE);
+                                textField.requestFocus();
+                                textField.selectAll();
+                            });
+                        }
+                    } catch (NumberFormatException ex) {
+                        SwingUtilities.invokeLater(() -> {
+                            JOptionPane.showMessageDialog(ChonLo_Dialog.this, 
+                                "Số lượng không hợp lệ.\nVui lòng nhập một số nguyên dương.", 
+                                "Lỗi nhập liệu", 
+                                JOptionPane.ERROR_MESSAGE);
+                            textField.requestFocus();
+                            textField.selectAll();
+                        });
+                    }
+                }
+            });
+        }
+    }
+    
+    /**
+     * DocumentFilter chỉ cho phép nhập số
+     */
+    class NumericDocumentFilter extends DocumentFilter {
+        @Override
+        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+            if (string != null && isValidInput(string)) {
+                super.insertString(fb, offset, string, attr);
+            } else {
+                Toolkit.getDefaultToolkit().beep();
+                JOptionPane.showMessageDialog(ChonLo_Dialog.this, 
+                    "Chỉ được nhập số!", 
+                    "Lỗi nhập liệu", 
+                    JOptionPane.WARNING_MESSAGE);
+            }
+        }
+
+        @Override
+        public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+            if (text != null && isValidInput(text)) {
+                super.replace(fb, offset, length, text, attrs);
+            } else {
+                Toolkit.getDefaultToolkit().beep();
+                JOptionPane.showMessageDialog(ChonLo_Dialog.this, 
+                    "Chỉ được nhập số!", 
+                    "Lỗi nhập liệu", 
+                    JOptionPane.WARNING_MESSAGE);
+            }
+        }
+        
+        private boolean isValidInput(String text) {
+            // Cho phép chuỗi rỗng (khi xóa) hoặc chỉ chứa số
+            return text.isEmpty() || text.matches("[0-9]+");
+        }
+    }
 
     class ChiTietPhieuNhapRenderer extends DefaultListCellRenderer {
         @Override
@@ -633,24 +870,31 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
             if (value instanceof ChiTietPhieuNhap ct) {
                 LoSanPham lo = ct.getLoSanPham();
                 
-                // Lấy đơn vị tính đã nhập và số lượng gốc
-                DonViTinh dvtDaNhap = ct.getDonViTinh();
-                int soLuongGoc = ct.getSoLuongNhap();
+                String tenDonViHienThi;
+                int soLuongHienThi;
                 
-                // Tìm quy cách tương ứng với đơn vị tính đã nhập
-                int soLuongHienThi = soLuongGoc;
-                String tenDonViHienThi = quyCachGoc.getDonViTinh().getTenDonViTinh();
-                
-                if (dvtDaNhap != null) {
-                    for (QuyCachDongGoi qc : dsQuyCach) {
-                        if (qc.getDonViTinh().getMaDonViTinh().equals(dvtDaNhap.getMaDonViTinh())) {
-                            if (qc.getHeSoQuyDoi() > 0) {
-                                soLuongHienThi = soLuongGoc / qc.getHeSoQuyDoi();
-                            }
-                            tenDonViHienThi = dvtDaNhap.getTenDonViTinh();
-                            break;
-                        }
+                // Kiểm tra xem có thông tin hiển thị trong Map không
+                if (mapThongTinHienThi != null && mapThongTinHienThi.containsKey(ct)) {
+                    Object ttht = mapThongTinHienThi.get(ct);
+                    // Sử dụng reflection để lấy thông tin (vì không thể import class từ GUI)
+                    try {
+                        java.lang.reflect.Field quyCachField = ttht.getClass().getDeclaredField("quyCach");
+                        java.lang.reflect.Field soLuongField = ttht.getClass().getDeclaredField("soLuong");
+                        quyCachField.setAccessible(true);
+                        soLuongField.setAccessible(true);
+                        
+                        QuyCachDongGoi qc = (QuyCachDongGoi) quyCachField.get(ttht);
+                        soLuongHienThi = (Integer) soLuongField.get(ttht);
+                        tenDonViHienThi = qc.getDonViTinh().getTenDonViTinh();
+                    } catch (Exception e) {
+                        // Nếu có lỗi, dùng đơn vị gốc
+                        tenDonViHienThi = quyCachGoc.getDonViTinh().getTenDonViTinh();
+                        soLuongHienThi = ct.getSoLuongNhap();
                     }
+                } else {
+                    // Không có thông tin hiển thị -> dùng đơn vị gốc
+                    tenDonViHienThi = quyCachGoc.getDonViTinh().getTenDonViTinh();
+                    soLuongHienThi = ct.getSoLuongNhap();
                 }
                 
                 String text = String.format("%s - HSD: %s - (Hiện có: %d %s)",
