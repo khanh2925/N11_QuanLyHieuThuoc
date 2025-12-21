@@ -5,7 +5,6 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.Serializable;
-import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -21,8 +20,6 @@ import javax.swing.border.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.text.NumberFormatter;
-
 // Imports của Apache POI
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -32,11 +29,8 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 
-import com.toedter.calendar.JDateChooser;
-
 import database.connectDB;
 import component.button.PillButton;
-import component.input.PlaceholderSupport;
 import component.border.RoundedBorder;
 import component.input.TaoJtextNhanh;
 import dao.DonViTinh_DAO;
@@ -61,7 +55,11 @@ import gui.dialog.ThemLo_Dialog;
 
 
 public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Serializable,MouseListener{
-    private JPanel pnDanhSachDon;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private JPanel pnDanhSachDon;
     private JTextField txtSearch;
     private JTextField txtTimNCC;
     private JTextField txtTongTienHang;
@@ -69,7 +67,7 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
     private JTextField txtDiaChiNCC;
     private JTextField txtEmailNCC;
 
-    private JButton btnThemLo, btnNhapFile, btnNhapPhieu, btnHuyPhieu;
+    private JButton btnNhapFile, btnNhapPhieu, btnHuyPhieu;
     private JScrollPane scrollPane;
 
     // ===== DAOs =====
@@ -77,13 +75,13 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
     private LoSanPham_DAO loSanPhamDAO;
     private PhieuNhap_DAO phieuNhapDAO;
     private NhaCungCap_DAO nhaCungCapDAO;
-    private DonViTinh_DAO donViTinhDAO;
     private QuyCachDongGoi_DAO quyCachDAO; 
 
     // ===== Formatting =====
     private final DecimalFormat df = new DecimalFormat("#,###");
     private final DateTimeFormatter fmtDate = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private final DateTimeFormatter fmtDateTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    @SuppressWarnings("unused")
+	private final DateTimeFormatter fmtDateTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     // ===== Dữ liệu phiên làm việc =====
     private NhaCungCap nhaCungCapDaChon = null;
@@ -112,7 +110,7 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
         loSanPhamDAO = new LoSanPham_DAO();
         phieuNhapDAO = new PhieuNhap_DAO();
         nhaCungCapDAO = new NhaCungCap_DAO();
-        donViTinhDAO = new DonViTinh_DAO();
+        new DonViTinh_DAO();
         quyCachDAO = new QuyCachDongGoi_DAO(); 
 
         if (this.nhanVienDangNhap == null) {
@@ -161,7 +159,7 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
         loSanPhamDAO = new LoSanPham_DAO();
         phieuNhapDAO = new PhieuNhap_DAO();
         nhaCungCapDAO = new NhaCungCap_DAO();
-        donViTinhDAO = new DonViTinh_DAO();
+        new DonViTinh_DAO();
         quyCachDAO = new QuyCachDongGoi_DAO(); 
 
         try {
@@ -186,7 +184,8 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
     /**
      * Phương thức khởi tạo giao diện chính
      */
-    private void initialize() {
+    @SuppressWarnings("unused")
+	private void initialize() {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
@@ -427,7 +426,8 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
     /**
      * Helper: Tạo một JLabel để hiển thị thông tin (dạng Nhãn: Giá trị)
      */
-    private JLabel taoNhanThongTin(String labelText, String valueText) {
+    @SuppressWarnings("unused")
+	private JLabel taoNhanThongTin(String labelText, String valueText) {
         JLabel label = new JLabel(String.format("<html>%s <b style='color: #333;'>%s</b></html>", labelText, valueText));
         label.setFont(new Font("Segoe UI", Font.PLAIN, 20));
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -465,7 +465,8 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
     /**
      * Helper: Tìm một component con theo tên
      */
-    private Component timComponentTheoTen(Container container, String name) {
+    @SuppressWarnings("unused")
+	private Component timComponentTheoTen(Container container, String name) {
         for (Component comp : container.getComponents()) {
             if (name.equals(comp.getName())) {
                 return comp;
@@ -790,9 +791,12 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
             // Dòng 7+ (index 6+): Dữ liệu sản phẩm
             
             String sdtNCC = "";
-            String tenNCC = "";
-            String diaChiNCC = "";
-            String emailNCC = "";
+            @SuppressWarnings("unused")
+			String tenNCC = "";
+            @SuppressWarnings("unused")
+			String diaChiNCC = "";
+            @SuppressWarnings("unused")
+			String emailNCC = "";
             
             try {
                 // Đọc Tên Nhà Cung Cấp từ B2 (dòng 2, cột 1)
@@ -899,9 +903,12 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
                         if (hsd.isBefore(LocalDate.now().plusMonths(3))) {
                             final LocalDate finalHsd = hsd;
                             final String finalMaSP = maSP;
-                            final int finalSoLuong = soLuong;
-                            final double finalDonGia = donGia_Excel;
-                            final String finalTenDVT = tenDVT_Excel;
+                            @SuppressWarnings("unused")
+							final int finalSoLuong = soLuong;
+                            @SuppressWarnings("unused")
+							final double finalDonGia = donGia_Excel;
+                            @SuppressWarnings("unused")
+							final String finalTenDVT = tenDVT_Excel;
                             
                             // Hiển thị dialog xác nhận trên EDT thread
                             final boolean[] shouldContinue = {false};
@@ -1132,7 +1139,8 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
     /**
      * Helper: Lấy giá trị dạng Ngày từ ô Excel
      */
-    private LocalDate layGiaTriNgayTuO(Cell cell) throws Exception {
+    @SuppressWarnings("deprecation")
+	private LocalDate layGiaTriNgayTuO(Cell cell) throws Exception {
     	if (cell == null) return null;
 
         if (cell.getCellType() == CellType.STRING) {
@@ -1634,7 +1642,11 @@ private void xuLyTimNhaCungCap() {
     // ✅ CLASS CHI TIẾT SẢN PHẨM (ĐÃ CẬP NHẬT STT VÀ NÚT XÓA)
     // ✅ ===================================================================
     class ChiTietSanPhamPanel extends JPanel {
-        private SanPham sanPham;
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+		private SanPham sanPham;
         private DonViTinh donViTinh;
         private double donGia;
         private List<ChiTietPhieuNhap> dsChiTietCuaSP;

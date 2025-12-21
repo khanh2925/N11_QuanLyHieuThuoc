@@ -9,12 +9,9 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 
-import com.toedter.calendar.JDateChooser;
-
 import component.input.PlaceholderSupport;
 
 import java.awt.*;
-import java.awt.event.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -23,7 +20,11 @@ import java.util.ArrayList;
 //Class này dùng cho chọn lô trong huỷ hàng nhân viên
 public class DialogChonLo extends JDialog {
 
-    private JTextField txtTim;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private JTextField txtTim;
     private JTable tblLo;
     private DefaultTableModel model;
     private JPanel pnTop;

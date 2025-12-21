@@ -13,7 +13,8 @@ public class CapNhatNhaCungCap_Dialog extends JDialog implements ActionListener 
 
     private final NhaCungCap_DAO nccDAO = new NhaCungCap_DAO();
 
-    private final NhaCungCap nccBanDau;
+    @SuppressWarnings("unused")
+	private final NhaCungCap nccBanDau;
     private NhaCungCap nccCapNhat;
 
     private JTextField txtMa, txtTen, txtSdt, txtEmail;

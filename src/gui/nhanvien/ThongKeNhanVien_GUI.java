@@ -30,7 +30,11 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class ThongKeNhanVien_GUI extends JPanel implements ActionListener, MouseListener {
 
-    private JDateChooser dateTuNgay, dateDenNgay;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 2091812809316193815L;
+	private JDateChooser dateTuNgay, dateDenNgay;
     private JComboBox<String> cmbCaLam;
     
     // Khai báo nút là thuộc tính toàn cục

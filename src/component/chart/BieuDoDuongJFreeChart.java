@@ -19,6 +19,7 @@ import org.jfree.data.category.DefaultCategoryDataset;
 /**
  * Biểu đồ đường (Line Chart) hiển thị xu hướng theo thời gian
  */
+@SuppressWarnings("serial")
 public class BieuDoDuongJFreeChart extends JPanel {
 
     private final DefaultCategoryDataset tapDuLieu;

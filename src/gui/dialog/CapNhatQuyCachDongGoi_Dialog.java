@@ -11,6 +11,7 @@ import entity.DonViTinh;
 import entity.QuyCachDongGoi;
 import entity.SanPham;
 
+@SuppressWarnings("serial")
 public class CapNhatQuyCachDongGoi_Dialog extends JDialog {
 
     private JTextField txtMaQCDG;

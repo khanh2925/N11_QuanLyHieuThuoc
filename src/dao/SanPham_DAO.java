@@ -358,6 +358,7 @@ public class SanPham_DAO {
 
 			// Giả định: Nếu tìm thấy, lấy khuyến mãi đầu tiên và gán vào SanPham
 			if (dsKM != null && !dsKM.isEmpty()) {
+				@SuppressWarnings("unused")
 				ChiTietKhuyenMaiSanPham kmHienTai = dsKM.get(0);
 
 				// ⚠️ Dòng code này yêu cầu SanPham.java có phương thức setKhuyenMaiHienTai()

@@ -8,6 +8,7 @@ import java.util.List;
 import entity.PhieuTra;
 import entity.ChiTietPhieuTra;
 
+@SuppressWarnings("serial")
 public class PhieuTraPreviewDialog extends JDialog {
 
     public PhieuTraPreviewDialog(Window owner, PhieuTra pt, List<ChiTietPhieuTra> dsCT) {

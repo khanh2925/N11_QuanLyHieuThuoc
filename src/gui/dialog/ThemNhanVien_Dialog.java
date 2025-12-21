@@ -7,21 +7,20 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.Date;
-import java.util.concurrent.ThreadLocalRandom;
-
 import javax.swing.*;
-import javax.swing.border.LineBorder;
-
 import com.toedter.calendar.JDateChooser; // Sử dụng thư viện JCalendar
 
 import dao.NhanVien_DAO;
 import dao.TaiKhoan_DAO; // Cần dùng để kiểm tra tên đăng nhập
-import entity.NhanVien;
 import entity.TaiKhoan;
 
 public class ThemNhanVien_Dialog extends JDialog {
 
-    private JTextField txtTenNhanVien;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 5067882818719547760L;
+	private JTextField txtTenNhanVien;
     private JTextField txtTenDangNhap;
     private JTextField txtDiaChi;
     private JTextField txtSoDienThoai;
@@ -177,23 +176,32 @@ public class ThemNhanVien_Dialog extends JDialog {
     private void onThemButtonClick() {
         try {
             // 1. Lấy dữ liệu từ các trường
-            String ten = txtTenNhanVien.getText();
+            @SuppressWarnings("unused")
+			String ten = txtTenNhanVien.getText();
             String tenDangNhap = txtTenDangNhap.getText();
-            String diaChi = txtDiaChi.getText();
-            String sdt = txtSoDienThoai.getText();
-            String matKhau = new String(txtMatKhau.getPassword());
+            @SuppressWarnings("unused")
+			String diaChi = txtDiaChi.getText();
+            @SuppressWarnings("unused")
+			String sdt = txtSoDienThoai.getText();
+            @SuppressWarnings("unused")
+			String matKhau = new String(txtMatKhau.getPassword());
             
             Date selectedDate = ngaySinhDateChooser.getDate();
             if (selectedDate == null) {
                 JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày sinh.", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            LocalDate ngaySinh = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            @SuppressWarnings("unused")
+			LocalDate ngaySinh = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
-            boolean gioiTinh = radNam.isSelected();
-            boolean isQuanLy = chkQuanLy.isSelected();
-            String caLam = cmbCaLam.getSelectedItem().toString();
-            boolean trangThai = true; // Nhân viên mới luôn đang làm
+            @SuppressWarnings("unused")
+			boolean gioiTinh = radNam.isSelected();
+            @SuppressWarnings("unused")
+			boolean isQuanLy = chkQuanLy.isSelected();
+            @SuppressWarnings("unused")
+			String caLam = cmbCaLam.getSelectedItem().toString();
+            @SuppressWarnings("unused")
+			boolean trangThai = true; // Nhân viên mới luôn đang làm
 
             // 2. Kiểm tra nghiệp vụ (ví dụ: tên đăng nhập tồn tại)
             if (taiKhoan_DAO.kiemTraTenDangNhapTonTai(tenDangNhap)) {
@@ -206,8 +214,10 @@ public class ThemNhanVien_Dialog extends JDialog {
             NhanVien_DAO nvDAO = new NhanVien_DAO();
             TaiKhoan_DAO tkDAO = new TaiKhoan_DAO();
 
-            String maNV = nvDAO.taoMaNhanVienTuDong();
-            String maTK = tkDAO.taoMaTaiKhoanTuDong();
+            @SuppressWarnings("unused")
+			String maNV = nvDAO.taoMaNhanVienTuDong();
+            @SuppressWarnings("unused")
+			String maTK = tkDAO.taoMaTaiKhoanTuDong();
 
             
             // 6. Đóng dialog

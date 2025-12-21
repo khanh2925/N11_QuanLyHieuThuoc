@@ -1,8 +1,5 @@
 package entity;
 
-
-import entity.TaiKhoan;
-
 public class Session {
     private static Session instance;
     private TaiKhoan taiKhoanDangNhap;

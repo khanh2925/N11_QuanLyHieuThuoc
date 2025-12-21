@@ -22,6 +22,7 @@ import dao.SanPham_DAO;
 import entity.SanPham;
 import enums.LoaiSanPham;
 
+@SuppressWarnings("serial")
 public class DialogChonSanPhamApDung extends JDialog {
 
 	private static final String PLACEHOLDER_TIM_KIEM = "Tìm kiếm theo mã sản phẩm hoặc tên sản phẩm...";

@@ -9,7 +9,6 @@
 package gui.tracuu;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.HierarchyEvent;
 import java.io.File;
 import java.io.FileOutputStream;

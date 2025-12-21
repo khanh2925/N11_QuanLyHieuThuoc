@@ -8,7 +8,6 @@
 package gui;
 
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 
 public class App {
 	public static void main(String[] args) {

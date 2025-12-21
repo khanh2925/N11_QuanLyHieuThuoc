@@ -32,7 +32,11 @@ import dao.ThongKe_DAO;
  */
 public class TonKhoThap_Panel extends JPanel {
 
-    private JTable tblTonKho;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -6453881894792846126L;
+	private JTable tblTonKho;
     private DefaultTableModel tableModel;
     private JLabel lblTongQuan;
     private JComboBox<Integer> cmbNguong;

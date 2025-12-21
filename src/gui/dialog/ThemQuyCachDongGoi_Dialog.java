@@ -14,7 +14,11 @@ import entity.SanPham;
 
 public class ThemQuyCachDongGoi_Dialog extends JDialog {
 
-    private JComboBox<SanPham> cmbSanPham;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -1417747876713449731L;
+	private JComboBox<SanPham> cmbSanPham;
     private JComboBox<DonViTinh> cmbDonViTinh;
     private JTextField txtHeSoQuyDoi;
     private JTextField txtTiLeGiam;

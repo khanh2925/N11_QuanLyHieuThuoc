@@ -19,6 +19,11 @@ import java.util.List;
 
 public class HuyHangItemPanel extends JPanel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3540603648376310498L;
+
 	private static final DecimalFormat DF = new DecimalFormat("#,##0");
 
 	private ItemHuyHang item;

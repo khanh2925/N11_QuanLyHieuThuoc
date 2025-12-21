@@ -24,12 +24,18 @@ import org.jfree.chart.ui.RectangleInsets;
  */
 public class BieuDoTronLegend extends JPanel {
 
-    private DefaultPieDataset tapDuLieu;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	@SuppressWarnings("rawtypes")
+	private DefaultPieDataset tapDuLieu;
     private JFreeChart bieuDo;
     private ChartPanel khungBieuDo;
     private final List<DuLieuBieuDoTron> danhSachDuLieu;
 
-    public BieuDoTronLegend() {
+    @SuppressWarnings("rawtypes")
+	public BieuDoTronLegend() {
         danhSachDuLieu = new ArrayList<>();
         tapDuLieu = new DefaultPieDataset();
         bieuDo = taoBieuDo(tapDuLieu);
@@ -41,7 +47,8 @@ public class BieuDoTronLegend extends JPanel {
         add(khungBieuDo, BorderLayout.CENTER);
     }
 
-    private JFreeChart taoBieuDo(DefaultPieDataset dataset) {
+    @SuppressWarnings("rawtypes")
+	private JFreeChart taoBieuDo(DefaultPieDataset dataset) {
         // Tạo biểu đồ tròn với legend
         JFreeChart bieuDoMoi = ChartFactory.createPieChart(
                 null, // Không có title
@@ -87,7 +94,8 @@ public class BieuDoTronLegend extends JPanel {
         return bieuDoMoi;
     }
 
-    private void capNhatBieuDo() {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	private void capNhatBieuDo() {
         tapDuLieu.clear();
         for (DuLieuBieuDoTron duLieu : danhSachDuLieu) {
             tapDuLieu.setValue(duLieu.getTen(), duLieu.getGiaTri());

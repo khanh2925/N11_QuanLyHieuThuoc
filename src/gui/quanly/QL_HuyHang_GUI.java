@@ -51,11 +51,8 @@ import component.border.RoundedBorder;
 import dao.ChiTietPhieuHuy_DAO;
 import dao.PhieuHuy_DAO;
 import entity.ChiTietPhieuHuy;
-import entity.ChiTietPhieuTra;
 import entity.PhieuHuy;
-import entity.PhieuTra;
 import gui.dialog.PhieuHuyPreviewDialog;
-import gui.dialog.PhieuTraPreviewDialog;
 
 public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListener {
 

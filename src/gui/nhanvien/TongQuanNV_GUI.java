@@ -41,6 +41,10 @@ import dao.PhieuHuy_DAO;
 
 public class TongQuanNV_GUI extends JPanel implements ActionListener, MouseListener {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1461265675080059356L;
 	private JPanel pnCenter;
 	private JPanel pnHeader;
 
@@ -57,14 +61,17 @@ public class TongQuanNV_GUI extends JPanel implements ActionListener, MouseListe
 	private BieuDoCotJFreeChart bieuDoCot;
 
 	// DAOs
+	@SuppressWarnings("unused")
 	private HoaDon_DAO hoaDonDAO;
 	private ThongKe_DAO thongKeDAO;
 	private PhieuTra_DAO phieuTraDAO;
 	private PhieuHuy_DAO phieuHuyDAO;
+	@SuppressWarnings("unused")
 	private ChiTietHoaDon_DAO chiTietHoaDonDAO;
 	private LoSanPham_DAO loSanPhamDao;
 
 	// Main GUI reference để chuyển card
+	@SuppressWarnings("unused")
 	private gui.Main_GUI mainGUI;
 
 	private Color mauChu = new Color(0, 51, 102);

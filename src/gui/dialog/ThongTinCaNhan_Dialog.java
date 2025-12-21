@@ -16,7 +16,11 @@ import entity.TaiKhoan;
 
 public class ThongTinCaNhan_Dialog extends JDialog {
 
-    // Fields có thể chỉnh sửa
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	// Fields có thể chỉnh sửa
     private JTextField txtTenNhanVien;
     private JTextField txtSoDienThoai;
     private JTextArea txtDiaChi;

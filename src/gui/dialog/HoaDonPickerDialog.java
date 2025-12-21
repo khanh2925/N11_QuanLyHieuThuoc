@@ -16,6 +16,7 @@ import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
 import java.util.List;
 
+@SuppressWarnings("serial")
 public class HoaDonPickerDialog extends JDialog {
 	private final JTable tblHoaDon;
 	private final JTable tblChiTiet;

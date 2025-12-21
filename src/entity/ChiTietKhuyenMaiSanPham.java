@@ -1,6 +1,5 @@
 package entity;
 import java.util.Objects;
-import enums.HinhThucKM;
 
 public class ChiTietKhuyenMaiSanPham {
     private SanPham sanPham;

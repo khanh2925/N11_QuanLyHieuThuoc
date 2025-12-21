@@ -8,8 +8,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -18,12 +16,10 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
+
 import javax.swing.table.*;
 import com.toedter.calendar.JDateChooser;
 
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import component.button.PillButton;
 import component.input.PlaceholderSupport;
@@ -34,9 +30,14 @@ import entity.PhieuNhap;
 
 public class TraCuuPhieuNhap_GUI extends JPanel implements ActionListener, MouseListener {
 
-    private JPanel pnHeader;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -4598678052976438004L;
+	private JPanel pnHeader;
     private JPanel pnCenter;
-    private String hello;
+    @SuppressWarnings("unused")
+	private String hello;
     private JTable tblPhieuNhap;
     private DefaultTableModel modelPhieuNhap;
     private JFrame mainFrame;

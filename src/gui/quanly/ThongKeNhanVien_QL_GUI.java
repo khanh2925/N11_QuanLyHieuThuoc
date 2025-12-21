@@ -32,7 +32,11 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class ThongKeNhanVien_QL_GUI extends JPanel implements ActionListener, MouseListener {
 
-    private JDateChooser dateTuNgay, dateDenNgay;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -943457133810212452L;
+	private JDateChooser dateTuNgay, dateDenNgay;
     private JComboBox<String> cmbCaLam;
     private JComboBox<String> cmbNhanVien;
     

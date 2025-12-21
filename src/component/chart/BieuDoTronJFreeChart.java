@@ -21,20 +21,27 @@ import org.jfree.data.general.DefaultPieDataset;
 
 public class BieuDoTronJFreeChart extends JPanel {
 
-    // Enum để xác định loại biểu đồ
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	// Enum để xác định loại biểu đồ
     public static enum KieuBieuDo {
         MAC_DINH, // Biểu đồ tròn thông thường
         HINH_VANH_KHUYEN // Biểu đồ Donut
     }
 
-    private DefaultPieDataset tapDuLieu;
+    @SuppressWarnings("rawtypes")
+	private DefaultPieDataset tapDuLieu;
     private JFreeChart bieuDo;
     private ChartPanel khungBieuDo;
     private final List<DuLieuBieuDoTron> danhSachDuLieu;
     private KieuBieuDo kieuBieuDo = KieuBieuDo.MAC_DINH;
     private int chiSoDaChon = -1;
 
-    public BieuDoTronJFreeChart() {
+    @SuppressWarnings("rawtypes")
+	public BieuDoTronJFreeChart() {
         danhSachDuLieu = new ArrayList<>();
         tapDuLieu = new DefaultPieDataset();
         bieuDo = taoBieuDo(tapDuLieu);
@@ -47,7 +54,8 @@ public class BieuDoTronJFreeChart extends JPanel {
         themSuKienChuot();
     }
 
-    private JFreeChart taoBieuDo(DefaultPieDataset dataset) {
+    @SuppressWarnings("rawtypes")
+	private JFreeChart taoBieuDo(DefaultPieDataset dataset) {
         JFreeChart bieuDoMoi;
 
         if (kieuBieuDo == KieuBieuDo.HINH_VANH_KHUYEN) {
@@ -77,7 +85,8 @@ public class BieuDoTronJFreeChart extends JPanel {
         return bieuDoMoi;
     }
 
-    private void capNhatBieuDo() {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	private void capNhatBieuDo() {
         tapDuLieu.clear();
         for (DuLieuBieuDoTron duLieu : danhSachDuLieu) {
             tapDuLieu.setValue(duLieu.getTen(), duLieu.getGiaTri());

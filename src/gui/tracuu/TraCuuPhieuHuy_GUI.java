@@ -56,7 +56,8 @@ public class TraCuuPhieuHuy_GUI extends JPanel implements ActionListener {
 
     // DAO
     private PhieuHuy_DAO ph_dao;
-    private ChiTietPhieuHuy_DAO ctph_dao;
+    @SuppressWarnings("unused")
+	private ChiTietPhieuHuy_DAO ctph_dao;
 
     // DATA
     private List<PhieuHuy> allPhieuHuy = new ArrayList<>();

@@ -11,6 +11,7 @@ import entity.SanPham;
 import enums.DuongDung;
 import enums.LoaiSanPham;
 
+@SuppressWarnings("serial")
 public class CapNhatSanPham_Dialog extends JDialog implements ActionListener {
 
     private JTextField txtTenSanPham, txtSoDangKy, txtGiaNhap, txtHinhAnh, txtKeBanSanPham;

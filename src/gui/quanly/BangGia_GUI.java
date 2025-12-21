@@ -83,7 +83,8 @@ public class BangGia_GUI extends JPanel implements ActionListener,MouseListener 
     private List<ChiTietBangGia> dsChiTietTam; 
     private double nextStartPrice = 0; // ✅ Biến theo dõi giá bắt đầu tiếp theo
     private int indexDangSua = -1; // ✅ Chỉ số dòng đang được sửa (-1 = không sửa)
-    private boolean dangLoadDuLieu = false; // ✅ Flag để phân biệt load dữ liệu vs nhập liệu mới
+    @SuppressWarnings("unused")
+	private boolean dangLoadDuLieu = false; // ✅ Flag để phân biệt load dữ liệu vs nhập liệu mới
 
     public BangGia_GUI() {
         setPreferredSize(new Dimension(1537, 850));

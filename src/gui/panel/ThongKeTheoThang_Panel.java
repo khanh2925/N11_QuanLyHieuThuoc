@@ -30,7 +30,11 @@ import enums.LoaiSanPham;
 
 public class ThongKeTheoThang_Panel extends JPanel implements MouseListener, ActionListener {
 
-    private JComboBox<Integer> cmbChonNam;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private JComboBox<Integer> cmbChonNam;
     private JComboBox<String> cmbLoaiSP;
     private BieuDoCotGroup bieuDoDoanhThu;
     private JLabel lblTongBanHang, lblTongNhapHang, lblTongTraHang, lblTongHuyHang, lblLoiNhuanRong;
@@ -148,7 +152,8 @@ public class ThongKeTheoThang_Panel extends JPanel implements MouseListener, Act
         return lValue;
     }
 
-    private void loadDuLieu() {
+    @SuppressWarnings("deprecation")
+	private void loadDuLieu() {
         int nam = (Integer) cmbChonNam.getSelectedItem();
         String tenLoai = (String) cmbLoaiSP.getSelectedItem();
         String maLoaiSP = "Tất cả";

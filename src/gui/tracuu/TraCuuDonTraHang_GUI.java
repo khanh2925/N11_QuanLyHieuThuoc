@@ -52,8 +52,6 @@ import component.border.RoundedBorder;
 import dao.ChiTietPhieuTra_DAO;
 import dao.PhieuTra_DAO;
 import entity.ChiTietPhieuTra;
-import entity.KhachHang;
-import entity.NhanVien;
 import entity.PhieuTra;
 import gui.dialog.PhieuTraPreviewDialog;
 

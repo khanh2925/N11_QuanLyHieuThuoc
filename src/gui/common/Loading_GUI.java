@@ -15,7 +15,6 @@ import javax.swing.JProgressBar;
 import javax.swing.JWindow;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 
 import component.panel.ImagePanel;
@@ -131,7 +130,8 @@ public class Loading_GUI extends JWindow {
      */
     private void startLoading() {
         SwingWorker<Boolean, LoadingProgress> worker = new SwingWorker<Boolean, LoadingProgress>() {
-            @Override
+            @SuppressWarnings("static-access")
+			@Override
             protected Boolean doInBackground() throws Exception {
                 try {
                     // Bước 1: Khởi tạo cấu hình (0-10%)

@@ -29,7 +29,7 @@ import component.button.PillButton;
 import component.chart.BieuDoCotJFreeChart;
 import component.chart.DuLieuBieuDoCot;
 import dao.ThongKe_DAO;
-import entity.Session;
+
 
 /**
  * Panel thống kê Top sản phẩm bán chạy
@@ -38,7 +38,11 @@ import entity.Session;
  */
 public class TopSanPhamBanChay_Panel extends JPanel {
 
-    private JDateChooser ngayBatDau;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -7032320884019005286L;
+	private JDateChooser ngayBatDau;
     private JDateChooser ngayKetThuc;
     private JComboBox<Integer> cmbSoLuong;
     private BieuDoCotJFreeChart bieuDoTop;

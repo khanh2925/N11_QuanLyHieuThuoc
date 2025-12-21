@@ -41,6 +41,10 @@ import java.util.List;
  */
 public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8434860880999548812L;
 	private static final String PLACEHOLDER_HET_HAN = "Hết hạn sử dụng";
 	private static final String PLACEHOLDER_TIM_KIEM = "Tìm theo mã lô, mã/tên sản phẩm";
 	// ====== TÌM KIẾM / DANH SÁCH ======
@@ -67,6 +71,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 	private final SanPham_DAO spDAO = new SanPham_DAO();
 
 	// ====== NGÀY ======
+	@SuppressWarnings("unused")
 	private final LocalDate today = LocalDate.now();
 	private final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -665,6 +670,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private void capNhatSLTrongModel(String maLo, int slHuy, double thanhTien) {
 		for (int i = 0; i < modelHuy.getRowCount(); i++) {
 			if (modelHuy.getValueAt(i, 0).equals(maLo)) {
@@ -675,6 +681,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private void capNhatLyDoTrongModel(String maLo, String lyDo) {
 		for (int i = 0; i < modelHuy.getRowCount(); i++) {
 			if (modelHuy.getValueAt(i, 0).equals(maLo)) {
@@ -706,6 +713,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 		lblTongTien.setText(String.format("%,.0f đ", tongTienHuy));
 	}
 
+	@SuppressWarnings("unused")
 	private int parseIntSafe(String text, int defaultVal) {
 		try {
 			return Integer.parseInt(text.trim());

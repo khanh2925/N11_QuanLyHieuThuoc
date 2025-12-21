@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
 
+@SuppressWarnings("serial")
 public class QuenMatKhau_Dialog extends JDialog {
 
     private JTextField txtMaNV, txtTenNV, txtSDT;

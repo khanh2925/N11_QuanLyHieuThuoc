@@ -20,7 +20,11 @@ import entity.KhachHang;
 
 public class ThemKhachHang_Dialog extends JDialog implements ActionListener {
 
-    private JTextField txtTenKhachHang;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 6060359898797547124L;
+	private JTextField txtTenKhachHang;
     private JTextField txtSoDienThoai;
     private JRadioButton radNam, radNu;
     private JDateChooser ngaySinhDateChooser;
@@ -169,7 +173,8 @@ public class ThemKhachHang_Dialog extends JDialog implements ActionListener {
 
 
  // === HÀM VALIDATE CHÍNH ===
-    private boolean isvalidForm() {
+    @SuppressWarnings("unused")
+	private boolean isvalidForm() {
     	String maKH = String.format("KH-%04d", (int)(System.currentTimeMillis() % 10000));
         String ten = txtTenKhachHang.getText() != null ? txtTenKhachHang.getText().trim() : "";
         if (ten.isEmpty()) {

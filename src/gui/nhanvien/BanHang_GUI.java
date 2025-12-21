@@ -43,7 +43,7 @@ import dao.KhuyenMai_DAO;
 import enums.HinhThucKM;
 import gui.panel.DonHangItemPanel;
 import gui.dialog.HoaDonPreviewDialog;
-import java.awt.event.KeyEvent;
+
 
 /**
  * Giao diện Bán Hàng
@@ -1568,6 +1568,7 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 		});
 	}
 
+	@SuppressWarnings("unused")
 	private double tinhTienGiamHoaDon(double tongSauGiamSP, KhuyenMai km) {
 		if (km == null || km.getHinhThuc() == null)
 			return 0;

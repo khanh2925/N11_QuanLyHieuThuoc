@@ -21,7 +21,8 @@ public class ChiTietPhieuNhap_DAO {
     // ============================================================
     // 📦 CACHE - Lưu chi tiết phiếu nhập theo mã phiếu
     // ============================================================
-    private static Map<String, List<ChiTietPhieuNhap>> cacheChiTietByPhieu = new HashMap<>();
+    @SuppressWarnings("unused")
+	private static Map<String, List<ChiTietPhieuNhap>> cacheChiTietByPhieu = new HashMap<>();
 
     public ChiTietPhieuNhap_DAO() {
     }

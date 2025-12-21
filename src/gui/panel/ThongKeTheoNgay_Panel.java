@@ -32,7 +32,11 @@ import enums.LoaiSanPham;
 
 public class ThongKeTheoNgay_Panel extends JPanel implements MouseListener, ActionListener {
 
-    private JDateChooser ngayBatDau_DataChoose, ngayKetThuc_DataChoose;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private JDateChooser ngayBatDau_DataChoose, ngayKetThuc_DataChoose;
     private JComboBox<String> cmbLoaiSP;
     private BieuDoCotGroup bieuDoDoanhThu;
     private JLabel lblTongBanHang, lblTongNhapHang, lblTongTraHang, lblTongHuyHang, lblLoiNhuanRong;
@@ -162,7 +166,8 @@ public class ThongKeTheoNgay_Panel extends JPanel implements MouseListener, Acti
     }
 
     // --- LOGIC LOADING DATA ---
-    private void loadDuLieu() {
+    @SuppressWarnings("deprecation")
+	private void loadDuLieu() {
         Date tu = ngayBatDau_DataChoose.getDate();
         Date den = ngayKetThuc_DataChoose.getDate();
         if (tu == null || den == null) return;

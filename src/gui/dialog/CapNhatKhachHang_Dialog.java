@@ -9,14 +9,15 @@ import java.time.format.DateTimeParseException;
 import java.util.Date;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
+
 
 import com.toedter.calendar.JDateChooser;
 
-import dao.KhachHang_DAO;
-import entity.KhachHang;
-import entity.NhanVien;
 
+import entity.KhachHang;
+
+
+@SuppressWarnings("serial")
 public class CapNhatKhachHang_Dialog extends JDialog {
 
 	 private JTextField txtTenKhachHang;

@@ -3,7 +3,6 @@ package entity;
 import java.util.Objects;
 import enums.DuongDung;
 import enums.LoaiSanPham;
-import entity.ChiTietKhuyenMaiSanPham; // 💡 Bổ sung import
 
 public class SanPham {
 

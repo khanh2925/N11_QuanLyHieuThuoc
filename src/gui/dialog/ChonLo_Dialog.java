@@ -29,7 +29,11 @@ import entity.SanPham;
 
 public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListener,ChangeListener {
 
-    // ===== I. CÁC TRƯỜNG DỮ LIỆU (FIELDS) =====
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	// ===== I. CÁC TRƯỜNG DỮ LIỆU (FIELDS) =====
     private final DateTimeFormatter fmtDate = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final DecimalFormat df = new DecimalFormat("#,### đ");
 
@@ -864,7 +868,12 @@ public class ChonLo_Dialog extends JDialog implements ActionListener, MouseListe
     }
 
     class ChiTietPhieuNhapRenderer extends DefaultListCellRenderer {
-        @Override
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
+		@Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (value instanceof ChiTietPhieuNhap ct) {

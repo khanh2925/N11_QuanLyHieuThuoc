@@ -14,7 +14,11 @@ import enums.LoaiSanPham;
 
 public class ThemSanPham_Dialog extends JDialog implements ActionListener {
 
-    private JTextField txtTenSanPham, txtSoDangKy, txtGiaNhap, txtHinhAnh, txtKeBanSanPham;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 4668478910075369745L;
+	private JTextField txtTenSanPham, txtSoDangKy, txtGiaNhap, txtHinhAnh, txtKeBanSanPham;
     private JComboBox<LoaiSanPham> cmbLoaiSanPham;
     private JComboBox<DuongDung> cmbDuongDung;
     private JCheckBox chkHoatDong;

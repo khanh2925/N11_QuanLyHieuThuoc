@@ -14,6 +14,7 @@ import javax.swing.border.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
+@SuppressWarnings("serial")
 public class Khung_GUI extends JPanel {
 
     private JPanel pnCenter;   // vùng trung tâm

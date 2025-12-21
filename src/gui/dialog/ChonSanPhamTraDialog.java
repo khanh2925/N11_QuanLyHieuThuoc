@@ -1,7 +1,6 @@
 package gui.dialog;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.util.*;
@@ -10,6 +9,7 @@ import javax.swing.table.DefaultTableModel;
 
 import entity.ChiTietHoaDon;
 
+@SuppressWarnings("serial")
 public class ChonSanPhamTraDialog extends JDialog {
 
 	private JTable table;

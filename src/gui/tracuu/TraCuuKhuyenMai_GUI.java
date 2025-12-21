@@ -42,7 +42,11 @@ import enums.HinhThucKM;
 
 public class TraCuuKhuyenMai_GUI extends JPanel implements ActionListener, MouseListener {
 
-    private JPanel pnHeader;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -6103097848763520776L;
+	private JPanel pnHeader;
     private JPanel pnCenter;
 
     private JTable tblKhuyenMai;

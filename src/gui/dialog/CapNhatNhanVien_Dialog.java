@@ -17,6 +17,7 @@ import dao.TaiKhoan_DAO;
 import entity.NhanVien;
 import entity.TaiKhoan;
 
+@SuppressWarnings("serial")
 public class CapNhatNhanVien_Dialog extends JDialog {
 
     private JTextField txtTenNhanVien;

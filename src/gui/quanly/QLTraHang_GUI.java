@@ -103,8 +103,11 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 	private JPanel pnBtnCTPT;
 	private JSplitPane pnCenter;
 	// Font & Color
+	@SuppressWarnings("unused")
 	private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 16);
+	@SuppressWarnings("unused")
 	private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 16);
+	@SuppressWarnings("unused")
 	private final Color COLOR_PRIMARY = new Color(33, 150, 243);
 
 	DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");

@@ -16,10 +16,10 @@ import dao.SanPham_DAO;
 import entity.DonViTinh;
 import entity.QuyCachDongGoi;
 import entity.SanPham;
-import enums.LoaiSanPham;
 import gui.dialog.CapNhatQuyCachDongGoi_Dialog;
 import gui.dialog.ThemQuyCachDongGoi_Dialog;
 
+@SuppressWarnings("serial")
 public class QuyCachDongGoi_GUI extends JPanel {
 
     private JTable table;

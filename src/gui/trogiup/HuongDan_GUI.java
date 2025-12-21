@@ -29,7 +29,11 @@ import org.apache.pdfbox.Loader; // PDFBox 3.0.x
 
 public class HuongDan_GUI extends JPanel {
 
-    private PDDocument pdfDocument;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 5775617548894401089L;
+	private PDDocument pdfDocument;
     private PDFRenderer pdfRenderer;
     private int currentPage = 0;
     private int totalPages = 0;
@@ -200,7 +204,8 @@ public class HuongDan_GUI extends JPanel {
     /**
      * Tính toán zoom level để PDF vừa khít với panel (mặc định zoom to hơn 1 chút)
      */
-    private void calculateAutoFitZoom() {
+    @SuppressWarnings("unused")
+	private void calculateAutoFitZoom() {
         try {
             if (pdfDocument == null || pdfDocument.getNumberOfPages() == 0) return;
             

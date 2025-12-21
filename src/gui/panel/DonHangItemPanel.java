@@ -39,7 +39,8 @@ public class DonHangItemPanel extends JPanel {
     private BanHang_GUI parentGUI;
     private List<ItemDonHang> dsItem;
     private LoSanPham_DAO loSanPhamDao;
-    private QuyCachDongGoi_DAO quyCachDongGoiDao;
+    @SuppressWarnings("unused")
+	private QuyCachDongGoi_DAO quyCachDongGoiDao;
 
     // ===== UI =====
     private JLabel lblSTT;

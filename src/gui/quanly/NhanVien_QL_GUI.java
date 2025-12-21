@@ -734,6 +734,7 @@ public class NhanVien_QL_GUI extends JPanel implements ActionListener {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private void setHinhAnh(String name) {
 		try {
 			URL url = getClass().getResource("/resources/images/" + name);

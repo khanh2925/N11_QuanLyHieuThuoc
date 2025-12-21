@@ -3,8 +3,6 @@ package dao;
 import database.connectDB;
 import entity.BangGia;
 import entity.ChiTietBangGia;
-import entity.SanPham;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

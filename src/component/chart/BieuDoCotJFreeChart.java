@@ -29,6 +29,7 @@ import org.jfree.chart.ui.RectangleAnchor;
 import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.category.DefaultCategoryDataset;
 
+@SuppressWarnings("serial")
 public class BieuDoCotJFreeChart extends JPanel {
 
     private final DefaultCategoryDataset tapDuLieu;

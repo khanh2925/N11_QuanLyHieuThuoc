@@ -11,6 +11,7 @@ import database.connectDB;
 import entity.NhanVien;
 import entity.TaiKhoan;
 
+@SuppressWarnings("unused")
 public class TaiKhoan_DAO {
 
 	public TaiKhoan_DAO() {

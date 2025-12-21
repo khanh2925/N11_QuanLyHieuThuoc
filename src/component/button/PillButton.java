@@ -1,8 +1,6 @@
 package component.button;
 
 import java.awt.*;
-import java.awt.geom.RoundRectangle2D;
-
 import javax.swing.*;
 
 /**
@@ -11,9 +9,16 @@ import javax.swing.*;
  */
 public class PillButton extends JButton {
 
-    private Color leftColor = new Color(220, 220, 220);
-    private Color rightColor = new Color(250, 220, 220);
-    private Color borderColor = new Color(170, 170, 170);
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	@SuppressWarnings("unused")
+	private Color leftColor = new Color(220, 220, 220);
+    @SuppressWarnings("unused")
+	private Color rightColor = new Color(250, 220, 220);
+    @SuppressWarnings("unused")
+	private Color borderColor = new Color(170, 170, 170);
 
     public PillButton(String text) {
         super(text);

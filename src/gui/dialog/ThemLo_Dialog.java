@@ -27,6 +27,7 @@ import entity.LoSanPham;
 import entity.QuyCachDongGoi;
 import entity.SanPham;
 
+@SuppressWarnings("serial")
 public class ThemLo_Dialog extends JDialog implements ActionListener,MouseListener,ChangeListener  {
 
     private JTextField txtMaLo;
@@ -50,8 +51,10 @@ public class ThemLo_Dialog extends JDialog implements ActionListener,MouseListen
 
     // Thông tin truyền vào
     private SanPham sanPham;
-    private String maLoDeNghi;
-    private List<QuyCachDongGoi> dsQuyCach;
+    @SuppressWarnings("unused")
+	private String maLoDeNghi;
+    @SuppressWarnings("unused")
+	private List<QuyCachDongGoi> dsQuyCach;
     private QuyCachDongGoi quyCachGoc;
     
     private final DecimalFormat df = new DecimalFormat("#,### đ");

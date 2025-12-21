@@ -23,7 +23,6 @@ import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import component.button.PillButton;
-import component.chart.BieuDoTronJFreeChart;
 import component.chart.BieuDoTronLegend;
 import component.chart.DuLieuBieuDoTron;
 import dao.ThongKe_DAO;
@@ -35,7 +34,11 @@ import dao.ThongKe_DAO;
  */
 public class ThongKeTheoLoai_Panel extends JPanel {
 
-    private BieuDoTronLegend bieuDoTron;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private BieuDoTronLegend bieuDoTron;
     private JTable tblChiTiet;
     private DefaultTableModel tableModel;
     private JComboBox<Integer> cmbNam;

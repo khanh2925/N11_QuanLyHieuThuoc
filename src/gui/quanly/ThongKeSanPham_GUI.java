@@ -19,7 +19,11 @@ import gui.panel.ThongKeTheoLoai_Panel;
  */
 public class ThongKeSanPham_GUI extends JPanel {
 
-    private JPanel pnCenter;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 6323351745366844098L;
+	private JPanel pnCenter;
     private JPanel pnHeader;
 
     // === KHAI BÁO CHO CARDLAYOUT ===
@@ -37,11 +41,14 @@ public class ThongKeSanPham_GUI extends JPanel {
     private JButton btnTonKhoThap;
     private JButton btnSapHetHan;
     private JButton btnTheoLoai;
-    private JButton currentActiveButton;
+    @SuppressWarnings("unused")
+	private JButton currentActiveButton;
 
     // Màu sắc
-    private final Color ACTIVE_COLOR = new Color(0x0077B6);
-    private final Color INACTIVE_COLOR = new Color(0x6C757D);
+    @SuppressWarnings("unused")
+	private final Color ACTIVE_COLOR = new Color(0x0077B6);
+    @SuppressWarnings("unused")
+	private final Color INACTIVE_COLOR = new Color(0x6C757D);
 
     public ThongKeSanPham_GUI() {
         this.setPreferredSize(new Dimension(1280, 800));

@@ -278,7 +278,8 @@ public class KhachHang_NV_GUI extends JPanel implements ActionListener, Document
     }
 
     // tạo button và gán sự kiện
-    private PillButton createPillButton(String text, int w, int h) {
+    @SuppressWarnings("unused")
+	private PillButton createPillButton(String text, int w, int h) {
         PillButton btn = new PillButton(text);
         btn.setFont(FONT_BOLD);
         btn.setPreferredSize(new Dimension(w, h));

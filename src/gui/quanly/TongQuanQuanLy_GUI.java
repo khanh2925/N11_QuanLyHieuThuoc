@@ -50,7 +50,11 @@ import dao.PhieuNhap_DAO;
 
 public class TongQuanQuanLy_GUI extends JPanel implements ActionListener, MouseListener {
 
-    private JPanel pnCenter;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 907476279580670931L;
+	private JPanel pnCenter;
     private JPanel pnHeader;
     
     // KPIs Top Row (2 hàng x 3 cột = 5 thẻ + 1 ô trống)

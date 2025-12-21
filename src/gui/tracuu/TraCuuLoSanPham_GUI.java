@@ -285,6 +285,7 @@ public class TraCuuLoSanPham_GUI extends JPanel implements ActionListener, Mouse
 		hienThiDanhSachLo(dsDangHienThi);
 	}
 
+	@SuppressWarnings("unused")
 	private void loadDuLieuLo() {
 		allLo = loDao.layTatCaLoSanPham();
 		if (allLo == null)

@@ -3,7 +3,6 @@ package gui.dialog;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.sql.SQLException;
 import java.util.List;
 import javax.swing.*;
 import dao.DonViTinh_DAO;
@@ -13,6 +12,7 @@ import entity.QuyCachDongGoi;
 import entity.SanPham;
 import gui.quanly.QuanLySanPham_GUI;
 
+@SuppressWarnings("serial")
 public class QuyCachDongGoi_Dialog extends JDialog implements ActionListener {
     
     private JTextField txtMaQC, txtHeSo, txtTiLeGiam;

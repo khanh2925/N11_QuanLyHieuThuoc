@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import enums.HinhThucKM; // Đảm bảo bạn đã import enum này
-
 public class HoaDon {
 
     private String maHoaDon;

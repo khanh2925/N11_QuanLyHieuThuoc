@@ -50,6 +50,7 @@ import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.*;
 
+@SuppressWarnings("serial")
 public class Main_GUI extends JFrame {
 	private final Set<String> loadedCards = new HashSet<>();
 	private final Map<String, java.util.function.Supplier<JPanel>> cardSuppliers = new HashMap<>();

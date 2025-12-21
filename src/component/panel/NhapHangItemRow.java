@@ -8,6 +8,7 @@ import java.awt.event.*;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 
+@SuppressWarnings("serial")
 public class NhapHangItemRow extends JPanel {
 	// model tối giản cho ví dụ (bạn có thể thay bằng SanPham/LoSanPham thật)
 	public static class RowModel {

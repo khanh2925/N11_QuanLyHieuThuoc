@@ -14,6 +14,10 @@ import enums.HinhThucKM;
 
 public class CapNhatKhuyenMai_Dialog extends JDialog {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5899377703283843218L;
 	private JTextField txtMaKM, txtTenKM, txtGiaTri, txtSoLuongToiThieu, txtSoLuongTangThem;
 	private JTextField txtDieuKienGiaTri;
 	private JLabel lblDieuKien;
@@ -236,6 +240,7 @@ public class CapNhatKhuyenMai_Dialog extends JDialog {
 		updateUIBasedOnHinhThuc();
 	}
 
+	@SuppressWarnings("unused")
 	private void onLuuButtonClick() {
 		if (!validateForm()) {
 			return;

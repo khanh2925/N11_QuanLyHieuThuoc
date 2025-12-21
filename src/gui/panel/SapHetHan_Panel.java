@@ -35,7 +35,11 @@ import dao.ThongKe_DAO;
  */
 public class SapHetHan_Panel extends JPanel {
 
-    private JTable tblSapHetHan;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -4942132968530469085L;
+	private JTable tblSapHetHan;
     private DefaultTableModel tableModel;
     private JLabel lblTongQuan;
     private JComboBox<String> cmbThoiGian;
