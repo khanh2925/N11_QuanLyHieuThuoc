@@ -5,6 +5,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.Serializable;
+import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -20,6 +21,8 @@ import javax.swing.border.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.text.NumberFormatter;
+
 // Imports của Apache POI
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -29,8 +32,11 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 
+import com.toedter.calendar.JDateChooser;
+
 import database.connectDB;
 import component.button.PillButton;
+import component.input.PlaceholderSupport;
 import component.border.RoundedBorder;
 import component.input.TaoJtextNhanh;
 import dao.DonViTinh_DAO;
@@ -55,11 +61,7 @@ import gui.dialog.ThemLo_Dialog;
 
 
 public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Serializable,MouseListener{
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	private JPanel pnDanhSachDon;
+    private JPanel pnDanhSachDon;
     private JTextField txtSearch;
     private JTextField txtTimNCC;
     private JTextField txtTongTienHang;
@@ -67,7 +69,7 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
     private JTextField txtDiaChiNCC;
     private JTextField txtEmailNCC;
 
-    private JButton btnNhapFile, btnNhapPhieu, btnHuyPhieu;
+    private JButton btnThemLo, btnNhapFile, btnNhapPhieu, btnHuyPhieu;
     private JScrollPane scrollPane;
 
     // ===== DAOs =====
@@ -75,13 +77,13 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
     private LoSanPham_DAO loSanPhamDAO;
     private PhieuNhap_DAO phieuNhapDAO;
     private NhaCungCap_DAO nhaCungCapDAO;
+    private DonViTinh_DAO donViTinhDAO;
     private QuyCachDongGoi_DAO quyCachDAO; 
 
     // ===== Formatting =====
     private final DecimalFormat df = new DecimalFormat("#,###");
     private final DateTimeFormatter fmtDate = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    @SuppressWarnings("unused")
-	private final DateTimeFormatter fmtDateTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private final DateTimeFormatter fmtDateTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     // ===== Dữ liệu phiên làm việc =====
     private NhaCungCap nhaCungCapDaChon = null;
@@ -110,7 +112,7 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
         loSanPhamDAO = new LoSanPham_DAO();
         phieuNhapDAO = new PhieuNhap_DAO();
         nhaCungCapDAO = new NhaCungCap_DAO();
-        new DonViTinh_DAO();
+        donViTinhDAO = new DonViTinh_DAO();
         quyCachDAO = new QuyCachDongGoi_DAO(); 
 
         if (this.nhanVienDangNhap == null) {
@@ -159,7 +161,7 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
         loSanPhamDAO = new LoSanPham_DAO();
         phieuNhapDAO = new PhieuNhap_DAO();
         nhaCungCapDAO = new NhaCungCap_DAO();
-        new DonViTinh_DAO();
+        donViTinhDAO = new DonViTinh_DAO();
         quyCachDAO = new QuyCachDongGoi_DAO(); 
 
         try {
@@ -184,8 +186,7 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
     /**
      * Phương thức khởi tạo giao diện chính
      */
-    @SuppressWarnings("unused")
-	private void initialize() {
+    private void initialize() {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
@@ -253,26 +254,6 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
         pnSidebar.setLayout(new BoxLayout(pnSidebar, BoxLayout.Y_AXIS));
         add(pnSidebar, BorderLayout.EAST);
 
-        // --- Thông tin nhân viên ---
-//        JPanel pnNhanVien = new JPanel(new BorderLayout(5, 5));
-//        pnNhanVien.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-//        pnNhanVien.setOpaque(false);
-//        JLabel lblNhanVienLabel = new JLabel("Nhân viên:");
-//        lblNhanVienLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-//        JLabel lblNhanVienValue = new JLabel(nhanVienDangNhap != null ? nhanVienDangNhap.getTenNhanVien() : "N/A");
-//        lblNhanVienValue.setFont(new Font("Segoe UI", Font.BOLD, 14));
-//        JLabel lblThoiGian = new JLabel(java.time.LocalDateTime.now().format(fmtDateTime), SwingConstants.RIGHT);
-//        lblThoiGian.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-//        pnNhanVien.add(lblNhanVienLabel, BorderLayout.WEST);
-//        pnNhanVien.add(lblNhanVienValue, BorderLayout.CENTER);
-//        pnNhanVien.add(lblThoiGian, BorderLayout.EAST);
-//        pnSidebar.add(pnNhanVien);
-//        pnSidebar.add(Box.createVerticalStrut(10));
-//        JSeparator lineNV = new JSeparator();
-//        lineNV.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-//        pnSidebar.add(Box.createVerticalStrut(4));
-//        pnSidebar.add(lineNV);
-//        pnSidebar.add(Box.createVerticalStrut(15));
 
         // --- Giao diện tìm kiếm NCC ---
 
@@ -426,8 +407,7 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
     /**
      * Helper: Tạo một JLabel để hiển thị thông tin (dạng Nhãn: Giá trị)
      */
-    @SuppressWarnings("unused")
-	private JLabel taoNhanThongTin(String labelText, String valueText) {
+    private JLabel taoNhanThongTin(String labelText, String valueText) {
         JLabel label = new JLabel(String.format("<html>%s <b style='color: #333;'>%s</b></html>", labelText, valueText));
         label.setFont(new Font("Segoe UI", Font.PLAIN, 20));
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -465,8 +445,7 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
     /**
      * Helper: Tìm một component con theo tên
      */
-    @SuppressWarnings("unused")
-	private Component timComponentTheoTen(Container container, String name) {
+    private Component timComponentTheoTen(Container container, String name) {
         for (Component comp : container.getComponents()) {
             if (name.equals(comp.getName())) {
                 return comp;
@@ -492,7 +471,7 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
             @Override
             public void actionPerformed(ActionEvent e) {
                 txtSearch.requestFocus();
-                txtSearch.selectAll();
+                txtSearch.setText("");
             }
         });
 
@@ -791,12 +770,9 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
             // Dòng 7+ (index 6+): Dữ liệu sản phẩm
             
             String sdtNCC = "";
-            @SuppressWarnings("unused")
-			String tenNCC = "";
-            @SuppressWarnings("unused")
-			String diaChiNCC = "";
-            @SuppressWarnings("unused")
-			String emailNCC = "";
+            String tenNCC = "";
+            String diaChiNCC = "";
+            String emailNCC = "";
             
             try {
                 // Đọc Tên Nhà Cung Cấp từ B2 (dòng 2, cột 1)
@@ -903,12 +879,9 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
                         if (hsd.isBefore(LocalDate.now().plusMonths(3))) {
                             final LocalDate finalHsd = hsd;
                             final String finalMaSP = maSP;
-                            @SuppressWarnings("unused")
-							final int finalSoLuong = soLuong;
-                            @SuppressWarnings("unused")
-							final double finalDonGia = donGia_Excel;
-                            @SuppressWarnings("unused")
-							final String finalTenDVT = tenDVT_Excel;
+                            final int finalSoLuong = soLuong;
+                            final double finalDonGia = donGia_Excel;
+                            final String finalTenDVT = tenDVT_Excel;
                             
                             // Hiển thị dialog xác nhận trên EDT thread
                             final boolean[] shouldContinue = {false};
@@ -942,11 +915,66 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
                         }
                         DonViTinh dvtGoc = qc_goc.getDonViTinh();
 
-                        if (!tenDVT_Excel.equalsIgnoreCase(dvtGoc.getTenDonViTinh())) {
-                             throw new Exception(String.format("Đơn vị tính '%s' không phải Đơn Vị Gốc (%s) của sản phẩm.", tenDVT_Excel, dvtGoc.getTenDonViTinh()));
+                        // Lấy danh sách tất cả quy cách đóng gói của sản phẩm
+                        ArrayList<QuyCachDongGoi> dsQuyCach = quyCachDAO.layDanhSachQuyCachTheoSanPham(sp.getMaSanPham());
+                        if (dsQuyCach == null || dsQuyCach.isEmpty()) {
+                            throw new Exception("Sản phẩm '" + sp.getTenSanPham() + "' (SP: " + maSP + ") chưa được cấu hình Quy Cách Đóng Gói.");
                         }
-                        if (donGia_Excel != sp.getGiaNhap()) {
-                            throw new Exception(String.format("Đơn giá nhập '%,.0f' không khớp với Đơn Giá Gốc (%,.0f) của sản phẩm.", donGia_Excel, sp.getGiaNhap()));
+                        
+                        // Tìm quy cách đóng gói tương ứng với đơn vị tính từ Excel
+                        QuyCachDongGoi quyCachDaChon = null;
+                        for (QuyCachDongGoi qc : dsQuyCach) {
+                            if (qc.getDonViTinh().getTenDonViTinh().equalsIgnoreCase(tenDVT_Excel)) {
+                                quyCachDaChon = qc;
+                                break;
+                            }
+                        }
+                        
+                        if (quyCachDaChon == null) {
+                            throw new Exception(String.format("Đơn vị tính '%s' không tồn tại trong danh sách Quy Cách Đóng Gói của sản phẩm.", tenDVT_Excel));
+                        }
+                        
+                        // Tính toán giá và số lượng gốc dựa trên hệ số quy đổi
+                        int heSoQuyDoi = quyCachDaChon.getHeSoQuyDoi();
+                        int soLuongGoc = soLuong * heSoQuyDoi; // Quy đổi về đơn vị gốc
+                        double donGiaGoc = sp.getGiaNhap(); // Giá gốc từ sản phẩm
+                        double donGiaHienThi = donGiaGoc * heSoQuyDoi; // Giá hiển thị theo đơn vị tính
+                        
+                        // Validate đơn giá từ Excel phải khớp với đơn giá hiển thị
+                        if (Math.abs(donGia_Excel - donGiaHienThi) > 0.01) {
+                            throw new Exception(String.format("Đơn giá nhập '%,.0f đ' không khớp với đơn giá của đơn vị '%s' (%,.0f đ).", 
+                                donGia_Excel, tenDVT_Excel, donGiaHienThi));
+                        }
+                        
+                        // Kiểm tra giới hạn 1,000,000 đơn vị gốc
+                        if (soLuongGoc > 1000000) {
+                            final int finalSoLuong = soLuong;
+                            final int finalSoLuongGoc = soLuongGoc;
+                            final String finalTenDVT = tenDVT_Excel;
+                            
+                            // Hiển thị cảnh báo trên EDT thread
+                            final boolean[] shouldContinue = {false};
+                            SwingUtilities.invokeAndWait(() -> {
+                                int option = JOptionPane.showConfirmDialog(
+                                    QuanLyPhieuNhap_GUI.this,
+                                    String.format("⚠️ CẢNH BÁO: Số lượng vượt quá giới hạn!\n\n" +
+                                        "Số lượng nhập: %,d %s\n" +
+                                        "Quy đổi về đơn vị gốc: %,d %s\n" +
+                                        "Giới hạn tối đa: 1,000,000 đơn vị gốc\n\n" +
+                                        "Bạn có chắc chắn muốn nhập số lượng này không?",
+                                        finalSoLuong, finalTenDVT,
+                                        finalSoLuongGoc, dvtGoc.getTenDonViTinh()),
+                                    "Cảnh báo - Vượt giới hạn số lượng",
+                                    JOptionPane.YES_NO_OPTION,
+                                    JOptionPane.WARNING_MESSAGE);
+                                shouldContinue[0] = (option == JOptionPane.YES_OPTION);
+                            });
+                            
+                            if (!shouldContinue[0]) {
+                                errorMessages.append(String.format("⏭️ Đã bỏ qua: Sản phẩm '%s' (Mã: %s) vượt quá giới hạn số lượng\n",
+                                    sp.getTenSanPham(), maSP));
+                                continue;
+                            }
                         }
                         
                         String maLo = String.format("LO-%06d", this.soLoTiepTheo);
@@ -955,21 +983,21 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
 
                         ChiTietPhieuNhap chiTietMoi = new ChiTietPhieuNhap();
                         chiTietMoi.setLoSanPham(loMoi);
-                        chiTietMoi.setDonViTinh(dvtGoc); 
-                        chiTietMoi.setSoLuongNhap(soLuong);
-                        chiTietMoi.setDonGiaNhap(sp.getGiaNhap()); 
+                        chiTietMoi.setDonViTinh(dvtGoc); // Lưu đơn vị gốc vào CSDL
+                        chiTietMoi.setSoLuongNhap(soLuongGoc); // Lưu số lượng gốc vào CSDL
+                        chiTietMoi.setDonGiaNhap(donGiaGoc); // Lưu giá gốc vào CSDL
 
                         ChiTietSanPhamPanel panelSanPham = timPanelSanPham(sp.getMaSanPham());
 
                         if(panelSanPham != null) {
-                            if (!panelSanPham.layDonViTinh().equals(dvtGoc) || panelSanPham.layDonGia() != sp.getGiaNhap()) { 
+                            if (!panelSanPham.layDonViTinh().equals(dvtGoc) || panelSanPham.layDonGia() != donGiaGoc) { 
                                 throw new Exception(String.format("DVT/Đơn giá không khớp. (Cần: %s - %.0f đ)",
                                     panelSanPham.layDonViTinh().getTenDonViTinh(), panelSanPham.layDonGia())); 
                             }
-                            panelSanPham.themLot(chiTietMoi, qc_goc, soLuong);
+                            panelSanPham.themLot(chiTietMoi, quyCachDaChon, soLuong);
                         } else {
-                            ChiTietSanPhamPanel newPanel = new ChiTietSanPhamPanel(sp, dvtGoc, sp.getGiaNhap());
-                            newPanel.themLot(chiTietMoi, qc_goc, soLuong);
+                            ChiTietSanPhamPanel newPanel = new ChiTietSanPhamPanel(sp, dvtGoc, donGiaGoc);
+                            newPanel.themLot(chiTietMoi, quyCachDaChon, soLuong);
                             pnDanhSachDon.add(newPanel);
                             capNhatLaiSTT();
                         }
@@ -1139,8 +1167,7 @@ public class QuanLyPhieuNhap_GUI extends JPanel implements ActionListener, Seria
     /**
      * Helper: Lấy giá trị dạng Ngày từ ô Excel
      */
-    @SuppressWarnings("deprecation")
-	private LocalDate layGiaTriNgayTuO(Cell cell) throws Exception {
+    private LocalDate layGiaTriNgayTuO(Cell cell) throws Exception {
     	if (cell == null) return null;
 
         if (cell.getCellType() == CellType.STRING) {
@@ -1293,6 +1320,20 @@ private void xuLyTimNhaCungCap() {
                     "Không tìm thấy sản phẩm phù hợp với mã sản phẩm đã nhập: " + maSP + "\nVui lòng nhập lại mã sản phẩm khác!", 
                     "Không tìm thấy", 
                     JOptionPane.ERROR_MESSAGE);
+            txtSearch.requestFocus();
+            return;
+        }
+        
+        // Kiểm tra độ dài mã sản phẩm
+        if (maSP.length() > 20) {
+            JOptionPane.showMessageDialog(this, 
+                    "❌ Mã sản phẩm không được vượt quá 20 ký tự!\n\n" +
+                    "Độ dài hiện tại: " + maSP.length() + " ký tự\n" +
+                    "Mã sản phẩm hợp lệ: SP-xxxxxx (9 ký tự)\n\n" +
+                    "Vui lòng nhập lại!", 
+                    "Mã sản phẩm quá dài", 
+                    JOptionPane.ERROR_MESSAGE);
+            txtSearch.selectAll();
             txtSearch.requestFocus();
             return;
         }
@@ -1642,11 +1683,7 @@ private void xuLyTimNhaCungCap() {
     // ✅ CLASS CHI TIẾT SẢN PHẨM (ĐÃ CẬP NHẬT STT VÀ NÚT XÓA)
     // ✅ ===================================================================
     class ChiTietSanPhamPanel extends JPanel {
-        /**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
-		private SanPham sanPham;
+        private SanPham sanPham;
         private DonViTinh donViTinh;
         private double donGia;
         private List<ChiTietPhieuNhap> dsChiTietCuaSP;
