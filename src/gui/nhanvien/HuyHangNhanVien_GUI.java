@@ -41,6 +41,7 @@ import java.util.List;
  */
 public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 
+	private static final String PLACEHOLDER_HET_HAN = "Hết hạn sử dụng";
 	private static final String PLACEHOLDER_TIM_KIEM = "Tìm theo mã lô, mã/tên sản phẩm";
 	// ====== TÌM KIẾM / DANH SÁCH ======
 	private JTextField txtTimLo;
@@ -384,7 +385,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 			LoSanPham lo = dialog.getSelectedLo();
 			if (lo != null) {
 				if ("HSD".equals(loaiTim)) {
-					addDongHuyVoiLyDo(lo, lo.getSanPham().getGiaNhap(), "Gần hết hạn sử dụng");
+					addDongHuyVoiLyDo(lo, lo.getSanPham().getGiaNhap(), PLACEHOLDER_HET_HAN);
 				} else {
 					addDongHuy(lo, lo.getSanPham().getGiaNhap());
 				}
@@ -435,7 +436,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 						final LoSanPham loFinal = lo;
 						SwingUtilities.invokeAndWait(() -> {
 							if ("HSD".equals(loaiTim)) {
-								addDongHuyVoiLyDo(loFinal, loFinal.getSanPham().getGiaNhap(), "Gần hết hạn sử dụng");
+								addDongHuyVoiLyDo(loFinal, loFinal.getSanPham().getGiaNhap(), PLACEHOLDER_HET_HAN);
 							} else {
 								addDongHuy(loFinal, loFinal.getSanPham().getGiaNhap());
 							}
@@ -494,7 +495,7 @@ public class HuyHangNhanVien_GUI extends JPanel implements ActionListener {
 
 			if (!daTonTai) {
 				if ("HSD".equals(loaiTim)) {
-					addDongHuyVoiLyDo(lo, lo.getSanPham().getGiaNhap(), "Gần hết hạn sử dụng");
+					addDongHuyVoiLyDo(lo, lo.getSanPham().getGiaNhap(), PLACEHOLDER_HET_HAN);
 				} else {
 					addDongHuy(lo, lo.getSanPham().getGiaNhap());
 				}
