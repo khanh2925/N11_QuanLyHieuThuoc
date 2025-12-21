@@ -99,6 +99,9 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 	private JButton btnApDungKMHD;
 	private KhuyenMai kmHoaDonGoiY; // Lưu tạm KM ngon nhất tìm được
 	private boolean cheDoUuTienHoaDon = false; // Mặc định là False (Ưu tiên KM Sản phẩm)
+	private static final String REGEX_MA_SP = "^SP-\\d{6}$";
+	private static final String REGEX_SO_DANG_KY = "^[A-Za-z0-9./-]{1,20}$";
+
 
 	public BanHang_GUI() {
 		setPreferredSize(new Dimension(1537, 850));
@@ -598,13 +601,27 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 			return;
 		}
 
-		// 2. Ràng buộc: Thuốc kê đơn bắt buộc có khách hàng
-		boolean thuocKeDon = ckThuocTheoDon.isSelected();
-		if (thuocKeDon && khachHangHienTai == null) {
-			JOptionPane.showMessageDialog(this, "Đơn thuốc kê đơn bắt buộc phải chọn khách hàng.", "Thiếu khách hàng",
-					JOptionPane.WARNING_MESSAGE);
-			return;
-		}
+		// 2. Ràng buộc: Thuốc kê đơn bắt buộc có khách hàng (KHÔNG PHẢI khách vãng lai)
+				boolean thuocKeDon = ckThuocTheoDon.isSelected();
+				if (thuocKeDon) {
+					if (khachHangHienTai == null) {
+						JOptionPane.showMessageDialog(this,
+								"Đơn thuốc kê đơn bắt buộc phải chọn khách hàng.",
+								"Thiếu khách hàng",
+								JOptionPane.WARNING_MESSAGE);
+						return;
+					}
+
+					// Kiểm tra không được là khách vãng lai
+					if ("KH-00000000-0000".equals(khachHangHienTai.getMaKhachHang())) {
+						JOptionPane.showMessageDialog(this,
+								"Thuốc kê đơn không được bán cho khách vãng lai!\n" +
+										"Vui lòng chọn khách hàng thực hoặc bỏ tick 'Thuốc kê đơn'.",
+								"Khách hàng không hợp lệ",
+								JOptionPane.WARNING_MESSAGE);
+						return;
+					}
+				}
 
 		// 3. Lấy khách cho hóa đơn (Nếu không chọn thì lấy khách Vãng Lai)
 		KhachHang khForHD = khachHangHienTai;
@@ -807,17 +824,69 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 			return 0;
 		}
 	}
+	private boolean validateTimThuocVaThongBao(String input) {
+	    if (input == null) {
+	        JOptionPane.showMessageDialog(
+	                this,
+	                "Vui lòng nhập mã sản phẩm hoặc số đăng ký!",
+	                "Thiếu dữ liệu",
+	                JOptionPane.WARNING_MESSAGE
+	        );
+	        return false;
+	    }
+
+	    String s = input.trim();
+
+	    if (s.isEmpty() || s.equals(PLACEHOLDER_TIM_THUOC)) {
+	        JOptionPane.showMessageDialog(
+	                this,
+	                "Vui lòng nhập mã sản phẩm hoặc số đăng ký!",
+	                "Thiếu dữ liệu",
+	                JOptionPane.WARNING_MESSAGE
+	        );
+	        return false;
+	    }
+
+	    s = s.toUpperCase(); // chuẩn hoá mã SP
+
+	    // ✅ MÃ SP
+	    if (s.matches(REGEX_MA_SP)) {
+	        System.out.println("[VALIDATE] Mã SP hợp lệ: " + s);
+	        return true;
+	    }
+
+	    // ✅ SỐ ĐĂNG KÝ
+	    if (s.matches(REGEX_SO_DANG_KY)) {
+	        System.out.println("[VALIDATE] Số đăng ký hợp lệ: " + s);
+	        return true;
+	    }
+
+	    // ❌ SAI ĐỊNH DẠNG
+	    JOptionPane.showMessageDialog(
+	            this,
+	            "Dữ liệu tìm kiếm không hợp lệ!\n\n"
+	          + "Định dạng hợp lệ:\n"
+	          + "• Mã sản phẩm: SP-xxxxxx\n"
+	          + "• Số đăng ký: tối đa 20 ký tự",
+	            "Sai định dạng",
+	            JOptionPane.ERROR_MESSAGE
+	    );
+
+	    System.out.println("[VALIDATE] Sai định dạng: " + s);
+	    return false;
+	}
+
 
 	// ================= XỬ LÝ TÌM THUỐC ==================
 	private void xuLyTimThuoc() {
 		String tuKhoa = txtTimThuoc.getText().trim();
 
-		// Kiểm tra xem có phải placeholder không
-		if (tuKhoa.isEmpty() || tuKhoa.equals(PLACEHOLDER_TIM_THUOC)) {
-			JOptionPane.showMessageDialog(this, "Vui lòng nhập số đăng ký hoặc mã sản phẩm!");
-			return;
-		}
-
+	    if (!validateTimThuocVaThongBao(tuKhoa)) {
+	        txtTimThuoc.requestFocus();
+	        txtTimThuoc.selectAll();
+	        return;
+	    }
+	    tuKhoa = tuKhoa.toUpperCase(); // Chuẩn hoá mã SP
 		SanPham sp = sanPhamDao.timSanPhamTheoSoDangKy(tuKhoa);
 		if (sp == null)
 			sp = sanPhamDao.laySanPhamTheoMa(tuKhoa);
@@ -881,7 +950,7 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 		// ===== Ảnh =====
 		String anhPath = sp.getHinhAnh();
 		if (anhPath == null || anhPath.isEmpty()) {
-			anhPath = "/resources/images/default_medicine.png";
+			anhPath = "icon_anh_sp_null.png";
 		}
 
 		// Lô gần nhất
@@ -1146,9 +1215,11 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 
 		java.util.LinkedHashSet<Long> set = new java.util.LinkedHashSet<>();
 
+		// Gợi ý cơ bản: số tiền chính xác và +1k
 		set.add(billK);
 		set.add(billK + 1);
 
+		// Làm tròn theo mức 5k, 10k, 50k, 100k
 		long round5 = ((billK + 4) / 5) * 5;
 		set.add(round5);
 
@@ -1161,6 +1232,21 @@ public class BanHang_GUI extends JPanel implements ActionListener {
 		long round100 = ((billK + 99) / 100) * 100;
 		set.add(round100);
 
+		// --- GỢI Ý THEO TỜ TIỀN PHỔ BIẾN (50k, 100k, 200k, 500k) ---
+		// Tìm số tờ tiền ít nhất để đủ thanh toán
+		long[] denominations = { 500, 200, 100, 50 }; // Theo thứ tự giảm dần
+
+		for (long denom : denominations) {
+			// Số tờ cần thiết (làm tròn lên)
+			long numNotes = (billK + denom - 1) / denom;
+
+			// Chỉ gợi ý nếu dùng từ 1-3 tờ (thực tế)
+			if (numNotes >= 1 && numNotes <= 3) {
+				set.add(numNotes * denom);
+			}
+		}
+
+		// Thêm mức 500k nếu còn chỗ
 		if (set.size() < btnGoiY.length) {
 			long round500 = ((billK + 499) / 500) * 500;
 			set.add(round500);

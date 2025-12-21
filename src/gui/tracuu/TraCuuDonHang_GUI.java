@@ -91,6 +91,13 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         setupKeyboardShortcuts(); // Thiết lập phím tắt
         addFocusOnShow(); // Tự động focus ô tìm kiếm khi hiển thị
         xuLyLamMoi(); // Load dữ liệu ban đầu
+        dateTuNgay.addPropertyChangeListener("date", evt -> {
+            xuLyTimKiem();
+        });
+
+        dateDenNgay.addPropertyChangeListener("date", evt -> {
+            xuLyTimKiem();
+        });
     }
 
     // ==============================================================================
@@ -353,7 +360,7 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         });
 
         // Enter trên ô tìm kiếm
-        txtTimKiem.addActionListener(ev -> xuLyTimKiem());
+//        txtTimKiem.addActionListener(ev -> xuLyTimKiem());
     }
     private void addFocusOnShow() {
         addHierarchyListener(e -> {
@@ -426,9 +433,71 @@ public class TraCuuDonHang_GUI extends JPanel implements ActionListener {
         // Render có lọc theo ngày mặc định
         xuLyTimKiem();
     }
+    private boolean validateTimKiem() {
+        String tuKhoa = txtTimKiem.getText().trim();
+        if (tuKhoa.contains("Tìm theo mã"))
+            tuKhoa = "";
+
+        // VALIDATION 1: Kiểm tra độ dài từ khóa tìm kiếm (không quá độ dài mã hóa đơn)
+        if (!tuKhoa.isEmpty() && tuKhoa.length() > 16) {
+            JOptionPane.showMessageDialog(this,
+                    "Từ khóa tìm kiếm không được vượt quá 16 ký tự!",
+                    "Lỗi nhập liệu",
+                    JOptionPane.ERROR_MESSAGE);
+            txtTimKiem.requestFocus();
+            txtTimKiem.selectAll();
+            return false;
+        }
+
+        // VALIDATION 2: Kiểm tra ngày hợp lệ
+        Date dTu = dateTuNgay.getDate();
+        Date dDen = dateDenNgay.getDate();
+        Date today = new Date();
+
+        // Kiểm tra ngày bắt đầu không được lớn hơn ngày hôm nay
+        if (dTu != null && dTu.after(today)) {
+            JOptionPane.showMessageDialog(this,
+                    "Ngày bắt đầu không được lớn hơn ngày hôm nay!\nĐã tự động reset về ngày hiện tại.",
+                    "Lỗi nhập liệu",
+                    JOptionPane.WARNING_MESSAGE);
+            dateTuNgay.setDate(today);
+            dateTuNgay.requestFocus();
+            return false;
+        }
+
+        // Kiểm tra ngày kết thúc không được lớn hơn ngày hôm nay
+        if (dDen != null && dDen.after(today)) {
+            JOptionPane.showMessageDialog(this,
+                    "Ngày kết thúc không được lớn hơn ngày hôm nay!\nĐã tự động reset về ngày hiện tại.",
+                    "Lỗi nhập liệu",
+                    JOptionPane.WARNING_MESSAGE);
+            dateDenNgay.setDate(today);
+            dateDenNgay.requestFocus();
+            return false;
+        }
+
+        // Kiểm tra ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu
+        if (dTu != null && dDen != null && dDen.before(dTu)) {
+            JOptionPane.showMessageDialog(this,
+                    "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!\nĐã tự động reset ngày kết thúc về ngày hiện tại.",
+                    "Lỗi nhập liệu",
+                    JOptionPane.WARNING_MESSAGE);
+            dateDenNgay.setDate(today);
+            dateDenNgay.requestFocus();
+            return false;
+        }
+
+        return true;
+    }
+
     // --- 2. Tìm kiếm và Lọc (TỐI ƯU: Lai ghép Query DB + Filter Cache) ---
     private void xuLyTimKiem() {
+        // Validate dữ liệu trước khi tìm kiếm
+        if (!validateTimKiem()) {
+            return;
+        }
         String tuKhoa = txtTimKiem.getText().trim();
+        
         if (tuKhoa.contains("Tìm theo mã")) tuKhoa = "";
 
         List<HoaDon> ketQua = new ArrayList<>();

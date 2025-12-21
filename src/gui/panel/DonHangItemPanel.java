@@ -350,7 +350,7 @@ public class DonHangItemPanel extends JPanel {
             }
         });
 
-        // ===== ĐỔI ĐƠN VỊ =====
+     // ===== ĐỔI ĐƠN VỊ =====
         final String[] lastDonVi = { item.getTenDonViHienTai() };
         cbDonVi.addActionListener(ev -> {
             if (item.isKhoaChinhSua()) {
@@ -360,12 +360,16 @@ public class DonHangItemPanel extends JPanel {
             }
 
             String dv = (String) cbDonVi.getSelectedItem();
-            if (dv == null || dv.equals(lastDonVi[0])) return;
+            if (dv == null || dv.equals(lastDonVi[0]))
+                return;
 
             for (ItemDonHang it : dsItem) {
-                if (it == item) continue;
-                if (!it.getSanPham().getMaSanPham().equals(item.getSanPham().getMaSanPham())) continue;
-                if (!it.getLoSanPham().getMaLo().equals(item.getLoSanPham().getMaLo())) continue;
+                if (it == item)
+                    continue;
+                if (!it.getSanPham().getMaSanPham().equals(item.getSanPham().getMaSanPham()))
+                    continue;
+                if (!it.getLoSanPham().getMaLo().equals(item.getLoSanPham().getMaLo()))
+                    continue;
 
                 if (dv.equals(it.getTenDonViHienTai())) {
                     JOptionPane.showMessageDialog(parentGUI,
@@ -378,7 +382,47 @@ public class DonHangItemPanel extends JPanel {
                 }
             }
 
+            // Đổi đơn vị (số lượng sẽ tự động quy đổi trong setDonVi)
             item.setDonVi(dv);
+
+            // Kiểm tra tồn kho sau khi đổi đơn vị
+            int slHienTai = item.getSoLuongMua(); // Số lượng đã được quy đổi
+            int slMaxCoThe = tinhSoLuongToiDaTrongLo(item);
+
+            // Nếu không đủ hàng với số lượng hiện tại
+            if (slHienTai > slMaxCoThe || !kiemTraTongTonChoLo(item, slHienTai)) {
+                // Tính toán thông tin hiển thị
+                QuyCachDongGoi qcMoi = item.getMapQuyCach().get(dv);
+                int heSoMoi = qcMoi != null ? qcMoi.getHeSoQuyDoi() : 1;
+                int tonKhoBase = item.getTonKho();
+                String dvGoc = item.getDonViGoc();
+
+                // Hiển thị thông báo
+                String message = String.format(
+                        "Không đủ hàng để đổi sang đơn vị \"%s\"!\n\n" +
+                                "• Tồn kho: %d %s\n" +
+                                "• Cần tối thiểu: %d %s (cho 1 %s)\n" +
+                                "• Chỉ đủ cho: %d %s",
+                        dv,
+                        tonKhoBase, dvGoc,
+                        heSoMoi, dvGoc, dv,
+                        slMaxCoThe, dv);
+
+                JOptionPane.showMessageDialog(
+                        parentGUI,
+                        message,
+                        "Không đủ hàng",
+                        JOptionPane.WARNING_MESSAGE);
+
+                // Tự động rollback về đơn vị cũ và reset số lượng về 1
+                item.setDonVi(lastDonVi[0]);
+                item.setSoLuongMua(1);
+                cbDonVi.setSelectedItem(lastDonVi[0]);
+                capNhatGiaoDien();
+                thongBaoCapNhat();
+                return;
+            }
+
             lastDonVi[0] = dv;
             capNhatGiaoDien();
             thongBaoCapNhat();

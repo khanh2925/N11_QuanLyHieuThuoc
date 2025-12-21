@@ -283,9 +283,9 @@ public class Loading_GUI extends JWindow {
         SwingUtilities.invokeLater(() -> {
             try {
                 // Set look and feel
-                javax.swing.UIManager.setLookAndFeel(
-                    javax.swing.UIManager.getSystemLookAndFeelClassName()
-                );
+//                javax.swing.UIManager.setLookAndFeel(
+//                    javax.swing.UIManager.getSystemLookAndFeelClassName()
+//                );
             } catch (Exception e) {
                 e.printStackTrace();
             }

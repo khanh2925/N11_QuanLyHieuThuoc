@@ -150,6 +150,7 @@ public class DangNhap_GUI extends JFrame {
 		btnTogglePassword.setContentAreaFilled(false);
 		btnTogglePassword.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		btnTogglePassword.setFocusable(false); // Quan trọng: Không cho nút chiếm focus khi click
+		
 
 		pnFormDangNhap.add(btnTogglePassword);
 

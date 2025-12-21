@@ -92,7 +92,7 @@ public class TraHangItemPanel extends JPanel {
 		lblAnh.setBorder(new LineBorder(Color.LIGHT_GRAY));
 		lblAnh.setHorizontalAlignment(JLabel.CENTER);
 		try {
-			ImageIcon icon = new ImageIcon(getClass().getResource("/resources/images/" + anhPath));
+			ImageIcon icon = new ImageIcon(getClass().getResource("/resources/images/"+anhPath));
 			lblAnh.setIcon(new ImageIcon(icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH)));
 		} catch (Exception e) {
 			lblAnh.setText("Ảnh");

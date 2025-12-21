@@ -118,6 +118,7 @@ public class HuongDan_GUI extends JPanel {
         actionMap.put("zoomOut", new AbstractAction() {
             public void actionPerformed(ActionEvent e) { zoomOut(); }
         });
+        scrollPane.getVerticalScrollBar().setUnitIncrement(40); 
     }
     
     private JButton createToolbarButton(String text, Color bgColor) {
