@@ -749,6 +749,8 @@ public class QLTraHang_GUI extends JPanel implements ActionListener, MouseListen
 			cbTrangThai.setSelectedIndex(0);
 			dateTuNgay.setDate(null);
 			dateDenNgay.setDate(null);
+			// Xóa cache
+			pt_dao.clearCache();
 			loadDataTablePT();
 			modelCTPT.setRowCount(0);
 			txtSearch.requestFocus(); // Focus vào ô tìm kiếm sau khi làm mới

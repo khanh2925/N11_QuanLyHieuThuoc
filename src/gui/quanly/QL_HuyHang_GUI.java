@@ -674,6 +674,8 @@ public class QL_HuyHang_GUI extends JPanel implements ActionListener, MouseListe
 			cbTrangThai.setSelectedIndex(0);
 			dateTuNgay.setDate(null);
 			dateDenNgay.setDate(null);
+			// Xóa cache
+			ph_dao.clearCache();
 			loadDataTablePH();
 			modelCTPH.setRowCount(0);
 			txtSearch.requestFocus(); // Focus vào ô tìm kiếm sau khi làm mới

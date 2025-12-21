@@ -13,6 +13,13 @@ public class PhieuTra_DAO {
 	// CACHE LAYER
 	private static List<PhieuTra> cacheAllPhieuTra = null;
 
+	/**
+	 * Xóa cache để load lại dữ liệu mới từ DB
+	 */
+	public void clearCache() {
+		cacheAllPhieuTra = null;
+	}
+
 	public PhieuTra_DAO() {
 	}
 

@@ -14,6 +14,13 @@ public class PhieuHuy_DAO {
 	// CACHE LAYER
 	private static List<PhieuHuy> cacheAllPhieuHuy = null;
 
+	/**
+	 * Xóa cache để load lại dữ liệu mới từ DB
+	 */
+	public void clearCache() {
+		cacheAllPhieuHuy = null;
+	}
+
 	public PhieuHuy_DAO() {
 	}
 
